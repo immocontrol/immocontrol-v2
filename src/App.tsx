@@ -26,6 +26,7 @@ const notFoundImport = () => import("@/pages/NotFound");
 const loansImport = () => import("@/pages/Loans");
 const cashForecastImport = () => import("@/pages/CashForecast");
 const todosImport = () => import("@/pages/Todos");
+const onboardingImport = () => import("@/pages/Onboarding");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -40,6 +41,7 @@ const NotFound = lazy(notFoundImport);
 const Loans = lazy(loansImport);
 const CashForecast = lazy(cashForecastImport);
 const Todos = lazy(todosImport);
+const Onboarding = lazy(onboardingImport);
 
 // Preload all routes after initial render to eliminate loading on tab switch
 const preloadRoutes = () => {
@@ -92,6 +94,7 @@ const RoleRouter = () => {
   const { user, loading } = useAuth();
   const [role, setRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -115,12 +118,29 @@ const RoleRouter = () => {
     fetchRole();
   }, [user]);
 
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        setOnboardingDone((data as any)?.onboarding_completed ?? false);
+      } catch {
+        setOnboardingDone(true);
+      }
+    };
+    checkOnboarding();
+  }, [user]);
+
   // Preload all routes eagerly
   useEffect(() => {
     preloadRoutes();
   }, []);
 
-  if (loading || roleLoading) {
+  if (loading || roleLoading || onboardingDone === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Laden...</div>
@@ -129,6 +149,11 @@ const RoleRouter = () => {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Show onboarding if not completed
+  if (!onboardingDone) {
+    return <Onboarding />;
+  }
 
   // Tenant portal
   if (role === "tenant") {
