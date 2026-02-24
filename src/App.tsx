@@ -95,14 +95,17 @@ const RoleRouter = () => {
 
   useEffect(() => {
     const fetchRole = async () => {
-      if (!user) { setRoleLoading(false); return; }
+      if (!user) {
+        setRoleLoading(false);
+        return;
+      }
       try {
         const { data } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
           .maybeSingle();
-        setRole(data?.role || "landlord");
+        setRole(data?.role ?? "landlord");
       } catch {
         setRole("landlord");
       } finally {

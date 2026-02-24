@@ -54,7 +54,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
         .eq("property_id", propertyId)
         .order("priority", { ascending: false })
         .order("planned_date", { ascending: true });
-      return (data || []) as MaintenanceItem[];
+      return (data || []) as unknown as MaintenanceItem[];
     },
     enabled: !!user,
   });

@@ -14,16 +14,902 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contacts: {
+        Row: {
+          address: string | null
+          category: string
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          category?: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      document_expiries: {
+        Row: {
+          created_at: string | null
+          expiry_date: string
+          id: string
+          name: string
+          notes: string | null
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expiry_date: string
+          id?: string
+          name: string
+          notes?: string | null
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expiry_date?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_expiries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          bank_name: string
+          created_at: string
+          end_date: string | null
+          fixed_interest_until: string | null
+          id: string
+          interest_rate: number
+          loan_amount: number
+          loan_type: string
+          monthly_payment: number
+          notes: string | null
+          property_id: string
+          remaining_balance: number
+          repayment_rate: number
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_name?: string
+          created_at?: string
+          end_date?: string | null
+          fixed_interest_until?: string | null
+          id?: string
+          interest_rate?: number
+          loan_amount?: number
+          loan_type?: string
+          monthly_payment?: number
+          notes?: string | null
+          property_id: string
+          remaining_balance?: number
+          repayment_rate?: number
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_name?: string
+          created_at?: string
+          end_date?: string | null
+          fixed_interest_until?: string | null
+          id?: string
+          interest_rate?: number
+          loan_amount?: number
+          loan_type?: string
+          monthly_payment?: number
+          notes?: string | null
+          property_id?: string
+          remaining_balance?: number
+          repayment_rate?: number
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_items: {
+        Row: {
+          category: string
+          completed: boolean
+          created_at: string | null
+          estimated_cost: number
+          id: string
+          notes: string | null
+          planned_date: string | null
+          priority: string
+          property_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          completed?: boolean
+          created_at?: string | null
+          estimated_cost?: number
+          id?: string
+          notes?: string | null
+          planned_date?: string | null
+          priority?: string
+          property_id: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed?: boolean
+          created_at?: string | null
+          estimated_cost?: number
+          id?: string
+          notes?: string | null
+          planned_date?: string | null
+          priority?: string
+          property_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          property_id: string
+          sender_id: string
+          sender_role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          property_id: string
+          sender_id: string
+          sender_role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          property_id?: string
+          sender_id?: string
+          sender_role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_goals: {
+        Row: {
+          created_at: string | null
+          current_value: number
+          deadline: string | null
+          id: string
+          target: number
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_value?: number
+          deadline?: string | null
+          id?: string
+          target?: number
+          title?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_value?: number
+          deadline?: string | null
+          id?: string
+          target?: number
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          created_at: string
+          current_value: number
+          id: string
+          interest_rate: number
+          location: string
+          monthly_cashflow: number
+          monthly_credit_rate: number
+          monthly_expenses: number
+          monthly_rent: number
+          name: string
+          ownership: string
+          purchase_date: string
+          purchase_price: number
+          remaining_debt: number
+          sqm: number
+          type: string
+          units: number
+          updated_at: string
+          user_id: string
+          year_built: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          current_value: number
+          id?: string
+          interest_rate?: number
+          location: string
+          monthly_cashflow?: number
+          monthly_credit_rate?: number
+          monthly_expenses?: number
+          monthly_rent?: number
+          name: string
+          ownership?: string
+          purchase_date: string
+          purchase_price: number
+          remaining_debt?: number
+          sqm?: number
+          type?: string
+          units?: number
+          updated_at?: string
+          user_id: string
+          year_built?: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          interest_rate?: number
+          location?: string
+          monthly_cashflow?: number
+          monthly_credit_rate?: number
+          monthly_expenses?: number
+          monthly_rent?: number
+          name?: string
+          ownership?: string
+          purchase_date?: string
+          purchase_price?: number
+          remaining_debt?: number
+          sqm?: number
+          type?: string
+          units?: number
+          updated_at?: string
+          user_id?: string
+          year_built?: number
+        }
+        Relationships: []
+      }
+      property_documents: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string | null
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number
+          file_type?: string | null
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string | null
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_insurances: {
+        Row: {
+          annual_premium: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          policy_number: string | null
+          property_id: string
+          provider: string
+          renewal_date: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          annual_premium?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          policy_number?: string | null
+          property_id: string
+          provider?: string
+          renewal_date?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          annual_premium?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          policy_number?: string | null
+          property_id?: string
+          provider?: string
+          renewal_date?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_insurances_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_notes_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_value_history: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          note: string | null
+          property_id: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          note?: string | null
+          property_id: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          note?: string | null
+          property_id?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_value_history_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rent_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          landlord_id: string
+          note: string | null
+          paid_date: string | null
+          property_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          landlord_id: string
+          note?: string | null
+          paid_date?: string | null
+          property_id: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          landlord_id?: string
+          note?: string | null
+          paid_date?: string | null
+          property_id?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          invitation_token: string | null
+          member_email: string
+          member_user_id: string | null
+          owner_id: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invitation_token?: string | null
+          member_email: string
+          member_user_id?: string | null
+          owner_id: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invitation_token?: string | null
+          member_email?: string
+          member_user_id?: string | null
+          owner_id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          deposit: number | null
+          email: string | null
+          first_name: string
+          id: string
+          invitation_sent_at: string | null
+          invitation_token: string | null
+          is_active: boolean | null
+          landlord_id: string
+          last_name: string
+          monthly_rent: number | null
+          move_in_date: string | null
+          move_out_date: string | null
+          phone: string | null
+          property_id: string
+          unit_label: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deposit?: number | null
+          email?: string | null
+          first_name: string
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          is_active?: boolean | null
+          landlord_id: string
+          last_name: string
+          monthly_rent?: number | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          phone?: string | null
+          property_id: string
+          unit_label?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deposit?: number | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          is_active?: boolean | null
+          landlord_id?: string
+          last_name?: string
+          monthly_rent?: number | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          phone?: string | null
+          property_id?: string
+          unit_label?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          actual_cost: number | null
+          assigned_to_contact_id: string | null
+          assigned_to_user_id: string | null
+          category: Database["public"]["Enums"]["ticket_category"]
+          cost_note: string | null
+          created_at: string
+          description: string
+          estimated_cost: number | null
+          handworker_note: string | null
+          id: string
+          landlord_id: string
+          landlord_note: string | null
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          property_id: string
+          status: Database["public"]["Enums"]["ticket_status"]
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_to_contact_id?: string | null
+          assigned_to_user_id?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          cost_note?: string | null
+          created_at?: string
+          description: string
+          estimated_cost?: number | null
+          handworker_note?: string | null
+          id?: string
+          landlord_id: string
+          landlord_note?: string | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          property_id: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_to_contact_id?: string | null
+          assigned_to_user_id?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          cost_note?: string | null
+          created_at?: string
+          description?: string
+          estimated_cost?: number | null
+          handworker_note?: string | null
+          id?: string
+          landlord_id?: string
+          landlord_note?: string | null
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          property_id?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_assigned_to_contact_id_fkey"
+            columns: ["assigned_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todos: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string | null
+          description: string
+          due_date: string | null
+          due_time: string | null
+          id: string
+          labels: string[]
+          priority: number
+          project: string
+          sort_order: number
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          labels?: string[]
+          priority?: number
+          project?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          labels?: string[]
+          priority?: number
+          project?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_banks: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_tenant_landlord: { Args: { _tenant_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_message_participant: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "landlord" | "tenant" | "handworker"
+      payment_status: "pending" | "confirmed" | "overdue" | "cancelled"
+      ticket_category:
+        | "repair"
+        | "damage"
+        | "maintenance"
+        | "question"
+        | "other"
+        | "documents"
+      ticket_priority: "low" | "medium" | "high" | "urgent"
+      ticket_status: "open" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +1036,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["landlord", "tenant", "handworker"],
+      payment_status: ["pending", "confirmed", "overdue", "cancelled"],
+      ticket_category: [
+        "repair",
+        "damage",
+        "maintenance",
+        "question",
+        "other",
+        "documents",
+      ],
+      ticket_priority: ["low", "medium", "high", "urgent"],
+      ticket_status: ["open", "in_progress", "resolved", "closed"],
+    },
   },
 } as const

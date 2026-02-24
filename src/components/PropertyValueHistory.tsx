@@ -41,7 +41,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
         .select("*")
         .eq("property_id", propertyId)
         .order("date", { ascending: true });
-      return (data || []) as ValueEntry[];
+      return (data || []) as unknown as ValueEntry[];
     },
     enabled: !!user,
   });

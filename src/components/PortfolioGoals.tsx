@@ -47,7 +47,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
     queryKey: ["portfolio_goals"],
     queryFn: async () => {
       const { data } = await supabase.from("portfolio_goals" as any).select("*").order("created_at");
-      return (data || []) as Goal[];
+      return (data || []) as unknown as Goal[];
     },
     enabled: !!user,
   });
