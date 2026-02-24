@@ -50,7 +50,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
         .select("*")
         .eq("property_id", propertyId)
         .order("renewal_date", { ascending: true });
-      return (data || []) as Insurance[];
+      return (data || []) as unknown as Insurance[];
     },
     enabled: !!user,
   });

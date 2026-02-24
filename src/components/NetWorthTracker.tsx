@@ -22,7 +22,7 @@ const NetWorthTracker = ({ currentEquity, totalValue, totalDebt }: NetWorthTrack
         .from("property_value_history" as any)
         .select("date, value")
         .order("date", { ascending: true });
-      return (data || []) as { date: string; value: number }[];
+      return (data || []) as unknown as { date: string; value: number }[];
     },
     enabled: !!user,
   });

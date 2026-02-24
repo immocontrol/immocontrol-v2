@@ -35,7 +35,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
         .select("*")
         .eq("property_id", propertyId)
         .order("expiry_date", { ascending: true });
-      return (data || []) as DocExpiry[];
+      return (data || []) as unknown as DocExpiry[];
     },
     enabled: !!user,
   });
