@@ -254,7 +254,7 @@ const Auth = () => {
                     <Separator className="flex-1" />
                   </div>
 
-                  <Button
+                   <Button
                     type="button"
                     variant="outline"
                     className="w-full"
@@ -277,6 +277,33 @@ const Auth = () => {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                     Mit Google anmelden
+                  </Button>
+
+                  <div className="flex items-center gap-3 my-1">
+                    <Separator className="flex-1" />
+                    <span className="text-xs text-muted-foreground">oder</span>
+                    <Separator className="flex-1" />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    disabled={loading}
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const { error } = await supabase.auth.signInAnonymously();
+                        if (error) throw error;
+                        toast.success("Test-Zugang erstellt! 🧪");
+                      } catch (error: any) {
+                        toast.error(translateError(error.message || "Test-Login fehlgeschlagen"));
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    🧪 Als Testnutzer starten
                   </Button>
                 </>
               )}

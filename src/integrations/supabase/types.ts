@@ -289,21 +289,39 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           display_name: string | null
+          experience_level: string | null
           id: string
+          investor_type: string | null
+          onboarding_completed: boolean
+          property_count_goal: number | null
+          strategy: string | null
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          experience_level?: string | null
           id?: string
+          investor_type?: string | null
+          onboarding_completed?: boolean
+          property_count_goal?: number | null
+          strategy?: string | null
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          experience_level?: string | null
           id?: string
+          investor_type?: string | null
+          onboarding_completed?: boolean
+          property_count_goal?: number | null
+          strategy?: string | null
           user_id?: string
         }
         Relationships: []
