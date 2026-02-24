@@ -168,7 +168,7 @@ const Auth = () => {
                 <Label htmlFor="email" className="text-xs text-muted-foreground">E-Mail</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
+                   <Input
                     id="email"
                     type="email"
                     placeholder="deine@email.de"
@@ -177,6 +177,7 @@ const Auth = () => {
                     required
                     className="pl-10 h-10"
                     autoComplete="email"
+                    autoFocus
                   />
                 </div>
               </div>
@@ -240,7 +241,11 @@ const Auth = () => {
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || !email.trim() || (mode !== "forgot" && password.length < 6)}
+              >
                 {loading ? (
                   <span className="flex items-center gap-2"><span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> Laden...</span>
                 ) : mode === "login" ? "Anmelden" : mode === "register" ? "Konto erstellen" : "Link senden"}
@@ -278,12 +283,6 @@ const Auth = () => {
                     </svg>
                     Mit Google anmelden
                   </Button>
-
-                  <div className="flex items-center gap-3 my-1">
-                    <Separator className="flex-1" />
-                    <span className="text-xs text-muted-foreground">oder</span>
-                    <Separator className="flex-1" />
-                  </div>
 
                   <Button
                     type="button"

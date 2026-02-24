@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle } from "lucide-react";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -45,6 +45,10 @@ const CATEGORIES = [
 const ContactManagement = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+
+  // Document title
+  useEffect(() => { document.title = "Kontakte – ImmoControl"; }, []);
+
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("alle");
   const [open, setOpen] = useState(false);

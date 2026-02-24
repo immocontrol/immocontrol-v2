@@ -43,6 +43,9 @@ const Dashboard = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
 
+  // Document title
+  useEffect(() => { document.title = "Portfolio – ImmoControl"; }, []);
+
   const { data: allTenants = [] } = useQuery({
     queryKey: ["all_tenants_dashboard"],
     queryFn: async () => {

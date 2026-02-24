@@ -97,6 +97,9 @@ const Todos = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const quickInputRef = useRef<HTMLInputElement>(null);
 
+  // Document title
+  useEffect(() => { document.title = "Aufgaben – ImmoControl"; }, []);
+
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: queryKeys.todos.all(user?.id ?? ""),
     queryFn: async () => {
@@ -270,7 +273,7 @@ const Todos = () => {
 
   return (
     <div className="flex gap-6 min-h-[calc(100vh-8rem)]">
-      <aside className="w-56 shrink-0 space-y-1">
+      <aside className="hidden md:block w-56 shrink-0 space-y-1">
         <div className="mb-4">
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-primary" /> Aufgaben
@@ -327,9 +330,33 @@ const Todos = () => {
       </aside>
 
       <main className="flex-1 min-w-0 space-y-4">
+        {/* Mobile view tabs */}
+        <div className="flex md:hidden gap-1 bg-secondary/50 p-1 rounded-lg overflow-x-auto scrollbar-hide">
+          {([
+            { key: "inbox" as ViewType, label: "Eingang", count: inboxCount },
+            { key: "today" as ViewType, label: "Heute", count: todayCount },
+            { key: "upcoming" as ViewType, label: "Geplant", count: 0 },
+            { key: "completed" as ViewType, label: "Erledigt", count: completedTodos.length },
+          ]).map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              className={cn(
+                "flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap",
+                view === key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground"
+              )}
+            >
+              {label}
+              {count > 0 && <span className="text-[10px] bg-primary/10 text-primary px-1 rounded-full">{count}</span>}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold hidden md:block">
               {view === "inbox" ? "Eingang" : view === "today" ? "Heute" : view === "upcoming" ? "Geplant" : "Erledigt"}
             </h2>
             {overdueCount > 0 && view !== "completed" && (

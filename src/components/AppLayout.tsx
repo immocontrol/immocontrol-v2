@@ -156,6 +156,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* 1. Skip to content link for accessibility */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">
+        Zum Inhalt springen
+      </a>
       <ScrollProgress />
       <KeyboardShortcuts />
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -178,7 +182,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       <Link
                         to={item.path}
                         data-nav-link
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative ${
+                        aria-current={isActive ? "page" : undefined}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -221,7 +226,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </header>
 
-      <main className="flex-1 container py-6 pb-24 md:pb-6">
+      <main id="main-content" className="flex-1 container py-6 pb-24 md:pb-6">
         {children}
       </main>
 
@@ -247,6 +252,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 key={item.path}
                 to={item.path}
                 data-nav-link
+                aria-current={isActive ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors relative ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}

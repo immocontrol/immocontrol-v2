@@ -167,8 +167,17 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.from("properties").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: invalidate,
-    onError: () => toast.error("Fehler beim Löschen"),
+    onMutate: async (id: string) => {
+      await qc.cancelQueries({ queryKey: queryKeys.properties.all });
+      const previous = qc.getQueryData<Property[]>(queryKeys.properties.all);
+      qc.setQueryData<Property[]>(queryKeys.properties.all, (old) => old?.filter(p => p.id !== id) ?? []);
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
+      toast.error("Fehler beim Löschen");
+    },
+    onSettled: invalidate,
   });
 
   const addProperty = useCallback(async (property: Omit<Property, "id">) => {

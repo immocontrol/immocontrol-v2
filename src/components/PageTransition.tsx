@@ -40,9 +40,9 @@ const PageTransition = ({ children }: PageTransitionProps) => {
   }, [children, location.pathname]);
 
   const style: React.CSSProperties = phase === "exit"
-    ? { opacity: 0, transform: "translateX(-12px) scale(0.99)", transition: "opacity 120ms ease-out, transform 120ms ease-out" }
+    ? { opacity: 0, transform: "translateX(-12px) scale(0.99)", transition: "opacity 120ms ease-out, transform 120ms ease-out", willChange: "opacity, transform" }
     : phase === "enter"
-    ? { opacity: 1, transform: "translateX(0) scale(1)", transition: "opacity 200ms cubic-bezier(0.22,1,0.36,1), transform 200ms cubic-bezier(0.22,1,0.36,1)" }
+    ? { opacity: 1, transform: "translateX(0) scale(1)", transition: "opacity 200ms cubic-bezier(0.22,1,0.36,1), transform 200ms cubic-bezier(0.22,1,0.36,1)", willChange: "opacity, transform" }
     : { opacity: 1, transform: "none" };
 
   return (

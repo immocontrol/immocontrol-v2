@@ -137,11 +137,11 @@ const Onboarding = () => {
         </div>
 
         {/* Progress */}
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={totalSteps} aria-label={`Schritt ${step + 1} von ${totalSteps}`}>
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded-full transition-colors ${
+              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
                 i <= step ? "bg-primary" : "bg-secondary"
               }`}
             />

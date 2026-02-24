@@ -48,6 +48,9 @@ const loanTypeLabels: Record<string, string> = {
 
 const Loans = () => {
   const { user } = useAuth();
+
+  // Document title
+  useEffect(() => { document.title = "Darlehen – ImmoControl"; }, []);
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);

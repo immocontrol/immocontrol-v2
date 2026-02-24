@@ -49,9 +49,9 @@ const PropertyCard = memo(({
   return (
     <Link
       to={`/objekt/${id}`}
-      className="block gradient-card rounded-xl border border-border p-4 hover:border-primary/30 hover-lift group animate-fade-in transition-all duration-300"
+      className="block gradient-card rounded-xl border border-border p-4 hover:border-primary/30 hover-lift group animate-fade-in transition-all duration-300 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
       style={{ animationDelay: `${delay}ms` }}
-      aria-label={`${name} – ${loc}`}
+      aria-label={`${name} – ${loc} – Cashflow ${formatCurrency(monthlyCashflow)}/M`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
