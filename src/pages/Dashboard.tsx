@@ -17,6 +17,7 @@ import PropertyCard from "@/components/PropertyCard";
 import { lazy, Suspense } from "react";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
 import { FinanceExportDialog } from "@/components/FinanceExport";
+import { SelbstauskunftGenerator } from "@/components/SelbstauskunftGenerator";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -305,6 +306,7 @@ ${properties.map(p => `<tr>
             <Download className="h-3.5 w-3.5" />
             CSV
           </Button>
+          <SelbstauskunftGenerator />
           <FinanceExportDialog />
           <AddPropertyDialog />
         </div>

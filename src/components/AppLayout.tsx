@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback } from "react";
+import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { getProperty } = useProperties();
+  const desktopNavRef = useRef<HTMLElement>(null);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
+  const [dotStyle, setDotStyle] = useState<React.CSSProperties>({});
+  const [mobileDotStyle, setMobileDotStyle] = useState<React.CSSProperties>({});
 
   const handleLogout = async () => {
     await signOut();
@@ -47,7 +51,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     .toUpperCase()
     .slice(0, 2);
 
-  // Improvement 17: Breadcrumb for property detail
+  // Breadcrumb
   const propertyMatch = location.pathname.match(/^\/objekt\/(.+)$/);
   const propertyName = propertyMatch ? getProperty(propertyMatch[1])?.name : null;
 
@@ -74,7 +78,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return null;
   })();
 
-  // Improvement: Alt+number keyboard shortcuts for navigation
+  // Keyboard shortcuts
   const navigateTo = useCallback((path: string) => {
     navigate(path);
   }, [navigate]);
@@ -98,6 +102,58 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => window.removeEventListener("keydown", handler);
   }, [navigateTo]);
 
+  // Sliding indicator for desktop nav
+  const updateDotPosition = useCallback(() => {
+    if (!desktopNavRef.current) return;
+    const activeIdx = navItems.findIndex(item =>
+      item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
+    );
+    if (activeIdx === -1) { setDotStyle({ opacity: 0 }); return; }
+    const links = desktopNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
+    const activeLink = links[activeIdx];
+    if (!activeLink) return;
+    const navRect = desktopNavRef.current.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    setDotStyle({
+      left: linkRect.left - navRect.left + linkRect.width / 2 - 3,
+      opacity: 1,
+      transition: "left 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
+    });
+  }, [location.pathname]);
+
+  // Sliding indicator for mobile nav
+  const updateMobileDotPosition = useCallback(() => {
+    if (!mobileNavRef.current) return;
+    const activeIdx = navItems.findIndex(item =>
+      item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
+    );
+    if (activeIdx === -1) { setMobileDotStyle({ opacity: 0 }); return; }
+    const links = mobileNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
+    const activeLink = links[activeIdx];
+    if (!activeLink) return;
+    const navRect = mobileNavRef.current.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    setMobileDotStyle({
+      left: linkRect.left - navRect.left + linkRect.width / 2 - 2,
+      opacity: 1,
+      transition: "left 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
+    });
+  }, [location.pathname]);
+
+  useLayoutEffect(() => {
+    updateDotPosition();
+    updateMobileDotPosition();
+  }, [location.pathname, updateDotPosition, updateMobileDotPosition]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateDotPosition);
+    window.addEventListener("resize", updateMobileDotPosition);
+    return () => {
+      window.removeEventListener("resize", updateDotPosition);
+      window.removeEventListener("resize", updateMobileDotPosition);
+    };
+  }, [updateDotPosition, updateMobileDotPosition]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <ScrollProgress />
@@ -113,7 +169,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {breadcrumb}
           </div>
           <div className="flex items-center gap-1">
-            <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Hauptnavigation">
+            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-1 relative" role="navigation" aria-label="Hauptnavigation">
               {navItems.map((item) => {
                 const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
                 return (
@@ -121,6 +177,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     <TooltipTrigger asChild>
                       <Link
                         to={item.path}
+                        data-nav-link
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative ${
                           isActive
                             ? "bg-primary/10 text-primary"
@@ -129,9 +186,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       >
                         <item.icon className="h-4 w-4" />
                         {item.label}
-                        {isActive && (
-                          <span className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
-                        )}
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
@@ -140,6 +194,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   </Tooltip>
                 );
               })}
+              {/* Sliding dot indicator */}
+              <span
+                className="absolute -bottom-[9px] w-1.5 h-1.5 rounded-full bg-primary pointer-events-none"
+                style={dotStyle}
+              />
             </nav>
             <div className="flex items-center gap-1.5 ml-2">
               <NotificationBell />
@@ -178,27 +237,30 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <BackToTop />
       <GlobalQuickTodo />
 
-      {/* 4. Mobile nav with active label */}
+      {/* Mobile nav with sliding dot */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom" role="navigation" aria-label="Mobile Navigation">
-        <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative">
           {navItems.map((item) => {
             const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                data-nav-link
                 className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors relative ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}
-                {isActive && (
-                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
-                )}
               </Link>
             );
           })}
+          {/* Mobile sliding dot */}
+          <span
+            className="absolute -top-1 w-1 h-1 rounded-full bg-primary pointer-events-none"
+            style={mobileDotStyle}
+          />
         </div>
       </nav>
     </div>
