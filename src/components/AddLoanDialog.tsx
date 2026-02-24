@@ -1,0 +1,359 @@
+import { useState, useCallback, useEffect } from "react";
+import { Plus, ChevronRight, ChevronLeft, Landmark, Search, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/NumberInput";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useProperties } from "@/context/PropertyContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import { GERMAN_BANKS } from "@/data/germanBanks";
+
+const LOAN_TYPE_LABELS: Record<string, string> = {
+  annuity: "Annuitätendarlehen",
+  bullet: "Endfälliges Darlehen",
+  variable: "Variables Darlehen",
+  kfw: "KfW-Darlehen",
+};
+
+const STEP_LABELS = ["Objekt & Bank", "Konditionen", "Details"];
+
+const StepIndicator = ({ current, total }: { current: number; total: number }) => (
+  <div className="flex items-center justify-center gap-0 mb-6">
+    {Array.from({ length: total }, (_, i) => {
+      const isCompleted = i < current;
+      const isActive = i === current;
+      return (
+        <div key={i} className="flex items-center">
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
+            isCompleted && "bg-primary text-primary-foreground",
+            isActive && "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
+            !isCompleted && !isActive && "bg-muted text-muted-foreground"
+          )}>
+            {i + 1}
+          </div>
+          {i < total - 1 && (
+            <div className={cn("w-12 h-0.5 transition-all duration-300", i < current ? "bg-primary" : "bg-muted")} />
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
+interface AddLoanDialogProps {
+  onCreated?: () => void;
+}
+
+const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
+  const { user } = useAuth();
+  const { properties } = useProperties();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  const [form, setForm] = useState({
+    property_id: "", bank_name: "", loan_type: "annuity",
+    loan_amount: 0, remaining_balance: 0, interest_rate: 0,
+    repayment_rate: 0, monthly_payment: 0, tilgungsfreie_monate: 0,
+    fixed_interest_until: "", start_date: "", end_date: "", notes: "",
+  });
+
+  const [bankSearch, setBankSearch] = useState("");
+  const [bankPopoverOpen, setBankPopoverOpen] = useState(false);
+  const [addingNewBank, setAddingNewBank] = useState(false);
+  const [newBankName, setNewBankName] = useState("");
+
+  const { data: userBanks = [] } = useQuery({
+    queryKey: ["user_banks"],
+    queryFn: async () => {
+      const { data } = await supabase.from("user_banks").select("*").order("name");
+      return (data || []) as { id: string; name: string }[];
+    },
+    enabled: !!user,
+  });
+
+  const allBanks = [...new Set([...GERMAN_BANKS, ...userBanks.map(b => b.name)])].sort((a, b) => a.localeCompare(b, "de"));
+  const filteredBanks = bankSearch.trim() ? allBanks.filter(b => b.toLowerCase().includes(bankSearch.toLowerCase())) : allBanks;
+  const isCustomBank = (name: string) => userBanks.some(b => b.name === name);
+
+  useEffect(() => {
+    if (form.loan_amount > 0 && (form.interest_rate > 0 || form.repayment_rate > 0)) {
+      const monthly = (form.loan_amount * (form.interest_rate + form.repayment_rate)) / 100 / 12;
+      setForm(prev => ({ ...prev, monthly_payment: Math.round(monthly * 100) / 100 }));
+    }
+  }, [form.loan_amount, form.interest_rate, form.repayment_rate]);
+
+  useEffect(() => {
+    if (!form.start_date || form.loan_amount <= 0 || form.interest_rate <= 0 || form.repayment_rate <= 0) return;
+    const monthlyRate = form.interest_rate / 100 / 12;
+    const annuity = (form.loan_amount * (form.interest_rate + form.repayment_rate)) / 100 / 12;
+    const gracePeriod = form.tilgungsfreie_monate || 0;
+    let balance = form.loan_amount * Math.pow(1 + monthlyRate, gracePeriod);
+    let months = gracePeriod;
+    while (balance > 0 && months < 600) {
+      balance = balance + balance * monthlyRate - annuity;
+      months++;
+    }
+    if (months < 600) {
+      const startDate = new Date(form.start_date);
+      startDate.setMonth(startDate.getMonth() + months);
+      setForm(prev => ({
+        ...prev,
+        end_date: prev.end_date || startDate.toISOString().split("T")[0],
+        remaining_balance: prev.remaining_balance === 0 ? Math.max(0, Math.round(balance * 100) / 100) : prev.remaining_balance,
+      }));
+    }
+  }, [form.start_date, form.loan_amount, form.interest_rate, form.repayment_rate, form.tilgungsfreie_monate]);
+
+  const resetForm = useCallback(() => {
+    setForm({ property_id: "", bank_name: "", loan_type: "annuity", loan_amount: 0, remaining_balance: 0, interest_rate: 0, repayment_rate: 0, monthly_payment: 0, tilgungsfreie_monate: 0, fixed_interest_until: "", start_date: "", end_date: "", notes: "" });
+    setBankSearch("");
+    setAddingNewBank(false);
+    setNewBankName("");
+    setStep(0);
+  }, []);
+
+  const handleOpenChange = useCallback((v: boolean) => {
+    setOpen(v);
+    if (!v) resetForm();
+  }, [resetForm]);
+
+  const canGoNext = step === 0
+    ? !!form.property_id && !!form.bank_name
+    : step === 1
+    ? form.loan_amount > 0 && form.interest_rate > 0
+    : true;
+
+  const addCustomBank = async () => {
+    if (!user || !newBankName.trim()) return;
+    const { error } = await supabase.from("user_banks").insert({ user_id: user.id, name: newBankName.trim() });
+    if (error && error.code !== "23505") { toast.error("Fehler beim Hinzufügen"); return; }
+    const name = newBankName.trim();
+    setForm(f => ({ ...f, bank_name: name }));
+    setBankSearch(name);
+    setNewBankName("");
+    setAddingNewBank(false);
+    setBankPopoverOpen(false);
+    await qc.invalidateQueries({ queryKey: ["user_banks"] });
+    toast.success(`"${name}" hinzugefügt`);
+  };
+
+  const deleteCustomBank = async (bankName: string) => {
+    const bank = userBanks.find(b => b.name === bankName);
+    if (!bank) return;
+    await supabase.from("user_banks").delete().eq("id", bank.id);
+    if (form.bank_name === bankName) { setForm(f => ({ ...f, bank_name: "" })); setBankSearch(""); }
+    qc.invalidateQueries({ queryKey: ["user_banks"] });
+    toast.success(`"${bankName}" gelöscht`);
+  };
+
+  const handleSave = async () => {
+    if (!user || !form.property_id || !form.bank_name) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("loans").insert({
+        user_id: user.id,
+        property_id: form.property_id,
+        bank_name: form.bank_name,
+        loan_type: form.loan_type,
+        loan_amount: form.loan_amount,
+        remaining_balance: form.remaining_balance,
+        interest_rate: form.interest_rate,
+        repayment_rate: form.repayment_rate,
+        monthly_payment: form.monthly_payment,
+        tilgungsfreie_monate: form.tilgungsfreie_monate,
+        fixed_interest_until: form.fixed_interest_until || null,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
+        notes: form.notes || null,
+      });
+      if (error) throw error;
+      toast.success("Darlehen angelegt");
+      handleOpenChange(false);
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+      onCreated?.();
+    } catch {
+      toast.error("Fehler beim Anlegen");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> Darlehen
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Landmark className="h-5 w-5 text-primary" /> Neues Darlehen anlegen
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground">Schritt {step + 1} von 3 — {STEP_LABELS[step]}</p>
+        </DialogHeader>
+
+        <StepIndicator current={step} total={3} />
+
+        <div className="space-y-4 min-h-[260px]">
+          {step === 0 && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Objekt *</Label>
+                <Select value={form.property_id} onValueChange={v => setForm(f => ({ ...f, property_id: v }))}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Bank *</Label>
+                <Popover open={bankPopoverOpen} onOpenChange={setBankPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-9 w-full justify-between text-sm font-normal">
+                      {form.bank_name || "Bank wählen…"}
+                      <Search className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0" align="start">
+                    <div className="p-2 border-b">
+                      <Input placeholder="Bank suchen…" value={bankSearch} onChange={e => setBankSearch(e.target.value)} className="h-8 text-sm" autoFocus />
+                    </div>
+                    <ScrollArea className="max-h-[200px]">
+                      <div className="p-1">
+                        {filteredBanks.map(bank => (
+                          <div key={bank} className="flex items-center group/bank">
+                            <button
+                              className={cn("flex-1 text-left px-3 py-1.5 text-sm rounded hover:bg-secondary transition-colors", form.bank_name === bank && "bg-primary/10 text-primary font-medium")}
+                              onClick={() => { setForm(f => ({ ...f, bank_name: bank })); setBankSearch(bank); setBankPopoverOpen(false); }}
+                            >
+                              {bank}
+                            </button>
+                            {isCustomBank(bank) && (
+                              <button className="opacity-0 group-hover/bank:opacity-100 p-1 mr-1 text-muted-foreground hover:text-destructive transition-all" onClick={e => { e.stopPropagation(); deleteCustomBank(bank); }}>
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {filteredBanks.length === 0 && <p className="text-xs text-muted-foreground px-3 py-2">Nicht gefunden</p>}
+                      </div>
+                    </ScrollArea>
+                    <div className="border-t p-2">
+                      {!addingNewBank ? (
+                        <button className="w-full text-left px-3 py-1.5 text-sm text-primary hover:bg-primary/5 rounded flex items-center gap-1.5" onClick={() => { setAddingNewBank(true); setNewBankName(bankSearch); }}>
+                          <Plus className="h-3 w-3" /> Neue Bank hinzufügen
+                        </button>
+                      ) : (
+                        <div className="flex gap-1.5">
+                          <Input placeholder="Bankname" value={newBankName} onChange={e => setNewBankName(e.target.value)} className="h-8 text-sm flex-1" autoFocus onKeyDown={e => e.key === "Enter" && addCustomBank()} />
+                          <Button size="sm" className="h-8" onClick={addCustomBank} disabled={!newBankName.trim()}>OK</Button>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Darlehensart</Label>
+                <Select value={form.loan_type} onValueChange={v => setForm(f => ({ ...f, loan_type: v }))}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(LOAN_TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Darlehensbetrag *</Label>
+                <NumberInput value={form.loan_amount} onChange={v => setForm(f => ({ ...f, loan_amount: v }))} className="h-9 text-sm" placeholder="0" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Restschuld</Label>
+                <NumberInput value={form.remaining_balance} onChange={v => setForm(f => ({ ...f, remaining_balance: v }))} className="h-9 text-sm" placeholder="0" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Zinssatz % *</Label>
+                <NumberInput value={form.interest_rate} onChange={v => setForm(f => ({ ...f, interest_rate: v }))} decimals className="h-9 text-sm" placeholder="0,00" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Tilgung %</Label>
+                <NumberInput value={form.repayment_rate} onChange={v => setForm(f => ({ ...f, repayment_rate: v }))} decimals className="h-9 text-sm" placeholder="0,00" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Rate/Monat (berechnet)</Label>
+                <NumberInput value={form.monthly_payment} onChange={v => setForm(f => ({ ...f, monthly_payment: v }))} decimals className="h-9 text-sm bg-secondary/50" placeholder="0,00" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Tilgungsfreie Monate</Label>
+                <NumberInput value={form.tilgungsfreie_monate} onChange={v => setForm(f => ({ ...f, tilgungsfreie_monate: v }))} className="h-9 text-sm" placeholder="0" />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Zinsbindung bis</Label>
+                <Input type="date" value={form.fixed_interest_until} onChange={e => setForm(f => ({ ...f, fixed_interest_until: e.target.value }))} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Startdatum</Label>
+                <Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value, end_date: "", remaining_balance: 0 }))} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <Label className="text-xs flex items-center gap-1">
+                  Enddatum
+                  {form.start_date && form.loan_amount > 0 && form.repayment_rate > 0 && (
+                    <span className="text-[10px] text-primary font-normal">(auto-berechnet)</span>
+                  )}
+                </Label>
+                <Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} className="h-9 text-sm" />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">Notizen</Label>
+                <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          {step > 0 && (
+            <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} className="gap-1.5">
+              <ChevronLeft className="h-4 w-4" /> Zurück
+            </Button>
+          )}
+          {step < 2 ? (
+            <Button type="button" onClick={() => setStep(s => s + 1)} className="flex-1 gap-1.5" disabled={!canGoNext}>
+              Weiter <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button onClick={handleSave} className="flex-1" disabled={saving || !form.property_id || !form.bank_name}>
+              {saving ? "Anlegen…" : "Darlehen anlegen"}
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default AddLoanDialog;
