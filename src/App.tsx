@@ -2,26 +2,183 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/hooks/useTheme";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { PropertyProvider } from "@/context/PropertyContext";
+import AppLayout from "@/components/AppLayout";
+import ScrollToTop from "@/components/ScrollToTop";
+import PageTransition from "@/components/PageTransition";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const queryClient = new QueryClient();
+// Lazy imports with preloading
+const dashboardImport = () => import("@/pages/Dashboard");
+const propertyDetailImport = () => import("@/pages/PropertyDetail");
+const analysisImport = () => import("@/pages/AnalysisCalculator");
+const authImport = () => import("@/pages/Auth");
+const settingsImport = () => import("@/pages/Settings");
+const contactsImport = () => import("@/pages/Contacts");
+const tenantPortalImport = () => import("@/pages/TenantPortal");
+const handworkerPortalImport = () => import("@/pages/HandworkerPortal");
+const einladungImport = () => import("@/pages/Einladung");
+const notFoundImport = () => import("@/pages/NotFound");
+const loansImport = () => import("@/pages/Loans");
+const cashForecastImport = () => import("@/pages/CashForecast");
+const todosImport = () => import("@/pages/Todos");
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+const Dashboard = lazy(dashboardImport);
+const PropertyDetail = lazy(propertyDetailImport);
+const AnalysisCalculator = lazy(analysisImport);
+const Auth = lazy(authImport);
+const Settings = lazy(settingsImport);
+const Contacts = lazy(contactsImport);
+const TenantPortal = lazy(tenantPortalImport);
+const HandworkerPortal = lazy(handworkerPortalImport);
+const Einladung = lazy(einladungImport);
+const NotFound = lazy(notFoundImport);
+const Loans = lazy(loansImport);
+const CashForecast = lazy(cashForecastImport);
+const Todos = lazy(todosImport);
+
+// Preload all routes after initial render to eliminate loading on tab switch
+const preloadRoutes = () => {
+  dashboardImport();
+  propertyDetailImport();
+  analysisImport();
+  settingsImport();
+  contactsImport();
+  loansImport();
+  cashForecastImport();
+  todosImport();
+  notFoundImport();
+};
+
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="animate-pulse text-muted-foreground">Laden...</div>
+  </div>
+);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      retry: 1,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Laden...</div>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+};
+
+const RoleRouter = () => {
+  const { user, loading } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user) { setRoleLoading(false); return; }
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        setRole(data?.role || "landlord");
+      } catch {
+        setRole("landlord");
+      } finally {
+        setRoleLoading(false);
+      }
+    };
+    fetchRole();
+  }, [user]);
+
+  // Preload all routes eagerly
+  useEffect(() => {
+    preloadRoutes();
+  }, []);
+
+  if (loading || roleLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Laden...</div>
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" replace />;
+
+  // Tenant portal
+  if (role === "tenant") {
+    return <TenantPortal />;
+  }
+
+  // Handworker portal
+  if (role === "handworker") {
+    return <HandworkerPortal />;
+  }
+
+  return (
+    <AppLayout>
+      <PageTransition>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/objekt/:id" element={<PropertyDetail />} />
+          <Route path="/darlehen" element={<Loans />} />
+          <Route path="/forecast" element={<CashForecast />} />
+          <Route path="/analyse" element={<AnalysisCalculator />} />
+          <Route path="/kontakte" element={<Contacts />} />
+          <Route path="/aufgaben" element={<Todos />} />
+          <Route path="/einstellungen" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </PageTransition>
+    </AppLayout>
+  );
+};
+
+const App = () => (
+  <ThemeProvider defaultTheme="dark">
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <PropertyProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/einladung" element={<Einladung />} />
+                  <Route path="/*" element={<RoleRouter />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </PropertyProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
