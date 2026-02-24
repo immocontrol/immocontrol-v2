@@ -8,7 +8,7 @@ interface PageTransitionProps {
 const PageTransition = ({ children }: PageTransitionProps) => {
   const location = useLocation();
   const [displayChildren, setDisplayChildren] = useState(children);
-  const [visible, setVisible] = useState(true);
+  const [phase, setPhase] = useState<"visible" | "exit" | "enter">("visible");
   const prevPathRef = useRef(location.pathname);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -18,12 +18,15 @@ const PageTransition = ({ children }: PageTransitionProps) => {
 
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    setVisible(false);
+    setPhase("exit");
     timerRef.current = setTimeout(() => {
       setDisplayChildren(children);
-      setVisible(true);
-      timerRef.current = null;
-    }, 100);
+      setPhase("enter");
+      timerRef.current = setTimeout(() => {
+        setPhase("visible");
+        timerRef.current = null;
+      }, 200);
+    }, 120);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -36,14 +39,14 @@ const PageTransition = ({ children }: PageTransitionProps) => {
     }
   }, [children, location.pathname]);
 
+  const style: React.CSSProperties = phase === "exit"
+    ? { opacity: 0, transform: "translateX(-12px) scale(0.99)", transition: "opacity 120ms ease-out, transform 120ms ease-out" }
+    : phase === "enter"
+    ? { opacity: 1, transform: "translateX(0) scale(1)", transition: "opacity 200ms cubic-bezier(0.22,1,0.36,1), transform 200ms cubic-bezier(0.22,1,0.36,1)" }
+    : { opacity: 1, transform: "none" };
+
   return (
-    <div
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(4px)",
-        transition: "opacity 150ms ease-in-out, transform 150ms ease-in-out",
-      }}
-    >
+    <div style={style}>
       {displayChildren}
     </div>
   );
