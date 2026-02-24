@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
 import { Building2, User, Briefcase, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,13 +26,27 @@ const Onboarding = () => {
   const [investorType, setInvestorType] = useState("");
   const [strategy, setStrategy] = useState("");
   const [saving, setSaving] = useState(false);
-  const navigate = useNavigate();
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const { user } = useAuth();
 
   const totalSteps = 3;
 
-  const handleComplete = async () => {
-    if (!user) return;
+  const nextStep = useCallback(() => {
+    if (step < totalSteps - 1) {
+      setStep(step + 1);
+      setFocusedIndex(-1);
+    }
+  }, [step]);
+
+  const prevStep = useCallback(() => {
+    if (step > 0) {
+      setStep(step - 1);
+      setFocusedIndex(-1);
+    }
+  }, [step]);
+
+  const handleComplete = useCallback(async () => {
+    if (!user || saving) return;
     setSaving(true);
     try {
       const { error } = await supabase
@@ -48,15 +61,15 @@ const Onboarding = () => {
 
       if (error) throw error;
       toast.success("Willkommen bei ImmoControl! 🏠");
-      navigate("/", { replace: true });
+      // Full reload to reset RoleRouter state
+      window.location.href = "/";
     } catch (error: any) {
       toast.error("Fehler beim Speichern: " + error.message);
-    } finally {
       setSaving(false);
     }
-  };
+  }, [user, saving, displayName, investorType, strategy]);
 
-  const handleSkip = async () => {
+  const handleSkip = useCallback(async () => {
     if (!user) return;
     setSaving(true);
     try {
@@ -64,11 +77,48 @@ const Onboarding = () => {
         .from("profiles")
         .update({ onboarding_completed: true } as any)
         .eq("user_id", user.id);
-      navigate("/", { replace: true });
     } catch {
-      navigate("/", { replace: true });
+      // ignore
     }
-  };
+    window.location.href = "/";
+  }, [user]);
+
+  // Current options list for keyboard nav
+  const currentOptions = step === 1 ? INVESTOR_TYPES : step === 2 ? STRATEGIES : [];
+  const currentValue = step === 1 ? investorType : strategy;
+  const setCurrentValue = step === 1 ? setInvestorType : setStrategy;
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (step < totalSteps - 1) {
+          nextStep();
+        } else {
+          handleComplete();
+        }
+        return;
+      }
+
+      if (currentOptions.length === 0) return;
+
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        const next = focusedIndex < currentOptions.length - 1 ? focusedIndex + 1 : 0;
+        setFocusedIndex(next);
+        setCurrentValue(currentOptions[next].value);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        const prev = focusedIndex > 0 ? focusedIndex - 1 : currentOptions.length - 1;
+        setFocusedIndex(prev);
+        setCurrentValue(currentOptions[prev].value);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [step, focusedIndex, currentOptions, setCurrentValue, nextStep, handleComplete]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -115,6 +165,12 @@ const Onboarding = () => {
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="h-10"
                   autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      nextStep();
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -126,16 +182,16 @@ const Onboarding = () => {
                 <Briefcase className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">Dein Investoren-Typ</h2>
               </div>
-              <div className="space-y-2">
-                {INVESTOR_TYPES.map((type) => (
+              <div className="space-y-2" role="listbox">
+                {INVESTOR_TYPES.map((type, i) => (
                   <button
                     key={type.value}
-                    onClick={() => setInvestorType(type.value)}
+                    onClick={(e) => { e.stopPropagation(); setInvestorType(type.value); setFocusedIndex(i); }}
                     className={`w-full text-left p-3 rounded-lg border transition-colors ${
                       investorType === type.value
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/40"
-                    }`}
+                    } ${focusedIndex === i ? "ring-2 ring-primary/50" : ""}`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{type.icon}</span>
@@ -156,16 +212,16 @@ const Onboarding = () => {
                 <Sparkles className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">Deine Strategie</h2>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {STRATEGIES.map((s) => (
+              <div className="grid grid-cols-2 gap-2" role="listbox">
+                {STRATEGIES.map((s, i) => (
                   <button
                     key={s.value}
-                    onClick={() => setStrategy(s.value)}
+                    onClick={(e) => { e.stopPropagation(); setStrategy(s.value); setFocusedIndex(i); }}
                     className={`text-left p-3 rounded-lg border transition-colors ${
                       strategy === s.value
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/40"
-                    }`}
+                    } ${focusedIndex === i ? "ring-2 ring-primary/50" : ""}`}
                   >
                     <p className="text-sm font-medium">{s.label}</p>
                     <p className="text-[10px] text-muted-foreground">{s.description}</p>
@@ -178,25 +234,33 @@ const Onboarding = () => {
           {/* Navigation */}
           <div className="flex items-center justify-between pt-2">
             {step > 0 ? (
-              <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)}>
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); prevStep(); }}>
                 <ChevronLeft className="h-4 w-4 mr-1" /> Zurück
               </Button>
             ) : (
-              <Button variant="ghost" size="sm" onClick={handleSkip} className="text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSkip(); }} className="text-muted-foreground">
                 Überspringen
               </Button>
             )}
 
             {step < totalSteps - 1 ? (
-              <Button size="sm" onClick={() => setStep(step + 1)}>
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); nextStep(); }}>
                 Weiter <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button size="sm" onClick={handleComplete} disabled={saving}>
+              <Button
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleComplete(); }}
+                disabled={saving}
+              >
                 {saving ? "Speichern..." : "Loslegen 🚀"}
               </Button>
             )}
           </div>
+
+          <p className="text-center text-[10px] text-muted-foreground">
+            Enter ↵ zum Weiter · Pfeiltasten ↑↓ zum Auswählen
+          </p>
         </div>
 
         <p className="text-center text-[10px] text-muted-foreground">
