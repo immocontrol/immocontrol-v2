@@ -23,10 +23,14 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip }: S
 
   return (
     <div
-      className="gradient-card rounded-xl border border-border p-4 animate-fade-in hover-lift group relative overflow-hidden cursor-pointer select-none"
+      role="button"
+      tabIndex={0}
+      className="gradient-card rounded-xl border border-border p-4 animate-fade-in hover-lift group relative overflow-hidden cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
       style={{ animationDelay: `${delay}ms` }}
       title={tooltip || `${label}: ${value} – Klicken zum Kopieren`}
       onClick={copyValue}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copyValue(); } }}
+      aria-label={`${label}: ${value}. Klicken zum Kopieren`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/[0.03] group-hover:to-transparent transition-all duration-500" />
       {trend && (

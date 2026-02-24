@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import ExposeHistory from "@/components/analysis/ExposeHistory";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
 
 const AnalysisCalculator = () => {
+  useEffect(() => { document.title = "Objektanalyse – ImmoControl"; }, []);
   const [inputs, setInputs] = useState<AnalysisInputState>(DEFAULT_INPUTS);
   const [savedScenarios, setSavedScenarios] = useState<{ name: string; inputs: AnalysisInputState }[]>(() => {
     try {

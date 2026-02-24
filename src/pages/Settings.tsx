@@ -20,19 +20,27 @@ const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
+  // Document title
+  useEffect(() => { document.title = "Einstellungen – ImmoControl"; }, []);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (data?.display_name) setDisplayName(data.display_name);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data?.display_name) setDisplayName(data.display_name);
+      } finally {
+        setProfileLoading(false);
+      }
     };
     fetchProfile();
   }, [user]);
