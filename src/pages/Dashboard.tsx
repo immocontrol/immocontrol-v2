@@ -28,6 +28,14 @@ import TenantLeaseAlerts from "@/components/TenantLeaseAlerts";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
 import NetWorthTracker from "@/components/NetWorthTracker";
 import CashflowPerSqmWidget from "@/components/CashflowPerSqmWidget";
+import RentCollectionChart from "@/components/RentCollectionChart";
+import ExpenseCategoryBreakdown from "@/components/ExpenseCategoryBreakdown";
+import YearOverYear from "@/components/YearOverYear";
+import ContractExpiryCountdown from "@/components/ContractExpiryCountdown";
+import MaintenanceCostTrend from "@/components/MaintenanceCostTrend";
+import PortfolioAllocationWidget from "@/components/PortfolioAllocationWidget";
+import BudgetVsActual from "@/components/BudgetVsActual";
+import LoanAmortizationMini from "@/components/LoanAmortizationMini";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import StatCard from "@/components/StatCard";
@@ -621,6 +629,30 @@ ${properties.map(p => `<tr>
       <div className="grid md:grid-cols-2 gap-3">
         <VacancyCostCalc />
         <RenovationROICalc />
+      </div>
+
+      {/* Budget vs Actual + Rent Collection */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <BudgetVsActual />
+        <RentCollectionChart />
+      </div>
+
+      {/* Year over Year + Contract Expiry */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <YearOverYear />
+        <ContractExpiryCountdown />
+      </div>
+
+      {/* Expense Breakdown + Maintenance Trend */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <ExpenseCategoryBreakdown />
+        <MaintenanceCostTrend />
+      </div>
+
+      {/* Portfolio Allocation + Loan Amortization */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <PortfolioAllocationWidget />
+        <LoanAmortizationMini />
       </div>
 
       {/* Debt/Equity + Net Worth */}
