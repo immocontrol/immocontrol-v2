@@ -206,6 +206,90 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          base_rent: number
+          cold_rent: number
+          contract_type: string
+          created_at: string
+          deposit_amount: number
+          end_date: string | null
+          id: string
+          is_indefinite: boolean
+          last_rent_increase: string | null
+          next_rent_increase: string | null
+          notes: string | null
+          notice_period_months: number
+          property_id: string
+          rent_increase_index: string | null
+          start_date: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+          warm_rent: number
+        }
+        Insert: {
+          base_rent?: number
+          cold_rent?: number
+          contract_type?: string
+          created_at?: string
+          deposit_amount?: number
+          end_date?: string | null
+          id?: string
+          is_indefinite?: boolean
+          last_rent_increase?: string | null
+          next_rent_increase?: string | null
+          notes?: string | null
+          notice_period_months?: number
+          property_id: string
+          rent_increase_index?: string | null
+          start_date: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+          warm_rent?: number
+        }
+        Update: {
+          base_rent?: number
+          cold_rent?: number
+          contract_type?: string
+          created_at?: string
+          deposit_amount?: number
+          end_date?: string | null
+          id?: string
+          is_indefinite?: boolean
+          last_rent_increase?: string | null
+          next_rent_increase?: string | null
+          notes?: string | null
+          notice_period_months?: number
+          property_id?: string
+          rent_increase_index?: string | null
+          start_date?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+          warm_rent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_expiries: {
         Row: {
           created_at: string | null
@@ -237,6 +321,124 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "document_expiries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_certificates: {
+        Row: {
+          certificate_type: string
+          created_at: string
+          energy_class: string | null
+          energy_value: number | null
+          expiry_date: string
+          id: string
+          issue_date: string
+          issuer: string | null
+          notes: string | null
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          certificate_type?: string
+          created_at?: string
+          energy_class?: string | null
+          energy_value?: number | null
+          expiry_date: string
+          id?: string
+          issue_date: string
+          issuer?: string | null
+          notes?: string | null
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          certificate_type?: string
+          created_at?: string
+          energy_class?: string | null
+          energy_value?: number | null
+          expiry_date?: string
+          id?: string
+          issue_date?: string
+          issuer?: string | null
+          notes?: string | null
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_certificates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string | null
+          is_recurring: boolean
+          notes: string | null
+          payment_date: string | null
+          property_id: string | null
+          recurrence_interval: string | null
+          status: string
+          tax_amount: number
+          updated_at: string
+          user_id: string
+          vendor_name: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          is_recurring?: boolean
+          notes?: string | null
+          payment_date?: string | null
+          property_id?: string | null
+          recurrence_interval?: string | null
+          status?: string
+          tax_amount?: number
+          updated_at?: string
+          user_id: string
+          vendor_name: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          is_recurring?: boolean
+          notes?: string | null
+          payment_date?: string | null
+          property_id?: string | null
+          recurrence_interval?: string | null
+          status?: string
+          tax_amount?: number
+          updated_at?: string
+          user_id?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -355,6 +557,56 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_resolutions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          meeting_id: string
+          resolution_number: number
+          result: string
+          title: string
+          user_id: string
+          votes_abstain: number
+          votes_against: number
+          votes_for: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          meeting_id: string
+          resolution_number?: number
+          result?: string
+          title: string
+          user_id: string
+          votes_abstain?: number
+          votes_against?: number
+          votes_for?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          meeting_id?: string
+          resolution_number?: number
+          result?: string
+          title?: string
+          user_id?: string
+          votes_abstain?: number
+          votes_against?: number
+          votes_for?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_resolutions_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "owner_meetings"
             referencedColumns: ["id"]
           },
         ]
@@ -479,6 +731,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "meters_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owner_meetings: {
+        Row: {
+          attendee_count: number | null
+          created_at: string
+          id: string
+          is_virtual: boolean
+          location: string | null
+          meeting_date: string
+          meeting_link: string | null
+          minutes: string | null
+          property_id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attendee_count?: number | null
+          created_at?: string
+          id?: string
+          is_virtual?: boolean
+          location?: string | null
+          meeting_date: string
+          meeting_link?: string | null
+          minutes?: string | null
+          property_id: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attendee_count?: number | null
+          created_at?: string
+          id?: string
+          is_virtual?: boolean
+          location?: string | null
+          meeting_date?: string
+          meeting_link?: string | null
+          minutes?: string | null
+          property_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_meetings_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -844,6 +1152,81 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_contracts: {
+        Row: {
+          annual_cost: number
+          contact_id: string | null
+          contract_number: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          is_auto_renew: boolean
+          notes: string | null
+          notice_period_months: number
+          payment_interval: string
+          property_id: string
+          provider_name: string
+          service_type: string
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annual_cost?: number
+          contact_id?: string | null
+          contract_number?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_auto_renew?: boolean
+          notes?: string | null
+          notice_period_months?: number
+          payment_interval?: string
+          property_id: string
+          provider_name: string
+          service_type?: string
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annual_cost?: number
+          contact_id?: string | null
+          contract_number?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_auto_renew?: boolean
+          notes?: string | null
+          notice_period_months?: number
+          payment_interval?: string
+          property_id?: string
+          provider_name?: string
+          service_type?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_contracts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_contracts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
