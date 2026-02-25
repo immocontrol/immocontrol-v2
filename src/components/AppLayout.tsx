@@ -20,9 +20,10 @@ const navItems = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
   { path: "/darlehen", label: "Finanzen", icon: Landmark, shortcut: "2" },
   { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
-  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "4" },
-  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "5" },
-  { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "6" },
+  { path: "/vertraege", label: "Verträge", icon: FileText, shortcut: "4" },
+  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
+  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
+  { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
   { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
 

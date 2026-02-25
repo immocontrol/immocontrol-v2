@@ -23,6 +23,10 @@ import MeterManagement from "@/components/MeterManagement";
 import AfACalculator from "@/components/AfACalculator";
 import KautionsOverview from "@/components/KautionsOverview";
 import { HandoverProtocol } from "@/components/HandoverProtocol";
+import ContractManagement from "@/components/ContractManagement";
+import EnergyCertificateTracker from "@/components/EnergyCertificateTracker";
+import ServiceContracts from "@/components/ServiceContracts";
+import OwnerMeetings from "@/components/OwnerMeetings";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -389,6 +393,18 @@ const PropertyDetail = () => {
 
       {/* Insurance Tracker */}
       <InsuranceTracker propertyId={property.id} />
+
+      {/* Energy Certificate */}
+      <EnergyCertificateTracker propertyId={property.id} />
+
+      {/* Contracts */}
+      <ContractManagement propertyId={property.id} />
+
+      {/* Service Contracts */}
+      <ServiceContracts propertyId={property.id} />
+
+      {/* Owner Meetings */}
+      <OwnerMeetings propertyId={property.id} />
 
       {/* Meter Management */}
       <MeterManagement propertyId={property.id} />

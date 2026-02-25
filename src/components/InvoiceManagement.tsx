@@ -1,0 +1,248 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
+import { toast } from "sonner";
+import { useProperties } from "@/context/PropertyContext";
+
+const CATEGORIES = [
+  { value: "wartung", label: "Wartung & Reparatur" },
+  { value: "versicherung", label: "Versicherung" },
+  { value: "steuer", label: "Steuern & Abgaben" },
+  { value: "verwaltung", label: "Verwaltung" },
+  { value: "energie", label: "Energie & Versorger" },
+  { value: "handwerker", label: "Handwerker" },
+  { value: "sonstiges", label: "Sonstiges" },
+];
+
+const InvoiceManagement = () => {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const { properties } = useProperties();
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState("alle");
+  const [form, setForm] = useState({
+    property_id: "",
+    vendor_name: "",
+    invoice_number: "",
+    invoice_date: new Date().toISOString().split("T")[0],
+    due_date: "",
+    amount: 0,
+    tax_amount: 0,
+    category: "sonstiges",
+    notes: "",
+  });
+
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ["invoices", filter],
+    queryFn: async () => {
+      let q = supabase.from("invoices").select("*").order("invoice_date", { ascending: false });
+      if (filter !== "alle") q = q.eq("status", filter);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("invoices").insert({
+        user_id: user!.id,
+        property_id: form.property_id || null,
+        vendor_name: form.vendor_name,
+        invoice_number: form.invoice_number || null,
+        invoice_date: form.invoice_date,
+        due_date: form.due_date || null,
+        amount: form.amount,
+        tax_amount: form.tax_amount,
+        category: form.category,
+        notes: form.notes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      setOpen(false);
+      toast.success("Rechnung erfasst");
+    },
+    onError: () => toast.error("Fehler"),
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const updates: any = { status };
+      if (status === "bezahlt") updates.payment_date = new Date().toISOString().split("T")[0];
+      const { error } = await supabase.from("invoices").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success("Status aktualisiert");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("invoices").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      toast.success("Gelöscht");
+    },
+  });
+
+  const getStatusBadge = (status: string, dueDate: string | null) => {
+    if (status === "bezahlt") return <Badge className="bg-profit/15 text-profit border-profit/30"><Check className="h-3 w-3 mr-1" />Bezahlt</Badge>;
+    if (status === "storniert") return <Badge variant="secondary">Storniert</Badge>;
+    if (dueDate && new Date(dueDate) < new Date()) return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Überfällig</Badge>;
+    return <Badge className="bg-gold/15 text-gold border-gold/30"><Clock className="h-3 w-3 mr-1" />Offen</Badge>;
+  };
+
+  const totals = invoices.reduce((acc: any, inv: any) => {
+    acc.total += Number(inv.amount);
+    if (inv.status === "offen") acc.open += Number(inv.amount);
+    if (inv.status === "bezahlt") acc.paid += Number(inv.amount);
+    return acc;
+  }, { total: 0, open: 0, paid: 0 });
+
+  const getPropertyName = (pid: string | null) => pid ? properties.find(p => p.id === pid)?.name || "–" : "Allgemein";
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Receipt className="h-4 w-4 text-muted-foreground" /> Rechnungseingang
+        </h2>
+        <div className="flex items-center gap-2">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alle">Alle</SelectItem>
+              <SelectItem value="offen">Offen</SelectItem>
+              <SelectItem value="bezahlt">Bezahlt</SelectItem>
+              <SelectItem value="storniert">Storniert</SelectItem>
+            </SelectContent>
+          </Select>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline"><Plus className="h-3.5 w-3.5 mr-1" /> Rechnung</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Rechnung erfassen</DialogTitle></DialogHeader>
+              <div className="grid gap-3 mt-2">
+                <div><Label>Lieferant / Dienstleister</Label><Input value={form.vendor_name} onChange={e => setForm(f => ({ ...f, vendor_name: e.target.value }))} placeholder="z.B. Stadtwerke" /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Rechnungsnummer</Label><Input value={form.invoice_number} onChange={e => setForm(f => ({ ...f, invoice_number: e.target.value }))} /></div>
+                  <div>
+                    <Label>Kategorie</Label>
+                    <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Rechnungsdatum</Label><Input type="date" value={form.invoice_date} onChange={e => setForm(f => ({ ...f, invoice_date: e.target.value }))} /></div>
+                  <div><Label>Fällig am</Label><Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Betrag netto (€)</Label><Input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: +e.target.value }))} /></div>
+                  <div><Label>MwSt. (€)</Label><Input type="number" value={form.tax_amount} onChange={e => setForm(f => ({ ...f, tax_amount: +e.target.value }))} /></div>
+                </div>
+                <div>
+                  <Label>Objekt (optional)</Label>
+                  <Select value={form.property_id} onValueChange={v => setForm(f => ({ ...f, property_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Kein Objekt" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Allgemein</SelectItem>
+                      {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={() => addMutation.mutate()} disabled={!form.vendor_name || addMutation.isPending}>Erfassen</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="rounded-lg bg-secondary/50 p-3 text-center">
+          <div className="text-xs text-muted-foreground">Gesamt</div>
+          <div className="text-sm font-bold">{formatCurrency(totals.total)}</div>
+        </div>
+        <div className="rounded-lg bg-gold/10 p-3 text-center">
+          <div className="text-xs text-muted-foreground">Offen</div>
+          <div className="text-sm font-bold text-gold">{formatCurrency(totals.open)}</div>
+        </div>
+        <div className="rounded-lg bg-profit/10 p-3 text-center">
+          <div className="text-xs text-muted-foreground">Bezahlt</div>
+          <div className="text-sm font-bold text-profit">{formatCurrency(totals.paid)}</div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground animate-pulse">Laden...</div>
+      ) : invoices.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Keine Rechnungen vorhanden.</p>
+      ) : (
+        <div className="overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Datum</TableHead>
+                <TableHead>Lieferant</TableHead>
+                <TableHead>Objekt</TableHead>
+                <TableHead>Kategorie</TableHead>
+                <TableHead>Betrag</TableHead>
+                <TableHead>Fällig</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((inv: any) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="text-xs">{new Date(inv.invoice_date).toLocaleDateString("de-DE")}</TableCell>
+                  <TableCell className="text-xs font-medium">{inv.vendor_name}</TableCell>
+                  <TableCell className="text-xs">{getPropertyName(inv.property_id)}</TableCell>
+                  <TableCell className="text-xs capitalize">{CATEGORIES.find(c => c.value === inv.category)?.label || inv.category}</TableCell>
+                  <TableCell className="text-xs font-medium">{formatCurrency(inv.amount)}</TableCell>
+                  <TableCell className="text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString("de-DE") : "–"}</TableCell>
+                  <TableCell>{getStatusBadge(inv.status, inv.due_date)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {inv.status === "offen" && (
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => updateStatus.mutate({ id: inv.id, status: "bezahlt" })}>
+                          <Check className="h-3 w-3 mr-1" /> Bezahlt
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(inv.id)}>
+                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+export default InvoiceManagement;
