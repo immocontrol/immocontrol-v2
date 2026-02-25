@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2 } from "lucide-react";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import QuickNoteWidget from "@/components/QuickNoteWidget";
 import OccupancyTracker from "@/components/OccupancyTracker";
@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type FilterType = "alle" | "egbr" | "privat";
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
@@ -56,6 +57,7 @@ const Dashboard = () => {
   });
   const [filter, setFilter] = useState<FilterType>("alle");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 200);
   const [sort, setSort] = useState<SortType>("name");
   const [refreshing, setRefreshing] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -155,8 +157,8 @@ ${properties.map(p => `<tr>
   const filteredProperties = useMemo(() => {
     let result = properties.filter((p) => {
       if (filter !== "alle" && p.ownership !== filter) return false;
-      if (search) {
-        const q = search.toLowerCase();
+      if (debouncedSearch) {
+        const q = debouncedSearch.toLowerCase();
         return p.name.toLowerCase().includes(q) || (p.address || "").toLowerCase().includes(q) || p.type.toLowerCase().includes(q);
       }
       return true;
@@ -177,7 +179,7 @@ ${properties.map(p => `<tr>
     });
 
     return result;
-  }, [properties, filter, search, sort]);
+  }, [properties, filter, debouncedSearch, sort]);
 
   // Feature 10: Best/Worst performer
   const bestPerformer = useMemo(() => {

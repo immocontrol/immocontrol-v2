@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle } from "lucide-react";
+import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download } from "lucide-react";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
 import AddContactDialog from "@/components/AddContactDialog";
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface ContactItem {
   id: string;
@@ -162,11 +163,13 @@ const ContactManagement = () => {
     setOpen(true);
   };
 
+  const debouncedSearch = useDebounce(search, 200);
+
   const filtered = contacts.filter((c) => {
     if (catFilter !== "alle" && c.category !== catFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return c.name.toLowerCase().includes(q) || (c.company || "").toLowerCase().includes(q);
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      return c.name.toLowerCase().includes(q) || (c.company || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").toLowerCase().includes(q);
     }
     return true;
   });
@@ -188,6 +191,27 @@ const ContactManagement = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* vCard Export */}
+          {contacts.length > 0 && (
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => {
+              const vcards = contacts.map(c => {
+                const parts = c.name.split(" ");
+                const lastName = parts.pop() || "";
+                const firstName = parts.join(" ") || "";
+                return `BEGIN:VCARD\nVERSION:3.0\nN:${lastName};${firstName}\nFN:${c.name}${c.company ? `\nORG:${c.company}` : ""}${c.email ? `\nEMAIL:${c.email}` : ""}${c.phone ? `\nTEL:${c.phone}` : ""}${c.address ? `\nADR:;;${c.address}` : ""}${c.notes ? `\nNOTE:${c.notes}` : ""}\nEND:VCARD`;
+              }).join("\n");
+              const blob = new Blob([vcards], { type: "text/vcard;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "immocontrol-kontakte.vcf";
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success("Kontakte als vCard exportiert!");
+            }}>
+              <Download className="h-3.5 w-3.5" /> vCard
+            </Button>
+          )}
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCsvImportOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> CSV importieren
           </Button>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2 } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -127,6 +127,20 @@ const PropertyDetail = () => {
           <div className="flex items-center gap-1">
             <QuickActions onScrollTo={scrollToSection} />
             <EditPropertyDialog property={property} />
+            {/* Share/Copy property summary */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              aria-label="Objektdaten teilen"
+              onClick={() => {
+                const summary = `📊 ${property.name}\n📍 ${property.address}\n💰 Wert: ${formatCurrency(property.currentValue)}\n🏠 Miete: ${formatCurrency(property.monthlyRent)}/M\n📈 Cashflow: ${formatCurrency(property.monthlyCashflow)}/M\n📊 Brutto-Rendite: ${bruttoRendite.toFixed(1)}%\n🏦 Restschuld: ${formatCurrency(property.remainingDebt)}`;
+                navigator.clipboard.writeText(summary);
+                toast.success("Objektzusammenfassung kopiert!");
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

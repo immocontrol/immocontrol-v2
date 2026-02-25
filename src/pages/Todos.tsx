@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   CheckSquare, Plus, Trash2, Circle, CheckCircle2, Flag, Calendar, Tag,
   ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search,
-  LayoutList, CalendarDays, MoreHorizontal, Edit2,
+  LayoutList, CalendarDays, MoreHorizontal, Edit2, CheckCheck, Trash,
 } from "lucide-react";
 import TodoStats from "@/components/TodoStats";
 import TodoCalendarSync from "@/components/TodoCalendarSync";
@@ -365,6 +365,32 @@ const Todos = () => {
           </div>
           <div className="flex items-center gap-2">
             <TodoCalendarSync todos={todos} />
+            {/* Bulk actions */}
+            {view === "inbox" && filtered.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
+                    <MoreHorizontal className="h-3.5 w-3.5" /> Aktionen
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => {
+                    const uncompleted = filtered.filter(t => !t.completed);
+                    uncompleted.forEach(t => updateMutation.mutate({ id: t.id, updates: { completed: true, completed_at: new Date().toISOString() } }));
+                    toast.success(`${uncompleted.length} Aufgaben erledigt`);
+                  }}>
+                    <CheckCheck className="h-3.5 w-3.5 mr-2" /> Alle erledigen
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const completed = todos.filter(t => t.completed);
+                    completed.forEach(t => deleteMutation.mutate(t.id));
+                    toast.success(`${completed.length} erledigte gelöscht`);
+                  }} className="text-destructive">
+                    <Trash className="h-3.5 w-3.5 mr-2" /> Erledigte löschen
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input

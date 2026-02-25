@@ -202,8 +202,12 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
   const getProperty = useCallback((id: string) => properties.find((p) => p.id === id), [properties]);
   const getStats = useCallback(() => stats, [stats]);
 
+  const contextValue = useMemo(() => ({
+    properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty, getStats,
+  }), [properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty, getStats]);
+
   return (
-    <PropertyContext.Provider value={{ properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty, getStats }}>
+    <PropertyContext.Provider value={contextValue}>
       {children}
     </PropertyContext.Provider>
   );

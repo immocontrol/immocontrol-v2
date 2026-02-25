@@ -11,6 +11,8 @@ import ScrollToTop from "@/components/ScrollToTop";
 import PageTransition from "@/components/PageTransition";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { CommandPalette } from "@/components/CommandPalette";
 
 // Lazy imports with preloading
 const dashboardImport = () => import("@/pages/Dashboard");
@@ -194,13 +196,16 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/einladung" element={<Einladung />} />
-                  <Route path="/*" element={<RoleRouter />} />
-                </Routes>
-              </Suspense>
+              <CommandPalette />
+              <ErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/einladung" element={<Einladung />} />
+                    <Route path="/*" element={<RoleRouter />} />
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
             </BrowserRouter>
           </TooltipProvider>
         </PropertyProvider>
