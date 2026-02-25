@@ -20,6 +20,8 @@ import PropertyBenchmark from "@/components/PropertyBenchmark";
 import ExpensePieChart from "@/components/ExpensePieChart";
 import DocumentExpiryTracker from "@/components/DocumentExpiryTracker";
 import MeterManagement from "@/components/MeterManagement";
+import { HandoverProtocol } from "@/components/HandoverProtocol";
+import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -367,9 +369,11 @@ const PropertyDetail = () => {
       {/* Value History */}
       <PropertyValueHistory propertyId={property.id} currentValue={property.currentValue} purchasePrice={property.purchasePrice} />
 
-      {/* Rent increase calculator + Maintenance */}
+      {/* Rent increase calculator + Maintenance + New tools */}
       <div className="flex items-center gap-2 flex-wrap">
         <RentIncreaseCalculator currentRent={property.monthlyRent} propertyName={property.name} />
+        <RentIncreaseLetter />
+        <HandoverProtocol />
       </div>
 
       {/* Maintenance Planner */}
