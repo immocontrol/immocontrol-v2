@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Send, Trash2, Sparkles, User, X, Minimize2 } from "lucide-react";
+import { Bot, Send, Trash2, Sparkles, User, X, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,21 +9,46 @@ import { useAuth } from "@/hooks/useAuth";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/immo-ai-chat`;
+const STORAGE_KEY = "immo-ai-chat-history";
 
 const SUGGESTIONS = [
   "Wie ist meine Portfolio-Rendite?",
   "Welcher Mieter wohnt am längsten?",
   "Wann kann ich die Miete anpassen?",
   "Übersicht meiner Restschulden",
+  "Erstelle eine Selbstauskunft-Zusammenfassung",
+  "Welches Objekt hat den besten Cashflow?",
 ];
 
 export default function ImmoAIBubble() {
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const [messages, setMessages] = useState<Msg[]>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Improvement 1: Persist chat history
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-50))); } catch {}
+  }, [messages]);
+
+  // Improvement 2: Alt+0 keyboard shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === "0") {
+        e.preventDefault();
+        setOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -31,9 +56,7 @@ export default function ImmoAIBubble() {
     }, 50);
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
   const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -60,7 +83,6 @@ export default function ImmoAIBubble() {
         const errData = await resp.json().catch(() => ({}));
         throw new Error(errData.error || `Fehler ${resp.status}`);
       }
-
       if (!resp.body) throw new Error("Kein Stream erhalten");
 
       const reader = resp.body.getReader();
@@ -121,6 +143,13 @@ export default function ImmoAIBubble() {
     }
   };
 
+  const clearChat = () => {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const unreadCount = messages.length;
+
   return (
     <>
       {/* Floating Bubble */}
@@ -128,17 +157,20 @@ export default function ImmoAIBubble() {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-20 md:bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-          aria-label="Immo AI öffnen"
+          aria-label="Immo AI öffnen (Alt+0)"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
-          {/* Notification dot if no messages yet */}
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-primary/80 rounded-full border-2 border-background" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-accent text-accent-foreground rounded-full text-[10px] font-bold flex items-center justify-center px-1 badge-pulse">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </button>
       )}
 
       {/* Chat Window */}
       {open && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="fixed bottom-20 md:bottom-6 right-4 z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
             <div className="flex items-center gap-2">
@@ -147,23 +179,25 @@ export default function ImmoAIBubble() {
               </div>
               <div>
                 <p className="text-sm font-semibold">Immo AI</p>
-                <p className="text-[10px] text-muted-foreground">Dein Portfolio-Assistent</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {isLoading ? "Denkt nach..." : messages.length > 0 ? `${messages.length} Nachrichten` : "Dein Portfolio-Assistent"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               {messages.length > 0 && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMessages([])}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat} title="Chat leeren">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)} title="Schließen (Alt+0)">
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-4 px-2">
                 <div className="bg-primary/10 rounded-full p-4">
@@ -189,22 +223,17 @@ export default function ImmoAIBubble() {
               </div>
             ) : (
               messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                >
+                <div key={i} className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "assistant" && (
                     <div className="shrink-0 bg-primary/10 rounded-full h-6 w-6 flex items-center justify-center mt-1">
                       <Bot className="h-3 w-3 text-primary" />
                     </div>
                   )}
-                  <div
-                    className={`rounded-xl px-3 py-2 max-w-[85%] ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/50 border border-border/50"
-                    }`}
-                  >
+                  <div className={`rounded-xl px-3 py-2 max-w-[85%] ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50 border border-border/50"
+                  }`}>
                     {msg.role === "assistant" ? (
                       <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_p]:my-0.5 [&_ul]:my-0.5 [&_ol]:my-0.5 [&_li]:my-0 [&_h3]:mt-2 [&_h3]:mb-0.5 [&_h3]:text-sm [&_table]:text-[10px]">
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
@@ -239,7 +268,7 @@ export default function ImmoAIBubble() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Frage stellen..."
+                placeholder="Frage stellen... (Alt+0 zum Öffnen/Schließen)"
                 className="min-h-[36px] max-h-[80px] resize-none text-xs"
                 rows={1}
                 disabled={isLoading}

@@ -13,6 +13,11 @@ import CashflowPerSqmWidget from "@/components/CashflowPerSqmWidget";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import StatCard from "@/components/StatCard";
+import PortfolioHealthScore from "@/components/PortfolioHealthScore";
+import { QuickCalculator } from "@/components/QuickCalculator";
+import { PropertyComparison } from "@/components/PropertyComparison";
+import { HandoverProtocol } from "@/components/HandoverProtocol";
+import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import PropertyCard from "@/components/PropertyCard";
 import { lazy, Suspense } from "react";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
@@ -348,6 +353,10 @@ ${properties.map(p => `<tr>
             <Printer className="h-3.5 w-3.5" />
             PDF
           </Button>
+          <QuickCalculator />
+          <PropertyComparison />
+          <HandoverProtocol />
+          <RentIncreaseLetter />
           <SelbstauskunftGenerator />
           <FinanceExportDialog />
           <AddPropertyDialog />
@@ -356,6 +365,18 @@ ${properties.map(p => `<tr>
 
       {/* Onboarding */}
       <OnboardingBanner />
+
+      {/* Portfolio Health Score */}
+      <PortfolioHealthScore
+        totalValue={stats.totalValue}
+        totalDebt={stats.totalDebt}
+        totalCashflow={stats.totalCashflow}
+        totalRent={stats.totalRent}
+        totalExpenses={totalMonthlyExpenses}
+        totalCreditRate={totalMonthlyCreditRate}
+        vacancyRate={vacancyRate}
+        propertyCount={stats.propertyCount}
+      />
 
       {/* Key stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">

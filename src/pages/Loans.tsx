@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { GERMAN_BANKS } from "@/data/germanBanks";
+import { Download } from "lucide-react";
 
 interface Loan {
   id: string;
@@ -355,6 +356,27 @@ const Loans = () => {
           {filterBank !== "alle" && (
             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => setFilterBank("alle")}>
               <X className="h-3 w-3 mr-1" /> Filter
+            </Button>
+          )}
+
+          {/* CSV Export */}
+          {filteredLoans.length > 0 && (
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => {
+              const headers = ["Bank", "Objekt", "Betrag", "Restschuld", "Zinssatz", "Tilgung", "Rate/M", "Zinsbindung bis", "Start", "Ende", "Typ"];
+              const rows = filteredLoans.map(l => [
+                l.bank_name, getPropertyName(l.property_id), l.loan_amount, l.remaining_balance,
+                l.interest_rate, l.repayment_rate, l.monthly_payment,
+                l.fixed_interest_until || "", l.start_date || "", l.end_date || "", loanTypeLabels[l.loan_type] || l.loan_type,
+              ]);
+              const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+              const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url; a.download = `darlehen_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+              URL.revokeObjectURL(url);
+              toast.success("Darlehen als CSV exportiert!");
+            }}>
+              <Download className="h-3.5 w-3.5" /> CSV
             </Button>
           )}
 
