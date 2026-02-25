@@ -29,6 +29,9 @@ const loansImport = () => import("@/pages/Loans");
 const cashForecastImport = () => import("@/pages/CashForecast");
 const todosImport = () => import("@/pages/Todos");
 const onboardingImport = () => import("@/pages/Onboarding");
+const nebenkostenImport = () => import("@/pages/Nebenkosten");
+const berichteImport = () => import("@/pages/Berichte");
+const mietuebersichtImport = () => import("@/pages/Mietuebersicht");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -44,6 +47,9 @@ const Loans = lazy(loansImport);
 const CashForecast = lazy(cashForecastImport);
 const Todos = lazy(todosImport);
 const Onboarding = lazy(onboardingImport);
+const Nebenkosten = lazy(nebenkostenImport);
+const Berichte = lazy(berichteImport);
+const Mietuebersicht = lazy(mietuebersichtImport);
 
 // Preload all routes after initial render to eliminate loading on tab switch
 const preloadRoutes = () => {
@@ -56,6 +62,9 @@ const preloadRoutes = () => {
   cashForecastImport();
   todosImport();
   notFoundImport();
+  nebenkostenImport();
+  berichteImport();
+  mietuebersichtImport();
 };
 
 const PageLoader = () => (
@@ -181,6 +190,9 @@ const RoleRouter = () => {
           <Route path="/analyse" element={<AnalysisCalculator />} />
           <Route path="/kontakte" element={<Contacts />} />
           <Route path="/aufgaben" element={<Todos />} />
+          <Route path="/nebenkosten" element={<Nebenkosten />} />
+          <Route path="/berichte" element={<Berichte />} />
+          <Route path="/mietuebersicht" element={<Mietuebersicht />} />
           <Route path="/einstellungen" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

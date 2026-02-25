@@ -254,6 +254,85 @@ export type Database = {
           },
         ]
       }
+      meter_readings: {
+        Row: {
+          created_at: string
+          id: string
+          meter_id: string
+          note: string | null
+          reading_date: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meter_id: string
+          note?: string | null
+          reading_date?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meter_id?: string
+          note?: string | null
+          reading_date?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meter_readings_meter_id_fkey"
+            columns: ["meter_id"]
+            isOneToOne: false
+            referencedRelation: "meters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meters: {
+        Row: {
+          created_at: string
+          id: string
+          location_note: string | null
+          meter_number: string
+          meter_type: string
+          property_id: string
+          unit_label: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_note?: string | null
+          meter_number?: string
+          meter_type?: string
+          property_id: string
+          unit_label?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_note?: string | null
+          meter_number?: string
+          meter_type?: string
+          property_id?: string
+          unit_label?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meters_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_goals: {
         Row: {
           created_at: string | null
@@ -897,6 +976,116 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      utility_billing_items: {
+        Row: {
+          billing_id: string
+          category: string
+          created_at: string
+          description: string
+          distribution_key: string
+          id: string
+          tenant_amount: number
+          total_amount: number
+          user_id: string
+        }
+        Insert: {
+          billing_id: string
+          category?: string
+          created_at?: string
+          description?: string
+          distribution_key?: string
+          id?: string
+          tenant_amount?: number
+          total_amount?: number
+          user_id: string
+        }
+        Update: {
+          billing_id?: string
+          category?: string
+          created_at?: string
+          description?: string
+          distribution_key?: string
+          id?: string
+          tenant_amount?: number
+          total_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_billing_items_billing_id_fkey"
+            columns: ["billing_id"]
+            isOneToOne: false
+            referencedRelation: "utility_billings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_billings: {
+        Row: {
+          balance: number
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string
+          id: string
+          notes: string | null
+          prepayments: number
+          property_id: string
+          status: string
+          tenant_id: string | null
+          tenant_share: number
+          total_costs: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prepayments?: number
+          property_id: string
+          status?: string
+          tenant_id?: string | null
+          tenant_share?: number
+          total_costs?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prepayments?: number
+          property_id?: string
+          status?: string
+          tenant_id?: string | null
+          tenant_share?: number
+          total_costs?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_billings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utility_billings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
