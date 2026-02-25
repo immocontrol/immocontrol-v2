@@ -1,4 +1,5 @@
-import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
+import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +35,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { getProperty } = useProperties();
+  const isOnline = useOnlineStatus();
   const desktopNavRef = useRef<HTMLElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
   const [dotStyle, setDotStyle] = useState<React.CSSProperties>({});
@@ -158,7 +160,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* 1. Skip to content link for accessibility */}
+      {!isOnline && (
+        <div className="offline-banner" role="alert">⚠️ Keine Internetverbindung – Änderungen werden nicht gespeichert</div>
+      )}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">
         Zum Inhalt springen
       </a>

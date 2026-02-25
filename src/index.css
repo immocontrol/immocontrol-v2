@@ -300,7 +300,16 @@
     appearance: textfield;
   }
 
-  /* 15. Reduced motion preference */
+  /* Print styles */
+  @media print {
+    body { background: white !important; color: black !important; }
+    nav, footer, [role="navigation"], .fixed { display: none !important; }
+    .gradient-card { background: white !important; border: 1px solid #ddd !important; break-inside: avoid; }
+    .shimmer, .animate-fade-in, .animate-count { animation: none !important; }
+    .text-profit { color: #2a9d6e !important; }
+    .text-loss { color: #d94040 !important; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -309,10 +318,27 @@
     }
   }
 
-  /* 16. Better text rendering */
   body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  .offline-banner {
+    background: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+    text-align: center;
+    padding: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .card-enter {
+    animation: cardEnter 0.4s ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes cardEnter {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 }
