@@ -10,6 +10,7 @@ import BackToTop from "@/components/BackToTop";
 import ScrollProgress from "@/components/ScrollProgress";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import GlobalQuickTodo from "@/components/GlobalQuickTodo";
+import { KeyboardShortcutHelp } from "@/components/KeyboardShortcutHelp";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
@@ -234,6 +235,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               >
                 <Search className="h-4 w-4" />
               </Button>
+              <KeyboardShortcutHelp />
               <NotificationBell />
               <Link to="/einstellungen" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Avatar className="h-7 w-7">

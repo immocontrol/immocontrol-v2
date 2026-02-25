@@ -272,6 +272,11 @@ const Loans = () => {
   const avgRate = filteredLoans.length > 0
     ? filteredLoans.reduce((s, l) => s + l.interest_rate * l.remaining_balance, 0) / Math.max(totalBalance, 1)
     : 0;
+  // Feature: Total interest paid estimate (annual)
+  const totalAnnualInterest = filteredLoans.reduce((s, l) => s + (l.remaining_balance * l.interest_rate / 100), 0);
+  // Feature: Total loan amount vs remaining
+  const totalLoanAmount = filteredLoans.reduce((s, l) => s + l.loan_amount, 0);
+  const totalTilgungsfortschritt = totalLoanAmount > 0 ? ((totalLoanAmount - totalBalance) / totalLoanAmount * 100) : 0;
 
   const now = new Date();
   const zinsBindungData = filteredLoans
@@ -566,10 +571,14 @@ const Loans = () => {
       <LoanFixedInterestAlerts loans={filteredLoans} />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="gradient-card rounded-xl border border-border p-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Restschuld gesamt</p>
           <p className="text-xl font-bold mt-1">{formatCurrency(totalBalance)}</p>
+          <div className="h-1.5 bg-secondary rounded-full overflow-hidden mt-2">
+            <div className="h-full bg-primary rounded-full progress-animated" style={{ width: `${totalTilgungsfortschritt}%` }} />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">{totalTilgungsfortschritt.toFixed(0)}% getilgt</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rate/Monat</p>
@@ -579,6 +588,11 @@ const Loans = () => {
         <div className="gradient-card rounded-xl border border-border p-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ø Zinssatz</p>
           <p className="text-xl font-bold mt-1">{avgRate.toFixed(2)}%</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zinslast/Jahr</p>
+          <p className="text-xl font-bold mt-1 text-loss">{formatCurrency(totalAnnualInterest)}</p>
+          <p className="text-[10px] text-muted-foreground">{formatCurrency(totalAnnualInterest / 12)}/Monat</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zinsänderungsrisiko</p>

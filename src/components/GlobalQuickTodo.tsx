@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Plus, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const GlobalQuickTodo = () => {
+const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const location = useLocation();
@@ -44,7 +44,7 @@ const GlobalQuickTodo = () => {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-6 z-40">
+    <div ref={ref} className="fixed bottom-20 right-4 md:bottom-6 z-40">
       {open ? (
         <div className="bg-card border border-border rounded-xl shadow-lg p-3 w-72 animate-fade-in">
           <div className="flex items-center gap-2 mb-2">
@@ -70,6 +70,7 @@ const GlobalQuickTodo = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              data-global-quick-todo
               onClick={() => setOpen(true)}
               size="icon"
               className="h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform"
@@ -84,6 +85,8 @@ const GlobalQuickTodo = () => {
       )}
     </div>
   );
-};
+});
+
+GlobalQuickTodo.displayName = "GlobalQuickTodo";
 
 export default GlobalQuickTodo;

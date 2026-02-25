@@ -44,6 +44,7 @@ interface Todo {
 }
 
 type ViewType = "inbox" | "today" | "upcoming" | "completed";
+type PriorityFilter = "all" | 1 | 2 | 3 | 4;
 
 const PRIORITY_CONFIG: Record<number, { label: string; color: string; icon: string }> = {
   1: { label: "Dringend", color: "text-red-500", icon: "🔴" },
@@ -67,11 +68,22 @@ const isOverdue = (dateStr: string) => {
   return dateStr < today;
 };
 
+// Feature: Due date countdown
+const getDaysUntil = (dateStr: string): number => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+};
+
 const formatDueDate = (dateStr: string) => {
   const today = new Date().toISOString().split("T")[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
   if (dateStr === today) return "Heute";
   if (dateStr === tomorrow) return "Morgen";
+  const days = getDaysUntil(dateStr);
+  if (days < 0) return `${Math.abs(days)}d überfällig`;
+  if (days <= 7) return `in ${days}d`;
   return new Date(dateStr).toLocaleDateString("de-DE", { day: "2-digit", month: "short" });
 };
 
@@ -95,6 +107,7 @@ const Todos = () => {
   const [editTodo, setEditTodo] = useState<Todo | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const quickInputRef = useRef<HTMLInputElement>(null);
 
   // Document title
@@ -221,6 +234,11 @@ const Todos = () => {
       result = result.filter(t => t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
     }
 
+    // Feature: Priority filter
+    if (priorityFilter !== "all") {
+      result = result.filter(t => t.priority === priorityFilter);
+    }
+
     switch (view) {
       case "today":
         return result.filter(t => t.due_date && isToday(t.due_date));
@@ -231,7 +249,7 @@ const Todos = () => {
       default:
         return result;
     }
-  }, [todos, view, search]);
+  }, [todos, view, search, priorityFilter]);
 
   const completedTodos = useMemo(() => todos.filter(t => t.completed).slice(0, 20), [todos]);
 
@@ -391,6 +409,26 @@ const Todos = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+            {/* Feature: Priority filter */}
+            <div className="flex gap-1 mr-2">
+              {([
+                { key: "all" as PriorityFilter, label: "Alle" },
+                { key: 1 as PriorityFilter, label: "🔴" },
+                { key: 2 as PriorityFilter, label: "🟠" },
+                { key: 3 as PriorityFilter, label: "🟡" },
+              ]).map(f => (
+                <button
+                  key={String(f.key)}
+                  onClick={() => setPriorityFilter(f.key)}
+                  className={cn(
+                    "text-[10px] px-2 py-1 rounded font-medium transition-colors",
+                    priorityFilter === f.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
