@@ -32,6 +32,7 @@ const onboardingImport = () => import("@/pages/Onboarding");
 const nebenkostenImport = () => import("@/pages/Nebenkosten");
 const berichteImport = () => import("@/pages/Berichte");
 const mietuebersichtImport = () => import("@/pages/Mietuebersicht");
+const immoAIImport = () => import("@/pages/ImmoAI");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -50,6 +51,7 @@ const Onboarding = lazy(onboardingImport);
 const Nebenkosten = lazy(nebenkostenImport);
 const Berichte = lazy(berichteImport);
 const Mietuebersicht = lazy(mietuebersichtImport);
+const ImmoAI = lazy(immoAIImport);
 
 // Preload all routes after initial render to eliminate loading on tab switch
 const preloadRoutes = () => {
@@ -193,6 +195,7 @@ const RoleRouter = () => {
           <Route path="/nebenkosten" element={<Nebenkosten />} />
           <Route path="/berichte" element={<Berichte />} />
           <Route path="/mietuebersicht" element={<Mietuebersicht />} />
+          <Route path="/immo-ai" element={<ImmoAI />} />
           <Route path="/einstellungen" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
