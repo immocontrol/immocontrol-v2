@@ -1,7 +1,8 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
 import { NotificationBell } from "@/components/NotificationBell";
 import BackToTop from "@/components/BackToTop";
@@ -31,6 +32,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const { getProperty } = useProperties();
   const desktopNavRef = useRef<HTMLElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
@@ -206,6 +208,28 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               />
             </nav>
             <div className="flex items-center gap-1.5 ml-2">
+              {/* Quick theme toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label={theme === "dark" ? "Helles Design" : "Dunkles Design"}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              {/* Command palette trigger */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hidden md:flex"
+                onClick={() => {
+                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+                }}
+                aria-label="Suche öffnen (⌘K)"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
               <NotificationBell />
               <Link to="/einstellungen" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Avatar className="h-7 w-7">

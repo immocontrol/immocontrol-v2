@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
+import { PasswordStrength } from "@/components/PasswordStrength";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -196,7 +197,9 @@ const Settings = () => {
             placeholder="••••••••"
             className="h-9 text-sm"
             minLength={6}
+            autoComplete="new-password"
           />
+          <PasswordStrength password={newPassword} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Passwort bestätigen</Label>
@@ -212,6 +215,43 @@ const Settings = () => {
           Passwort ändern
         </Button>
       </form>
+
+      {/* Feature: JSON Data Export */}
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "120ms" }}>
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Database className="h-4 w-4 text-muted-foreground" /> Daten-Backup
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Exportiere alle deine Daten als JSON-Datei. Du kannst diesen Export als Backup verwenden.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={async () => {
+            try {
+              const tables = ["properties", "contacts", "loans", "todos", "tenants", "tickets", "rent_payments", "portfolio_goals"];
+              const backup: Record<string, any> = { exportedAt: new Date().toISOString(), version: "1.0" };
+              for (const table of tables) {
+                const { data } = await supabase.from(table as any).select("*");
+                backup[table] = data || [];
+              }
+              const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `immocontrol-backup-${new Date().toISOString().split("T")[0]}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success("Backup exportiert!");
+            } catch {
+              toast.error("Export fehlgeschlagen");
+            }
+          }}
+        >
+          <Download className="h-3.5 w-3.5" /> JSON exportieren
+        </Button>
+      </div>
 
       {/* Team */}
       <TeamManagement />

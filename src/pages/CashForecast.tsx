@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { TrendingDown, CalendarDays } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { TrendingDown, CalendarDays, Download } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,8 @@ const CashForecast = () => {
   const { user } = useAuth();
   const { properties, stats, loading } = useProperties();
   const [forecastWeeks, setForecastWeeks] = useState<13 | 26>(13);
+
+  useEffect(() => { document.title = "Cashforecast – ImmoControl"; }, []);
 
   const { data: loans = [] } = useQuery({
     queryKey: queryKeys.loans.all,
