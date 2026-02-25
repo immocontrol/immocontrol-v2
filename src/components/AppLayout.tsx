@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -25,6 +25,7 @@ const navItems = [
   { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
   { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
   { path: "/analyse", label: "Analyse", icon: Calculator, shortcut: "8" },
+  { path: "/immo-ai", label: "Immo AI", icon: Sparkles, shortcut: "0" },
   { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
 
