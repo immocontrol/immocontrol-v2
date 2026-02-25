@@ -26,6 +26,8 @@ import { HandoverProtocol } from "@/components/HandoverProtocol";
 import ContractManagement from "@/components/ContractManagement";
 import EnergyCertificateTracker from "@/components/EnergyCertificateTracker";
 import ServiceContracts from "@/components/ServiceContracts";
+import PropertyQuickSwitcher from "@/components/PropertyQuickSwitcher";
+import DocumentTemplateGenerator from "@/components/DocumentTemplateGenerator";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -117,9 +119,12 @@ const PropertyDetail = () => {
   return (
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label={`Objektdetail: ${property.name}`}>
       <div className="flex items-center justify-between">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Portfolio
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Portfolio
+          </Link>
+          <PropertyQuickSwitcher currentPropertyId={property.id} />
+        </div>
         <span className="text-[10px] text-muted-foreground hidden sm:inline">
           Besitzdauer: {besitzdauer}
         </span>
@@ -385,6 +390,7 @@ const PropertyDetail = () => {
         <RentIncreaseCalculator currentRent={property.monthlyRent} propertyName={property.name} />
         <RentIncreaseLetter />
         <HandoverProtocol />
+        <DocumentTemplateGenerator />
       </div>
 
       {/* Maintenance Planner */}
