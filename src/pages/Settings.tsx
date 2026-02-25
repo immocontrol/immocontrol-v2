@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -250,6 +250,30 @@ const Settings = () => {
           }}
         >
           <Download className="h-3.5 w-3.5" /> JSON exportieren
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".json";
+            input.onchange = async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (!file) return;
+              try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                toast.success(`Backup gelesen: ${Object.keys(data).filter(k => k !== "exportedAt" && k !== "version").length} Tabellen gefunden. Import-Funktion kommt bald!`);
+              } catch {
+                toast.error("Ungültige JSON-Datei");
+              }
+            };
+            input.click();
+          }}
+        >
+          <Upload className="h-3.5 w-3.5" /> JSON prüfen
         </Button>
       </div>
 

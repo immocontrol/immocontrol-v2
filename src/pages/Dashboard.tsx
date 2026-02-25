@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2 } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer } from "lucide-react";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import QuickNoteWidget from "@/components/QuickNoteWidget";
 import OccupancyTracker from "@/components/OccupancyTracker";
@@ -292,10 +292,29 @@ ${properties.map(p => `<tr>
 
   const totalSqm = properties.reduce((s, p) => s + (p.sqm || 0), 0);
   const avgPricePerSqm = totalSqm > 0 ? stats.totalValue / totalSqm : 0;
-  // Improvement 3: Total monthly expenses
   const totalMonthlyExpenses = properties.reduce((s, p) => s + (p.monthlyExpenses || 0), 0);
   const totalMonthlyCreditRate = properties.reduce((s, p) => s + (p.monthlyCreditRate || 0), 0);
   const totalCosts = totalMonthlyExpenses + totalMonthlyCreditRate;
+
+  // Feature: Average holding period
+  const avgHoldingMonths = properties.length > 0
+    ? properties.reduce((s, p) => {
+        const months = (Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+        return s + months;
+      }, 0) / properties.length
+    : 0;
+  const avgHoldingYears = Math.floor(avgHoldingMonths / 12);
+  const avgHoldingRemMonths = Math.floor(avgHoldingMonths % 12);
+
+  // Feature: Top 3 by cashflow
+  const top3Cashflow = [...properties].sort((a, b) => b.monthlyCashflow - a.monthlyCashflow).slice(0, 3);
+
+  // Feature: Portfolio share text
+  const sharePortfolio = () => {
+    const text = `📊 ImmoControl Portfolio\n${stats.propertyCount} Objekte · ${stats.totalUnits} Einheiten\n💰 Gesamtwert: ${formatCurrency(stats.totalValue)}\n📈 Eigenkapital: ${formatCurrency(stats.equity)}\n🏠 Miete: ${formatCurrency(stats.totalRent)}/M\n💵 Cashflow: ${formatCurrency(stats.totalCashflow)}/M\n📊 Brutto-Rendite: ${stats.avgRendite.toFixed(1)}%`;
+    navigator.clipboard.writeText(text);
+    toast.success("Portfolio-Zusammenfassung kopiert!");
+  };
 
   return (
     <div className="space-y-6" role="main" aria-label="Portfolio Dashboard">
@@ -307,9 +326,17 @@ ${properties.map(p => `<tr>
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
+            <Share2 className="h-3.5 w-3.5" />
+            Teilen
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCSV}>
             <Download className="h-3.5 w-3.5" />
             CSV
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportPDF}>
+            <Printer className="h-3.5 w-3.5" />
+            PDF
           </Button>
           <SelbstauskunftGenerator />
           <FinanceExportDialog />
@@ -409,9 +436,24 @@ ${properties.map(p => `<tr>
         </div>
       </div>
 
-      {/* Feature 10: Best/Worst performer */}
+      {/* Feature: Average holding period */}
+      {properties.length > 0 && (
+        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in flex items-center gap-3" style={{ animationDelay: "240ms" }}>
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Clock className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Ø Haltedauer</p>
+            <p className="text-sm font-semibold">
+              {avgHoldingYears > 0 ? `${avgHoldingYears} Jahre ${avgHoldingRemMonths} Monate` : `${avgHoldingRemMonths} Monate`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Feature: Best/Worst performer */}
       {properties.length >= 2 && bestPerformer && worstPerformer && bestPerformer.id !== worstPerformer.id && (
-        <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "220ms" }}>
+        <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "260ms" }}>
           <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Trophy className="h-4 w-4 text-primary" />
@@ -433,6 +475,28 @@ ${properties.map(p => `<tr>
                 {formatCurrency(worstPerformer.monthlyCashflow)}/M
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feature: Top 3 Cashflow Ranking */}
+      {top3Cashflow.length >= 2 && (
+        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "280ms" }}>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">🏆 Top 3 Cashflow</h3>
+          <div className="space-y-2">
+            {top3Cashflow.map((p, i) => (
+              <div key={p.id} className="flex items-center gap-3">
+                <span className={`text-sm font-bold w-6 text-center ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                  {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{p.name}</p>
+                </div>
+                <span className={`text-sm font-semibold tabular-nums ${p.monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
+                  {formatCurrency(p.monthlyCashflow)}/M
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

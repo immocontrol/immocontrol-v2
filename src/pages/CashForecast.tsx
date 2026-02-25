@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { TrendingDown, CalendarDays, Download } from "lucide-react";
+import { TrendingDown, CalendarDays, Download, Target } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, getISOWeek } from "@/lib/formatters";
 import { Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid, Line, ComposedChart, ReferenceLine } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Loan {
   id: string;
@@ -19,7 +21,7 @@ interface Loan {
 const CashForecast = () => {
   const { user } = useAuth();
   const { properties, stats, loading } = useProperties();
-  const [forecastWeeks, setForecastWeeks] = useState<13 | 26>(13);
+  const [forecastWeeks, setForecastWeeks] = useState<13 | 26 | 52>(13);
 
   useEffect(() => { document.title = "Cashforecast – ImmoControl"; }, []);
 
@@ -72,6 +74,24 @@ const CashForecast = () => {
   const netCashflow13W = totalIncome13W - totalExpenses13W;
   const lowestPoint = forecastData.length > 0 ? Math.min(...forecastData.map(w => w.kumulativ)) : 0;
 
+  // Feature: Break-even week
+  const breakEvenWeek = forecastData.findIndex((w, i) => i > 0 && forecastData[i - 1].kumulativ < 0 && w.kumulativ >= 0);
+
+  // Feature: CSV Export
+  const exportCashForecastCSV = () => {
+    const headers = ["Woche", "Zeitraum", "Einnahmen", "Ausgaben", "Netto", "Kumulativ"];
+    const rows = forecastData.map(w => [w.week, w.label, w.einnahmen, Math.abs(w.ausgaben), w.netto, w.kumulativ]);
+    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cashforecast_${forecastWeeks}w_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exportiert!");
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -109,15 +129,21 @@ const CashForecast = () => {
             {forecastWeeks}-Wochen-Vorschau · {properties.length} Objekte · {loans.length} Darlehen
           </p>
         </div>
-        <Select value={String(forecastWeeks)} onValueChange={v => setForecastWeeks(Number(v) as 13 | 26)}>
-          <SelectTrigger className="h-9 w-36 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="13">13 Wochen</SelectItem>
-            <SelectItem value="26">26 Wochen</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCashForecastCSV}>
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
+          <Select value={String(forecastWeeks)} onValueChange={v => setForecastWeeks(Number(v) as 13 | 26 | 52)}>
+            <SelectTrigger className="h-9 w-36 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="13">13 Wochen</SelectItem>
+              <SelectItem value="26">26 Wochen</SelectItem>
+              <SelectItem value="52">52 Wochen</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -147,6 +173,18 @@ const CashForecast = () => {
             </p>
           )}
         </div>
+        {/* Feature: Break-even indicator */}
+        {breakEvenWeek > 0 && (
+          <div className="gradient-card rounded-xl border border-border p-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Break-Even</p>
+            <p className="text-xl font-bold mt-1 text-profit flex items-center gap-1">
+              <Target className="h-4 w-4" /> {forecastData[breakEvenWeek]?.week}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Nach {breakEvenWeek} Wochen positiv
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Main Chart */}

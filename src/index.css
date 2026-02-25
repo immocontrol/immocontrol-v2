@@ -341,4 +341,48 @@
     from { opacity: 0; transform: translateY(12px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
+
+  /* Improvement: Subtle glow for active nav items */
+  .nav-glow {
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.1);
+  }
+
+  /* Improvement: Better table row hover */
+  .table-row-hover:hover {
+    background: hsl(var(--secondary) / 0.5);
+  }
+
+  /* Feature: Countdown badge pulse */
+  .countdown-urgent {
+    animation: urgentPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes urgentPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Improvement: Smooth dialog appearance */
+  [data-state="open"] > .dialog-content {
+    animation: dialogIn 0.2s ease-out;
+  }
+  @keyframes dialogIn {
+    from { opacity: 0; transform: scale(0.95) translateY(4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Feature: Status dot */
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .status-dot--active { background: hsl(var(--profit)); }
+  .status-dot--warning { background: hsl(var(--gold)); }
+  .status-dot--danger { background: hsl(var(--loss)); }
+
+  /* Improvement: Better number input alignment */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
 }
