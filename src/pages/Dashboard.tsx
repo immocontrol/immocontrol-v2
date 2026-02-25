@@ -9,6 +9,18 @@ import SteuerHelfer from "@/components/SteuerHelfer";
 import TilgungsProgress from "@/components/TilgungsProgress";
 import QuickNoteWidget from "@/components/QuickNoteWidget";
 import OccupancyTracker from "@/components/OccupancyTracker";
+import MietpreisbremseChecker from "@/components/MietpreisbremseChecker";
+import GrundsteuerCalculator from "@/components/GrundsteuerCalculator";
+import CashReserveWidget from "@/components/CashReserveWidget";
+import LoanRefinancingCalc from "@/components/LoanRefinancingCalc";
+import VacancyCostCalc from "@/components/VacancyCostCalc";
+import MortgageStressTest from "@/components/MortgageStressTest";
+import GEGComplianceChecker from "@/components/GEGComplianceChecker";
+import PortfolioMilestones from "@/components/PortfolioMilestones";
+import TaxDeadlineReminder from "@/components/TaxDeadlineReminder";
+import RenovationROICalc from "@/components/RenovationROICalc";
+import HausgeldTracker from "@/components/HausgeldTracker";
+import AnnualSummaryCard from "@/components/AnnualSummaryCard";
 import DebtEquityWidget from "@/components/DebtEquityWidget";
 import YieldHeatmap from "@/components/YieldHeatmap";
 import PortfolioTypeChart from "@/components/PortfolioTypeChart";
@@ -577,6 +589,38 @@ ${properties.map(p => `<tr>
       <div className="grid md:grid-cols-2 gap-3">
         <TilgungsProgress />
         <SteuerHelfer />
+      </div>
+
+      {/* NEW: Annual Summary + Cash Reserve */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <AnnualSummaryCard />
+        <CashReserveWidget />
+      </div>
+
+      {/* NEW: Stress Test + Milestones */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <MortgageStressTest />
+        <PortfolioMilestones />
+      </div>
+
+      {/* NEW: Tax + GEG + Mietpreisbremse */}
+      <div className="grid md:grid-cols-3 gap-3">
+        <TaxDeadlineReminder />
+        <GEGComplianceChecker />
+        <MietpreisbremseChecker />
+      </div>
+
+      {/* NEW: Refinancing + Grundsteuer + Hausgeld */}
+      <div className="grid md:grid-cols-3 gap-3">
+        <LoanRefinancingCalc />
+        <GrundsteuerCalculator />
+        <HausgeldTracker />
+      </div>
+
+      {/* NEW: Vacancy Cost + Renovation ROI */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <VacancyCostCalc />
+        <RenovationROICalc />
       </div>
 
       {/* Debt/Equity + Net Worth */}

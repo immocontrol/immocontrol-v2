@@ -26,7 +26,6 @@ import { HandoverProtocol } from "@/components/HandoverProtocol";
 import ContractManagement from "@/components/ContractManagement";
 import EnergyCertificateTracker from "@/components/EnergyCertificateTracker";
 import ServiceContracts from "@/components/ServiceContracts";
-import OwnerMeetings from "@/components/OwnerMeetings";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -403,8 +402,29 @@ const PropertyDetail = () => {
       {/* Service Contracts */}
       <ServiceContracts propertyId={property.id} />
 
-      {/* Owner Meetings */}
-      <OwnerMeetings propertyId={property.id} />
+      {/* NOI & Cap Rate */}
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in">
+        <h2 className="text-sm font-semibold mb-3">Betriebskennzahlen</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {(() => {
+            const noi = (property.monthlyRent - property.monthlyExpenses) * 12;
+            const capRate = property.currentValue > 0 ? (noi / property.currentValue) * 100 : 0;
+            const operatingRatio = property.monthlyRent > 0 ? (property.monthlyExpenses / property.monthlyRent) * 100 : 0;
+            const rentPerUnit = property.units > 0 ? property.monthlyRent / property.units : 0;
+            return [
+              { label: "NOI (Netto-Betriebsergebnis)", value: formatCurrency(noi), good: noi > 0 },
+              { label: "Cap Rate", value: `${capRate.toFixed(2)}%`, good: capRate >= 4 },
+              { label: "Betriebskostenquote", value: `${operatingRatio.toFixed(0)}%`, good: operatingRatio <= 30 },
+              { label: "Miete/Einheit", value: formatCurrency(rentPerUnit), good: true },
+            ].map(item => (
+              <div key={item.label}>
+                <div className="text-xs text-muted-foreground mb-1">{item.label}</div>
+                <div className={`text-lg font-bold ${item.good ? "text-profit" : "text-loss"}`}>{item.value}</div>
+              </div>
+            ));
+          })()}
+        </div>
+      </div>
 
       {/* Meter Management */}
       <MeterManagement propertyId={property.id} />
