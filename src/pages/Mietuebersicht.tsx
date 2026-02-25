@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
 import BankMatching from "@/components/BankMatching";
+import Mahnwesen from "@/components/Mahnwesen";
+import MietTrendChart from "@/components/MietTrendChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Mietuebersicht = () => {
@@ -101,6 +103,8 @@ const Mietuebersicht = () => {
       <Tabs defaultValue="zahlungen" className="w-full">
         <TabsList>
           <TabsTrigger value="zahlungen">Zahlungen</TabsTrigger>
+          <TabsTrigger value="mahnwesen">Mahnwesen</TabsTrigger>
+          <TabsTrigger value="trend">Trend</TabsTrigger>
           <TabsTrigger value="bank">Bank-Abgleich</TabsTrigger>
         </TabsList>
 
@@ -218,6 +222,14 @@ const Mietuebersicht = () => {
               })}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="mahnwesen" className="mt-4">
+          <Mahnwesen />
+        </TabsContent>
+
+        <TabsContent value="trend" className="mt-4">
+          <MietTrendChart />
         </TabsContent>
 
         <TabsContent value="bank" className="mt-4">
