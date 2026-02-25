@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3 } from "lucide-react";
 import PortfolioGoals from "@/components/PortfolioGoals";
+import PortfolioForecast from "@/components/PortfolioForecast";
+import RenditeRanking from "@/components/RenditeRanking";
+import DiversifikationsScore from "@/components/DiversifikationsScore";
+import WasserfallChart from "@/components/WasserfallChart";
+import SteuerHelfer from "@/components/SteuerHelfer";
+import TilgungsProgress from "@/components/TilgungsProgress";
 import QuickNoteWidget from "@/components/QuickNoteWidget";
 import OccupancyTracker from "@/components/OccupancyTracker";
 import DebtEquityWidget from "@/components/DebtEquityWidget";
@@ -554,6 +560,24 @@ ${properties.map(p => `<tr>
 
       {/* Overdue Payment Banner */}
       <OverduePaymentBanner />
+
+      {/* Portfolio Forecast + Rendite Ranking */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <PortfolioForecast />
+        <RenditeRanking />
+      </div>
+
+      {/* Cashflow Waterfall + Diversification */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <WasserfallChart />
+        <DiversifikationsScore />
+      </div>
+
+      {/* Tilgungs Progress + Steuer Helfer */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <TilgungsProgress />
+        <SteuerHelfer />
+      </div>
 
       {/* Debt/Equity + Net Worth */}
       <div className="grid md:grid-cols-2 gap-3">

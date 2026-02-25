@@ -20,6 +20,8 @@ import PropertyBenchmark from "@/components/PropertyBenchmark";
 import ExpensePieChart from "@/components/ExpensePieChart";
 import DocumentExpiryTracker from "@/components/DocumentExpiryTracker";
 import MeterManagement from "@/components/MeterManagement";
+import AfACalculator from "@/components/AfACalculator";
+import KautionsOverview from "@/components/KautionsOverview";
 import { HandoverProtocol } from "@/components/HandoverProtocol";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import { supabase } from "@/integrations/supabase/client";
@@ -365,6 +367,12 @@ const PropertyDetail = () => {
 
       {/* Benchmark */}
       <PropertyBenchmark propertyId={property.id} />
+
+      {/* AfA Calculator */}
+      <AfACalculator />
+
+      {/* Kautions Overview */}
+      <KautionsOverview propertyId={property.id} />
 
       {/* Value History */}
       <PropertyValueHistory propertyId={property.id} currentValue={property.currentValue} purchasePrice={property.purchasePrice} />
