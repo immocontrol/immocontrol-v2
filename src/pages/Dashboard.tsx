@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3 } from "lucide-react";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import QuickNoteWidget from "@/components/QuickNoteWidget";
 import OccupancyTracker from "@/components/OccupancyTracker";
@@ -316,6 +316,16 @@ ${properties.map(p => `<tr>
     toast.success("Portfolio-Zusammenfassung kopiert!");
   };
 
+  // New Feature: LTV ratio
+  const portfolioLTV = stats.totalValue > 0 ? (stats.totalDebt / stats.totalValue * 100) : 0;
+  // New Feature: Vacancy rate from tenants
+  const totalUnitsFromProps = properties.reduce((s, p) => s + p.units, 0);
+  const occupiedUnits = allTenants.filter(t => t.is_active).length;
+  const vacancyRate = totalUnitsFromProps > 0 ? ((totalUnitsFromProps - occupiedUnits) / totalUnitsFromProps * 100) : 0;
+  // New Feature: Annual income
+  const annualIncome = stats.totalRent * 12;
+  const annualCashflow = stats.totalCashflow * 12;
+
   return (
     <div className="space-y-6" role="main" aria-label="Portfolio Dashboard">
       <div className="flex items-center justify-between">
@@ -386,6 +396,26 @@ ${properties.map(p => `<tr>
           icon={<Ruler className="h-4 w-4" />}
           delay={200}
         />
+      </div>
+
+      {/* New: Quick KPI row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "210ms" }}>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
+          <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "220ms" }}>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
+          <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "230ms" }}>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
+          <p className="text-lg font-bold">{formatCurrency(annualIncome)}</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "240ms" }}>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahres-Cashflow</p>
+          <p className={`text-lg font-bold ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
+        </div>
       </div>
 
       {/* Debt overview + Improvement 3: Monthly cost summary */}

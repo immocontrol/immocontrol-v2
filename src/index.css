@@ -385,4 +385,82 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  /* New: Glass card effect */
+  .glass-card {
+    background: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* New: Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* New: Slide up animation for cards */
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* New: Hover lift effect */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -8px hsl(var(--primary) / 0.15);
+  }
+
+  /* New: Skeleton shimmer improved */
+  .shimmer-enhanced {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted) / 0.5) 50%, hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmerEnhanced 1.5s infinite;
+  }
+  @keyframes shimmerEnhanced {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+
+  /* New: Badge pulse for notifications */
+  .badge-pulse {
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+  @keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* New: Focus ring improvement */
+  .focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 0.15s ease;
+  }
+  .focus-ring:focus-visible {
+    outline-color: hsl(var(--primary));
+  }
+
+  /* New: Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
 }

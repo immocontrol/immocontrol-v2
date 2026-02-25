@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download } from "lucide-react";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -179,6 +179,17 @@ const ContactManagement = () => {
   const activeAssignments = Object.values(contactTicketCounts).reduce((s, c) => s + c, 0);
   const totalSpent = Object.values(contactCosts).reduce((s, c) => s + c, 0);
 
+  // New: Duplicate detection
+  const possibleDuplicates = useMemo(() => {
+    const seen = new Map<string, string[]>();
+    contacts.forEach(c => {
+      const key = c.name.toLowerCase().trim();
+      if (!seen.has(key)) seen.set(key, []);
+      seen.get(key)!.push(c.id);
+    });
+    return Array.from(seen.values()).filter(ids => ids.length > 1).flat();
+  }, [contacts]);
+
   return (
     <div className="space-y-6" role="main" aria-label="Kontaktverwaltung">
       <div className="flex items-center justify-between">
@@ -188,6 +199,7 @@ const ContactManagement = () => {
             {contacts.length} Kontakte · {handworkerCount} Handwerker
             {activeAssignments > 0 && <span> · {activeAssignments} aktive Aufträge</span>}
             {totalSpent > 0 && <span> · {formatCurrency(totalSpent)} Gesamtkosten</span>}
+            {possibleDuplicates.length > 0 && <span className="text-gold"> · ⚠ {possibleDuplicates.length / 2} mögliche Duplikate</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -347,7 +359,7 @@ const ContactManagement = () => {
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
             return (
-              <div key={c.id} className="gradient-card rounded-xl border border-border p-4 group hover:border-primary/20 transition-all duration-200 hover:shadow-sm">
+              <div key={c.id} className={`gradient-card rounded-xl border p-4 group hover:border-primary/20 transition-all duration-200 hover:shadow-sm hover-lift ${possibleDuplicates.includes(c.id) ? "border-gold/30" : "border-border"}`}>
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <CatIcon className="h-4 w-4 text-primary" />
