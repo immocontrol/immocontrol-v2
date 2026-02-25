@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_transactions: {
+        Row: {
+          amount: number
+          bic: string | null
+          booking_date: string
+          booking_text: string | null
+          created_at: string
+          currency: string
+          iban: string | null
+          id: string
+          match_confidence: string | null
+          matched_payment_id: string | null
+          reference: string | null
+          sender_receiver: string | null
+          user_id: string
+          value_date: string | null
+        }
+        Insert: {
+          amount: number
+          bic?: string | null
+          booking_date: string
+          booking_text?: string | null
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          match_confidence?: string | null
+          matched_payment_id?: string | null
+          reference?: string | null
+          sender_receiver?: string | null
+          user_id: string
+          value_date?: string | null
+        }
+        Update: {
+          amount?: number
+          bic?: string | null
+          booking_date?: string
+          booking_text?: string | null
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          match_confidence?: string | null
+          matched_payment_id?: string | null
+          reference?: string | null
+          sender_receiver?: string | null
+          user_id?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_matched_payment_id_fkey"
+            columns: ["matched_payment_id"]
+            isOneToOne: false
+            referencedRelation: "rent_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           address: string | null
