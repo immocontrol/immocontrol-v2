@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -19,11 +19,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 const navItems = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
   { path: "/darlehen", label: "Darlehen", icon: Landmark, shortcut: "2" },
-  { path: "/forecast", label: "Forecast", icon: CalendarDays, shortcut: "3" },
-  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "4" },
-  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "5" },
-  { path: "/analyse", label: "Analyse", icon: Calculator, shortcut: "6" },
-  { path: "/einstellungen", label: "Einstellungen", icon: Settings, shortcut: "7" },
+  { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
+  { path: "/nebenkosten", label: "Nebenkosten", icon: FileText, shortcut: "4" },
+  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
+  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
+  { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
+  { path: "/analyse", label: "Analyse", icon: Calculator, shortcut: "8" },
+  { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
 
 interface AppLayoutProps {

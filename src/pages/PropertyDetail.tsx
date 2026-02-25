@@ -19,6 +19,7 @@ import InsuranceTracker from "@/components/InsuranceTracker";
 import PropertyBenchmark from "@/components/PropertyBenchmark";
 import ExpensePieChart from "@/components/ExpensePieChart";
 import DocumentExpiryTracker from "@/components/DocumentExpiryTracker";
+import MeterManagement from "@/components/MeterManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -367,6 +368,9 @@ const PropertyDetail = () => {
 
       {/* Insurance Tracker */}
       <InsuranceTracker propertyId={property.id} />
+
+      {/* Meter Management */}
+      <MeterManagement propertyId={property.id} />
 
       {/* Document Expiry Tracker */}
       <DocumentExpiryTracker propertyId={property.id} />
