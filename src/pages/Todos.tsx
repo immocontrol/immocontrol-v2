@@ -621,8 +621,9 @@ const TodoRow = ({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
 
   return (
     <div className={cn(
-      "group flex items-start gap-3 gradient-card border border-border rounded-xl px-4 py-3 hover:border-primary/20 transition-all",
-      todo.completed && "opacity-50"
+      "group flex items-start gap-3 gradient-card border border-border rounded-xl px-4 py-3 hover:border-primary/20 transition-all hover-lift",
+      todo.completed && "opacity-50",
+      isOver && "border-loss/30 bg-loss/5"
     )}>
       <button
         onClick={() => onToggle(todo)}

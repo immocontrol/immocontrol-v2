@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2 } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3 } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -87,6 +87,12 @@ const PropertyDetail = () => {
   const cashOnCash = eigenkapital > 0 ? ((property.monthlyCashflow * 12) / eigenkapital) * 100 : 0;
   const mietmultiplikator = property.monthlyRent > 0 ? property.purchasePrice / (property.monthlyRent * 12) : 0;
   const ltv = property.currentValue > 0 ? (property.remainingDebt / property.currentValue) * 100 : 0;
+  // New Feature: DSCR (Debt Service Coverage Ratio)
+  const dscr = property.monthlyCreditRate > 0 ? (property.monthlyRent - property.monthlyExpenses) / property.monthlyCreditRate : 0;
+  // New Feature: Break-even occupancy
+  const breakEvenOccupancy = property.monthlyRent > 0 ? ((property.monthlyExpenses + property.monthlyCreditRate) / property.monthlyRent) * 100 : 0;
+  // New Feature: Price per unit
+  const pricePerUnit = property.units > 0 ? property.purchasePrice / property.units : 0;
 
   // Besitzdauer
   const purchaseDate = new Date(property.purchaseDate);
@@ -235,13 +241,16 @@ const PropertyDetail = () => {
       {/* Rendite - Improvement 8: Traffic light colors */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
         <h2 className="text-sm font-semibold mb-4">Renditekennzahlen</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Brutto-Rendite", value: bruttoRendite, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 5, mid: (v: number) => v >= 3 },
             { label: "Netto-Rendite", value: nettoRendite, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 3, mid: (v: number) => v >= 1.5 },
             { label: "Cash-on-Cash", value: cashOnCash, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 5, mid: (v: number) => v >= 2 },
             { label: "Mietmultiplikator", value: mietmultiplikator, format: (v: number) => v > 0 ? `${v.toFixed(1)}x` : "–", good: (v: number) => v > 0 && v <= 20, mid: (v: number) => v > 0 && v <= 25 },
             { label: "LTV", value: ltv, format: (v: number) => `${v.toFixed(1)}%`, good: (v: number) => v <= 60, mid: (v: number) => v <= 80 },
+            { label: "DSCR", value: dscr, format: (v: number) => v > 0 ? `${v.toFixed(2)}x` : "–", good: (v: number) => v >= 1.3, mid: (v: number) => v >= 1.0 },
+            { label: "Break-Even", value: breakEvenOccupancy, format: (v: number) => `${v.toFixed(0)}%`, good: (v: number) => v <= 70, mid: (v: number) => v <= 90 },
+            { label: "Preis/Einheit", value: pricePerUnit, format: (v: number) => formatCurrency(v), good: () => true, mid: () => false },
           ].map((item) => (
             <div key={item.label} className="relative">
               <div className="text-xs text-muted-foreground mb-1">{item.label}</div>

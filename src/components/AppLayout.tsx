@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -9,8 +9,8 @@ import { NotificationBell } from "@/components/NotificationBell";
 import BackToTop from "@/components/BackToTop";
 import ScrollProgress from "@/components/ScrollProgress";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
-import GlobalQuickTodo from "@/components/GlobalQuickTodo";
 import { KeyboardShortcutHelp } from "@/components/KeyboardShortcutHelp";
+import ImmoAIBubble from "@/components/ImmoAIBubble";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
@@ -18,14 +18,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 const navItems = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
-  { path: "/darlehen", label: "Darlehen", icon: Landmark, shortcut: "2" },
+  { path: "/darlehen", label: "Finanzen", icon: Landmark, shortcut: "2" },
   { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
-  { path: "/nebenkosten", label: "Nebenkosten", icon: FileText, shortcut: "4" },
-  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
-  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
-  { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
-  { path: "/analyse", label: "Analyse", icon: Calculator, shortcut: "8" },
-  { path: "/immo-ai", label: "Immo AI", icon: Sparkles, shortcut: "0" },
+  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "4" },
+  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "5" },
+  { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "6" },
   { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
 
@@ -95,10 +92,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (e.key === "q" && !e.altKey && !e.ctrlKey && !e.metaKey) {
-        document.querySelector<HTMLButtonElement>("[data-global-quick-todo]")?.click();
-        return;
-      }
+      // removed quick todo shortcut
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
       const item = navItems.find(n => n.shortcut === e.key);
       if (item) {
@@ -273,7 +267,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </footer>
 
       <BackToTop />
-      <GlobalQuickTodo />
+      <ImmoAIBubble />
 
       {/* Mobile nav with sliding dot */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom" role="navigation" aria-label="Mobile Navigation">
