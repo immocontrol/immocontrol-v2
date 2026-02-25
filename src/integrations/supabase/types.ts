@@ -14,8 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_accounts: {
+        Row: {
+          bank_name: string | null
+          bic: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          is_default: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bank_matching_rules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          match_type: string
+          match_value: string
+          name: string
+          property_id: string | null
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          match_type?: string
+          match_value?: string
+          name?: string
+          property_id?: string | null
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          match_type?: string
+          match_value?: string
+          name?: string
+          property_id?: string | null
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_matching_rules_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_matching_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transactions: {
         Row: {
+          account_id: string | null
           amount: number
           bic: string | null
           booking_date: string
@@ -32,6 +117,7 @@ export type Database = {
           value_date: string | null
         }
         Insert: {
+          account_id?: string | null
           amount: number
           bic?: string | null
           booking_date: string
@@ -48,6 +134,7 @@ export type Database = {
           value_date?: string | null
         }
         Update: {
+          account_id?: string | null
           amount?: number
           bic?: string | null
           booking_date?: string
@@ -64,6 +151,13 @@ export type Database = {
           value_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bank_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bank_transactions_matched_payment_id_fkey"
             columns: ["matched_payment_id"]
