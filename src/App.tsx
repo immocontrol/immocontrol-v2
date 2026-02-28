@@ -34,6 +34,8 @@ const berichteImport = () => import("@/pages/Berichte");
 const mietuebersichtImport = () => import("@/pages/Mietuebersicht");
 const immoAIImport = () => import("@/pages/ImmoAI");
 const vertraegeImport = () => import("@/pages/Vertraege");
+const crmImport = () => import("@/pages/CRM");
+const dealsImport = () => import("@/pages/Deals");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -54,6 +56,8 @@ const Berichte = lazy(berichteImport);
 const Mietuebersicht = lazy(mietuebersichtImport);
 const ImmoAI = lazy(immoAIImport);
 const Vertraege = lazy(vertraegeImport);
+const CRM = lazy(crmImport);
+const Deals = lazy(dealsImport);
 
 // Preload all routes after initial render to eliminate loading on tab switch
 const preloadRoutes = () => {
@@ -70,6 +74,8 @@ const preloadRoutes = () => {
   berichteImport();
   mietuebersichtImport();
   vertraegeImport();
+  crmImport();
+  dealsImport();
 };
 
 const PageLoader = () => (
@@ -200,6 +206,8 @@ const RoleRouter = () => {
           <Route path="/mietuebersicht" element={<Mietuebersicht />} />
           <Route path="/immo-ai" element={<ImmoAI />} />
           <Route path="/vertraege" element={<Vertraege />} />
+          <Route path="/crm" element={<CRM />} />
+          <Route path="/deals" element={<Deals />} />
           <Route path="/einstellungen" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

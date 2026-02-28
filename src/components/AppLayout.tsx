@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -12,6 +12,7 @@ import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import { KeyboardShortcutHelp } from "@/components/KeyboardShortcutHelp";
 import ImmoAIBubble from "@/components/ImmoAIBubble";
 import { Button } from "@/components/ui/button";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,6 +25,8 @@ const navItems = [
   { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
   { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
   { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
+  { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
+  { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
   { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
 
@@ -211,6 +214,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               />
             </nav>
             <div className="flex items-center gap-1.5 ml-2">
+              <GlobalSearch />
               {/* Quick theme toggle */}
               <Button
                 variant="ghost"
@@ -220,18 +224,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 aria-label={theme === "dark" ? "Helles Design" : "Dunkles Design"}
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
-              {/* Command palette trigger */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground hidden md:flex"
-                onClick={() => {
-                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-                }}
-                aria-label="Suche öffnen (⌘K)"
-              >
-                <Search className="h-4 w-4" />
               </Button>
               <KeyboardShortcutHelp />
               <NotificationBell />
