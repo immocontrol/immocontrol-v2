@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download } from "lucide-react";
+import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
 import AddContactDialog from "@/components/AddContactDialog";
@@ -55,6 +55,7 @@ const ContactManagement = () => {
   const [open, setOpen] = useState(false);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editContact, setEditContact] = useState<ContactItem | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
   const [form, setForm] = useState({
     name: "", company: "", category: "Handwerker",
     email: "", phone: "", address: "", notes: "",
@@ -146,11 +147,28 @@ const ContactManagement = () => {
     onError: (e: Error) => toast.error(e.message || "Fehler"),
   });
 
+  // Soft delete: move to trash
   const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    },
+    onSuccess: () => { toast.success("Kontakt in Papierkorb verschoben"); invalidate(); },
+  });
+
+  // Restore from trash
+  const restoreMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("contacts").update({ deleted_at: null }).eq("id", id);
+    },
+    onSuccess: () => { toast.success("Kontakt wiederhergestellt"); invalidate(); },
+  });
+
+  // Permanently delete
+  const permanentDeleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("contacts").delete().eq("id", id);
     },
-    onSuccess: () => { toast.success("Kontakt entfernt"); invalidate(); },
+    onSuccess: () => { toast.success("Kontakt endg\u00fcltig gel\u00f6scht"); invalidate(); },
   });
 
   const openEdit = (c: ContactItem) => {
@@ -226,6 +244,14 @@ const ContactManagement = () => {
           )}
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCsvImportOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> CSV importieren
+          </Button>
+          <Button
+            variant={showTrash ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowTrash(!showTrash)}
+          >
+            <Archive className="h-3.5 w-3.5" /> {showTrash ? "Zur\u00fcck" : "Papierkorb"}
           </Button>
           <AddContactDialog onCreated={() => invalidate()} />
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
@@ -427,7 +453,7 @@ const ContactManagement = () => {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Kontakt löschen?</AlertDialogTitle>
-                          <AlertDialogDescription>„{c.name}" wird unwiderruflich entfernt.</AlertDialogDescription>
+                                          <AlertDialogDescription>„{c.name}“ wird in den Papierkorb verschoben.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Abbrechen</AlertDialogCancel>

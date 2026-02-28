@@ -51,7 +51,7 @@ const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
         <kbd className="hidden sm:inline text-[10px] ml-1 px-1 py-0.5 rounded bg-primary/10 text-primary/70">Q</kbd>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-52 p-1 bg-popover border border-border rounded-lg shadow-lg z-50 animate-fade-in">
+        <div className="absolute right-0 top-full mt-1 w-52 p-1 bg-popover border border-border rounded-lg shadow-lg z-[9999] animate-fade-in">
           {actions.map(action => {
             const Icon = action.icon;
             return (
