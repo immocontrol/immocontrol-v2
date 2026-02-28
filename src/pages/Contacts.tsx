@@ -143,7 +143,7 @@ const ContactManagement = () => {
       setOpen(false);
       invalidate();
     },
-    onError: (e: any) => toast.error(e.message || "Fehler"),
+    onError: (e: Error) => toast.error(e.message || "Fehler"),
   });
 
   const deleteMutation = useMutation({

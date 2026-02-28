@@ -296,6 +296,22 @@ ${properties.map(p => {
         <p className="text-sm text-muted-foreground mt-1">Miet-, Objekt- und Steuerberichte auf Knopfdruck</p>
       </div>
 
+      {/* Quick Summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="gradient-card rounded-xl border border-border p-3 text-center">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
+          <p className="text-lg font-bold text-profit">{formatCurrency(properties.reduce((s, p) => s + p.monthlyRent * 12, 0))}</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahreskosten</p>
+          <p className="text-lg font-bold text-loss">{formatCurrency(properties.reduce((s, p) => s + p.monthlyExpenses * 12, 0))}</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Berichte</p>
+          <p className="text-lg font-bold">7 verfügbar</p>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <Select value={year} onValueChange={setYear}>

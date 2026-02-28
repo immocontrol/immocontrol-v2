@@ -278,6 +278,9 @@ const Loans = () => {
   // Feature: Total loan amount vs remaining
   const totalLoanAmount = filteredLoans.reduce((s, l) => s + l.loan_amount, 0);
   const totalTilgungsfortschritt = totalLoanAmount > 0 ? ((totalLoanAmount - totalBalance) / totalLoanAmount * 100) : 0;
+  // Improvement: Refinancing alert - loans with rates above market average
+  const MARKET_RATE_THRESHOLD = 3.5;
+  const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
 
   const now = new Date();
   const zinsBindungData = filteredLoans
@@ -327,7 +330,14 @@ const Loans = () => {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Landmark className="h-6 w-6 text-primary" /> Darlehen
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{loans.length} Darlehen · {formatCurrency(totalBalance)} Restschuld</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {loans.length} Darlehen · {formatCurrency(totalBalance)} Restschuld
+            {highRateLoans.length > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gold/10 text-gold">
+                <AlertTriangle className="h-3 w-3" /> {highRateLoans.length} über {MARKET_RATE_THRESHOLD}% Zins
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Ownership filter */}

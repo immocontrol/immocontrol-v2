@@ -69,6 +69,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 type FilterType = "alle" | "egbr" | "privat";
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
+type TypeFilter = "alle" | "MFH" | "ETW" | "EFH" | "Gewerbe";
 
 const Dashboard = () => {
   const { properties, loading, stats } = useProperties();
@@ -87,6 +88,7 @@ const Dashboard = () => {
     enabled: !!user,
   });
   const [filter, setFilter] = useState<FilterType>("alle");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("alle");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 200);
   const [sort, setSort] = useState<SortType>("name");
@@ -188,6 +190,7 @@ ${properties.map(p => `<tr>
   const filteredProperties = useMemo(() => {
     let result = properties.filter((p) => {
       if (filter !== "alle" && p.ownership !== filter) return false;
+      if (typeFilter !== "alle" && p.type !== typeFilter) return false;
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();
         return p.name.toLowerCase().includes(q) || (p.address || "").toLowerCase().includes(q) || p.type.toLowerCase().includes(q);
@@ -210,7 +213,7 @@ ${properties.map(p => `<tr>
     });
 
     return result;
-  }, [properties, filter, debouncedSearch, sort]);
+  }, [properties, filter, typeFilter, debouncedSearch, sort]);
 
   // Feature 10: Best/Worst performer
   const bestPerformer = useMemo(() => {
@@ -738,6 +741,20 @@ ${properties.map(p => `<tr>
               )}
             </button>
           ))}
+          {/* Property type quick-filter chips */}
+          <div className="hidden sm:flex items-center gap-1 ml-2 border-l border-border pl-2">
+            {(["alle", "MFH", "ETW", "EFH", "Gewerbe"] as TypeFilter[]).map(t => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`text-[10px] px-2 py-1 rounded font-medium transition-colors ${
+                  typeFilter === t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                {t === "alle" ? "Typ: Alle" : t}
+              </button>
+            ))}
+          </div>
           <button
             onClick={handleRefresh}
             className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"

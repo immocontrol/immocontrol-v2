@@ -378,7 +378,7 @@ const Todos = () => {
               {view === "inbox" ? "Eingang" : view === "today" ? "Heute" : view === "upcoming" ? "Geplant" : "Erledigt"}
             </h2>
             {overdueCount > 0 && view !== "completed" && (
-              <p className="text-xs text-red-500 mt-0.5">{overdueCount} überfällig</p>
+              <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1"><Clock className="h-3 w-3" /> {overdueCount} überfällig</p>
             )}
           </div>
           <div className="flex items-center gap-2">
