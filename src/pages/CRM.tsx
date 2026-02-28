@@ -103,8 +103,8 @@ const CRM = () => {
       });
       if (error) throw error;
       setPlacesResults(data.places || []);
-    } catch (err: any) {
-      toast.error("Fehler bei der Suche: " + (err.message || "Unbekannt"));
+    } catch (err: unknown) {
+      toast.error("Fehler bei der Suche: " + (err instanceof Error ? err.message : "Unbekannt"));
     } finally {
       setPlacesLoading(false);
     }
@@ -129,7 +129,7 @@ const CRM = () => {
       queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
       toast.success("Lead gespeichert");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   // Add manual lead
@@ -147,7 +147,7 @@ const CRM = () => {
       setAddDialogOpen(false);
       setAddForm({ name: "", company: "", phone: "", email: "", address: "", category: "geschaeft", notes: "" });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   // Log a call
@@ -179,7 +179,7 @@ const CRM = () => {
       setLogDialogOpen(false);
       setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   // Update lead status

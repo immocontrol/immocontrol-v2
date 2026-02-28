@@ -41,9 +41,9 @@ const Einladung = () => {
 
         setStatus("success");
         setMessage(data.message);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStatus("error");
-        setMessage(err.message || "Unbekannter Fehler");
+        setMessage(err instanceof Error ? err.message : "Unbekannter Fehler");
       }
     };
 

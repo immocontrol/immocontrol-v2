@@ -106,9 +106,9 @@ export default function ImmoAI() {
           }
         }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("ImmoAI error:", e);
-      toast.error(e.message || "Fehler bei der AI-Anfrage");
+      toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "❌ Es ist ein Fehler aufgetreten. Bitte versuche es erneut." },

@@ -56,6 +56,7 @@ const Onboarding = () => {
           investor_type: investorType || undefined,
           strategy: strategy || undefined,
           onboarding_completed: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .eq("user_id", user.id);
 
@@ -63,8 +64,8 @@ const Onboarding = () => {
       toast.success("Willkommen bei ImmoControl! 🏠");
       // Full reload to reset RoleRouter state
       window.location.href = "/";
-    } catch (error: any) {
-      toast.error("Fehler beim Speichern: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannt"));
       setSaving(false);
     }
   }, [user, saving, displayName, investorType, strategy]);
@@ -75,6 +76,7 @@ const Onboarding = () => {
     try {
       await supabase
         .from("profiles")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .update({ onboarding_completed: true } as any)
         .eq("user_id", user.id);
     } catch {
