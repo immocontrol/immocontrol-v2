@@ -272,8 +272,8 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
       if (error) throw error;
       toast.success(data.message || `${data.created} Zahlungen erstellt`);
       fetchPayments();
-    } catch (e: any) {
-      toast.error(e.message || "Fehler bei automatischer Erstellung");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Fehler bei automatischer Erstellung");
     } finally {
       setAutoGenerating(false);
     }
@@ -289,8 +289,8 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
       if (error) throw error;
       toast.success(data.message || `${data.marked} als überfällig markiert`);
       fetchPayments();
-    } catch (e: any) {
-      toast.error(e.message || "Fehler");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Fehler");
     } finally {
       setMarkingOverdue(false);
     }

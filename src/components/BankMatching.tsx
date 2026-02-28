@@ -348,8 +348,8 @@ const BankMatching = () => {
       toast.success(`${rows.length} Transaktionen importiert`);
       queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
       setImportOpen(false);
-    } catch (err: any) {
-      toast.error("Import fehlgeschlagen: " + (err?.message || "Fehler"));
+    } catch (err: unknown) {
+      toast.error("Import fehlgeschlagen: " + (err instanceof Error ? err.message : "Fehler"));
     } finally {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";

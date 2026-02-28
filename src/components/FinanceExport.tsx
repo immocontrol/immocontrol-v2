@@ -87,7 +87,7 @@ export const FinanceExportDialog = () => {
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`Steuer-Export ${year} heruntergeladen`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error("Fehler beim Export");
     } finally {
       setLoading(false);
@@ -213,7 +213,7 @@ ${(payments || []).map((p: any) => {
         printWindow.print();
       }
       toast.success(`Jahresbericht ${year} geöffnet`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error("Fehler beim Erstellen des Berichts");
     } finally {
       setLoading(false);

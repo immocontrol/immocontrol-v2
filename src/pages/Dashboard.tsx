@@ -186,7 +186,7 @@ ${properties.map(p => `<tr>
 
   // Feature 1 + 2 + filter
   const filteredProperties = useMemo(() => {
-    let result = properties.filter((p) => {
+    const result = properties.filter((p) => {
       if (filter !== "alle" && p.ownership !== filter) return false;
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();

@@ -35,7 +35,7 @@ export default function ImmoAIBubble() {
 
   // Improvement 1: Persist chat history
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-50))); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-50))); } catch { /* localStorage may be unavailable */ }
   }, [messages]);
 
   // Improvement 2: Alt+0 keyboard shortcut
@@ -124,9 +124,9 @@ export default function ImmoAIBubble() {
           }
         }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("ImmoAI error:", e);
-      toast.error(e.message || "Fehler bei der AI-Anfrage");
+      toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "❌ Fehler aufgetreten. Bitte erneut versuchen." },

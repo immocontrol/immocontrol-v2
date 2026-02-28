@@ -341,8 +341,8 @@ export const SelbstauskunftGenerator = () => {
 
       doc.save(`Selbstauskunft_${data.name || "Entwurf"}_${new Date().toISOString().split("T")[0]}.pdf`);
       toast.success("Selbstauskunft als PDF heruntergeladen!");
-    } catch (err: any) {
-      toast.error("Fehler beim Erstellen: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Fehler beim Erstellen: " + (err instanceof Error ? err.message : "Unbekannt"));
     } finally {
       setGenerating(false);
     }

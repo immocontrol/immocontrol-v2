@@ -79,8 +79,8 @@ const Auth = () => {
           toast.success("Konto erstellt! Bitte bestätige deine E-Mail-Adresse.");
         }
       }
-    } catch (error: any) {
-      toast.error(translateError(error.message || "Ein Fehler ist aufgetreten"));
+    } catch (error: unknown) {
+      toast.error(translateError(error instanceof Error ? error.message : "Ein Fehler ist aufgetreten"));
     } finally {
       setLoading(false);
     }
@@ -295,8 +295,8 @@ const Auth = () => {
                         const { error } = await supabase.auth.signInAnonymously();
                         if (error) throw error;
                         toast.success("Test-Zugang erstellt! 🧪");
-                      } catch (error: any) {
-                        toast.error(translateError(error.message || "Test-Login fehlgeschlagen"));
+                      } catch (error: unknown) {
+                        toast.error(translateError(error instanceof Error ? error.message : "Test-Login fehlgeschlagen"));
                       } finally {
                         setLoading(false);
                       }
