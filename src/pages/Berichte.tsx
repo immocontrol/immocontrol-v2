@@ -289,9 +289,10 @@ ${properties.map(p => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label="Berichte-Center">
+      {/* Improvement 10: Mobile responsive heading */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <FileBarChart className="h-6 w-6 text-primary" /> Berichte-Center
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+          <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Berichte-Center
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Miet-, Objekt- und Steuerberichte auf Knopfdruck</p>
       </div>
@@ -333,8 +334,8 @@ ${properties.map(p => {
         </Select>
       </div>
 
-      {/* Report cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Improvement 11: Report cards with stagger animation + hover glow */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 list-stagger">
         {/* Mietbericht */}
         <div className="gradient-card rounded-xl border border-border p-5 space-y-3">
           <div className="flex items-center gap-2">

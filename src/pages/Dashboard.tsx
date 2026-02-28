@@ -448,21 +448,21 @@ ${properties.map(p => `<tr>
         />
       </div>
 
-      {/* Quick KPI row */}
+      {/* Improvement 15: Quick KPI row with card-hover-glow */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "210ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "210ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "220ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "220ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "230ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "230ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
           <p className="text-lg font-bold">{formatCurrency(annualIncome)}</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "240ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "240ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahres-Cashflow</p>
           <p className={`text-lg font-bold ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
         </div>
@@ -818,7 +818,7 @@ ${properties.map(p => `<tr>
           </Button>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 list-stagger">
           {filteredProperties.map((property, i) => (
             <PropertyCard
               key={property.id}

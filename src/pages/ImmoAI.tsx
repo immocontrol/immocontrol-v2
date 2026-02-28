@@ -23,8 +23,21 @@ const SUGGESTIONS = [
 
 export default function ImmoAI() {
   const { session } = useAuth();
-  const [messages, setMessages] = useState<Msg[]>([]);
+  // Improvement 6: Persist chat in localStorage
+  const [messages, setMessages] = useState<Msg[]>(() => {
+    try {
+      const saved = localStorage.getItem("immoai_chat");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [input, setInput] = useState("");
+
+  // Persist messages to localStorage on change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("immoai_chat", JSON.stringify(messages.slice(-50)));
+    }
+  }, [messages]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -148,7 +161,7 @@ export default function ImmoAI() {
           </p>
         </div>
         {messages.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => setMessages([])}>
+          <Button variant="outline" size="sm" onClick={() => { setMessages([]); localStorage.removeItem("immoai_chat"); }}>
             <Trash2 className="h-4 w-4 mr-1" /> Neuer Chat
           </Button>
         )}
@@ -156,7 +169,8 @@ export default function ImmoAI() {
 
       <Card className="border-border/50">
         <CardContent className="p-0">
-          <div ref={scrollRef} className="h-[calc(100vh-320px)] overflow-y-auto p-4 space-y-4">
+          {/* Improvement 7: Mobile-optimized chat height */}
+          <div ref={scrollRef} className="h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)] overflow-y-auto p-3 sm:p-4 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
                 <div className="bg-primary/10 rounded-full p-6">

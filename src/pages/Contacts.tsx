@@ -355,7 +355,8 @@ const ContactManagement = () => {
       ) : (
         <>
           <ContactStats contacts={contacts} />
-          <div className="grid gap-3 md:grid-cols-2">
+          {/* Improvement 14: Contact list with stagger animation */}
+          <div className="grid gap-3 md:grid-cols-2 list-stagger">
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
             return (

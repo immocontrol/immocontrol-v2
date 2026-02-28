@@ -728,6 +728,18 @@ const Loans = () => {
                         </span>
                       )}
                     </div>
+                    {/* Improvement 2: Loan payoff progress bar */}
+                    {l.loan_amount > 0 && (
+                      <div className="mt-1.5">
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+                          <span>Tilgung: {((1 - l.remaining_balance / l.loan_amount) * 100).toFixed(0)}%</span>
+                          <span>{formatCurrency(l.loan_amount - l.remaining_balance)} von {formatCurrency(l.loan_amount)}</span>
+                        </div>
+                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full progress-bar-animated" style={{ width: `${Math.max(1, (1 - l.remaining_balance / l.loan_amount) * 100)}%` }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <LoanPayoffSimulator remainingBalance={l.remaining_balance} interestRate={l.interest_rate} monthlyPayment={l.monthly_payment} bankName={l.bank_name} />

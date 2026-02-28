@@ -123,16 +123,17 @@ const CashForecast = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Improvement 4: Mobile responsive header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" /> Cashforecast
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Cashforecast
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {forecastWeeks}-Wochen-Vorschau · {properties.length} Objekte · {loans.length} Darlehen
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select value={scenario} onValueChange={v => setScenario(v as "normal" | "optimistic" | "pessimistic")}>
             <SelectTrigger className="h-9 w-40 text-sm">
               <SelectValue />
@@ -158,6 +159,18 @@ const CashForecast = () => {
           </Select>
         </div>
       </div>
+
+      {/* Improvement 5: Scenario description */}
+      {scenario !== "normal" && (
+        <div className={`rounded-lg border p-3 text-xs animate-fade-in ${
+          scenario === "optimistic" ? "border-profit/30 bg-profit/5 text-profit" : "border-loss/30 bg-loss/5 text-loss"
+        }`}>
+          <TrendingUp className="h-3.5 w-3.5 inline mr-1" />
+          {scenario === "optimistic"
+            ? "Optimistisch: +5% Einnahmen, -5% Ausgaben"
+            : "Pessimistisch: -10% Einnahmen, +10% Ausgaben"}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -21,6 +21,7 @@ const Mietuebersicht = () => {
   const debouncedSearch = useDebounce(search, 200);
   const [statusFilter, setStatusFilter] = useState("alle");
   const [propertyFilter, setPropertyFilter] = useState("alle");
+  const [monthFilter, setMonthFilter] = useState("alle");
 
   useEffect(() => { document.title = "Mietübersicht – ImmoControl"; }, []);
 
@@ -45,10 +46,25 @@ const Mietuebersicht = () => {
   const tenantMap = useMemo(() => Object.fromEntries(tenants.map(t => [t.id, t])), [tenants]);
   const propertyMap = useMemo(() => Object.fromEntries(properties.map(p => [p.id, p])), [properties]);
 
+  // Improvement 3: Available months for filter
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    payments.forEach(p => {
+      const d = new Date(p.due_date);
+      months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    });
+    return Array.from(months).sort().reverse();
+  }, [payments]);
+
   const filteredPayments = useMemo(() => {
     return payments.filter(p => {
       if (statusFilter !== "alle" && p.status !== statusFilter) return false;
       if (propertyFilter !== "alle" && p.property_id !== propertyFilter) return false;
+      if (monthFilter !== "alle") {
+        const d = new Date(p.due_date);
+        const pm = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (pm !== monthFilter) return false;
+      }
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();
         const tenant = tenantMap[p.tenant_id];
@@ -59,7 +75,7 @@ const Mietuebersicht = () => {
       }
       return true;
     });
-  }, [payments, statusFilter, propertyFilter, debouncedSearch, tenantMap, propertyMap]);
+  }, [payments, statusFilter, propertyFilter, monthFilter, debouncedSearch, tenantMap, propertyMap]);
 
   // Stats
   const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
@@ -188,6 +204,20 @@ const Mietuebersicht = () => {
                 {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            {/* Improvement 3: Month filter */}
+            {availableMonths.length > 1 && (
+              <Select value={monthFilter} onValueChange={setMonthFilter}>
+                <SelectTrigger className="h-9 w-[140px] text-sm"><SelectValue placeholder="Monat" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alle">Alle Monate</SelectItem>
+                  {availableMonths.map(m => {
+                    const [y, mo] = m.split("-");
+                    const label = new Date(Number(y), Number(mo) - 1).toLocaleDateString("de-DE", { month: "short", year: "numeric" });
+                    return <SelectItem key={m} value={m}>{label}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Payment list */}

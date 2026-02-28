@@ -485,6 +485,82 @@
     outline-color: hsl(var(--primary));
   }
 
+  /* Improvement: Smooth number transitions */
+  .animate-number {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Improvement: Card hover glow */
+  .card-hover-glow {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .card-hover-glow:hover {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.1), 0 4px 16px -4px hsl(var(--primary) / 0.08);
+    border-color: hsl(var(--primary) / 0.2);
+  }
+
+  /* Improvement: Stagger animation for list items */
+  .list-stagger > * {
+    animation: listSlideIn 0.3s ease-out both;
+  }
+  .list-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .list-stagger > *:nth-child(2) { animation-delay: 40ms; }
+  .list-stagger > *:nth-child(3) { animation-delay: 80ms; }
+  .list-stagger > *:nth-child(4) { animation-delay: 120ms; }
+  .list-stagger > *:nth-child(5) { animation-delay: 160ms; }
+  .list-stagger > *:nth-child(6) { animation-delay: 200ms; }
+  .list-stagger > *:nth-child(7) { animation-delay: 240ms; }
+  .list-stagger > *:nth-child(8) { animation-delay: 280ms; }
+  @keyframes listSlideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Improvement: Progress bar animation */
+  .progress-bar-animated {
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Improvement: Floating action button for mobile */
+  .fab-mobile {
+    position: fixed;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    right: 1rem;
+    z-index: 40;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.3);
+  }
+
+  /* Improvement: Better mobile bottom spacing */
+  @media (max-width: 768px) {
+    .mobile-bottom-space {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Improvement: Skeleton line */
+  .skeleton-line {
+    height: 12px;
+    border-radius: 4px;
+  }
+
+  /* Improvement 17: Touch-friendly tap targets for mobile */
+  @media (max-width: 768px) {
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    .compact-touch button, .compact-touch a {
+      min-height: unset;
+      min-width: unset;
+    }
+  }
+
   /* New: Scrollbar styling */
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
@@ -499,4 +575,37 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.4);
   }
+}
+
+/* Improvement 18: Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .list-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .progress-bar-animated {
+    transition: none !important;
+  }
+}
+
+/* Improvement 19: Smooth page transitions */
+.page-enter {
+  animation: pageSlideIn 0.25s ease-out;
+}
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Improvement 20: Better focus indicators for accessibility */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
 }

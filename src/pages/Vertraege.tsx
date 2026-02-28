@@ -49,8 +49,9 @@ const Vertraege = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto" role="main">
+      {/* Improvement 8: Mobile responsive heading */}
       <div>
-        <h1 className="text-2xl font-bold">Verträge & Verwaltung</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Mietverträge, Rechnungen und Dienstleisterverträge verwalten
         </p>
@@ -69,7 +70,7 @@ const Vertraege = () => {
         </div>
       )}
 
-      {/* Quick Stats */}
+      {/* Improvement 9: Quick Stats with card-hover-glow */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
