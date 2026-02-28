@@ -283,11 +283,47 @@
     .stat-card-value {
       font-size: 1.25rem;
     }
+    /* Mobile: Reduce padding on cards */
+    .gradient-card {
+      padding: 0.75rem;
+    }
+    /* Mobile: Stack dialog content */
+    [role="dialog"] .grid-cols-2 {
+      grid-template-columns: 1fr;
+    }
+    /* Mobile: Better touch feedback */
+    button:active, a:active, [role="button"]:active {
+      transform: scale(0.97);
+      transition: transform 0.1s ease;
+    }
+    /* Mobile: Reduce heading sizes */
+    h1 { font-size: 1.25rem; }
+    h2 { font-size: 1.125rem; }
   }
 
   .mobile-scroll-x {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .mobile-scroll-x > * {
+    scroll-snap-align: start;
+  }
+
+  /* Touch-optimized inputs on mobile */
+  @media (max-width: 640px) {
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents iOS zoom on focus */
+    }
+  }
+
+  /* Smooth page transitions */
+  .page-enter {
+    animation: pageEnter 0.25s ease-out;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   input[type="number"]::-webkit-inner-spin-button,

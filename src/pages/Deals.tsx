@@ -120,7 +120,7 @@ const Deals = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Deal Pipeline</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Deal Pipeline</h1>
           <p className="text-muted-foreground text-sm">Investmentchancen verfolgen & bewerten</p>
         </div>
         <div className="flex items-center gap-2">
@@ -145,11 +145,11 @@ const Deals = () => {
 
       {/* Kanban View */}
       {viewMode === "kanban" ? (
-        <div className="flex gap-3 overflow-x-auto pb-4 snap-x">
+        <div className="flex gap-3 overflow-x-auto pb-4 snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
           {STAGES.map(stage => {
             const stageDeals = deals.filter((d: { stage: string }) => d.stage === stage.key);
             return (
-              <div key={stage.key} className="min-w-[260px] w-[260px] shrink-0 snap-start">
+              <div key={stage.key} className="min-w-[240px] sm:min-w-[260px] w-[240px] sm:w-[260px] shrink-0 snap-start">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn("w-2.5 h-2.5 rounded-full", stage.color)} />
                   <span className="text-sm font-semibold">{stage.label}</span>
@@ -272,12 +272,12 @@ const Deals = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Input type="number" placeholder="Kaufpreis €" value={form.purchase_price || ""} onChange={e => setForm(p => ({ ...p, purchase_price: parseFloat(e.target.value) || 0 }))} />
               <Input type="number" placeholder="Miete €/Monat" value={form.expected_rent || ""} onChange={e => setForm(p => ({ ...p, expected_rent: parseFloat(e.target.value) || 0 }))} />
               <Input type="number" placeholder="qm" value={form.sqm || ""} onChange={e => setForm(p => ({ ...p, sqm: parseFloat(e.target.value) || 0 }))} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input placeholder="Kontakt Name" value={form.contact_name} onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} />
               <Input placeholder="Kontakt Tel." value={form.contact_phone} onChange={e => setForm(p => ({ ...p, contact_phone: e.target.value }))} />
               <Input placeholder="Kontakt E-Mail" value={form.contact_email} onChange={e => setForm(p => ({ ...p, contact_email: e.target.value }))} />

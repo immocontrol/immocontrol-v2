@@ -278,8 +278,8 @@ const Todos = () => {
 
   if (isLoading) {
     return (
-      <div className="flex gap-6 h-[calc(100vh-8rem)]">
-        <div className="w-56 shrink-0 space-y-2">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6 h-[calc(100vh-8rem)]">
+        <div className="hidden md:block w-56 shrink-0 space-y-2">
           {[1, 2, 3, 4].map(i => <div key={i} className="h-9 shimmer rounded-lg" />)}
         </div>
         <div className="flex-1 space-y-3">
@@ -290,7 +290,7 @@ const Todos = () => {
   }
 
   return (
-    <div className="flex gap-6 min-h-[calc(100vh-8rem)]">
+    <div className="flex gap-4 sm:gap-6 min-h-[calc(100vh-8rem)]">
       <aside className="hidden md:block w-56 shrink-0 space-y-1">
         <div className="mb-4">
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
@@ -435,7 +435,7 @@ const Todos = () => {
                 placeholder="Suchen..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="h-8 pl-8 w-48 text-sm"
+                className="h-8 pl-8 w-32 sm:w-48 text-sm"
               />
             </div>
           </div>
@@ -667,7 +667,7 @@ const TodoRow = ({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(todo)}>
           <Edit2 className="h-3 w-3" />
         </Button>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info } from "lucide-react";
+import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -29,6 +29,16 @@ interface SearchPlace {
   buildingInfo?: BuildingInfo | null;
 }
 
+interface NearbyBusiness {
+  name: string;
+  type: string;
+  phone: string | null;
+  website: string | null;
+  email: string | null;
+  distance: number;
+  address: string | null;
+}
+
 interface BuildingInfo {
   footprintArea: number | null;
   levels: number | null;
@@ -36,6 +46,9 @@ interface BuildingInfo {
   buildingType: string | null;
   isMFH: boolean;
   confidence: "high" | "medium" | "low";
+  buildingCount: number;
+  buildings: { area: number; levels: number | null; type: string | null }[];
+  nearbyBusinesses: NearbyBusiness[];
 }
 
 // Nominatim search (free, no API key needed)
@@ -77,10 +90,18 @@ function calculatePolygonArea(coords: { lat: number; lon: number }[]): number {
   return Math.abs(area) / 2;
 }
 
-// OSM Overpass API: estimate building size near a coordinate
+// OSM Overpass API: estimate building size near a coordinate — sums ALL buildings on the plot
 async function estimateBuildingSize(lat: number, lng: number): Promise<BuildingInfo | null> {
-  const radius = 30;
-  const query = `[out:json][timeout:10];(way["building"](around:${radius},${lat},${lng});relation["building"](around:${radius},${lat},${lng}););out body;>;out skel qt;`;
+  // Use 50m radius to capture Vorderhaus, Hinterhaus, Remise, Seitenflügel etc.
+  const radius = 50;
+  const query = `[out:json][timeout:15];
+(
+  way["building"](around:${radius},${lat},${lng});
+  relation["building"](around:${radius},${lat},${lng});
+);
+out body;
+>;
+out skel qt;`;
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
@@ -89,48 +110,143 @@ async function estimateBuildingSize(lat: number, lng: number): Promise<BuildingI
     });
     if (!res.ok) return null;
     const data = await res.json();
-    const buildings = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) =>
+    const allBuildings = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) =>
       (e.type === "way" || e.type === "relation") && e.tags?.building
     ) || [];
-    if (buildings.length === 0) return null;
-    const building = buildings[0];
-    const tags = building.tags || {};
-    const levels = parseInt(tags["building:levels"]) || null;
-    const roofLevels = parseInt(tags["roof:levels"]) || 0;
-    const totalLevels = levels ? levels + roofLevels : null;
+    if (allBuildings.length === 0) return null;
+
     const nodes = data.elements?.filter((e: { type: string }) => e.type === "node") || [];
     const nodeMap = new Map<number, { lat: number; lon: number }>();
     nodes.forEach((n: { id: number; lat: number; lon: number }) => nodeMap.set(n.id, { lat: n.lat, lon: n.lon }));
-    let footprintArea: number | null = null;
-    if (building.nodes && building.nodes.length > 2) {
-      const coords = building.nodes
-        .map((id: number) => nodeMap.get(id))
-        .filter(Boolean) as { lat: number; lon: number }[];
-      if (coords.length > 2) {
-        footprintArea = Math.round(calculatePolygonArea(coords));
+
+    // Calculate area & levels for EACH building on the plot
+    const buildingDetails: { area: number; levels: number | null; type: string | null }[] = [];
+    let totalFootprint = 0;
+    let totalGross = 0;
+    let maxLevels = 0;
+    let hasLevelData = false;
+
+    for (const building of allBuildings) {
+      const tags = building.tags || {};
+      const bLevels = parseInt(tags["building:levels"]) || null;
+      const roofLevels = parseInt(tags["roof:levels"]) || 0;
+      const totalLevels = bLevels ? bLevels + roofLevels : null;
+      if (totalLevels) {
+        hasLevelData = true;
+        if (totalLevels > maxLevels) maxLevels = totalLevels;
       }
+
+      let bArea = 0;
+      if (building.nodes && building.nodes.length > 2) {
+        const coords = building.nodes
+          .map((id: number) => nodeMap.get(id))
+          .filter(Boolean) as { lat: number; lon: number }[];
+        if (coords.length > 2) {
+          bArea = Math.round(calculatePolygonArea(coords));
+        }
+      }
+
+      if (bArea > 0) {
+        totalFootprint += bArea;
+        const effectiveLevels = totalLevels || (bArea > 100 ? 3 : 2); // default estimate
+        totalGross += bArea * effectiveLevels;
+      }
+
+      buildingDetails.push({
+        area: bArea,
+        levels: totalLevels,
+        type: tags.building || null,
+      });
     }
-    const buildingType = tags.building;
-    const isMFH = buildingType === "apartments" || buildingType === "residential" ||
-                   (totalLevels !== null && totalLevels >= 3) ||
-                   (footprintArea !== null && footprintArea > 200);
-    const estimatedGrossArea = footprintArea && totalLevels
-      ? Math.round(footprintArea * totalLevels)
-      : footprintArea
-        ? Math.round(footprintArea * (isMFH ? 4 : 2))
-        : null;
+
+    const footprintArea = totalFootprint > 0 ? totalFootprint : null;
+    const levels = hasLevelData ? maxLevels : null;
+    const estimatedGrossArea = totalGross > 0 ? Math.round(totalGross) : null;
+
+    const isMFH = allBuildings.some((b: { tags?: Record<string, string> }) =>
+      b.tags?.building === "apartments" || b.tags?.building === "residential"
+    ) || (levels !== null && levels >= 3) || (footprintArea !== null && footprintArea > 200) || allBuildings.length >= 2;
+
     const confidence: "high" | "medium" | "low" =
-      (footprintArea && totalLevels) ? "high" :
+      (footprintArea && hasLevelData) ? "high" :
       footprintArea ? "medium" : "low";
-    return { footprintArea, levels: totalLevels, estimatedGrossArea, buildingType: tags.building || null, isMFH, confidence };
+
+    return {
+      footprintArea,
+      levels,
+      estimatedGrossArea,
+      buildingType: allBuildings[0]?.tags?.building || null,
+      isMFH,
+      confidence,
+      buildingCount: allBuildings.length,
+      buildings: buildingDetails,
+      nearbyBusinesses: [],
+    };
   } catch {
     return null;
   }
 }
 
+// Fetch nearby businesses/POIs via Overpass API
+async function fetchNearbyBusinesses(lat: number, lng: number): Promise<NearbyBusiness[]> {
+  const radius = 80;
+  const query = `[out:json][timeout:10];
+(
+  node["shop"](around:${radius},${lat},${lng});
+  node["office"](around:${radius},${lat},${lng});
+  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radius},${lat},${lng});
+  node["craft"](around:${radius},${lat},${lng});
+  way["shop"](around:${radius},${lat},${lng});
+  way["office"](around:${radius},${lat},${lng});
+  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radius},${lat},${lng});
+);
+out body;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pois = data.elements?.filter((e: { tags?: Record<string, string> }) => e.tags?.name) || [];
+    return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number }) => {
+      const tags = poi.tags || {};
+      const poiLat = poi.lat || 0;
+      const poiLon = poi.lon || 0;
+      const dist = Math.round(Math.sqrt(Math.pow((poiLat - lat) * 111320, 2) + Math.pow((poiLon - lng) * 111320 * Math.cos(lat * Math.PI / 180), 2)));
+      const type = tags.shop || tags.office || tags.amenity || tags.craft || "Geschäft";
+      return {
+        name: tags.name || "Unbekannt",
+        type,
+        phone: tags.phone || tags["contact:phone"] || null,
+        website: tags.website || tags["contact:website"] || null,
+        email: tags.email || tags["contact:email"] || null,
+        distance: dist,
+        address: tags["addr:street"] ? `${tags["addr:street"]} ${tags["addr:housenumber"] || ""}`.trim() : null,
+      };
+    }).sort((a: NearbyBusiness, b: NearbyBusiness) => a.distance - b.distance);
+  } catch {
+    return [];
+  }
+}
+
+// Nominatim autocomplete (debounced)
+async function searchNominatimAutocomplete(query: string): Promise<{ display_name: string; place_id: number }[]> {
+  if (query.length < 3) return [];
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=de&accept-language=de`;
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 function getBuildingSizeLabel(info: BuildingInfo): string {
   if (info.estimatedGrossArea) {
-    if (info.estimatedGrossArea > 1000) return "Grosses MFH";
+    if (info.estimatedGrossArea > 1000) return "Großes MFH";
     if (info.estimatedGrossArea > 500) return "Mittleres MFH";
     if (info.estimatedGrossArea > 200) return "Kleines MFH";
     return "EFH/ZFH";
@@ -185,8 +301,39 @@ const CRM = () => {
   const [searchSource, setSearchSource] = useState<"auto" | "nominatim">("auto");
   const [minBuildingSize, setMinBuildingSize] = useState<number>(0);
   const [estimatingBuildings, setEstimatingBuildings] = useState(false);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<{ display_name: string; place_id: number }[]>([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const autocompleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { document.title = "CRM & Akquise - ImmoControl"; }, []);
+
+  // Debounced autocomplete
+  const handleSearchInput = useCallback((value: string) => {
+    setSearchQuery(value);
+    if (autocompleteTimer.current) clearTimeout(autocompleteTimer.current);
+    if (value.length < 3) {
+      setAutocompleteSuggestions([]);
+      setShowAutocomplete(false);
+      return;
+    }
+    autocompleteTimer.current = setTimeout(async () => {
+      const results = await searchNominatimAutocomplete(value);
+      setAutocompleteSuggestions(results);
+      setShowAutocomplete(results.length > 0);
+    }, 400);
+  }, []);
+
+  // Close autocomplete on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchInputRef.current && !searchInputRef.current.parentElement?.contains(e.target as Node)) {
+        setShowAutocomplete(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Fetch leads
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
@@ -254,7 +401,7 @@ const CRM = () => {
     }
   }, [searchQuery, searchSource]);
 
-  // Estimate building sizes for all search results
+  // Estimate building sizes + fetch nearby businesses for all search results
   const estimateBuildingSizes = useCallback(async () => {
     if (placesResults.length === 0) return;
     setEstimatingBuildings(true);
@@ -263,10 +410,24 @@ const CRM = () => {
     for (let i = 0; i < updatedResults.length; i++) {
       const place = updatedResults[i];
       if (place.lat && place.lng && !place.buildingInfo) {
-        const info = await estimateBuildingSize(place.lat, place.lng);
+        // Fetch building info and nearby businesses in parallel
+        const [info, businesses] = await Promise.all([
+          estimateBuildingSize(place.lat, place.lng),
+          fetchNearbyBusinesses(place.lat, place.lng),
+        ]);
         if (info) {
+          info.nearbyBusinesses = businesses;
           updatedResults[i] = { ...place, buildingInfo: info };
           estimated++;
+        } else if (businesses.length > 0) {
+          updatedResults[i] = {
+            ...place,
+            buildingInfo: {
+              footprintArea: null, levels: null, estimatedGrossArea: null,
+              buildingType: null, isMFH: false, confidence: "low",
+              buildingCount: 0, buildings: [], nearbyBusinesses: businesses,
+            },
+          };
         }
         if (i < updatedResults.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 300));
@@ -298,7 +459,7 @@ const CRM = () => {
         lng: place.lng,
         category: "geschaeft",
         notes: place.buildingInfo
-          ? `Geschätzte Gebäudefläche: ~${place.buildingInfo.estimatedGrossArea || "?"}m² | ${getBuildingSizeLabel(place.buildingInfo)} | Stockwerke: ${place.buildingInfo.levels || "?"} | Grundfläche: ${place.buildingInfo.footprintArea || "?"}m²`
+          ? `Geschätzte Gebäudefläche: ~${place.buildingInfo.estimatedGrossArea || "?"}m² | ${getBuildingSizeLabel(place.buildingInfo)} | Stockwerke: ${place.buildingInfo.levels || "?"} | Grundfläche: ${place.buildingInfo.footprintArea || "?"}m² | ${place.buildingInfo.buildingCount} Gebäude${place.buildingInfo.nearbyBusinesses.length > 0 ? " | Geschäfte: " + place.buildingInfo.nearbyBusinesses.map(b => b.name).join(", ") : ""}`
           : "",
       });
       if (error) throw error;
@@ -419,21 +580,21 @@ const CRM = () => {
       </div>
 
       <Tabs defaultValue="search" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="search">Suche & Akquise</TabsTrigger>
-          <TabsTrigger value="leads">Meine Leads ({leads.length})</TabsTrigger>
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="search" className="flex-1 sm:flex-none">Suche & Akquise</TabsTrigger>
+          <TabsTrigger value="leads" className="flex-1 sm:flex-none">Meine Leads ({leads.length})</TabsTrigger>
         </TabsList>
 
         {/* Search Tab */}
         <TabsContent value="search" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <MapPin className="h-4 w-4" /> Geschäfte & Eigentümer finden
                 </CardTitle>
                 <Select value={searchSource} onValueChange={(v: string) => setSearchSource(v as "auto" | "nominatim")}>
-                  <SelectTrigger className="h-7 w-[160px] text-xs">
+                  <SelectTrigger className="h-7 w-full sm:w-[160px] text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -445,14 +606,42 @@ const CRM = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
-                <Input
-                  placeholder="z.B. 'Bäckerei Friedrichstraße Berlin' oder 'Mehrfamilienhaus München'"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && searchPlaces()}
-                  className="flex-1"
-                />
-                <Button onClick={searchPlaces} disabled={placesLoading || !searchQuery.trim()}>
+                <div className="flex-1 relative">
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="z.B. 'Eisenbahnstraße 73 Eberswalde' oder 'Bäckerei Berlin'"
+                    value={searchQuery}
+                    onChange={e => handleSearchInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") {
+                        setShowAutocomplete(false);
+                        searchPlaces();
+                      }
+                    }}
+                    onFocus={() => autocompleteSuggestions.length > 0 && setShowAutocomplete(true)}
+                  />
+                  {/* Autocomplete dropdown */}
+                  {showAutocomplete && autocompleteSuggestions.length > 0 && (
+                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {autocompleteSuggestions.map((s) => (
+                        <button
+                          key={s.place_id}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors flex items-center gap-2 border-b border-border/30 last:border-0"
+                          onClick={() => {
+                            setSearchQuery(s.display_name.split(",")[0] + ", " + (s.display_name.split(",").slice(1, 3).join(",").trim()));
+                            setShowAutocomplete(false);
+                            // Auto-search after selection
+                            setTimeout(() => searchPlaces(), 100);
+                          }}
+                        >
+                          <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
+                          <span className="truncate">{s.display_name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Button onClick={() => { setShowAutocomplete(false); searchPlaces(); }} disabled={placesLoading || !searchQuery.trim()}>
                   {placesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </Button>
               </div>
@@ -551,36 +740,100 @@ const CRM = () => {
                         </div>
                         {/* Building size info */}
                         {place.buildingInfo && (
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            <Badge
-                              variant="outline"
-                              className={cn("text-[10px] gap-1", getBuildingSizeColor(place.buildingInfo))}
-                            >
-                              <Ruler className="h-2.5 w-2.5" />
-                              {getBuildingSizeLabel(place.buildingInfo)}
-                              {place.buildingInfo.estimatedGrossArea && ` (~${place.buildingInfo.estimatedGrossArea}m²)`}
-                            </Badge>
-                            {place.buildingInfo.levels && (
-                              <span className="text-[10px] text-muted-foreground">
-                                {place.buildingInfo.levels} Stockwerke
-                              </span>
-                            )}
-                            {place.buildingInfo.footprintArea && (
-                              <span className="text-[10px] text-muted-foreground">
-                                Grundfläche: {place.buildingInfo.footprintArea}m²
-                              </span>
-                            )}
-                            {place.buildingInfo.confidence !== "high" && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <AlertTriangle className="h-3 w-3 text-yellow-500 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent className="text-xs">
-                                  {place.buildingInfo.confidence === "medium"
-                                    ? "Stockwerkanzahl geschätzt"
-                                    : "Grobe Schätzung - wenig OSM-Daten verfügbar"}
-                                </TooltipContent>
-                              </Tooltip>
+                          <div className="mt-1.5 space-y-1.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge
+                                variant="outline"
+                                className={cn("text-[10px] gap-1", getBuildingSizeColor(place.buildingInfo))}
+                              >
+                                <Ruler className="h-2.5 w-2.5" />
+                                {getBuildingSizeLabel(place.buildingInfo)}
+                                {place.buildingInfo.estimatedGrossArea && ` (~${place.buildingInfo.estimatedGrossArea}m²)`}
+                              </Badge>
+                              {place.buildingInfo.buildingCount > 1 && (
+                                <Badge variant="outline" className="text-[10px] gap-1 text-blue-600 dark:text-blue-400">
+                                  <Building2 className="h-2.5 w-2.5" />
+                                  {place.buildingInfo.buildingCount} Gebäude
+                                </Badge>
+                              )}
+                              {place.buildingInfo.levels && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {place.buildingInfo.levels} Stockwerke
+                                </span>
+                              )}
+                              {place.buildingInfo.footprintArea && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  Grundfläche: {place.buildingInfo.footprintArea}m²
+                                </span>
+                              )}
+                              {place.buildingInfo.confidence !== "high" && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <AlertTriangle className="h-3 w-3 text-yellow-500 cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="text-xs max-w-[300px]">
+                                    {place.buildingInfo.confidence === "medium"
+                                      ? "Stockwerkanzahl geschätzt"
+                                      : "Grobe Schätzung - wenig OSM-Daten verfügbar"}
+                                    {place.buildingInfo.buildingCount > 1 && (
+                                      <span className="block mt-1">
+                                        Einzelgebäude: {place.buildingInfo.buildings.filter(b => b.area > 0).map((b, i) =>
+                                          `#${i + 1}: ${b.area}m²${b.levels ? ` (${b.levels}St.)` : ""}`
+                                        ).join(" · ")}
+                                      </span>
+                                    )}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                            {/* Nearby businesses */}
+                            {place.buildingInfo.nearbyBusinesses.length > 0 && (
+                              <div className="pl-0.5">
+                                <div className="flex items-center gap-1 mb-1">
+                                  <Store className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-[10px] font-medium text-muted-foreground">
+                                    {place.buildingInfo.nearbyBusinesses.length} Geschäfte in der Nähe
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {place.buildingInfo.nearbyBusinesses.slice(0, 6).map((biz, idx) => (
+                                    <Tooltip key={idx}>
+                                      <TooltipTrigger asChild>
+                                        <Badge variant="secondary" className="text-[10px] gap-1 cursor-help">
+                                          <Store className="h-2.5 w-2.5" />
+                                          {biz.name}
+                                          {biz.phone && <Phone className="h-2 w-2 text-green-600" />}
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="text-xs max-w-[280px] space-y-1">
+                                        <div className="font-medium">{biz.name}</div>
+                                        <div className="text-muted-foreground capitalize">{biz.type} · {biz.distance}m entfernt</div>
+                                        {biz.address && <div>{biz.address}</div>}
+                                        {biz.phone && (
+                                          <a href={`tel:${biz.phone}`} className="text-primary hover:underline flex items-center gap-1">
+                                            <Phone className="h-3 w-3" /> {biz.phone}
+                                          </a>
+                                        )}
+                                        {biz.email && (
+                                          <a href={`mailto:${biz.email}`} className="text-primary hover:underline flex items-center gap-1">
+                                            <Mail className="h-3 w-3" /> {biz.email}
+                                          </a>
+                                        )}
+                                        {biz.website && (
+                                          <a href={biz.website} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                            <Globe className="h-3 w-3" /> Website
+                                          </a>
+                                        )}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))}
+                                  {place.buildingInfo.nearbyBusinesses.length > 6 && (
+                                    <Badge variant="secondary" className="text-[10px]">
+                                      +{place.buildingInfo.nearbyBusinesses.length - 6} weitere
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
@@ -618,14 +871,14 @@ const CRM = () => {
 
         {/* Leads Tab */}
         <TabsContent value="leads" className="space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant={filterStatus === "all" ? "default" : "outline"} size="sm" onClick={() => setFilterStatus("all")}>
+          <div className="flex items-center gap-2 flex-wrap overflow-x-auto scrollbar-hide pb-1">
+            <Button variant={filterStatus === "all" ? "default" : "outline"} size="sm" className="shrink-0" onClick={() => setFilterStatus("all")}>
               Alle ({leads.length})
             </Button>
             {Object.entries(statusLabels).map(([key, label]) => {
               const count = leads.filter((l: { status: string }) => l.status === key).length;
               return (
-                <Button key={key} variant={filterStatus === key ? "default" : "outline"} size="sm" onClick={() => setFilterStatus(key)}>
+                <Button key={key} variant={filterStatus === key ? "default" : "outline"} size="sm" className="shrink-0" onClick={() => setFilterStatus(key)}>
                   {label} ({count})
                 </Button>
               );
@@ -634,7 +887,7 @@ const CRM = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Lead list */}
-            <div className="lg:col-span-1 space-y-2 max-h-[70vh] overflow-y-auto">
+            <div className="lg:col-span-1 space-y-2 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto custom-scrollbar">
               {leadsLoading ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">Laden...</div>
               ) : filteredLeads.length === 0 ? (
@@ -682,7 +935,7 @@ const CRM = () => {
                         <CardTitle className="text-lg">{selectedLeadData.name}</CardTitle>
                         {selectedLeadData.company && <p className="text-sm text-muted-foreground">{selectedLeadData.company}</p>}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Select
                           value={selectedLeadData.status}
                           onValueChange={v => updateLeadStatus.mutate({ id: selectedLeadData.id, status: v })}
@@ -700,13 +953,13 @@ const CRM = () => {
                           </Button>
                         )}
                         <Button size="sm" variant="outline" onClick={() => { setLogDialogOpen(true); setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 }); }}>
-                          <MessageSquare className="h-4 w-4 mr-1" /> Gespräch loggen
+                          <MessageSquare className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Gespräch</span> loggen
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                       {selectedLeadData.phone && (
                         <div>
                           <span className="text-muted-foreground text-xs">Telefon</span>
