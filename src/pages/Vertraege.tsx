@@ -56,6 +56,19 @@ const Vertraege = () => {
         </p>
       </div>
 
+      {/* Renewal Warning Banner */}
+      {stats.expiringContracts > 0 && (
+        <div className="rounded-xl border-2 border-gold/30 bg-gold/5 p-4 flex items-center gap-3 animate-fade-in">
+          <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center shrink-0">
+            <AlertTriangle className="h-4 w-4 text-gold" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{stats.expiringContracts} Vertrag{stats.expiringContracts > 1 ? "e laufen" : " läuft"} in den nächsten 90 Tagen aus</p>
+            <p className="text-xs text-muted-foreground">Prüfe die Verlängerung oder Kündigung rechtzeitig.</p>
+          </div>
+        </div>
+      )}
+
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-3">

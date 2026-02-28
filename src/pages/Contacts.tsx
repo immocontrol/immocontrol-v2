@@ -143,7 +143,7 @@ const ContactManagement = () => {
       setOpen(false);
       invalidate();
     },
-    onError: (e: any) => toast.error(e.message || "Fehler"),
+    onError: (e: Error) => toast.error(e.message || "Fehler"),
   });
 
   const deleteMutation = useMutation({
@@ -192,9 +192,9 @@ const ContactManagement = () => {
 
   return (
     <div className="space-y-6" role="main" aria-label="Kontaktverwaltung">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Kontakte</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kontakte</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {contacts.length} Kontakte · {handworkerCount} Handwerker
             {activeAssignments > 0 && <span> · {activeAssignments} aktive Aufträge</span>}
@@ -296,8 +296,8 @@ const ContactManagement = () => {
       />
 
       {/* Search + Filter */}
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Kontakt suchen..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-8 h-9 text-sm" />
           {search && (
@@ -406,7 +406,7 @@ const ContactManagement = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
                     {c.phone && (
                       <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]" title="WhatsApp">

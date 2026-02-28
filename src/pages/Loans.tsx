@@ -278,6 +278,9 @@ const Loans = () => {
   // Feature: Total loan amount vs remaining
   const totalLoanAmount = filteredLoans.reduce((s, l) => s + l.loan_amount, 0);
   const totalTilgungsfortschritt = totalLoanAmount > 0 ? ((totalLoanAmount - totalBalance) / totalLoanAmount * 100) : 0;
+  // Improvement: Refinancing alert - loans with rates above market average
+  const MARKET_RATE_THRESHOLD = 3.5;
+  const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
 
   const now = new Date();
   const zinsBindungData = filteredLoans
@@ -313,7 +316,7 @@ const Loans = () => {
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 shimmer rounded-lg" />
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[1, 2, 3].map(i => <div key={i} className="h-24 shimmer rounded-xl" />)}
         </div>
       </div>
@@ -322,12 +325,19 @@ const Loans = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Landmark className="h-6 w-6 text-primary" /> Darlehen
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Darlehen
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{loans.length} Darlehen · {formatCurrency(totalBalance)} Restschuld</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {loans.length} Darlehen · {formatCurrency(totalBalance)} Restschuld
+            {highRateLoans.length > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gold/10 text-gold">
+                <AlertTriangle className="h-3 w-3" /> {highRateLoans.length} über {MARKET_RATE_THRESHOLD}% Zins
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Ownership filter */}
@@ -697,28 +707,28 @@ const Loans = () => {
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Landmark className="h-5 w-5 text-primary" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold truncate">{l.bank_name}</span>
-                    <Badge variant="secondary" className="text-[10px] h-4">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
-                    {prop && <span className="text-[10px] text-muted-foreground truncate">· {prop.name}</span>}
-                    {monthsLeft !== null && monthsLeft <= 12 && (
-                      <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                        <AlertTriangle className="h-2.5 w-2.5" /> Zinsbindung endet bald
-                      </span>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold truncate">{l.bank_name}</span>
+                      <Badge variant="secondary" className="text-[10px] h-4">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
+                      {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
+                      {monthsLeft !== null && monthsLeft <= 12 && (
+                        <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                          <AlertTriangle className="h-2.5 w-2.5" /> <span className="hidden sm:inline">Zinsbindung endet</span> bald
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
+                      <span>Restschuld: {formatCurrency(l.remaining_balance)}</span>
+                      <span>{l.interest_rate}% Zins · {l.repayment_rate}% Tilgung</span>
+                      <span className="hidden sm:inline">{formatCurrency(l.monthly_payment)}/M</span>
+                      {l.fixed_interest_until && (
+                        <span className="hidden sm:flex items-center gap-0.5">
+                          <Calendar className="h-2.5 w-2.5" /> bis {new Date(l.fixed_interest_until).toLocaleDateString("de-DE", { month: "short", year: "numeric" })}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground mt-0.5">
-                    <span>Restschuld: {formatCurrency(l.remaining_balance)}</span>
-                    <span>{l.interest_rate}% Zins · {l.repayment_rate}% Tilgung</span>
-                    <span>{formatCurrency(l.monthly_payment)}/M</span>
-                    {l.fixed_interest_until && (
-                      <span className="flex items-center gap-0.5">
-                        <Calendar className="h-2.5 w-2.5" /> bis {new Date(l.fixed_interest_until).toLocaleDateString("de-DE", { month: "short", year: "numeric" })}
-                      </span>
-                    )}
-                  </div>
-                </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <LoanPayoffSimulator remainingBalance={l.remaining_balance} interestRate={l.interest_rate} monthlyPayment={l.monthly_payment} bankName={l.bank_name} />
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)}><Edit2 className="h-3 w-3" /></Button>

@@ -68,6 +68,7 @@ const Mietuebersicht = () => {
   const overdue = filteredPayments.filter(p => p.status === "overdue");
   const totalOverdue = overdue.reduce((s, p) => s + Number(p.amount), 0);
   const pending = filteredPayments.filter(p => p.status === "pending");
+  const collectionRate = totalDue > 0 ? Math.round((totalConfirmed / totalDue) * 100) : 0;
 
   // Active tenants with rent
   const activeTenants = tenants.filter(t => t.is_active);
@@ -97,6 +98,13 @@ const Mietuebersicht = () => {
         <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat
+          {totalDue > 0 && (
+            <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              collectionRate >= 90 ? "bg-profit/10 text-profit" : collectionRate >= 70 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
+            }`}>
+              {collectionRate}% Eingangsquote
+            </span>
+          )}
         </p>
       </div>
 

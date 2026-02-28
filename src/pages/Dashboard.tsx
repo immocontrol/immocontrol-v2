@@ -69,6 +69,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 type FilterType = "alle" | "egbr" | "privat";
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
+type TypeFilter = "alle" | "MFH" | "ETW" | "EFH" | "Gewerbe";
 
 const Dashboard = () => {
   const { properties, loading, stats } = useProperties();
@@ -87,6 +88,7 @@ const Dashboard = () => {
     enabled: !!user,
   });
   const [filter, setFilter] = useState<FilterType>("alle");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("alle");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 200);
   const [sort, setSort] = useState<SortType>("name");
@@ -188,6 +190,7 @@ ${properties.map(p => `<tr>
   const filteredProperties = useMemo(() => {
     const result = properties.filter((p) => {
       if (filter !== "alle" && p.ownership !== filter) return false;
+      if (typeFilter !== "alle" && p.type !== typeFilter) return false;
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();
         return p.name.toLowerCase().includes(q) || (p.address || "").toLowerCase().includes(q) || p.type.toLowerCase().includes(q);
@@ -210,7 +213,7 @@ ${properties.map(p => `<tr>
     });
 
     return result;
-  }, [properties, filter, debouncedSearch, sort]);
+  }, [properties, filter, typeFilter, debouncedSearch, sort]);
 
   // Feature 10: Best/Worst performer
   const bestPerformer = useMemo(() => {
@@ -359,14 +362,14 @@ ${properties.map(p => `<tr>
 
   return (
     <div className="space-y-6" role="main" aria-label="Portfolio Dashboard">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{greeting}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{greeting}</h1>
           <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
             {stats.propertyCount} Objekte · {stats.totalUnits} Einheiten · {totalSqm.toLocaleString("de-DE")} m²
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
             <Share2 className="h-3.5 w-3.5" />
             Teilen
@@ -445,8 +448,8 @@ ${properties.map(p => `<tr>
         />
       </div>
 
-      {/* New: Quick KPI row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Quick KPI row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "210ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
@@ -528,9 +531,9 @@ ${properties.map(p => `<tr>
         </div>
       )}
 
-      {/* Feature: Best/Worst performer */}
+      {/* Best/Worst performer */}
       {properties.length >= 2 && bestPerformer && worstPerformer && bestPerformer.id !== worstPerformer.id && (
-        <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "260ms" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "260ms" }}>
           <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Trophy className="h-4 w-4 text-primary" />
@@ -685,8 +688,8 @@ ${properties.map(p => `<tr>
         <PropertyMap />
       </Suspense>
 
-      {/* Feature 1: Search + Feature 2: Sort + Filter tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      {/* Search + Sort + Filter */}
+      <div className="flex flex-col gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -738,6 +741,20 @@ ${properties.map(p => `<tr>
               )}
             </button>
           ))}
+          {/* Property type quick-filter chips */}
+          <div className="flex items-center gap-1 sm:ml-2 sm:border-l sm:border-border sm:pl-2 overflow-x-auto scrollbar-hide">
+            {(["alle", "MFH", "ETW", "EFH", "Gewerbe"] as TypeFilter[]).map(t => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`text-[10px] px-2 py-1 rounded font-medium transition-colors shrink-0 ${
+                  typeFilter === t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                {t === "alle" ? "Typ: Alle" : t}
+              </button>
+            ))}
+          </div>
           <button
             onClick={handleRefresh}
             className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
@@ -757,8 +774,8 @@ ${properties.map(p => `<tr>
               : `${filteredProperties.length} von ${properties.length} Objekten`
             }
           </h2>
-          {(search || filter !== "alle") && (
-            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setSearch(""); setFilter("alle"); }}>
+          {(search || filter !== "alle" || typeFilter !== "alle") && (
+            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
               Filter zurücksetzen
             </Button>
           )}

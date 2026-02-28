@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2, MapPin, Phone, Mail, ArrowRight, GripVertical, Edit2, Trash2 } from "lucide-react";
+import { Plus, Building2, MapPin, Phone, Mail, ArrowRight, GripVertical, Edit2, Trash2, Clock, TrendingUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STAGES = [
@@ -71,7 +71,7 @@ const Deals = () => {
       setEditDeal(null);
       setForm({ ...emptyForm });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const deleteDeal = useMutation({
@@ -109,15 +109,18 @@ const Deals = () => {
   const fmt = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
   // Stats
-  const activeDeals = deals.filter((d: any) => d.stage !== "abgelehnt" && d.stage !== "abgeschlossen");
-  const totalVolume = activeDeals.reduce((s: number, d: any) => s + (d.purchase_price || 0), 0);
-  const wonDeals = deals.filter((d: any) => d.stage === "abgeschlossen");
+  const activeDeals = deals.filter((d: { stage: string }) => d.stage !== "abgelehnt" && d.stage !== "abgeschlossen");
+  const totalVolume = activeDeals.reduce((s: number, d: { purchase_price?: number }) => s + (d.purchase_price || 0), 0);
+  const wonDeals = deals.filter((d: { stage: string }) => d.stage === "abgeschlossen");
+  const avgDealAge = activeDeals.length > 0
+    ? Math.round(activeDeals.reduce((s: number, d: { created_at: string }) => s + Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000), 0) / activeDeals.length)
+    : 0;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Deal Pipeline</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Deal Pipeline</h1>
           <p className="text-muted-foreground text-sm">Investmentchancen verfolgen & bewerten</p>
         </div>
         <div className="flex items-center gap-2">
@@ -137,25 +140,32 @@ const Deals = () => {
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Pipeline-Volumen</p><p className="text-xl font-bold">{fmt(totalVolume)}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Gewonnen</p><p className="text-xl font-bold text-green-600">{wonDeals.length}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Conversion</p><p className="text-xl font-bold">{deals.length ? Math.round((wonDeals.length / deals.length) * 100) : 0}%</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Alter (Tage)</p><p className="text-xl font-bold flex items-center gap-1">{avgDealAge}{avgDealAge > 30 && <AlertTriangle className="h-4 w-4 text-gold" />}</p></CardContent></Card>
       </div>
 
       {/* Kanban View */}
       {viewMode === "kanban" ? (
-        <div className="flex gap-3 overflow-x-auto pb-4 snap-x">
+        <div className="flex gap-3 overflow-x-auto pb-4 snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
           {STAGES.map(stage => {
-            const stageDeals = deals.filter((d: any) => d.stage === stage.key);
+            const stageDeals = deals.filter((d: { stage: string }) => d.stage === stage.key);
             return (
-              <div key={stage.key} className="min-w-[260px] w-[260px] shrink-0 snap-start">
+              <div key={stage.key} className="min-w-[240px] sm:min-w-[260px] w-[240px] sm:w-[260px] shrink-0 snap-start">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn("w-2.5 h-2.5 rounded-full", stage.color)} />
                   <span className="text-sm font-semibold">{stage.label}</span>
                   <Badge variant="outline" className="text-[10px] ml-auto">{stageDeals.length}</Badge>
                 </div>
                 <div className="space-y-2">
-                  {stageDeals.map((deal: any) => (
-                    <Card key={deal.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openEdit(deal)}>
+                  {stageDeals.map((deal: any) => {
+                    const dealAge = Math.floor((Date.now() - new Date(deal.created_at).getTime()) / 86400000);
+                    const isStale = dealAge > 30 && deal.stage !== "abgeschlossen" && deal.stage !== "abgelehnt";
+                    return (
+                    <Card key={deal.id} className={cn("cursor-pointer hover:shadow-md transition-shadow", isStale && "border-gold/40")} onClick={() => openEdit(deal)}>
                       <CardContent className="p-3 space-y-1.5">
-                        <p className="font-medium text-sm truncate">{deal.title}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-sm truncate flex-1">{deal.title}</p>
+                          {isStale && <AlertTriangle className="h-3 w-3 text-gold shrink-0 ml-1" />}
+                        </div>
                         {deal.address && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
                             <MapPin className="h-3 w-3 shrink-0" /> {deal.address}
@@ -168,9 +178,11 @@ const Deals = () => {
                         {deal.contact_name && (
                           <p className="text-[10px] text-muted-foreground">{deal.contact_name}</p>
                         )}
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {dealAge}d</p>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -194,7 +206,7 @@ const Deals = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {deals.map((deal: any) => {
+                  {deals.map((deal: { id: string; title: string; address?: string; stage: string; purchase_price?: number; expected_yield?: number; contact_name?: string; created_at: string }) => {
                     const s = stageMap[deal.stage];
                     return (
                       <tr key={deal.id} className="border-b border-border/50 hover:bg-secondary/30 cursor-pointer" onClick={() => openEdit(deal)}>
@@ -260,12 +272,12 @@ const Deals = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Input type="number" placeholder="Kaufpreis €" value={form.purchase_price || ""} onChange={e => setForm(p => ({ ...p, purchase_price: parseFloat(e.target.value) || 0 }))} />
               <Input type="number" placeholder="Miete €/Monat" value={form.expected_rent || ""} onChange={e => setForm(p => ({ ...p, expected_rent: parseFloat(e.target.value) || 0 }))} />
               <Input type="number" placeholder="qm" value={form.sqm || ""} onChange={e => setForm(p => ({ ...p, sqm: parseFloat(e.target.value) || 0 }))} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input placeholder="Kontakt Name" value={form.contact_name} onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} />
               <Input placeholder="Kontakt Tel." value={form.contact_phone} onChange={e => setForm(p => ({ ...p, contact_phone: e.target.value }))} />
               <Input placeholder="Kontakt E-Mail" value={form.contact_email} onChange={e => setForm(p => ({ ...p, contact_email: e.target.value }))} />

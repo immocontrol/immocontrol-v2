@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -275,6 +275,26 @@ const Settings = () => {
         >
           <Upload className="h-3.5 w-3.5" /> JSON prüfen
         </Button>
+      </div>
+
+      {/* Keyboard Shortcuts */}
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "130ms" }}>
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Keyboard className="h-4 w-4 text-muted-foreground" /> Tastenkombinationen
+        </h2>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {[
+            { keys: "Alt+1-9", desc: "Navigation" },
+            { keys: "Ctrl+K", desc: "Suche öffnen" },
+            { keys: "Ctrl+N", desc: "Neues Objekt" },
+            { keys: "Enter", desc: "Schnell-Aufgabe" },
+          ].map(s => (
+            <div key={s.keys} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
+              <span className="text-muted-foreground">{s.desc}</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">{s.keys}</kbd>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Team */}

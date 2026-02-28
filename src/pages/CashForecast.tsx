@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { TrendingDown, CalendarDays, Download, Target } from "lucide-react";
+import { TrendingDown, CalendarDays, Download, Target, TrendingUp } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ const CashForecast = () => {
   const { user } = useAuth();
   const { properties, stats, loading } = useProperties();
   const [forecastWeeks, setForecastWeeks] = useState<13 | 26 | 52>(13);
+  const [scenario, setScenario] = useState<"normal" | "optimistic" | "pessimistic">("normal");
 
   useEffect(() => { document.title = "Cashforecast – ImmoControl"; }, []);
 
@@ -37,7 +38,9 @@ const CashForecast = () => {
 
   const forecastData = useMemo(() => {
     const today = new Date();
-    const totalMonthlyExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0);
+    const scenarioMultiplier = scenario === "optimistic" ? 1.05 : scenario === "pessimistic" ? 0.90 : 1.0;
+    const expenseMultiplier = scenario === "optimistic" ? 0.95 : scenario === "pessimistic" ? 1.10 : 1.0;
+    const totalMonthlyExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0) * expenseMultiplier;
     const weeklyExpenses = totalMonthlyExpenses / 4.33;
     const totalMonthlyLoanPayments = loans.reduce((s, l) => s + l.monthly_payment, 0);
     const weeklyLoanPayments = totalMonthlyLoanPayments / 4.33;
@@ -52,7 +55,7 @@ const CashForecast = () => {
       weekEnd.setDate(weekStart.getDate() + 6);
 
       const isRentWeek = i % 4 === 0;
-      const weekIncome = isRentWeek ? stats.totalRent : 0;
+      const weekIncome = isRentWeek ? stats.totalRent * scenarioMultiplier : 0;
       const weekExpense = weeklyExpenses + weeklyLoanPayments;
       const weekNet = weekIncome - weekExpense;
       cumulativeCashflow += weekNet;
@@ -67,7 +70,7 @@ const CashForecast = () => {
       });
     }
     return result;
-  }, [properties, stats, loans, forecastWeeks]);
+  }, [properties, stats, loans, forecastWeeks, scenario]);
 
   const totalIncome13W = forecastData.reduce((s, w) => s + w.einnahmen, 0);
   const totalExpenses13W = forecastData.reduce((s, w) => s + Math.abs(w.ausgaben), 0);
@@ -130,6 +133,16 @@ const CashForecast = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Select value={scenario} onValueChange={v => setScenario(v as "normal" | "optimistic" | "pessimistic")}>
+            <SelectTrigger className="h-9 w-40 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="optimistic">Optimistisch (+5%)</SelectItem>
+              <SelectItem value="pessimistic">Pessimistisch (-10%)</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCashForecastCSV}>
             <Download className="h-3.5 w-3.5" /> CSV
           </Button>

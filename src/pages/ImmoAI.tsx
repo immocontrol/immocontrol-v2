@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Send, Trash2, Sparkles, User } from "lucide-react";
+import { Bot, Send, Trash2, Sparkles, User, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
@@ -118,6 +118,16 @@ export default function ImmoAI() {
     }
   };
 
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+
+  const copyMessage = useCallback((content: string, idx: number) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedIdx(idx);
+      toast.success("Kopiert!");
+      setTimeout(() => setCopiedIdx(null), 2000);
+    });
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -191,8 +201,17 @@ export default function ImmoAI() {
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h3]:mt-3 [&_h3]:mb-1 [&_table]:text-xs">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <div className="relative group">
+                        <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h3]:mt-3 [&_h3]:mb-1 [&_table]:text-xs">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); copyMessage(msg.content, i); }}
+                          className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-md p-1 shadow-sm hover:bg-secondary"
+                          title="Kopieren"
+                        >
+                          {copiedIdx === i ? <Check className="h-3 w-3 text-profit" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                        </button>
                       </div>
                     ) : (
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>

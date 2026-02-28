@@ -83,7 +83,7 @@ const Nebenkosten = () => {
       setCreateOpen(false);
       qc.invalidateQueries({ queryKey: ["utility_billings"] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const addItem = useMutation({
@@ -106,7 +106,7 @@ const Nebenkosten = () => {
       qc.invalidateQueries({ queryKey: ["utility_billing_items", selectedBilling] });
       updateBillingTotals();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const deleteItem = useMutation({
@@ -198,7 +198,15 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Nebenkostenabrechnung</h1>
-          <p className="text-sm text-muted-foreground mt-1">{billings.length} Abrechnungen</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {billings.length} Abrechnungen
+            {billings.length > 0 && (
+              <span className="ml-1">
+                · {formatCurrency(billings.reduce((s, b) => s + Number(b.total_costs), 0))} Gesamtkosten
+                · {billings.filter(b => b.status === "draft").length} Entwurf, {billings.filter(b => b.status === "final").length} final
+              </span>
+            )}
+          </p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
