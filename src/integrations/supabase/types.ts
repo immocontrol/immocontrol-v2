@@ -290,6 +290,170 @@ export type Database = {
           },
         ]
       }
+      crm_call_logs: {
+        Row: {
+          call_date: string
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          lead_id: string
+          notes: string | null
+          outcome: string
+          user_id: string
+        }
+        Insert: {
+          call_date?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          lead_id: string
+          notes?: string | null
+          outcome?: string
+          user_id: string
+        }
+        Update: {
+          call_date?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          outcome?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_call_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_leads: {
+        Row: {
+          address: string | null
+          category: string
+          company: string | null
+          created_at: string
+          email: string | null
+          google_place_id: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          category?: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          google_place_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          google_place_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      deals: {
+        Row: {
+          address: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          expected_rent: number | null
+          expected_yield: number | null
+          id: string
+          lost_reason: string | null
+          notes: string | null
+          property_type: string | null
+          purchase_price: number | null
+          source: string | null
+          sqm: number | null
+          stage: string
+          title: string
+          units: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          expected_rent?: number | null
+          expected_yield?: number | null
+          id?: string
+          lost_reason?: string | null
+          notes?: string | null
+          property_type?: string | null
+          purchase_price?: number | null
+          source?: string | null
+          sqm?: number | null
+          stage?: string
+          title: string
+          units?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          expected_rent?: number | null
+          expected_yield?: number | null
+          id?: string
+          lost_reason?: string | null
+          notes?: string | null
+          property_type?: string | null
+          purchase_price?: number | null
+          source?: string | null
+          sqm?: number | null
+          stage?: string
+          title?: string
+          units?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       document_expiries: {
         Row: {
           created_at: string | null
