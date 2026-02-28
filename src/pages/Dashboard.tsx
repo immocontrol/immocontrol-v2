@@ -774,8 +774,8 @@ ${properties.map(p => `<tr>
               : `${filteredProperties.length} von ${properties.length} Objekten`
             }
           </h2>
-          {(search || filter !== "alle") && (
-            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setSearch(""); setFilter("alle"); }}>
+          {(search || filter !== "alle" || typeFilter !== "alle") && (
+            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
               Filter zurücksetzen
             </Button>
           )}

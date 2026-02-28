@@ -366,15 +366,16 @@ const CRM = () => {
   });
 
   // Search with fallback: Google Places -> Nominatim
-  const searchPlaces = useCallback(async () => {
-    if (!searchQuery.trim()) return;
+  const searchPlaces = useCallback(async (queryOverride?: string) => {
+    const query = queryOverride ?? searchQuery;
+    if (!query.trim()) return;
     setPlacesLoading(true);
     setPlacesResults([]);
     try {
       if (searchSource === "auto") {
         try {
           const { data, error } = await supabase.functions.invoke("google-places-search", {
-            body: { query: searchQuery },
+            body: { query },
           });
           if (error) throw error;
           const places: SearchPlace[] = (data.places || []).map((p: SearchPlace) => ({ ...p, source: "google" as const }));
@@ -387,7 +388,7 @@ const CRM = () => {
           toast.info("Google Places nicht verfügbar - nutze OpenStreetMap als Alternative");
         }
       }
-      const places = await searchNominatim(searchQuery);
+      const places = await searchNominatim(query);
       setPlacesResults(places);
       if (places.length > 0) {
         toast.success(`${places.length} Ergebnisse via OpenStreetMap`);
@@ -628,10 +629,11 @@ const CRM = () => {
                           key={s.place_id}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors flex items-center gap-2 border-b border-border/30 last:border-0"
                           onClick={() => {
-                            setSearchQuery(s.display_name.split(",")[0] + ", " + (s.display_name.split(",").slice(1, 3).join(",").trim()));
+                            const selectedQuery = s.display_name.split(",")[0] + ", " + (s.display_name.split(",").slice(1, 3).join(",").trim());
+                            setSearchQuery(selectedQuery);
                             setShowAutocomplete(false);
-                            // Auto-search after selection
-                            setTimeout(() => searchPlaces(), 100);
+                            // Auto-search with the selected query directly to avoid stale closure
+                            searchPlaces(selectedQuery);
                           }}
                         >
                           <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
