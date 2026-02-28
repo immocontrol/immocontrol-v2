@@ -16,13 +16,13 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
   ({ className, value, onChange, suffix, ...props }, ref) => {
     const [display, setDisplay] = React.useState(() => {
       const num = typeof value === "string" ? parseFloat(value) : value;
-      return num ? formatNumberDE(num) : "";
+      return !isNaN(num) && num !== undefined ? formatNumberDE(num) : "";
     });
 
     React.useEffect(() => {
       const num = typeof value === "string" ? parseFloat(value) : value;
       if (!document.activeElement || document.activeElement !== internalRef.current) {
-        setDisplay(num ? formatNumberDE(num) : "");
+        setDisplay(!isNaN(num) && num !== undefined ? formatNumberDE(num) : "");
       }
     }, [value]);
 
@@ -40,7 +40,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
     const handleBlur = () => {
       const parsed = parseNumberDE(display);
-      setDisplay(parsed ? formatNumberDE(parsed) : "");
+      setDisplay(!isNaN(parsed) ? formatNumberDE(parsed) : "");
       onChange(parsed);
     };
 

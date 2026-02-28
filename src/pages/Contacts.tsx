@@ -63,12 +63,17 @@ const ContactManagement = () => {
 
   // Improvement 5: React Query for contacts
   const { data: contacts = [] } = useQuery({
-    queryKey: queryKeys.contacts.all,
+    queryKey: [...queryKeys.contacts.all, showTrash ? "trash" : "active"],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("contacts")
-        .select("*")
-        .order("name");
+        .select("*");
+      if (showTrash) {
+        query = query.not("deleted_at", "is", null).order("deleted_at", { ascending: false });
+      } else {
+        query = query.is("deleted_at", null).order("name");
+      }
+      const { data } = await query;
       return (data || []) as ContactItem[];
     },
     enabled: !!user,
@@ -434,33 +439,60 @@ const ContactManagement = () => {
                     )}
                   </div>
                   <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
-                    {c.phone && (
-                      <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]" title="WhatsApp">
-                          <MessageCircle className="h-3 w-3" />
+                    {showTrash ? (
+                      <>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Wiederherstellen" onClick={() => restoreMutation.mutate(c.id)}>
+                          <RotateCcw className="h-3 w-3" />
                         </Button>
-                      </a>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" title="Endgültig löschen">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Endgültig löschen?</AlertDialogTitle>
+                              <AlertDialogDescription>„{c.name}" wird unwiderruflich entfernt und kann nicht wiederhergestellt werden.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => permanentDeleteMutation.mutate(c.id)}>Endgültig löschen</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    ) : (
+                      <>
+                        {c.phone && (
+                          <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]" title="WhatsApp">
+                              <MessageCircle className="h-3 w-3" />
+                            </Button>
+                          </a>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Kontakt löschen?</AlertDialogTitle>
+                              <AlertDialogDescription>„{c.name}" wird in den Papierkorb verschoben.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(c.id)}>Löschen</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
                     )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Kontakt löschen?</AlertDialogTitle>
-                                          <AlertDialogDescription>„{c.name}“ wird in den Papierkorb verschoben.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(c.id)}>Löschen</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </div>
                 </div>
               </div>
