@@ -19,6 +19,7 @@ const formatInteger = (intStr: string): string => {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
+/* BUG-10: Fix Tausendertrennzeichen — ensure dots are always visible during typing */
 const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
   ({ className, value, onChange, decimals = false, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -30,20 +31,27 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     const numToDisplay = React.useCallback((num: number): string => {
       if (num === 0 || isNaN(num)) return "";
       if (decimals) {
-        const str = num.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 10 });
-        return str;
+        const parts = num.toFixed(2).split(".");
+        const intFormatted = formatInteger(parts[0]);
+        return `${intFormatted},${parts[1]}`;
       }
       return formatInteger(Math.round(num).toString());
     }, [decimals]);
 
+    /* BUG-10: Sync display when value changes externally (not while user is typing) */
     React.useEffect(() => {
       if (isFocused.current) return;
-      const num = typeof value === "string" ? parseFloat(value as string) : (value as number);
+      const num = typeof value === "string" ? parseFloat(String(value)) : (value as number);
       setDisplay(numToDisplay(num));
     }, [value, numToDisplay]);
 
     const handleFocus = () => {
       isFocused.current = true;
+      /* BUG-10: On focus, ensure current display shows formatted number */
+      if (!display && value) {
+        const num = typeof value === "string" ? parseFloat(String(value)) : (value as number);
+        if (num > 0) setDisplay(numToDisplay(num));
+      }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,9 +72,10 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         }
         const formattedInt = formatInteger(intRaw);
         const newDisplay = decRaw !== undefined ? `${formattedInt},${decRaw}` : formattedInt;
-        const dotsBefore = (raw.slice(0, caretPos).match(/\./g) || []).length;
-        const dotsAfter = (newDisplay.slice(0, caretPos).match(/\./g) || []).length;
-        const newCaret = caretPos + (dotsAfter - dotsBefore);
+        /* BUG-10: Calculate caret offset based on dot count difference */
+        const dotsBeforeCaret = (raw.slice(0, caretPos).match(/\./g) || []).length;
+        const dotsInNew = (newDisplay.slice(0, Math.min(caretPos + 5, newDisplay.length)).match(/\./g) || []).length;
+        const newCaret = Math.max(0, Math.min(caretPos + (dotsInNew - dotsBeforeCaret), newDisplay.length));
         setDisplay(newDisplay);
         onChange(parseGerman(newDisplay));
         requestAnimationFrame(() => {
@@ -74,10 +83,23 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
           if (el) el.setSelectionRange(newCaret, newCaret);
         });
       } else {
+        /* BUG-10: Integer mode — strip non-digits, format with dots, fix caret */
         const digits = raw.replace(/\D/g, "");
         const formattedInt = formatInteger(digits);
-        const extraDots = (formattedInt.match(/\./g) || []).length - (raw.slice(0, caretPos).match(/\./g) || []).length;
-        const newCaret = Math.min(caretPos + extraDots, formattedInt.length);
+        /* Count dots before caret in old vs new to calculate offset */
+        const oldDotsBeforeCaret = (raw.slice(0, caretPos).match(/\./g) || []).length;
+        const digitsBeforeCaret = caretPos - oldDotsBeforeCaret;
+        /* Find where that many digits are in the new formatted string */
+        let digitsSeen = 0;
+        let newCaret = 0;
+        for (let i = 0; i < formattedInt.length; i++) {
+          if (formattedInt[i] !== ".") {
+            digitsSeen++;
+            if (digitsSeen >= digitsBeforeCaret) { newCaret = i + 1; break; }
+          }
+        }
+        if (digitsBeforeCaret === 0) newCaret = 0;
+        if (digitsSeen < digitsBeforeCaret) newCaret = formattedInt.length;
         setDisplay(formattedInt);
         onChange(parseGerman(formattedInt));
         requestAnimationFrame(() => {
@@ -94,6 +116,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       onChange(num);
     };
 
+    /* IMPROVE-41: Accessible number input with proper inputMode for mobile keyboards */
     return (
       <input
         type="text"

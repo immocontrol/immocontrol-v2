@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Send, Trash2, Sparkles, User, X, MessageSquare } from "lucide-react";
+import { Bot, Send, Trash2, Sparkles, User, X, MessageSquare, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +42,49 @@ export default function ImmoAIBubble() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  /* BUG-8: Draggable AI chat bubble — works on both mobile (touch) and desktop (mouse) */
+  const [bubblePos, setBubblePos] = useState<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const isDragging = useRef(false);
+
+  const handleDragStart = useCallback((clientX: number, clientY: number) => {
+    const currentX = bubblePos?.x ?? (window.innerWidth - 72);
+    const currentY = bubblePos?.y ?? (window.innerHeight - 140);
+    dragRef.current = { startX: clientX, startY: clientY, origX: currentX, origY: currentY };
+    isDragging.current = false;
+  }, [bubblePos]);
+
+  const handleDragMove = useCallback((clientX: number, clientY: number) => {
+    if (!dragRef.current) return;
+    const dx = clientX - dragRef.current.startX;
+    const dy = clientY - dragRef.current.startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging.current = true;
+    const newX = Math.max(8, Math.min(window.innerWidth - 64, dragRef.current.origX + dx));
+    const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
+    setBubblePos({ x: newX, y: newY });
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY);
+    const onMouseUp = () => handleDragEnd();
+    const onTouchMove = (e: TouchEvent) => { if (dragRef.current) { e.preventDefault(); handleDragMove(e.touches[0].clientX, e.touches[0].clientY); } };
+    const onTouchEnd = () => handleDragEnd();
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [handleDragMove, handleDragEnd]);
 
   // Improvement 1: Persist chat history
   useEffect(() => {
@@ -162,12 +205,16 @@ export default function ImmoAIBubble() {
 
   return (
     <>
-      {/* Floating Bubble */}
+      {/* BUG-8: Draggable Floating Bubble — supports mouse drag + touch drag */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-20 md:bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-          aria-label="Immo AI öffnen (Alt+I)"
+          onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+          onClick={() => { if (!isDragging.current) setOpen(true); }}
+          /* IMPROVE-42: Drag-affordance cursor (grab/grabbing) and touch-none to prevent scroll interference */
+          className="fixed z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
+          style={bubblePos ? { left: bubblePos.x, top: bubblePos.y } : { bottom: "5rem", right: "1rem" }}
+          aria-label="Immo AI öffnen (Alt+I) — ziehen zum Verschieben"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
           {unreadCount > 0 && (
@@ -178,9 +225,12 @@ export default function ImmoAIBubble() {
         </button>
       )}
 
-      {/* Chat Window — IMP-44: Limit chat window height on small screens to avoid overlap with mobile nav */}
+      {/* BUG-8: Chat window positioned near bubble position */}
       {open && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div
+          className="fixed z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
+          style={bubblePos ? { left: Math.min(bubblePos.x, window.innerWidth - 416), top: Math.max(8, bubblePos.y - 570) } : { bottom: "5rem", right: "1rem" }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
             <div className="flex items-center gap-2">

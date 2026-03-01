@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Building2, MapPin, Phone, Mail, ArrowRight, GripVertical, Edit2, Trash2, Clock, TrendingUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/* IMPROVE-26: Deal record type for proper typing throughout the component */
+interface DealRecord {
+  id: string;
+  title: string;
+  address?: string;
+  description?: string;
+  stage: string;
+  purchase_price?: number;
+  expected_rent?: number;
+  expected_yield?: number;
+  sqm?: number;
+  units?: number;
+  property_type?: string;
+  contact_name?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  source?: string;
+  notes?: string;
+  lost_reason?: string;
+  created_at: string;
+}
 
 const STAGES = [
   { key: "recherche", label: "Recherche", color: "bg-slate-500" },
@@ -35,7 +57,8 @@ const Deals = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
-  const [editDeal, setEditDeal] = useState<any>(null);
+  /* IMPROVE-27: Replace `any` with proper DealRecord type for editDeal state */
+  const [editDeal, setEditDeal] = useState<DealRecord | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
 
@@ -93,8 +116,8 @@ const Deals = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["deals"] }),
   });
 
-  /* IMP-21: Replace `any` with proper deal record type */
-  const openEdit = (deal: Record<string, unknown>) => {
+  /* IMPROVE-28: Properly typed openEdit with DealRecord */
+  const openEdit = (deal: DealRecord) => {
     setEditDeal(deal);
     setForm({
       title: deal.title, address: deal.address || "", description: deal.description || "",
@@ -180,12 +203,16 @@ const Deals = () => {
     return acc;
   }, {} as Record<string, number>);
 
+  /* IMPROVE-29: Document title for Deals page */
+  useEffect(() => { document.title = `Deal Pipeline (${activeDeals.length}) – ImmoControl`; }, [activeDeals.length]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Deal Pipeline</h1>
-          <p className="text-muted-foreground text-sm">Investmentchancen verfolgen & bewerten</p>
+          {/* IMPROVE-30: Show active count and total volume in subtitle */}
+          <p className="text-muted-foreground text-sm">{activeDeals.length} aktive Deals · {fmt(totalVolume)} Volumen</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
@@ -208,6 +235,7 @@ const Deals = () => {
         {/* FUNC-17: Average deal value */}
         {avgDealValue > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Dealwert</p><p className="text-xl font-bold">{fmt(avgDealValue)}</p></CardContent></Card>}
         {/* FUNC-18: Pipeline velocity */}
+        {/* IMPROVE-35: Pipeline velocity metric displayed alongside other deal stats for quick pipeline health check */}
         {pipelineVelocity > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Tage im Stage</p><p className="text-xl font-bold">{pipelineVelocity}d</p></CardContent></Card>}
       </div>
 
@@ -265,7 +293,7 @@ const Deals = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  {stageDeals.map((deal: any) => {
+                  {stageDeals.map((deal: DealRecord) => {
                     const dealAge = Math.floor((Date.now() - new Date(deal.created_at).getTime()) / 86400000);
                     const isStale = dealAge > 30 && deal.stage !== "abgeschlossen" && deal.stage !== "abgelehnt";
                     return (

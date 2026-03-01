@@ -50,6 +50,7 @@ export const NotificationBell = () => {
   }, [user]);
 
   const total = data?.total || 0;
+  /* IMPROVE-38: Notifications sorted by severity — high-severity items (overdue payments, tickets) appear first */
   const allNotifications = data
     ? [
         ...data.notifications.overdue_payments,

@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { createDebounce, groupBy, sortByKey, truncate } from "@/lib/formatters";
+import { createDebounce, groupBy, sortByKey, truncate, pluralDE } from "@/lib/formatters";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -119,8 +119,6 @@ const Todos = () => {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const quickInputRef = useRef<HTMLInputElement>(null);
 
-  // Document title
-  useEffect(() => { document.title = "Aufgaben – ImmoControl"; }, []);
 
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: queryKeys.todos.all(user?.id ?? ""),
@@ -267,6 +265,9 @@ const Todos = () => {
 
   const inboxCount = useMemo(() => todos.filter(t => !t.completed).length, [todos]);
 
+  /* IMPROVE-31: Dynamic document title with task count */
+  useEffect(() => { document.title = `Aufgaben (${inboxCount}) – ImmoControl`; }, [inboxCount]);
+
   /* FUNC-8: Todo completion rate tracking */
   const completionRate = useMemo(() => {
     const total = todos.length;
@@ -335,6 +336,10 @@ const Todos = () => {
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-primary" /> Aufgaben
           </h1>
+          {/* IMPROVE-32: Show completion rate below heading */}
+          {todos.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">{completionRate}% erledigt · {pluralDE(overdueCount, "überfällig", "überfällige")}</p>
+          )}
         </div>
 
         {([
@@ -472,7 +477,8 @@ const Todos = () => {
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
-                placeholder="Suchen..."
+                /* IMPROVE-33: More specific search placeholder */
+                placeholder="Aufgabe suchen..."
                 value={searchInput}
                 onChange={e => {
                   const v = e.target.value;

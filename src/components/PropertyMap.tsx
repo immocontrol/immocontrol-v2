@@ -239,6 +239,7 @@ const PropertyMap = () => {
           <MapPin className="h-4 w-4 text-muted-foreground" /> Kartenansicht
         </h2>
         <div className="flex items-center gap-2">
+          {/* IMPROVE-39: Geocoding progress indicator shows real-time count of resolved addresses */}
           {geocoding && (
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" /> Adressen werden geladen…

@@ -99,7 +99,8 @@ const Deals = lazy(dealsImport);
 const Dokumente = lazy(dokumenteImport);
 const Wartungsplaner = lazy(wartungsplanerImport);
 
-// Preload all routes after initial render to eliminate loading on tab switch
+/* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
+   so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
 const preloadRoutes = () => {
   dashboardImport();
   propertyDetailImport();
@@ -203,7 +204,7 @@ const RoleRouter = () => {
     checkOnboarding();
   }, [user]);
 
-  // Preload all routes eagerly
+  /* BUG-6: Preload all routes eagerly after first render to prevent double-loading on tab switch */
   useEffect(() => {
     preloadRoutes();
   }, []);

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Camera, Upload, Send, AlertTriangle, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import FileImportPicker from "@/components/FileImportPicker";
 
 interface DamageReportProps {
   tenantId: string;
@@ -35,7 +36,6 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [form, setForm] = useState({
@@ -46,10 +46,9 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
     location: unitLabel || "",
   });
 
-  const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    const newFiles = Array.from(files).slice(0, 5 - photos.length);
+  /* BUG-11: Allow selecting photos via mobile document/app picker */
+  const handlePhotos = (picked: File[]) => {
+    const newFiles = picked.slice(0, 5 - photos.length);
     setPhotos(prev => [...prev, ...newFiles]);
     newFiles.forEach(file => {
       const reader = new FileReader();
@@ -186,6 +185,7 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
 
           {/* Photo Upload */}
           <div className="space-y-2">
+            {/* IMPROVE-17: Use FileImportPicker for mobile-friendly photo selection */}
             <Label className="text-xs flex items-center gap-1">
               <Camera className="h-3 w-3" /> Fotos (max. 5)
             </Label>
@@ -205,24 +205,17 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
               </div>
             )}
             {photos.length < 5 && (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handlePhotos}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <Upload className="h-3.5 w-3.5" /> Foto hinzufügen
-                </Button>
-              </>
+              <FileImportPicker
+                accept="image/*"
+                multiple
+                onFile={(file) => handlePhotos([file])}
+                onFiles={handlePhotos}
+                label="Foto hinzufügen"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                icon={<Upload className="h-3.5 w-3.5" />}
+              />
             )}
           </div>
 

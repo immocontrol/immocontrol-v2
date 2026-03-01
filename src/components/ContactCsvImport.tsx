@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { Upload, X, ChevronRight, Check, AlertTriangle, FileText, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileImportPicker } from "@/components/FileImportPicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -243,18 +244,33 @@ const ContactCsvImport = ({ open, onClose, onImported }: Props) => {
         </div>
 
         {step === "upload" && (
-          <div
-            className="border-2 border-dashed border-border rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input ref={fileInputRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls" className="hidden" onChange={handleFileInput} />
-            <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-            <p className="text-sm font-medium mb-1">CSV-Datei hier ablegen oder klicken</p>
-            <p className="text-xs text-muted-foreground">Unterstützt: CSV, TSV (Komma, Semikolon oder Tab-getrennt)</p>
-            <p className="text-xs text-muted-foreground mt-1">Erste Zeile wird als Spaltenüberschrift verwendet</p>
-          </div>
+          <>
+            <div
+              className="border-2 border-dashed border-border rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input ref={fileInputRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls" className="hidden" onChange={handleFileInput} />
+              <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-sm font-medium mb-1">CSV-Datei hier ablegen oder klicken</p>
+              <p className="text-xs text-muted-foreground">Unterstützt: CSV, TSV (Komma, Semikolon oder Tab-getrennt)</p>
+              <p className="text-xs text-muted-foreground mt-1">Erste Zeile wird als Spaltenüberschrift verwendet</p>
+            </div>
+
+            {/* BUG-12: Mobile file import picker — shows app selection on mobile */}
+            <div className="sm:hidden mt-2">
+              <FileImportPicker
+                accept=".csv,.txt,.tsv"
+                onFile={handleFile}
+                label="CSV vom Handy importieren"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                icon={<Upload className="h-3.5 w-3.5" />}
+              />
+            </div>
+          </>
         )}
 
         {step === "map" && (

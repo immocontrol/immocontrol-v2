@@ -9,7 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { jsPDF } from "jspdf";
+
+/* IMPROVE-14: Remove unused jsPDF import (smaller bundle, fewer dependencies) */
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 
@@ -50,6 +51,22 @@ const fmtCur = (v: string) => {
   return isNaN(n) ? "" : n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " \u20ac";
 };
 
+/* BUG-1: Sanitize text for WinAnsi encoding — replace non-WinAnsi chars with ASCII equivalents */
+/* BUG-2: Fixes "WinAnsi cannot encode \"−\" (0x2212)" error by mapping all problematic Unicode chars to ASCII */
+const sanitizeForWinAnsi = (text: string): string => {
+  return text
+    .replace(/\u2212/g, "-")   // minus sign -> hyphen
+    .replace(/\u2013/g, "-")   // en-dash -> hyphen
+    .replace(/\u2014/g, "--")  // em-dash -> double hyphen
+    .replace(/\u2018/g, "'")   // left single quote
+    .replace(/\u2019/g, "'")   // right single quote
+    .replace(/\u201c/g, '"')   // left double quote
+    .replace(/\u201d/g, '"')   // right double quote
+    .replace(/\u2026/g, "...") // ellipsis
+    .replace(/\u00b7/g, ".")   // middle dot
+    .replace(/\u2022/g, "*");  // bullet
+};
+
 const NAME_FIELDS: (keyof SelbstauskunftData)[] = ["name", "vorname", "geburtsname", "geburtsort"];
 
 /* FUNC-47: Selbstauskunft field validation */
@@ -74,10 +91,10 @@ const SELBSTAUSKUNFT_FIELD_IDS = [
 const SELBSTAUSKUNFT_TOTAL_STEPS = 7;
 
 const STEPS = [
-  { id: "personal", title: "Pers\u00f6nliche Daten" },
+  { id: "personal", title: "Persönliche Daten" },
   { id: "contact", title: "Kontakt & Familie" },
-  { id: "employment", title: "Berufst\u00e4tigkeit" },
-  { id: "assets", title: "Verm\u00f6genswerte" },
+  { id: "employment", title: "Berufstätigkeit" },
+  { id: "assets", title: "Vermögenswerte" },
   { id: "income", title: "Einnahmen" },
   { id: "expenses", title: "Ausgaben" },
   { id: "summary", title: "Zusammenfassung & Download" },
@@ -148,10 +165,11 @@ export const SelbstauskunftGenerator = () => {
       let page = pdfDoc.addPage([pageW, pageH]);
       let y = pageH - margin;
 
+      /* BUG-1: Sanitize all text for WinAnsi before drawing to prevent encoding errors */
       const drawText = (text: string, x: number, yPos: number, opts: { size?: number; bold?: boolean; color?: [number, number, number] } = {}) => {
         const font = opts.bold ? helveticaBold : helvetica;
         const c = opts.color || [30, 30, 30];
-        page.drawText(text, { x, y: yPos, size: opts.size || 10, font, color: rgb(c[0] / 255, c[1] / 255, c[2] / 255) });
+        page.drawText(sanitizeForWinAnsi(text), { x, y: yPos, size: opts.size || 10, font, color: rgb(c[0] / 255, c[1] / 255, c[2] / 255) });
       };
 
       const checkPage = (needed: number) => {
@@ -178,7 +196,7 @@ export const SelbstauskunftGenerator = () => {
         page.drawRectangle({ x, y: yPos - 2, width: w, height: 16, color: rgb(0.98, 0.98, 0.98), borderColor: rgb(0.78, 0.78, 0.78), borderWidth: 0.5 });
         // Create fillable form field
         const textField = form.createTextField(fieldName);
-        textField.setText(value || "");
+        textField.setText(sanitizeForWinAnsi(value || ""));
         textField.addToPage(page, { x: x + 2, y: yPos, width: w - 4, height: 12, borderWidth: 0 });
         try { textField.setFontSize(9); } catch { /* some viewers handle font size differently */ }
       };
@@ -503,7 +521,7 @@ export const SelbstauskunftGenerator = () => {
               <span className="font-bold text-loss">{fmtCur(sumA.toFixed(2))}</span>
             </div>
             <div className={"rounded-lg p-3 text-sm border " + (surplus >= 0 ? "bg-profit/5 border-profit/20" : "bg-loss/5 border-loss/20")}>
-              <span className="text-muted-foreground">\u00dcberschuss: </span>
+              <span className="text-muted-foreground">Überschuss: </span>
               <span className={"font-bold " + (surplus >= 0 ? "text-profit" : "text-loss")}>{fmtCur(surplus.toFixed(2))}</span>
             </div>
           </div>
@@ -521,14 +539,15 @@ export const SelbstauskunftGenerator = () => {
               />
             </div>
             <div className="rounded-lg border border-border p-4 space-y-2 bg-secondary/30">
+              {/* IMPROVE-15: Use literal umlauts/dashes in UI strings (avoid confusing \\uXXXX renderings) */}
               <h4 className="text-sm font-semibold">Zusammenfassung</h4>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div><span className="text-muted-foreground">Name:</span> {data.vorname} {data.name}</div>
-                <div><span className="text-muted-foreground">Arbeitgeber:</span> {data.arbeitgeber || "\u2013"}</div>
+                <div><span className="text-muted-foreground">Arbeitgeber:</span> {data.arbeitgeber || "–"}</div>
                 <div><span className="text-muted-foreground">Einnahmen:</span> {fmtCur(sumE.toFixed(2))}</div>
                 <div><span className="text-muted-foreground">Ausgaben:</span> {fmtCur(sumA.toFixed(2))}</div>
                 <div className="col-span-2">
-                  <span className="text-muted-foreground">\u00dcberschuss:</span>{" "}
+                  <span className="text-muted-foreground">Überschuss:</span>{" "}
                   <span className={surplus >= 0 ? "text-profit font-medium" : "text-loss font-medium"}>{fmtCur(surplus.toFixed(2))}</span>
                 </div>
               </div>
@@ -594,7 +613,7 @@ export const SelbstauskunftGenerator = () => {
         {/* Navigation */}
         <div className="flex items-center justify-between border-t border-border px-5 py-3 bg-background">
           <Button variant="outline" size="sm" onClick={prevStep} disabled={step === 0} className="gap-1">
-            <ChevronLeft className="h-3.5 w-3.5" /> Zur\u00fcck
+            <ChevronLeft className="h-3.5 w-3.5" /> Zurück
           </Button>
           {step < STEPS.length - 1 ? (
             <Button size="sm" onClick={nextStep} className="gap-1">

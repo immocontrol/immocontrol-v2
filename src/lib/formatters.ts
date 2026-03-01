@@ -225,3 +225,55 @@ export const groupBy = <T>(arr: T[], keyFn: (item: T) => string): Record<string,
     return groups;
   }, {} as Record<string, T[]>);
 };
+
+/* IMPROVE-44: Format German phone number for display (e.g. +49 30 12345678) */
+export const formatPhoneDE = (phone: string): string => {
+  const cleaned = phone.replace(/[^\d+]/g, "");
+  if (cleaned.startsWith("+49") && cleaned.length >= 12) {
+    const area = cleaned.slice(3, 5);
+    const rest = cleaned.slice(5);
+    return `+49 ${area} ${rest}`;
+  }
+  if (cleaned.startsWith("0") && cleaned.length >= 10) {
+    const area = cleaned.slice(0, cleaned.length <= 11 ? 4 : 3);
+    const rest = cleaned.slice(area.length);
+    return `${area} ${rest}`;
+  }
+  return phone;
+};
+
+/* IMPROVE-45: Validate German IBAN format */
+export const isValidIBAN = (iban: string): boolean => {
+  const cleaned = iban.replace(/\s/g, "").toUpperCase();
+  return /^DE\d{20}$/.test(cleaned);
+};
+
+/* IMPROVE-46: Format German address for display (street, PLZ city) */
+export const formatAddressDE = (street: string, plz: string, city: string): string =>
+  [street, [plz, city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+
+/* IMPROVE-47: Calculate annualized ROI from monthly cashflow and investment */
+export const calculateROI = (monthlyCashflow: number, totalInvestment: number): number =>
+  totalInvestment > 0 ? (monthlyCashflow * 12 / totalInvestment) * 100 : 0;
+
+/* IMPROVE-48: Format days until a future date as German countdown string */
+export const formatDaysUntil = (dateStr: string): string => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 0) return `${Math.abs(days)} Tage überfällig`;
+  if (days === 0) return "Heute";
+  if (days === 1) return "Morgen";
+  if (days <= 7) return `in ${days} Tagen`;
+  if (days <= 30) return `in ${Math.ceil(days / 7)} Wochen`;
+  return `in ${Math.ceil(days / 30)} Monaten`;
+};
+
+/* IMPROVE-49: Normalize string for fuzzy search comparison (lowercase, no accents) */
+export const normalizeString = (str: string): string =>
+  str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+/* IMPROVE-50: Format price per square meter with German locale */
+export const formatEuroPerSqm = (totalPrice: number, sqm: number): string =>
+  sqm > 0 ? `${numberFormatterDE.format(Math.round(totalPrice / sqm))} €/m²` : "–";

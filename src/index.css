@@ -1378,3 +1378,109 @@ input:focus, textarea:focus, select:focus {
   background: hsl(var(--primary) / 0.25);
   color: hsl(var(--foreground));
 }
+
+/* IMPROVE-1: Smooth loading placeholder with breathing animation */
+.loading-breathe {
+  animation: breathe 2s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* IMPROVE-2: Better empty state card with centered layout */
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  background: hsl(var(--muted) / 0.3);
+  border: 1px dashed hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+/* IMPROVE-3: Stat card micro-interaction on hover */
+.stat-card-interactive {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.stat-card-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -4px hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+/* IMPROVE-4: Improved dark mode input field contrast */
+.dark input:not(:disabled),
+.dark textarea:not(:disabled),
+.dark select:not(:disabled) {
+  background: hsl(var(--background));
+  border-color: hsl(var(--border) / 0.8);
+}
+.dark input:focus,
+.dark textarea:focus {
+  border-color: hsl(var(--primary) / 0.6);
+}
+
+/* IMPROVE-5: Better notification toast entrance with slide-in */
+[data-sonner-toast] {
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* IMPROVE-6: Mobile-optimized card gap spacing */
+@media (max-width: 640px) {
+  .mobile-gap-tight {
+    gap: 0.5rem;
+  }
+  .mobile-p-tight {
+    padding: 0.75rem;
+  }
+}
+
+/* IMPROVE-7: Improved dialog content max-height on mobile */
+@media (max-width: 640px) {
+  [data-radix-dialog-content] {
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 1rem;
+  }
+}
+
+/* IMPROVE-8: Better table header sticky positioning */
+.table-sticky-header thead th {
+  position: sticky;
+  top: 0;
+  background: hsl(var(--background));
+  z-index: 10;
+  box-shadow: 0 1px 0 hsl(var(--border));
+}
+
+/* IMPROVE-9: Smooth color transition for status indicators */
+.status-transition {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* IMPROVE-43: Improved mobile touch targets — minimum 44px hit area for buttons and interactive elements */
+@media (max-width: 640px) {
+  .touch-target-mobile {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* IMPROVE-10: Improved form label spacing consistency */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.form-group label {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
