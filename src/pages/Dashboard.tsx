@@ -460,8 +460,10 @@ ${properties.map(p => `<tr>
   // Feature: Portfolio share text
   const sharePortfolio = () => {
     const text = `📊 ImmoControl Portfolio\n${stats.propertyCount} Objekte · ${stats.totalUnits} Einheiten\n💰 Gesamtwert: ${formatCurrency(stats.totalValue)}\n📈 Eigenkapital: ${formatCurrency(stats.equity)}\n🏠 Miete: ${formatCurrency(stats.totalRent)}/M\n💵 Cashflow: ${formatCurrency(stats.totalCashflow)}/M\n📊 Brutto-Rendite: ${stats.avgRendite.toFixed(1)}%`;
-    navigator.clipboard.writeText(text);
-    toast.success("Portfolio-Zusammenfassung kopiert!");
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Portfolio-Zusammenfassung kopiert!"),
+      () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
+    );
   };
 
   // New Feature: LTV ratio

@@ -60,8 +60,10 @@ export const TeamManagement = () => {
   /** Generate a shareable invite link */
   const copyInviteLink = () => {
     const link = `${window.location.origin}/einladung?ref=${user?.id || ""}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Einladungslink kopiert!");
+    navigator.clipboard.writeText(link).then(
+      () => toast.success("Einladungslink kopiert!"),
+      () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
+    );
   };
 
   const toggleResource = (key: string) => {

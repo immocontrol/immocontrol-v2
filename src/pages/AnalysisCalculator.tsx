@@ -88,8 +88,10 @@ Eigenkapital: ${inputs.eigenkapital.toLocaleString("de-DE")} €
 Darlehen: ${calc.darlehen.toLocaleString("de-DE")} €
 Zinssatz: ${inputs.zinssatz}% · Tilgung: ${inputs.tilgung}%
 Rate/Monat: ${calc.monatlicheRate.toLocaleString("de-DE")} €`;
-    navigator.clipboard.writeText(text);
-    toast.success("Ergebnisse kopiert!");
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Ergebnisse kopiert!"),
+      () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
+    );
   }, [inputs, calc]);
 
   // Feature 4: PDF Export

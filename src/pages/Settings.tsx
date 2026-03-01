@@ -699,7 +699,7 @@ const Settings = () => {
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 shrink-0"
-                    onClick={() => { navigator.clipboard.writeText(totpSecret); toast.success("Schlüssel kopiert"); }}
+                    onClick={() => { navigator.clipboard.writeText(totpSecret).then(() => toast.success("Schlüssel kopiert"), () => toast.error("Kopieren fehlgeschlagen")); }}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
@@ -756,8 +756,10 @@ const Settings = () => {
               size="sm"
               className="w-full gap-1.5"
               onClick={() => {
-                navigator.clipboard.writeText(backupCodes.join("\n"));
-                toast.success("Backup-Codes kopiert!");
+                navigator.clipboard.writeText(backupCodes.join("\n")).then(
+                  () => toast.success("Backup-Codes kopiert!"),
+                  () => toast.error("Kopieren fehlgeschlagen")
+                );
               }}
             >
               <Copy className="h-3.5 w-3.5" /> Alle Codes kopieren
