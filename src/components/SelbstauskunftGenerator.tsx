@@ -346,10 +346,11 @@ export const SelbstauskunftGenerator = () => {
       const tp = pages.length;
       for (let i = 0; i < tp; i++) {
         const pg = pages[i];
-        pg.drawText("Selbstauskunft \u00b7 " + data.vorname + " " + data.name + " \u00b7 Seite " + (i + 1) + "/" + tp, {
+        /* BUG-2: Apply sanitizeForWinAnsi to footer text to prevent encoding crash */
+        pg.drawText(sanitizeForWinAnsi("Selbstauskunft \u00b7 " + data.vorname + " " + data.name + " \u00b7 Seite " + (i + 1) + "/" + tp), {
           x: margin, y: 20, size: 7, font: helvetica, color: rgb(0.7, 0.7, 0.7),
         });
-        pg.drawText("Erstellt mit ImmoControl", {
+        pg.drawText(sanitizeForWinAnsi("Erstellt mit ImmoControl"), {
           x: pageW - margin - 100, y: 20, size: 7, font: helvetica, color: rgb(0.7, 0.7, 0.7),
         });
       }
