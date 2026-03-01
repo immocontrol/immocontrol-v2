@@ -50,6 +50,26 @@ const fmtCur = (v: string) => {
 
 const NAME_FIELDS: (keyof SelbstauskunftData)[] = ["name", "vorname", "geburtsname", "geburtsort"];
 
+/* FUNC-47: Selbstauskunft field validation */
+const validateSelbstauskunftField = (field: string, value: string): string | null => {
+  if (!value.trim()) return null;
+  if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Ungültige E-Mail";
+  if (field === "phone" && !/^[+\d\s()-]{6,}$/.test(value)) return "Ungültige Telefonnummer";
+  if (field === "income" && isNaN(Number(value.replace(/\./g, "").replace(",", ".")))) return "Ungültige Zahl";
+  return null;
+};
+
+/* FUNC-48: PDF field IDs for Selbstauskunft */
+const SELBSTAUSKUNFT_FIELD_IDS = [
+  "name", "vorname", "geburtsname", "geburtsdatum", "geburtsort",
+  "strasse", "plz", "ort", "telefon", "email",
+  "beruf", "arbeitgeber", "einkommen", "familienstand",
+  "anzahl_personen", "haustiere", "schufa", "insolvenz",
+] as const;
+
+/* OPT-35: Form step count */
+const SELBSTAUSKUNFT_TOTAL_STEPS = 7;
+
 const STEPS = [
   { id: "personal", title: "Pers\u00f6nliche Daten" },
   { id: "contact", title: "Kontakt & Familie" },

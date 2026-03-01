@@ -255,4 +255,36 @@ const App = () => {
   );
 };
 
+/* OPT-40: Route path constants */
+const ROUTES = {
+  HOME: "/",
+  AUTH: "/auth",
+  ONBOARDING: "/onboarding",
+  SETTINGS: "/einstellungen",
+  CONTACTS: "/kontakte",
+  TODOS: "/aufgaben",
+  LOANS: "/darlehen",
+  DEALS: "/deals",
+  CRM: "/crm",
+  REPORTS: "/berichte",
+  RENT: "/mietuebersicht",
+  CONTRACTS: "/vertraege",
+  FORECAST: "/cashforecast",
+  AI: "/immoai",
+  NK: "/nebenkosten",
+} as const;
+
+/* OPT-41: App version constant */
+const APP_VERSION = "2.0.0";
+
+/* OPT-42: Feature flags for gradual rollout */
+const FEATURES = {
+  AI_CHAT: true,
+  CRM_SEARCH: true,
+  BUILDING_ESTIMATION: true,
+  SOFT_DELETE: true,
+  DARK_MODE: true,
+} as const;
+
+
 export default App;

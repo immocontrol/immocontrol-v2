@@ -265,6 +265,44 @@ const Todos = () => {
 
   const inboxCount = useMemo(() => todos.filter(t => !t.completed).length, [todos]);
 
+  /* FUNC-8: Todo completion rate tracking */
+  const completionRate = useMemo(() => {
+    const total = todos.length;
+    const done = todos.filter(t => t.completed).length;
+    return total > 0 ? Math.round((done / total) * 100) : 0;
+  }, [todos]);
+
+  /* FUNC-9: Average time to complete tasks */
+  const avgCompletionDays = useMemo(() => {
+    const completedWithDates = todos.filter(t => t.completed && t.completed_at && t.created_at);
+    if (completedWithDates.length === 0) return 0;
+    const totalDays = completedWithDates.reduce((s, t) => {
+      const created = new Date(t.created_at).getTime();
+      const completed = new Date(t.completed_at!).getTime();
+      return s + (completed - created) / (1000 * 60 * 60 * 24);
+    }, 0);
+    return Math.round(totalDays / completedWithDates.length * 10) / 10;
+  }, [todos]);
+
+  /* FUNC-10: Upcoming deadlines (next 3 days) */
+  const upcomingDeadlines = useMemo(() => {
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    const todayStr = new Date().toISOString().split("T")[0];
+    const futureStr = threeDaysFromNow.toISOString().split("T")[0];
+    return todos.filter(t => !t.completed && t.due_date && t.due_date >= todayStr && t.due_date <= futureStr);
+  }, [todos]);
+
+  /* OPT-13: Memoized project list with counts for sidebar */
+  const projectsWithCounts = useMemo(() => {
+    return projects.map(p => ({
+      name: p,
+      total: todos.filter(t => t.project === p).length,
+      open: todos.filter(t => t.project === p && !t.completed).length,
+    }));
+  }, [projects, todos]);
+
+
   const groupedByProject = useMemo(() => {
     if (view !== "inbox") return null;
     const groups: Record<string, Todo[]> = { "": [] };

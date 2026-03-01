@@ -35,8 +35,19 @@ const statusConfig: Record<PaymentStatus, { label: string; icon: typeof Clock; c
   cancelled: { label: "Storniert", icon: XCircle, color: "text-muted-foreground bg-secondary" },
 };
 
+/* FUNC-46: Payment status color mapping */
+const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  confirmed: "text-profit bg-profit/10",
+  pending: "text-gold bg-gold/10",
+  overdue: "text-loss bg-loss/10",
+  cancelled: "text-muted-foreground bg-muted",
+};
 
-
+/* OPT-34: Payment amount formatter */
+const formatPaymentAmount = (amount: number, status: string): string => {
+  const formatted = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(amount);
+  return status === "cancelled" ? `~${formatted}~` : formatted;
+};
 
 // ─── TENANT VIEW ────────────────────────────────────────────────
 interface TenantPaymentsProps {

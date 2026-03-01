@@ -20,6 +20,16 @@ const SUGGESTIONS = [
   "Welches Objekt hat den besten Cashflow?",
 ];
 
+/* OPT-38: Chat bubble position constants */
+const BUBBLE_POSITION = {
+  bottom: "1.5rem",
+  right: "1.5rem",
+  mobileBottom: "5rem",
+} as const;
+
+/* OPT-39: Message limit for bubble chat */
+const BUBBLE_MAX_MESSAGES = 20;
+
 export default function ImmoAIBubble() {
   const { session } = useAuth();
   const [open, setOpen] = useState(false);

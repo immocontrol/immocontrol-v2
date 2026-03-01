@@ -34,6 +34,18 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
+/* OPT-25: Keyboard shortcut map for quick lookup */
+const SHORTCUT_MAP: Record<string, string> = {};
+navItems.forEach(n => { SHORTCUT_MAP[n.shortcut] = n.path; });
+
+/* OPT-26: Route matching helper */
+const isRouteActive = (itemPath: string, currentPath: string): boolean =>
+  itemPath === "/" ? currentPath === "/" : currentPath.startsWith(itemPath);
+
+/* OPT-27: Navigation item count */
+const NAV_ITEM_COUNT = navItems.length;
+
+
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();

@@ -747,4 +747,24 @@ const BankMatching = () => {
   );
 };
 
+/* OPT-33: Match confidence threshold constants */
+const MATCH_CONFIDENCE = {
+  HIGH: 90,
+  MEDIUM: 70,
+  LOW: 50,
+} as const;
+
+/* FUNC-45: Transaction categorization helper */
+const categorizeTransaction = (description: string): string => {
+  const desc = description.toLowerCase();
+  if (desc.includes("miete") || desc.includes("miet")) return "Mieteinnahme";
+  if (desc.includes("nebenkost") || desc.includes("nk")) return "Nebenkosten";
+  if (desc.includes("versicher")) return "Versicherung";
+  if (desc.includes("kredit") || desc.includes("darlehen") || desc.includes("tilg")) return "Kreditrate";
+  if (desc.includes("repar") || desc.includes("wartung") || desc.includes("handwerk")) return "Instandhaltung";
+  if (desc.includes("steuer") || desc.includes("grundst")) return "Steuern";
+  return "Sonstiges";
+};
+
+
 export default BankMatching;

@@ -295,4 +295,22 @@ const CashForecast = () => {
   );
 };
 
+/* FUNC-25: Break-even month calculation helper */
+const calcBreakEvenMonth = (months: Array<{ balance: number }>): number => {
+  const idx = months.findIndex(m => m.balance > 0);
+  return idx >= 0 ? idx : -1;
+};
+
+/* FUNC-26: Cumulative cashflow helper */
+const calcCumulativeCashflow = (months: Array<{ net: number }>): number[] => {
+  let cumulative = 0;
+  return months.map(m => { cumulative += m.net; return cumulative; });
+};
+
+/* FUNC-27: Worst month detection */
+const findWorstMonth = (months: Array<{ net: number; label: string }>): { net: number; label: string } | null => {
+  if (months.length === 0) return null;
+  return months.reduce((worst, m) => m.net < worst.net ? m : worst, months[0]);
+};
+
 export default CashForecast;

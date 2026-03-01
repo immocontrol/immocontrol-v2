@@ -239,6 +239,30 @@ ${properties.map(p => `<tr>
     setTimeout(() => setRefreshing(false), 600);
   }, [qc]);
 
+  /* FUNC-4: Average holding period calculation */
+  const avgHoldingPeriodMonths = useMemo(() => {
+    if (properties.length === 0) return 0;
+    const totalMonths = properties.reduce((s, p) => {
+      const purchase = (p as any).purchase_date || (p as any).purchaseDate;
+      if (!purchase) return s;
+      const months = Math.floor((Date.now() - new Date(purchase).getTime()) / (1000 * 60 * 60 * 24 * 30));
+      return s + months;
+    }, 0);
+    return Math.round(totalMonths / properties.length);
+  }, [properties]);
+
+  /* FUNC-5: Highest and lowest yield properties */
+  const yieldExtremes = useMemo(() => {
+    if (properties.length === 0) return { highest: null, lowest: null };
+    const withYield = properties.map(p => ({
+      ...p,
+      yieldPct: p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice * 100) : 0,
+    }));
+    const sorted = [...withYield].sort((a, b) => b.yieldPct - a.yieldPct);
+    return { highest: sorted[0], lowest: sorted[sorted.length - 1] };
+  }, [properties]);
+
+
   const filters: { key: FilterType; label: string }[] = [
     { key: "alle", label: "Alle" },
     { key: "egbr", label: "eGbR" },
@@ -315,6 +339,37 @@ ${properties.map(p => `<tr>
       </div>
     );
   }
+
+  /* FUNC-1: Portfolio summary metrics */
+  const portfolioMetrics = useMemo(() => {
+    const totalRentPerSqm = stats.totalSqm > 0 ? (stats.totalRent / stats.totalSqm) : 0;
+    const avgValuePerUnit = stats.totalUnits > 0 ? (stats.totalValue / stats.totalUnits) : 0;
+    const debtToEquityRatio = stats.equity > 0 ? (stats.totalDebt / stats.equity) : 0;
+    const annualCashflow = stats.totalCashflow * 12;
+    const cashOnCashReturn = stats.equity > 0 ? (annualCashflow / stats.equity * 100) : 0;
+    return { totalRentPerSqm, avgValuePerUnit, debtToEquityRatio, annualCashflow, cashOnCashReturn };
+  }, [stats]);
+
+  /* FUNC-2: Property count by type */
+  const propertyTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    properties.forEach(p => { counts[p.type] = (counts[p.type] || 0) + 1; });
+    return counts;
+  }, [properties]);
+
+  /* FUNC-3: Vacancy detection - properties with no active tenants */
+  const vacantProperties = useMemo(() => {
+    return properties.filter(p => {
+      const propTenants = allTenants.filter(t => t.property_id === p.id && t.is_active);
+      return propTenants.length === 0;
+    });
+  }, [properties, allTenants]);
+
+  /* OPT-11: Memoized total rent from tenants for accuracy */
+  const totalTenantRent = useMemo(() => {
+    return allTenants.filter(t => t.is_active).reduce((s, t) => s + (t.monthly_rent || 0), 0);
+  }, [allTenants]);
+
 
   // Improvement 10: Greeting with user name
   const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";

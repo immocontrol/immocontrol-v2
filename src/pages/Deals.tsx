@@ -116,6 +116,57 @@ const Deals = () => {
     ? Math.round(activeDeals.reduce((s: number, d: { created_at: string }) => s + Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000), 0) / activeDeals.length)
     : 0;
 
+  /* FUNC-15: Deal conversion rate per stage */
+  const stageConversionRates = useMemo(() => {
+    const rates: Record<string, number> = {};
+    STAGES.forEach((stage, idx) => {
+      const inStage = deals.filter((d: { stage: string }) => d.stage === stage.key).length;
+      const later = STAGES.slice(idx + 1).map(s => s.key);
+      const progressed = deals.filter((d: { stage: string }) => later.includes(d.stage)).length;
+      rates[stage.key] = inStage > 0 ? Math.round((progressed / (inStage + progressed)) * 100) : 0;
+    });
+    return rates;
+  }, [deals]);
+
+  /* FUNC-16: Deal source analytics */
+  const sourceAnalytics = useMemo(() => {
+    const sources: Record<string, number> = {};
+    deals.forEach((d: any) => {
+      const src = d.source || "Unbekannt";
+      sources[src] = (sources[src] || 0) + 1;
+    });
+    return sources;
+  }, [deals]);
+
+  /* FUNC-17: Average deal value */
+  const avgDealValue = useMemo(() => {
+    const dealsWithPrice = deals.filter((d: { purchase_price?: number }) => d.purchase_price && d.purchase_price > 0);
+    if (dealsWithPrice.length === 0) return 0;
+    return dealsWithPrice.reduce((s: number, d: { purchase_price?: number }) => s + (d.purchase_price || 0), 0) / dealsWithPrice.length;
+  }, [deals]);
+
+  /* FUNC-18: Pipeline velocity - avg days in current stage */
+  const pipelineVelocity = useMemo(() => {
+    const active = deals.filter((d: any) => d.stage !== "closed" && d.stage !== "lost");
+    if (active.length === 0) return 0;
+    const totalDays = active.reduce((s: number, d: any) => {
+      const created = new Date(d.created_at || Date.now()).getTime();
+      return s + (Date.now() - created) / (1000 * 60 * 60 * 24);
+    }, 0);
+    return Math.round(totalDays / active.length);
+  }, [deals]);
+
+  /* OPT-15: Memoized deal property type distribution */
+  const dealTypeDistribution = useMemo(() => {
+    const types: Record<string, number> = {};
+    deals.forEach((d: any) => {
+      const t = d.property_type || "Sonstige";
+      types[t] = (types[t] || 0) + 1;
+    });
+    return types;
+  }, [deals]);
+
+
   // Improvement 1: Pipeline value per stage
   const stageValues = STAGES.reduce((acc, s) => {
     acc[s.key] = deals

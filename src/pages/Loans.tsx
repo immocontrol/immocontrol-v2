@@ -282,6 +282,66 @@ const Loans = () => {
   const MARKET_RATE_THRESHOLD = 3.5;
   const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
 
+  /* FUNC-11: Loan maturity warnings - loans ending within 12 months */
+  const maturingLoans = useMemo(() => {
+    const oneYear = new Date();
+    oneYear.setFullYear(oneYear.getFullYear() + 1);
+    return filteredLoans.filter(l => l.end_date && new Date(l.end_date) <= oneYear);
+  }, [filteredLoans]);
+
+  /* FUNC-12: Interest vs Principal split per month */
+  const interestPrincipalSplit = useMemo(() => {
+    return filteredLoans.map(l => {
+      const monthlyInterest = l.remaining_balance * l.interest_rate / 100 / 12;
+      const monthlyPrincipal = l.monthly_payment - monthlyInterest;
+      return { id: l.id, bank: l.bank_name, interest: monthlyInterest, principal: Math.max(0, monthlyPrincipal), payment: l.monthly_payment };
+    });
+  }, [filteredLoans]);
+
+  /* FUNC-13: Total interest paid estimate over remaining term */
+  const totalRemainingInterest = useMemo(() => {
+    return filteredLoans.reduce((s, l) => {
+      if (l.interest_rate <= 0 || l.monthly_payment <= 0) return s;
+      const monthlyRate = l.interest_rate / 100 / 12;
+      let balance = l.remaining_balance;
+      let totalInt = 0;
+      let months = 0;
+      while (balance > 0 && months < 600) {
+        const interest = balance * monthlyRate;
+        totalInt += interest;
+        balance = balance + interest - l.monthly_payment;
+        months++;
+      }
+      return s + totalInt;
+    }, 0);
+  }, [filteredLoans]);
+
+  /* FUNC-14: Weighted average remaining term in months */
+  const weightedAvgTermMonths = useMemo(() => {
+    let totalWeightedMonths = 0;
+    let totalBal = 0;
+    filteredLoans.forEach(l => {
+      if (l.end_date) {
+        const months = Math.max(0, (new Date(l.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+        totalWeightedMonths += months * l.remaining_balance;
+        totalBal += l.remaining_balance;
+      }
+    });
+    return totalBal > 0 ? Math.round(totalWeightedMonths / totalBal) : 0;
+  }, [filteredLoans]);
+
+  /* OPT-14: Memoized loan type distribution */
+  const loanTypeDistribution = useMemo(() => {
+    const dist: Record<string, { count: number; balance: number }> = {};
+    filteredLoans.forEach(l => {
+      if (!dist[l.loan_type]) dist[l.loan_type] = { count: 0, balance: 0 };
+      dist[l.loan_type].count++;
+      dist[l.loan_type].balance += l.remaining_balance;
+    });
+    return dist;
+  }, [filteredLoans]);
+
+
   const now = new Date();
   const zinsBindungData = filteredLoans
     .filter(l => l.fixed_interest_until)

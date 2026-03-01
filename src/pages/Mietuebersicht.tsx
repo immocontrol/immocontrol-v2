@@ -77,6 +77,42 @@ const Mietuebersicht = () => {
     });
   }, [payments, statusFilter, propertyFilter, monthFilter, debouncedSearch, tenantMap, propertyMap]);
 
+  /* FUNC-22: Year-over-year payment trend */
+  const paymentTrend = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const lastYear = currentYear - 1;
+    const thisYearTotal = payments
+      .filter(p => new Date(p.due_date).getFullYear() === currentYear && p.status === "confirmed")
+      .reduce((s, p) => s + Number(p.amount), 0);
+    const lastYearTotal = payments
+      .filter(p => new Date(p.due_date).getFullYear() === lastYear && p.status === "confirmed")
+      .reduce((s, p) => s + Number(p.amount), 0);
+    const change = lastYearTotal > 0 ? ((thisYearTotal - lastYearTotal) / lastYearTotal * 100) : 0;
+    return { thisYear: thisYearTotal, lastYear: lastYearTotal, change };
+  }, [payments]);
+
+  /* FUNC-23: Top paying tenants */
+  const topTenants = useMemo(() => {
+    return activeTenants
+      .map(t => ({ ...t, rent: Number(t.monthly_rent || 0) }))
+      .sort((a, b) => b.rent - a.rent)
+      .slice(0, 5);
+  }, [activeTenants]);
+
+  /* FUNC-24: Payment method distribution */
+  const paymentMethodDist = useMemo(() => {
+    const methods: Record<string, number> = {};
+    payments.forEach(p => {
+      const method = (p as any).payment_method || "Überweisung";
+      methods[method] = (methods[method] || 0) + 1;
+    });
+    return methods;
+  }, [payments]);
+
+  /* OPT-18: Memoized active tenant count and vacancy */
+  const activeTenantCount = activeTenants.length;
+
+
   // Stats
   const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
   const confirmed = filteredPayments.filter(p => p.status === "confirmed");

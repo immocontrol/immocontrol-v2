@@ -273,4 +273,21 @@ const Onboarding = () => {
   );
 };
 
+/* FUNC-42: Onboarding step labels */
+const ONBOARDING_STEPS = [
+  { key: "welcome", label: "Willkommen" },
+  { key: "profile", label: "Profil" },
+  { key: "property", label: "Erstes Objekt" },
+  { key: "complete", label: "Fertig" },
+] as const;
+
+/* FUNC-43: Onboarding progress percentage */
+const getOnboardingProgress = (step: number, total: number): number =>
+  Math.round((step / total) * 100);
+
+/* OPT-31: Onboarding completion check */
+const isOnboardingComplete = (): boolean =>
+  localStorage.getItem("onboarding_complete") === "true";
+
+
 export default Onboarding;

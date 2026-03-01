@@ -90,6 +90,25 @@ const Settings = () => {
     navigate("/auth");
   };
 
+  /* FUNC-36: Data usage estimation */
+  const dataUsageEstimate = useMemo(() => {
+    const storedKeys = ["immoai_chat", "theme", "onboarding_complete"];
+    let totalSize = 0;
+    storedKeys.forEach(key => {
+      const item = localStorage.getItem(key);
+      if (item) totalSize += item.length * 2;
+    });
+    return totalSize;
+  }, []);
+
+  /* FUNC-37: Session info display */
+  const sessionInfo = useMemo(() => ({
+    lastLogin: user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "–",
+    provider: user?.app_metadata?.provider || "email",
+  }), [user]);
+
+  /* OPT-21: Theme options as constant */
+
   const themeOptions = [
     { value: "light", label: "Hell", icon: Sun },
     { value: "dark", label: "Dunkel", icon: Moon },

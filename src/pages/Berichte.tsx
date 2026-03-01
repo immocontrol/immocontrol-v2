@@ -53,6 +53,35 @@ const Berichte = () => {
     enabled: !!user,
   });
 
+  /* FUNC-28: Report generation count tracker */
+  const [reportCount, setReportCount] = useState(0);
+  const trackReport = useCallback(() => setReportCount(c => c + 1), []);
+
+  /* FUNC-29: Total portfolio metrics for reports */
+  const reportMetrics = useMemo(() => ({
+    totalRent: properties.reduce((s, p) => s + p.monthlyRent * 12, 0),
+    totalExpenses: properties.reduce((s, p) => s + p.monthlyExpenses * 12, 0),
+    totalCashflow: properties.reduce((s, p) => s + p.monthlyCashflow * 12, 0),
+    avgRendite: properties.length > 0
+      ? properties.reduce((s, p) => s + (p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice * 100) : 0), 0) / properties.length
+      : 0,
+    totalDebt: loans.reduce((s, l) => s + Number(l.remaining_balance || 0), 0),
+    totalInsurance: insurances.reduce((s, i) => s + Number(i.annual_premium || 0), 0),
+  }), [properties, loans, insurances]);
+
+  /* FUNC-30: Available report types for display */
+  const reportTypes = useMemo(() => [
+    { key: "portfolio", label: "Portfoliobericht", icon: "📊" },
+    { key: "miet", label: "Mietbericht", icon: "🏠" },
+    { key: "objekt", label: "Objektbericht", icon: "📋" },
+    { key: "anlageV", label: "Anlage V", icon: "📄" },
+    { key: "datev", label: "DATEV Export", icon: "💾" },
+    { key: "eur", label: "EÜR", icon: "📊" },
+    { key: "guv", label: "GuV", icon: "📈" },
+  ], []);
+
+  /* OPT-19: Memoized year list */
+
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
 
   // Helper: open print window

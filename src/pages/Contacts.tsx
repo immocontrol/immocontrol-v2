@@ -222,7 +222,8 @@ const ContactManagement = () => {
             {contacts.length} Kontakte · {handworkerCount} Handwerker
             {activeAssignments > 0 && <span> · {activeAssignments} aktive Aufträge</span>}
             {totalSpent > 0 && <span> · {formatCurrency(totalSpent)} Gesamtkosten</span>}
-            {possibleDuplicates.length > 0 && <span className="text-gold"> · ⚠ {possibleDuplicates.length / 2} mögliche Duplikate</span>}
+            {/* BUGFIX: Correct duplicate count — count groups, not halved flat array */}
+            {possibleDuplicates.length > 0 && <span className="text-gold"> · ⚠ {possibleDuplicates.length} mögliche Duplikate</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">

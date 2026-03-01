@@ -35,7 +35,7 @@ export default function ImmoAI() {
   // Persist messages to localStorage on change
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem("immoai_chat", JSON.stringify(messages.slice(-50)));
+      /* OPT-17: Use constant for message limit */ localStorage.setItem("immoai_chat", JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
     }
   }, [messages]);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,7 +131,28 @@ export default function ImmoAI() {
     }
   };
 
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+    /* FUNC-19: Message count tracking */
+  const messageStats = useMemo(() => {
+    const userMsgs = messages.filter(m => m.role === "user").length;
+    const aiMsgs = messages.filter(m => m.role === "assistant").length;
+    return { userMsgs, aiMsgs, total: messages.length };
+  }, [messages]);
+
+  /* FUNC-20: Word count for AI responses */
+  const totalAIWords = useMemo(() => {
+    return messages
+      .filter(m => m.role === "assistant")
+      .reduce((s, m) => s + m.content.split(/\s+/).length, 0);
+  }, [messages]);
+
+  /* FUNC-21: Session duration tracking */
+  const [sessionStart] = useState(() => Date.now());
+
+  /* OPT-16: Limit stored messages to prevent localStorage overflow */
+  const MAX_STORED_MESSAGES = 50;
+
+
+const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const copyMessage = useCallback((content: string, idx: number) => {
     navigator.clipboard.writeText(content).then(() => {
