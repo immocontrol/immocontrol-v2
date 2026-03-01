@@ -35,8 +35,14 @@ const statusConfig: Record<PaymentStatus, { label: string; icon: typeof Clock; c
   cancelled: { label: "Storniert", icon: XCircle, color: "text-muted-foreground bg-secondary" },
 };
 
+/* FUNC-46: Payment status colors — derived from statusConfig to avoid duplication */
+const getPaymentStatusColor = (status: PaymentStatus): string => statusConfig[status]?.color ?? "";
 
-
+/* OPT-34: Payment amount formatter */
+const formatPaymentAmount = (amount: number, status: string): string => {
+  const formatted = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(amount);
+  return status === "cancelled" ? `~${formatted}~` : formatted;
+};
 
 // ─── TENANT VIEW ────────────────────────────────────────────────
 interface TenantPaymentsProps {

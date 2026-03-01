@@ -38,16 +38,23 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       onChange(parsed);
     };
 
+    /* BUGFIX: handleBlur preserves empty input instead of converting to "0" */
     const handleBlur = () => {
+      if (!display.trim()) {
+        setDisplay("");
+        onChange(0);
+        return;
+      }
       const parsed = parseNumberDE(display);
       setDisplay(!isNaN(parsed) ? formatNumberDE(parsed) : "");
       onChange(parsed);
     };
 
+    /* BUGFIX: handleFocus correctly handles zero value (0 is falsy in JS) */
     const handleFocus = () => {
       // On focus, show raw number for easier editing
       const parsed = parseNumberDE(display);
-      if (parsed) {
+      if (!isNaN(parsed) && parsed !== undefined && display.trim() !== "") {
         setDisplay(parsed.toString().replace(".", ","));
       }
     };

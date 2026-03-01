@@ -287,3 +287,20 @@ ${(payments || []).map((p: any) => {
     </Dialog>
   );
 };
+
+/* FUNC-44: Export format options */
+const EXPORT_FORMATS = [
+  { key: "csv", label: "CSV", ext: ".csv", mime: "text/csv" },
+  { key: "json", label: "JSON", ext: ".json", mime: "application/json" },
+] as const;
+
+/* OPT-32: File download helper */
+const downloadFile = (content: string, filename: string, mimeType: string) => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};

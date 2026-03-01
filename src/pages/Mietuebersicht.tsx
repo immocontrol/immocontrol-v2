@@ -77,6 +77,20 @@ const Mietuebersicht = () => {
     });
   }, [payments, statusFilter, propertyFilter, monthFilter, debouncedSearch, tenantMap, propertyMap]);
 
+  /* FUNC-22: Year-over-year payment trend */
+  const paymentTrend = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const lastYear = currentYear - 1;
+    const thisYearTotal = payments
+      .filter(p => new Date(p.due_date).getFullYear() === currentYear && p.status === "confirmed")
+      .reduce((s, p) => s + Number(p.amount), 0);
+    const lastYearTotal = payments
+      .filter(p => new Date(p.due_date).getFullYear() === lastYear && p.status === "confirmed")
+      .reduce((s, p) => s + Number(p.amount), 0);
+    const change = lastYearTotal > 0 ? ((thisYearTotal - lastYearTotal) / lastYearTotal * 100) : 0;
+    return { thisYear: thisYearTotal, lastYear: lastYearTotal, change };
+  }, [payments]);
+
   // Stats
   const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
   const confirmed = filteredPayments.filter(p => p.status === "confirmed");
@@ -89,6 +103,27 @@ const Mietuebersicht = () => {
   // Active tenants with rent
   const activeTenants = tenants.filter(t => t.is_active);
   const totalMonthlyRent = activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0);
+
+  /* FUNC-23: Top paying tenants */
+  const topTenants = useMemo(() => {
+    return activeTenants
+      .map(t => ({ ...t, rent: Number(t.monthly_rent || 0) }))
+      .sort((a, b) => b.rent - a.rent)
+      .slice(0, 5);
+  }, [activeTenants]);
+
+  /* FUNC-24: Payment method distribution */
+  const paymentMethodDist = useMemo(() => {
+    const methods: Record<string, number> = {};
+    payments.forEach(p => {
+      const method = (p as any).payment_method || "Überweisung";
+      methods[method] = (methods[method] || 0) + 1;
+    });
+    return methods;
+  }, [payments]);
+
+  /* OPT-18: Memoized active tenant count and vacancy */
+  const activeTenantCount = activeTenants.length;
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -155,6 +190,41 @@ const Mietuebersicht = () => {
               <div className="text-xl font-bold text-gold">{formatCurrency(pending.reduce((s, p) => s + Number(p.amount), 0))}</div>
               <div className="text-[10px] text-muted-foreground">{pending.length} ausstehend</div>
             </div>
+          </div>
+
+          {/* FUNC-22/23/24: Payment trend, top tenants, payment methods */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {paymentTrend.lastYear > 0 && (
+              <div className="glass-card rounded-xl border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vorjahresvergleich</p>
+                <p className={`text-lg font-bold ${paymentTrend.change >= 0 ? "text-profit" : "text-loss"}`}>
+                  {paymentTrend.change >= 0 ? "+" : ""}{paymentTrend.change.toFixed(1)}%
+                </p>
+                <p className="text-[10px] text-muted-foreground">{formatCurrency(paymentTrend.thisYear)} vs {formatCurrency(paymentTrend.lastYear)}</p>
+              </div>
+            )}
+            {topTenants.length > 0 && (
+              <div className="glass-card rounded-xl border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Top Mieter</p>
+                {topTenants.slice(0, 3).map((t, i) => (
+                  <div key={t.id} className="flex justify-between text-xs">
+                    <span className="truncate">{i + 1}. {t.first_name} {t.last_name}</span>
+                    <span className="font-medium">{formatCurrency(t.rent)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {Object.keys(paymentMethodDist).length > 0 && (
+              <div className="glass-card rounded-xl border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Zahlungsarten</p>
+                {Object.entries(paymentMethodDist).map(([method, count]) => (
+                  <div key={method} className="flex justify-between text-xs">
+                    <span>{method}</span>
+                    <span className="font-medium">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Vermietungsquote */}

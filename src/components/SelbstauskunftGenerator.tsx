@@ -50,6 +50,27 @@ const fmtCur = (v: string) => {
 
 const NAME_FIELDS: (keyof SelbstauskunftData)[] = ["name", "vorname", "geburtsname", "geburtsort"];
 
+/* FUNC-47: Selbstauskunft field validation */
+const CURRENCY_FIELDS: string[] = ["gehaltNetto", "renten", "selbststaendig", "mieteinnahmen", "kindergeld", "unterhaltEinnahmen", "lebenshaltung", "warmmiete", "krankenversicherung", "unterhaltAusgaben", "kitaBeitrag", "kreditraten", "sparraten", "sonstigeAusgaben"];
+const validateSelbstauskunftField = (field: string, value: string): string | null => {
+  if (!value.trim()) return null;
+  if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Ungültige E-Mail";
+  if (field === "telefon" && !/^[+\d\s()-]{6,}$/.test(value)) return "Ungültige Telefonnummer";
+  if (CURRENCY_FIELDS.includes(field) && isNaN(Number(value.replace(/\./g, "").replace(",", ".")))) return "Ungültige Zahl";
+  return null;
+};
+
+/* FUNC-48: PDF field IDs for Selbstauskunft */
+const SELBSTAUSKUNFT_FIELD_IDS = [
+  "name", "vorname", "geburtsname", "geburtsdatum", "geburtsort",
+  "strasse", "plz", "ort", "telefon", "email",
+  "beruf", "arbeitgeber", "einkommen", "familienstand",
+  "anzahl_personen", "haustiere", "schufa", "insolvenz",
+] as const;
+
+/* OPT-35: Form step count */
+const SELBSTAUSKUNFT_TOTAL_STEPS = 7;
+
 const STEPS = [
   { id: "personal", title: "Pers\u00f6nliche Daten" },
   { id: "contact", title: "Kontakt & Familie" },
@@ -294,19 +315,24 @@ export const SelbstauskunftGenerator = () => {
   }, [data, user, properties]);
 
   // Render helpers as plain functions (not components) to fix focus bug
-  const inp = (label: string, field: keyof SelbstauskunftData, type = "text", placeholder = "") => (
-    <div className="space-y-1" key={field}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      <Input
-        type={type}
-        value={data[field]}
-        onChange={(e) => update(field, e.target.value)}
-        placeholder={placeholder}
-        className="h-9 text-sm"
-        inputMode={type === "number" ? "decimal" : undefined}
-      />
-    </div>
-  );
+  const inp = (label: string, field: keyof SelbstauskunftData, type = "text", placeholder = "") => {
+    /* FUNC-47: Wire up field validation */
+    const validationError = validateSelbstauskunftField(field, data[field]);
+    return (
+      <div className="space-y-1" key={field}>
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+        <Input
+          type={type}
+          value={data[field]}
+          onChange={(e) => update(field, e.target.value)}
+          placeholder={placeholder}
+          className={`h-9 text-sm ${validationError ? "border-loss" : ""}`}
+          inputMode={type === "number" ? "decimal" : undefined}
+        />
+        {validationError && <p className="text-[10px] text-loss">{validationError}</p>}
+      </div>
+    );
+  };
 
   const sel = (label: string, field: keyof SelbstauskunftData, options: { value: string; label: string }[]) => (
     <div className="space-y-1" key={field}>

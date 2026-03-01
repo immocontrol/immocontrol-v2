@@ -14,6 +14,40 @@ import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
 
+/* OPT-40: Route path constants */
+const ROUTES = {
+  HOME: "/",
+  AUTH: "/auth",
+  ONBOARDING: "/onboarding",
+  SETTINGS: "/einstellungen",
+  CONTACTS: "/kontakte",
+  TODOS: "/aufgaben",
+  LOANS: "/darlehen",
+  DEALS: "/deals",
+  CRM: "/crm",
+  REPORTS: "/berichte",
+  RENT: "/mietuebersicht",
+  CONTRACTS: "/vertraege",
+  FORECAST: "/forecast",
+  AI: "/immo-ai",
+  NK: "/nebenkosten",
+  ANALYSE: "/analyse",
+  PROPERTY: "/objekt",
+  INVITATION: "/einladung",
+} as const;
+
+/* OPT-41: App version constant */
+const APP_VERSION = "2.0.0";
+
+/* OPT-42: Feature flags for gradual rollout */
+const FEATURES = {
+  AI_CHAT: true,
+  CRM_SEARCH: true,
+  BUILDING_ESTIMATION: true,
+  SOFT_DELETE: true,
+  DARK_MODE: true,
+} as const;
+
 // Lazy imports with preloading
 const dashboardImport = () => import("@/pages/Dashboard");
 const propertyDetailImport = () => import("@/pages/PropertyDetail");
@@ -108,7 +142,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to={ROUTES.AUTH} replace />;
   return <>{children}</>;
 };
 
@@ -173,7 +207,7 @@ const RoleRouter = () => {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to={ROUTES.AUTH} replace />;
 
   // Show onboarding if not completed
   if (!onboardingDone) {
@@ -194,21 +228,21 @@ const RoleRouter = () => {
     <AppLayout>
       <PageTransition>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/objekt/:id" element={<PropertyDetail />} />
-          <Route path="/darlehen" element={<Loans />} />
-          <Route path="/forecast" element={<CashForecast />} />
-          <Route path="/analyse" element={<AnalysisCalculator />} />
-          <Route path="/kontakte" element={<Contacts />} />
-          <Route path="/aufgaben" element={<Todos />} />
-          <Route path="/nebenkosten" element={<Nebenkosten />} />
-          <Route path="/berichte" element={<Berichte />} />
-          <Route path="/mietuebersicht" element={<Mietuebersicht />} />
-          <Route path="/immo-ai" element={<ImmoAI />} />
-          <Route path="/vertraege" element={<Vertraege />} />
-          <Route path="/crm" element={<CRM />} />
-          <Route path="/deals" element={<Deals />} />
-          <Route path="/einstellungen" element={<Settings />} />
+          <Route path={ROUTES.HOME} element={<Dashboard />} />
+          <Route path={`${ROUTES.PROPERTY}/:id`} element={<PropertyDetail />} />
+          <Route path={ROUTES.LOANS} element={<Loans />} />
+          <Route path={ROUTES.FORECAST} element={<CashForecast />} />
+          <Route path={ROUTES.ANALYSE} element={<AnalysisCalculator />} />
+          <Route path={ROUTES.CONTACTS} element={<Contacts />} />
+          <Route path={ROUTES.TODOS} element={<Todos />} />
+          <Route path={ROUTES.NK} element={<Nebenkosten />} />
+          <Route path={ROUTES.REPORTS} element={<Berichte />} />
+          <Route path={ROUTES.RENT} element={<Mietuebersicht />} />
+          <Route path={ROUTES.AI} element={<ImmoAI />} />
+          <Route path={ROUTES.CONTRACTS} element={<Vertraege />} />
+          <Route path={ROUTES.CRM} element={<CRM />} />
+          <Route path={ROUTES.DEALS} element={<Deals />} />
+          <Route path={ROUTES.SETTINGS} element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </PageTransition>
@@ -240,8 +274,8 @@ const App = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/einladung" element={<Einladung />} />
+                      <Route path={ROUTES.AUTH} element={<Auth />} />
+                      <Route path={ROUTES.INVITATION} element={<Einladung />} />
                       <Route path="/*" element={<RoleRouter />} />
                     </Routes>
                   </Suspense>

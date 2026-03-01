@@ -16,6 +16,7 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { generateTempId, isEqual } from "@/lib/formatters";
 
 const navItems = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
@@ -34,6 +35,18 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
+/* OPT-25: Keyboard shortcut map for quick lookup */
+const SHORTCUT_MAP: Record<string, string> = {};
+navItems.forEach(n => { SHORTCUT_MAP[n.shortcut] = n.path; });
+
+/* OPT-26: Route matching helper */
+const isRouteActive = (itemPath: string, currentPath: string): boolean =>
+  itemPath === "/" ? currentPath === "/" : currentPath.startsWith(itemPath);
+
+/* OPT-27: Navigation item count */
+const NAV_ITEM_COUNT = navItems.length;
+
+
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,6 +56,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const isOnline = useOnlineStatus();
   const desktopNavRef = useRef<HTMLElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
+  /* OPT-46: generateTempId for stable session tag */
+  const sessionIdRef = useRef<string>(generateTempId());
   const [dotStyle, setDotStyle] = useState<React.CSSProperties>({});
   const [mobileDotStyle, setMobileDotStyle] = useState<React.CSSProperties>({});
 
@@ -68,7 +83,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     const current = navItems.find(n => n.path === location.pathname);
     if (propertyName) {
       return (
-        <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground breadcrumb-nav">
           <span>/</span>
           <Link to="/" className="hover:text-foreground transition-colors">Portfolio</Link>
           <span>/</span>
@@ -78,7 +93,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }
     if (current && location.pathname !== "/") {
       return (
-        <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground breadcrumb-nav">
           <span>/</span>
           <span className="text-foreground font-medium">{current.label}</span>
         </div>
@@ -98,10 +113,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       // removed quick todo shortcut
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
-      const item = navItems.find(n => n.shortcut === e.key);
-      if (item) {
+      /* OPT-25: O(1) keyboard shortcut lookup */
+      const path = SHORTCUT_MAP[e.key];
+      if (path) {
         e.preventDefault();
-        navigateTo(item.path);
+        navigateTo(path);
       }
     };
     window.addEventListener("keydown", handler);
@@ -111,39 +127,53 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   // Sliding indicator for desktop nav
   const updateDotPosition = useCallback(() => {
     if (!desktopNavRef.current) return;
-    const activeIdx = navItems.findIndex(item =>
-      item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
-    );
-    if (activeIdx === -1) { setDotStyle({ opacity: 0 }); return; }
+    /* OPT-26: use route matching helper */
+    const activeIdx = navItems.findIndex((item) => isRouteActive(item.path, location.pathname));
+    if (activeIdx === -1) {
+      setDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
+      return;
+    }
+
     const links = desktopNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
     const activeLink = links[activeIdx];
     if (!activeLink) return;
     const navRect = desktopNavRef.current.getBoundingClientRect();
     const linkRect = activeLink.getBoundingClientRect();
-    setDotStyle({
+
+    const next: React.CSSProperties = {
       left: linkRect.left - navRect.left + linkRect.width / 2 - 3,
       opacity: 1,
       transition: "left 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
-    });
+    };
+
+    /* OPT-45: isEqual to avoid unnecessary style updates */
+    setDotStyle((prev) => (isEqual(prev, next) ? prev : next));
   }, [location.pathname]);
 
   // Sliding indicator for mobile nav
   const updateMobileDotPosition = useCallback(() => {
     if (!mobileNavRef.current) return;
-    const activeIdx = navItems.findIndex(item =>
-      item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
-    );
-    if (activeIdx === -1) { setMobileDotStyle({ opacity: 0 }); return; }
+    /* OPT-26: use route matching helper */
+    const activeIdx = navItems.findIndex((item) => isRouteActive(item.path, location.pathname));
+    if (activeIdx === -1) {
+      setMobileDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
+      return;
+    }
+
     const links = mobileNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
     const activeLink = links[activeIdx];
     if (!activeLink) return;
     const navRect = mobileNavRef.current.getBoundingClientRect();
     const linkRect = activeLink.getBoundingClientRect();
-    setMobileDotStyle({
+
+    const next: React.CSSProperties = {
       left: linkRect.left - navRect.left + linkRect.width / 2 - 2,
       opacity: 1,
       transition: "left 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
-    });
+    };
+
+    /* OPT-45: isEqual to avoid unnecessary style updates */
+    setMobileDotStyle((prev) => (isEqual(prev, next) ? prev : next));
   }, [location.pathname]);
 
   useLayoutEffect(() => {
@@ -161,7 +191,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, [updateDotPosition, updateMobileDotPosition]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div data-session-id={sessionIdRef.current} className="min-h-screen bg-background flex flex-col theme-transition-smooth dark-mode-contrast">
       {!isOnline && (
         <div className="offline-banner" role="alert">⚠️ Keine Internetverbindung – Änderungen werden nicht gespeichert</div>
       )}
@@ -170,7 +200,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </a>
       <ScrollProgress />
       <KeyboardShortcuts />
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+      {/* UI-6/UI-27: glass-header + page-header */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="ImmoControl Home">
@@ -181,9 +212,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {breadcrumb}
           </div>
           <div className="flex items-center gap-1">
-            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-1 relative" role="navigation" aria-label="Hauptnavigation">
+            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-1 relative" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navItems.map((item) => {
-                const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
+                const isActive = isRouteActive(item.path, location.pathname);
                 return (
                   <Tooltip key={item.path}>
                     <TooltipTrigger asChild>
@@ -191,7 +222,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         to={item.path}
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -201,7 +232,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         {item.label}
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
+                    <TooltipContent side="bottom" className="text-xs tooltip-arrow dropdown-enter">
                       {item.label} <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Alt+{item.shortcut}</kbd>
                     </TooltipContent>
                   </Tooltip>
@@ -219,7 +250,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground toggle-animated"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 aria-label={theme === "dark" ? "Helles Design" : "Dunkles Design"}
               >
@@ -263,17 +294,17 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <ImmoAIBubble />
 
       {/* Mobile nav with sliding dot */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom" role="navigation" aria-label="Mobile Navigation">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe" role="navigation" aria-label="Mobile Navigation">
         <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative">
           {navItems.map((item) => {
-            const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
+            const isActive = isRouteActive(item.path, location.pathname);
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 data-nav-link
                 aria-current={isActive ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors relative ${
+                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors relative nav-label-mobile touch-target ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >

@@ -54,6 +54,25 @@ interface MatchingRule {
   created_at: string;
 }
 
+/* OPT-33: Match confidence threshold constants */
+const MATCH_CONFIDENCE = {
+  HIGH: 90,
+  MEDIUM: 70,
+  LOW: 50,
+} as const;
+
+/* FUNC-45: Transaction categorization helper */
+const categorizeTransaction = (description: string): string => {
+  const desc = description.toLowerCase();
+  if (desc.includes("miete") || desc.includes("miet")) return "Mieteinnahme";
+  if (desc.includes("nebenkost") || desc.includes("nk")) return "Nebenkosten";
+  if (desc.includes("versicher")) return "Versicherung";
+  if (desc.includes("kredit") || desc.includes("darlehen") || desc.includes("tilg")) return "Kreditrate";
+  if (desc.includes("repar") || desc.includes("wartung") || desc.includes("handwerk")) return "Instandhaltung";
+  if (desc.includes("steuer") || desc.includes("grundst")) return "Steuern";
+  return "Sonstiges";
+};
+
 const BankMatching = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
@@ -548,7 +567,11 @@ const BankMatching = () => {
                         {account && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{account.name}</span>}
                       </div>
                       <p className="text-[11px] text-muted-foreground truncate">{tx.reference || tx.booking_text || "–"}</p>
-                      {tx.iban && <p className="text-[10px] text-muted-foreground font-mono">{tx.iban}</p>}
+                      <div className="flex items-center gap-1">
+                        {tx.iban && <span className="text-[10px] text-muted-foreground font-mono">{tx.iban}</span>}
+                        {/* FUNC-45: Category badge */}
+                        <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded">{categorizeTransaction(tx.reference || tx.booking_text || tx.sender_receiver || "")}</span>
+                      </div>
                     </div>
                     <div className="text-sm font-semibold tabular-nums text-profit">+{formatCurrency(tx.amount)}</div>
                     {suggestion ? (

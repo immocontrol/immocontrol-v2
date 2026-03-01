@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,10 +32,13 @@ export default function ImmoAI() {
   });
   const [input, setInput] = useState("");
 
+  /* OPT-16: Limit stored messages to prevent localStorage overflow */
+  const MAX_STORED_MESSAGES = 50;
+
   // Persist messages to localStorage on change
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem("immoai_chat", JSON.stringify(messages.slice(-50)));
+      /* OPT-17: Use constant for message limit */ localStorage.setItem("immoai_chat", JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
     }
   }, [messages]);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,7 +134,25 @@ export default function ImmoAI() {
     }
   };
 
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+    /* FUNC-19: Message count tracking */
+  const messageStats = useMemo(() => {
+    const userMsgs = messages.filter(m => m.role === "user").length;
+    const aiMsgs = messages.filter(m => m.role === "assistant").length;
+    return { userMsgs, aiMsgs, total: messages.length };
+  }, [messages]);
+
+  /* FUNC-20: Word count for AI responses */
+  const totalAIWords = useMemo(() => {
+    return messages
+      .filter(m => m.role === "assistant")
+      .reduce((s, m) => s + m.content.split(/\s+/).length, 0);
+  }, [messages]);
+
+  /* FUNC-21: Session duration tracking */
+  const [sessionStart] = useState(() => Date.now());
+
+
+const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const copyMessage = useCallback((content: string, idx: number) => {
     navigator.clipboard.writeText(content).then(() => {
@@ -160,11 +181,25 @@ export default function ImmoAI() {
             Dein intelligenter Immobilien-Assistent – kennt dein gesamtes Portfolio
           </p>
         </div>
-        {messages.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => { setMessages([]); localStorage.removeItem("immoai_chat"); }}>
-            <Trash2 className="h-4 w-4 mr-1" /> Neuer Chat
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* FUNC-19/20/21: Message stats, word count, session duration */}
+          {messages.length > 0 && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span>{messageStats.userMsgs} Fragen</span>
+              <span>·</span>
+              <span>{messageStats.aiMsgs} Antworten</span>
+              <span>·</span>
+              <span>{totalAIWords} Wörter</span>
+              <span>·</span>
+              <span>{Math.round((Date.now() - sessionStart) / 60000)} Min.</span>
+            </div>
+          )}
+          {messages.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => { setMessages([]); localStorage.removeItem("immoai_chat"); }}>
+              <Trash2 className="h-4 w-4 mr-1" /> Neuer Chat
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card className="border-border/50">

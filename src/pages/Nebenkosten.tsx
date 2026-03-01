@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -184,6 +184,30 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
     const w = window.open("", "_blank");
     if (w) { w.document.write(html); w.document.close(); w.print(); }
   };
+
+  /* FUNC-34: NK per sqm calculation */
+  const nkPerSqm = useMemo(() => {
+    const totalCosts = billings.reduce((s, b) => s + Number(b.total_costs || 0), 0);
+    const totalSqm = properties.reduce((s, p) => s + (p.sqm || 0), 0);
+    return totalSqm > 0 ? (totalCosts / totalSqm) : 0;
+  }, [billings, properties]);
+
+  /* FUNC-35: Billing status summary */
+  const billingStatusSummary = useMemo(() => ({
+    draft: billings.filter(b => b.status === "draft").length,
+    final: billings.filter(b => b.status === "final").length,
+    totalBalance: billings.reduce((s, b) => s + Math.abs(Number(b.balance || 0)), 0),
+  }), [billings]);
+
+  /* OPT-20: Memoized category totals for the selected billing */
+  const categoryTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    billingItems.forEach(item => {
+      totals[item.category] = (totals[item.category] || 0) + Number(item.tenant_amount || 0);
+    });
+    return totals;
+  }, [billingItems]);
+
 
   const selectedBillingData = billings.find(b => b.id === selectedBilling);
   const filteredTenants = form.property_id ? tenants.filter(t => t.property_id === form.property_id) : [];

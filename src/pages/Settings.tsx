@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +89,25 @@ const Settings = () => {
     toast.success("Abgemeldet");
     navigate("/auth");
   };
+
+  /* FUNC-36: Data usage estimation */
+  const dataUsageEstimate = useMemo(() => {
+    const storedKeys = ["immoai_chat", "theme", "onboarding_complete"];
+    let totalSize = 0;
+    storedKeys.forEach(key => {
+      const item = localStorage.getItem(key);
+      if (item) totalSize += item.length * 2;
+    });
+    return totalSize;
+  }, []);
+
+  /* FUNC-37: Session info display */
+  const sessionInfo = useMemo(() => ({
+    lastLogin: user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "–",
+    provider: user?.app_metadata?.provider || "email",
+  }), [user]);
+
+  /* OPT-21: Theme options as constant */
 
   const themeOptions = [
     { value: "light", label: "Hell", icon: Sun },
@@ -361,9 +380,30 @@ const Settings = () => {
         </AlertDialog>
       </div>
 
+      {/* FUNC-36/37: Data usage & session info */}
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in" style={{ animationDelay: "180ms" }}>
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Database className="h-4 w-4 text-muted-foreground" /> System-Info
+        </h2>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2 rounded-lg bg-secondary/30">
+            <span className="text-muted-foreground">Lokaler Speicher</span>
+            <p className="font-medium">{(dataUsageEstimate / 1024).toFixed(1)} KB</p>
+          </div>
+          <div className="p-2 rounded-lg bg-secondary/30">
+            <span className="text-muted-foreground">Letzter Login</span>
+            <p className="font-medium">{sessionInfo.lastLogin}</p>
+          </div>
+          <div className="p-2 rounded-lg bg-secondary/30">
+            <span className="text-muted-foreground">Auth-Methode</span>
+            <p className="font-medium capitalize">{sessionInfo.provider}</p>
+          </div>
+        </div>
+      </div>
+
       {/* App info footer */}
       <div className="text-center py-4 space-y-1 animate-fade-in" style={{ animationDelay: "250ms" }}>
-        <p className="text-[10px] text-muted-foreground">ImmoControl v1.0 · Made with ❤️</p>
+        <p className="text-[10px] text-muted-foreground">ImmoControl v2.0 · Made with ❤️</p>
         <p className="text-[10px] text-muted-foreground">
           Support: <a href="mailto:support@immocontrol.de" className="text-primary hover:underline">support@immocontrol.de</a>
         </p>

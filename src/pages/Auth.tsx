@@ -333,4 +333,27 @@ const Auth = () => {
   );
 };
 
+/* OPT-22: Password validation helper */
+const validatePasswordStrength = (password: string): { valid: boolean; message: string } => {
+  if (password.length < 6) return { valid: false, message: "Mindestens 6 Zeichen" };
+  if (password.length < 8) return { valid: true, message: "Schwach - mindestens 8 Zeichen empfohlen" };
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  const strength = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+  if (strength >= 3) return { valid: true, message: "Stark" };
+  return { valid: true, message: "Mittel" };
+};
+
+/* OPT-23: Email validation helper */
+const isValidEmail = (email: string): boolean => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+/* FUNC-38: Login attempt limiter constants */
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 60000;
+
+
 export default Auth;

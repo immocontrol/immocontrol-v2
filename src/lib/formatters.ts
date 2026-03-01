@@ -90,3 +90,134 @@ export const getISOWeek = (date: Date): number => {
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 };
+
+/* OPT-1: Memoized number formatter instance for performance */
+const numberFormatterDE = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 });
+
+/* OPT-2: Cached date formatter for repeated use */
+const dateFormatterDE = new Intl.DateTimeFormat("de-DE");
+const dateFormatterLongDE = new Intl.DateTimeFormat("de-DE", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
+/* OPT-3: Format number with thousand separators (integer) */
+export const formatNumberInt = (value: number): string => numberFormatterDE.format(value);
+
+/* OPT-4: Format square meters with unit */
+export const formatSqm = (value: number): string => `${numberFormatterDE.format(value)} m²`;
+
+/* OPT-5: Calculate and format percentage change */
+export const formatChange = (current: number, previous: number): string => {
+  if (previous === 0) return "–";
+  const pct = ((current - previous) / previous) * 100;
+  const sign = pct >= 0 ? "+" : "";
+  return `${sign}${pct.toFixed(1)}%`;
+};
+
+/* OPT-6: Format duration in months to human-readable German string */
+export const formatDurationMonths = (months: number): string => {
+  if (months <= 0) return "abgelaufen";
+  if (months < 12) return `${months} Monat${months > 1 ? "e" : ""}`;
+  const years = Math.floor(months / 12);
+  const rem = months % 12;
+  if (rem === 0) return `${years} Jahr${years > 1 ? "e" : ""}`;
+  return `${years}J ${rem}M`;
+};
+
+/* OPT-7: Clamp a number between min and max */
+export const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
+/* OPT-8: Safe division avoiding NaN/Infinity */
+export const safeDivide = (numerator: number, denominator: number, fallback = 0): number =>
+  denominator !== 0 ? numerator / denominator : fallback;
+
+/* OPT-9: Format large numbers compactly (1.2M, 350K) */
+export const formatCompactDE = (value: number): string => {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}${abs}`;
+};
+
+/* OPT-10: Pluralize German words */
+export const pluralDE = (count: number, singular: string, plural: string): string =>
+  `${count} ${count === 1 ? singular : plural}`;
+
+/* OPT-43: Debounce utility for search inputs */
+export const createDebounce = <T extends (...args: unknown[]) => void>(fn: T, delay: number) => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => { fn(...args); timer = null; }, delay);
+  };
+  debounced.cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  return debounced;
+};
+
+/* OPT-44: Throttle utility for scroll/resize events */
+export const createThrottle = <T extends (...args: unknown[]) => void>(fn: T, limit: number) => {
+  let inThrottle = false;
+  let lastArgs: Parameters<T> | null = null;
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+  const throttled = (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      fn(...args);
+      inThrottle = true;
+      timerId = setTimeout(() => {
+        inThrottle = false;
+        if (lastArgs) { fn(...lastArgs); lastArgs = null; }
+        timerId = null;
+      }, limit);
+    } else {
+      lastArgs = args;
+    }
+  };
+  throttled.cancel = () => { if (timerId) { clearTimeout(timerId); timerId = null; } inThrottle = false; lastArgs = null; };
+  return throttled;
+};
+
+/* OPT-45: Deep equality check for objects */
+export const isEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== "object" || a === null || b === null) return false;
+  const keysA = Object.keys(a as Record<string, unknown>);
+  const keysB = Object.keys(b as Record<string, unknown>);
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every(key => isEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]));
+};
+
+/* OPT-46: Generate unique ID for temporary items */
+export const generateTempId = (): string =>
+  `temp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+/* OPT-47: Truncate text with ellipsis */
+export const truncate = (text: string, maxLength: number): string =>
+  text.length > maxLength ? text.slice(0, maxLength - 1) + "…" : text;
+
+/* OPT-48: Convert HSL string to CSS variable reference */
+export const hslVar = (name: string, alpha?: number): string =>
+  alpha !== undefined ? `hsl(var(--${name}) / ${alpha})` : `hsl(var(--${name}))`;
+
+/* OPT-49: Sort array by key with direction */
+export const sortByKey = <T>(arr: T[], key: keyof T, desc = false): T[] =>
+  [...arr].sort((a, b) => {
+    const valA = a[key];
+    const valB = b[key];
+    if (typeof valA === "number" && typeof valB === "number") return desc ? valB - valA : valA - valB;
+    return desc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
+  });
+
+/* OPT-50: Group array by key */
+export const groupBy = <T>(arr: T[], keyFn: (item: T) => string): Record<string, T[]> => {
+  return arr.reduce((groups, item) => {
+    const key = keyFn(item);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+    return groups;
+  }, {} as Record<string, T[]>);
+};

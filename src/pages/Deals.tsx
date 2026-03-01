@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -116,6 +116,58 @@ const Deals = () => {
     ? Math.round(activeDeals.reduce((s: number, d: { created_at: string }) => s + Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000), 0) / activeDeals.length)
     : 0;
 
+  /* FUNC-15: Deal conversion rate per stage */
+  const stageConversionRates = useMemo(() => {
+    const rates: Record<string, number> = {};
+    STAGES.forEach((stage, idx) => {
+      const inStage = deals.filter((d: { stage: string }) => d.stage === stage.key).length;
+      const later = STAGES.slice(idx + 1).filter(s => s.key !== "abgelehnt").map(s => s.key);
+      const progressed = deals.filter((d: { stage: string }) => later.includes(d.stage)).length;
+      const total = inStage + progressed;
+      rates[stage.key] = total > 0 ? Math.round((progressed / total) * 100) : 0;
+    });
+    return rates;
+  }, [deals]);
+
+  /* FUNC-16: Deal source analytics */
+  const sourceAnalytics = useMemo(() => {
+    const sources: Record<string, number> = {};
+    deals.forEach((d: any) => {
+      const src = d.source || "Unbekannt";
+      sources[src] = (sources[src] || 0) + 1;
+    });
+    return sources;
+  }, [deals]);
+
+  /* FUNC-17: Average deal value */
+  const avgDealValue = useMemo(() => {
+    const dealsWithPrice = deals.filter((d: { purchase_price?: number }) => d.purchase_price && d.purchase_price > 0);
+    if (dealsWithPrice.length === 0) return 0;
+    return dealsWithPrice.reduce((s: number, d: { purchase_price?: number }) => s + (d.purchase_price || 0), 0) / dealsWithPrice.length;
+  }, [deals]);
+
+  /* FUNC-18: Pipeline velocity - avg days in current stage */
+  const pipelineVelocity = useMemo(() => {
+    const active = deals.filter((d: any) => d.stage !== "abgeschlossen" && d.stage !== "abgelehnt");
+    if (active.length === 0) return 0;
+    const totalDays = active.reduce((s: number, d: any) => {
+      const created = new Date(d.created_at || Date.now()).getTime();
+      return s + (Date.now() - created) / (1000 * 60 * 60 * 24);
+    }, 0);
+    return Math.round(totalDays / active.length);
+  }, [deals]);
+
+  /* OPT-15: Memoized deal property type distribution */
+  const dealTypeDistribution = useMemo(() => {
+    const types: Record<string, number> = {};
+    deals.forEach((d: any) => {
+      const t = d.property_type || "Sonstige";
+      types[t] = (types[t] || 0) + 1;
+    });
+    return types;
+  }, [deals]);
+
+
   // Improvement 1: Pipeline value per stage
   const stageValues = STAGES.reduce((acc, s) => {
     acc[s.key] = deals
@@ -149,7 +201,49 @@ const Deals = () => {
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Gewonnen</p><p className="text-xl font-bold text-green-600">{wonDeals.length}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Conversion</p><p className="text-xl font-bold">{deals.length ? Math.round((wonDeals.length / deals.length) * 100) : 0}%</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Alter (Tage)</p><p className="text-xl font-bold flex items-center gap-1">{avgDealAge}{avgDealAge > 30 && <AlertTriangle className="h-4 w-4 text-gold" />}</p></CardContent></Card>
+        {/* FUNC-17: Average deal value */}
+        {avgDealValue > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Dealwert</p><p className="text-xl font-bold">{fmt(avgDealValue)}</p></CardContent></Card>}
+        {/* FUNC-18: Pipeline velocity */}
+        {pipelineVelocity > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Tage im Stage</p><p className="text-xl font-bold">{pipelineVelocity}d</p></CardContent></Card>}
       </div>
+
+      {/* FUNC-15/16: Stage conversion rates & source analytics */}
+      {deals.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Conversion pro Stage</p>
+              <div className="space-y-1.5">
+                {STAGES.filter(s => s.key !== "abgelehnt" && s.key !== "abgeschlossen").map(s => (
+                  <div key={s.key} className="flex items-center gap-2">
+                    <div className={cn("w-2 h-2 rounded-full shrink-0", s.color)} />
+                    <span className="text-xs flex-1">{s.label}</span>
+                    <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${stageConversionRates[s.key] || 0}%` }} />
+                    </div>
+                    <span className="text-xs font-medium w-8 text-right">{stageConversionRates[s.key] || 0}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          {Object.keys(sourceAnalytics).length > 0 && (
+            <Card>
+              <CardContent className="p-3">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Quellen</p>
+                <div className="space-y-1.5">
+                  {Object.entries(sourceAnalytics).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([source, count]) => (
+                    <div key={source} className="flex items-center justify-between">
+                      <span className="text-xs truncate">{source}</span>
+                      <span className="text-xs font-medium bg-secondary px-1.5 py-0.5 rounded">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Kanban View */}
       {viewMode === "kanban" ? (

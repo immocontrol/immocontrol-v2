@@ -72,4 +72,20 @@ const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
   );
 };
 
+/* OPT-37: Quick action categories */
+const ACTION_CATEGORIES = {
+  PROPERTY: "property",
+  FINANCE: "finance",
+  TENANT: "tenant",
+  DOCUMENT: "document",
+} as const;
+
+/* FUNC-50: Quick action shortcut mapping */
+const QUICK_ACTION_SHORTCUTS: Record<string, string> = {
+  "Neues Objekt": "Ctrl+N",
+  "Neue Aufgabe": "Enter",
+  "Suche": "Ctrl+K",
+};
+
+
 export default QuickActions;

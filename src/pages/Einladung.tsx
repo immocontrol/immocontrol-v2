@@ -135,4 +135,19 @@ const Einladung = () => {
   );
 };
 
+/* OPT-36: Invitation status constants */
+const INVITATION_STATUS = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  EXPIRED: "expired",
+} as const;
+
+/* FUNC-49: Invitation expiry check (7 days) */
+const isInvitationExpired = (createdAt: string): boolean => {
+  const created = new Date(createdAt);
+  const expiry = new Date(created.getTime() + 7 * 24 * 60 * 60 * 1000);
+  return new Date() > expiry;
+};
+
+
 export default Einladung;

@@ -203,15 +203,16 @@ const ContactManagement = () => {
   const totalSpent = Object.values(contactCosts).reduce((s, c) => s + c, 0);
 
   // New: Duplicate detection
-  const possibleDuplicates = useMemo(() => {
+  const duplicateGroups = useMemo(() => {
     const seen = new Map<string, string[]>();
     contacts.forEach(c => {
       const key = c.name.toLowerCase().trim();
       if (!seen.has(key)) seen.set(key, []);
       seen.get(key)!.push(c.id);
     });
-    return Array.from(seen.values()).filter(ids => ids.length > 1).flat();
+    return Array.from(seen.values()).filter(ids => ids.length > 1);
   }, [contacts]);
+  const possibleDuplicates = duplicateGroups.flat();
 
   return (
     <div className="space-y-6" role="main" aria-label="Kontaktverwaltung">
@@ -222,7 +223,8 @@ const ContactManagement = () => {
             {contacts.length} Kontakte · {handworkerCount} Handwerker
             {activeAssignments > 0 && <span> · {activeAssignments} aktive Aufträge</span>}
             {totalSpent > 0 && <span> · {formatCurrency(totalSpent)} Gesamtkosten</span>}
-            {possibleDuplicates.length > 0 && <span className="text-gold"> · ⚠ {possibleDuplicates.length / 2} mögliche Duplikate</span>}
+            {/* BUGFIX: Correct duplicate count — count groups, not flat array */}
+            {duplicateGroups.length > 0 && <span className="text-gold"> · ⚠ {duplicateGroups.length} mögliche Duplikate</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
