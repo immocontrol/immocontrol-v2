@@ -159,11 +159,20 @@ export const createDebounce = <T extends (...args: unknown[]) => void>(fn: T, de
 /* OPT-44: Throttle utility for scroll/resize events */
 export const createThrottle = <T extends (...args: unknown[]) => void>(fn: T, limit: number) => {
   let inThrottle = false;
+  let lastArgs: Parameters<T> | null = null;
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       fn(...args);
       inThrottle = true;
-      setTimeout(() => { inThrottle = false; }, limit);
+      setTimeout(() => {
+        inThrottle = false;
+        if (lastArgs) {
+          fn(...lastArgs);
+          lastArgs = null;
+        }
+      }, limit);
+    } else {
+      lastArgs = args;
     }
   };
 };

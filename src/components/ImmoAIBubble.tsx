@@ -28,7 +28,7 @@ const BUBBLE_POSITION = {
 } as const;
 
 /* OPT-39: Message limit for bubble chat */
-const BUBBLE_MAX_MESSAGES = 20;
+const BUBBLE_MAX_MESSAGES = 50;
 
 export default function ImmoAIBubble() {
   const { session } = useAuth();

@@ -32,6 +32,9 @@ export default function ImmoAI() {
   });
   const [input, setInput] = useState("");
 
+  /* OPT-16: Limit stored messages to prevent localStorage overflow */
+  const MAX_STORED_MESSAGES = 50;
+
   // Persist messages to localStorage on change
   useEffect(() => {
     if (messages.length > 0) {
@@ -147,9 +150,6 @@ export default function ImmoAI() {
 
   /* FUNC-21: Session duration tracking */
   const [sessionStart] = useState(() => Date.now());
-
-  /* OPT-16: Limit stored messages to prevent localStorage overflow */
-  const MAX_STORED_MESSAGES = 50;
 
 
 const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
