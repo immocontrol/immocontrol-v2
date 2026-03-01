@@ -73,6 +73,8 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   const [bankPopoverOpen, setBankPopoverOpen] = useState(false);
   const [addingNewBank, setAddingNewBank] = useState(false);
   const [newBankName, setNewBankName] = useState("");
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [highlightFields, setHighlightFields] = useState<string[]>([]);
 
   const { data: userBanks = [] } = useQuery({
     queryKey: ["user_banks"],
@@ -159,7 +161,27 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   };
 
   const handleSave = async () => {
-    if (!user || !form.property_id || !form.bank_name) return;
+    if (!user) return;
+    /* Validate required fields and show specific error messages */
+    const errors: string[] = [];
+    const fields: string[] = [];
+    if (!form.property_id) { errors.push("Objekt muss ausgew\u00e4hlt werden"); fields.push("property_id"); }
+    if (!form.bank_name) { errors.push("Bank muss ausgew\u00e4hlt werden"); fields.push("bank_name"); }
+    if (form.loan_amount <= 0) { errors.push("Darlehensbetrag muss gr\u00f6\u00dfer als 0 sein"); fields.push("loan_amount"); }
+    if (form.interest_rate <= 0) { errors.push("Zinssatz muss angegeben werden"); fields.push("interest_rate"); }
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setHighlightFields(fields);
+      toast.error(errors[0]);
+      /* Auto-clear highlight after flash animation */
+      setTimeout(() => setHighlightFields([]), 2000);
+      /* Navigate to the step containing the first missing field */
+      if (fields.includes("property_id") || fields.includes("bank_name")) setStep(0);
+      else if (fields.includes("loan_amount") || fields.includes("interest_rate")) setStep(1);
+      return;
+    }
+    setValidationErrors([]);
+    setHighlightFields([]);
     setSaving(true);
     try {
       const { error } = await supabase.from("loans").insert({
@@ -178,13 +200,19 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
         end_date: form.end_date || null,
         notes: form.notes || null,
       });
-      if (error) throw error;
+      if (error) {
+        /* Show specific Supabase error messages */
+        const msg = error.message || "Unbekannter Fehler";
+        toast.error(`Fehler beim Speichern: ${msg}`);
+        return;
+      }
       toast.success("Darlehen angelegt");
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
       onCreated?.();
-    } catch {
-      toast.error("Fehler beim Anlegen");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Unbekannter Fehler";
+      toast.error(`Fehler beim Anlegen: ${msg}`);
     } finally {
       setSaving(false);
     }
@@ -207,23 +235,34 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
 
         <StepIndicator current={step} total={3} />
 
+        {validationErrors.length > 0 && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">
+            <p className="font-medium text-destructive">Bitte prüfen:</p>
+            <ul className="mt-1 list-disc pl-4 text-destructive/90 space-y-0.5">
+              {validationErrors.map((err) => (
+                <li key={err}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="space-y-4 min-h-[260px]">
           {step === 0 && (
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label className="text-xs">Objekt *</Label>
+                <Label className={`text-xs ${highlightFields.includes("property_id") ? "text-destructive font-semibold" : ""}`}>Objekt *</Label>
                 <Select value={form.property_id} onValueChange={v => setForm(f => ({ ...f, property_id: v }))}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
+                  <SelectTrigger className={`h-9 text-sm ${highlightFields.includes("property_id") ? "ring-2 ring-destructive animate-pulse" : ""}`}><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
                   <SelectContent>
                     {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Bank *</Label>
+                <Label className={`text-xs ${highlightFields.includes("bank_name") ? "text-destructive font-semibold" : ""}`}>Bank *</Label>
                 <Popover open={bankPopoverOpen} onOpenChange={setBankPopoverOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-9 w-full justify-between text-sm font-normal">
+                    <Button variant="outline" className={`h-9 w-full justify-between text-sm font-normal ${highlightFields.includes("bank_name") ? "ring-2 ring-destructive animate-pulse" : ""}`}>
                       {form.bank_name || "Bank wählen…"}
                       <Search className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                     </Button>
@@ -282,16 +321,16 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
           {step === 1 && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Darlehensbetrag *</Label>
-                <NumberInput value={form.loan_amount} onChange={v => setForm(f => ({ ...f, loan_amount: v }))} className="h-9 text-sm" placeholder="0" />
+                <Label className={`text-xs ${highlightFields.includes("loan_amount") ? "text-destructive font-semibold" : ""}`}>Darlehensbetrag *</Label>
+                <NumberInput value={form.loan_amount} onChange={v => setForm(f => ({ ...f, loan_amount: v }))} className={`h-9 text-sm ${highlightFields.includes("loan_amount") ? "ring-2 ring-destructive animate-pulse" : ""}`} placeholder="0" />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Restschuld</Label>
                 <NumberInput value={form.remaining_balance} onChange={v => setForm(f => ({ ...f, remaining_balance: v }))} className="h-9 text-sm" placeholder="0" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Zinssatz % *</Label>
-                <NumberInput value={form.interest_rate} onChange={v => setForm(f => ({ ...f, interest_rate: v }))} decimals className="h-9 text-sm" placeholder="0,00" />
+                <Label className={`text-xs ${highlightFields.includes("interest_rate") ? "text-destructive font-semibold" : ""}`}>Zinssatz % *</Label>
+                <NumberInput value={form.interest_rate} onChange={v => setForm(f => ({ ...f, interest_rate: v }))} decimals className={`h-9 text-sm ${highlightFields.includes("interest_rate") ? "ring-2 ring-destructive animate-pulse" : ""}`} placeholder="0,00" />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Tilgung %</Label>
@@ -346,7 +385,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
               Weiter <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSave} className="flex-1" disabled={saving || !form.property_id || !form.bank_name}>
+            <Button onClick={handleSave} className="flex-1" disabled={saving}>
               {saving ? "Anlegen…" : "Darlehen anlegen"}
             </Button>
           )}

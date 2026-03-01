@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 /* Smooth cross-fade transition: no flicker, no layout shift */
@@ -12,26 +12,25 @@ const PageTransition = ({ children }: PageTransitionProps) => {
   const [opacity, setOpacity] = useState(1);
   const prevPath = useRef(location.pathname);
   const isTransitioning = useRef(false);
+  const latestChildrenRef = useRef(children);
+  latestChildrenRef.current = children;
 
   useEffect(() => {
-    if (location.pathname !== prevPath.current && !isTransitioning.current) {
-      isTransitioning.current = true;
-      /* Fade out quickly */
-      setOpacity(0);
-      const timeout = setTimeout(() => {
-        setDisplayChildren(children);
-        /* Fade in */
-        requestAnimationFrame(() => {
-          setOpacity(1);
-          prevPath.current = location.pathname;
-          isTransitioning.current = false;
-        });
-      }, 120);
-      return () => { clearTimeout(timeout); isTransitioning.current = false; };
-    } else if (!isTransitioning.current) {
-      setDisplayChildren(children);
-    }
-  }, [children, location.pathname]);
+    if (location.pathname === prevPath.current || isTransitioning.current) return;
+    isTransitioning.current = true;
+    /* Fade out quickly */
+    setOpacity(0);
+    const timeout = setTimeout(() => {
+      setDisplayChildren(latestChildrenRef.current);
+      /* Fade in */
+      requestAnimationFrame(() => {
+        setOpacity(1);
+        prevPath.current = location.pathname;
+        isTransitioning.current = false;
+      });
+    }, 120);
+    return () => { clearTimeout(timeout); isTransitioning.current = false; };
+  }, [location.pathname]);
 
   return (
     <div

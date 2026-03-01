@@ -325,8 +325,8 @@
     }
   }
 
-  /* IMP-9: Ensure all containers respect viewport width */
-  .container {
+  /* IMP-9: Prevent horizontal scroll without clipping dropdowns */
+  html, body {
     overflow-x: hidden;
   }
 
