@@ -10,6 +10,8 @@ import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 interface SelbstauskunftData {
   anrede: string; titel: string; name: string; vorname: string; geburtsname: string;
@@ -132,181 +134,218 @@ export const SelbstauskunftGenerator = () => {
   const generatePDF = useCallback(async () => {
     setGenerating(true);
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pageW = 210;
-      const margin = 15;
+      /* ── Build fillable AcroForm PDF with pdf-lib (proper Unicode + editable fields) ── */
+      const pdfDoc = await PDFDocument.create();
+      const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const pageW = 595.28; // A4 in points
+      const pageH = 841.89;
+      const margin = 42.52; // ~15mm
       const contentW = pageW - 2 * margin;
-      let y = 15;
+      const form = pdfDoc.getForm();
+      let fieldCounter = 0;
 
-      const addText = (text: string, x: number, yPos: number, opts: { size?: number; bold?: boolean; color?: [number, number, number] } = {}) => {
-        doc.setFontSize(opts.size || 10);
-        doc.setFont("helvetica", opts.bold ? "bold" : "normal");
-        if (opts.color) doc.setTextColor(...opts.color); else doc.setTextColor(30, 30, 30);
-        doc.text(text, x, yPos);
+      let page = pdfDoc.addPage([pageW, pageH]);
+      let y = pageH - margin;
+
+      const drawText = (text: string, x: number, yPos: number, opts: { size?: number; bold?: boolean; color?: [number, number, number] } = {}) => {
+        const font = opts.bold ? helveticaBold : helvetica;
+        const c = opts.color || [30, 30, 30];
+        page.drawText(text, { x, y: yPos, size: opts.size || 10, font, color: rgb(c[0] / 255, c[1] / 255, c[2] / 255) });
       };
 
-      const addSection = (title: string) => {
-        if (y > 260) { doc.addPage(); y = 15; }
-        y += 4;
-        doc.setFillColor(42, 157, 110);
-        doc.rect(margin, y - 4, contentW, 7, "F");
-        addText(title, margin + 2, y + 1, { size: 11, bold: true, color: [255, 255, 255] });
-        y += 10;
+      const checkPage = (needed: number) => {
+        if (y - needed < margin) {
+          page = pdfDoc.addPage([pageW, pageH]);
+          y = pageH - margin;
+        }
       };
 
-      const addFieldRow = (l1: string, v1: string, l2: string, v2: string) => {
-        if (y > 275) { doc.addPage(); y = 15; }
-        const x1 = margin;
-        const x2 = margin + contentW / 2 + 2;
-        const w = contentW / 2 - 2;
-        addText(l1, x1, y, { size: 7, color: [120, 120, 120] });
-        addText(l2, x2, y, { size: 7, color: [120, 120, 120] });
-        y += 4;
-        doc.setDrawColor(200, 200, 200);
-        doc.setFillColor(250, 250, 250);
-        doc.roundedRect(x1, y - 3, w, 6, 1, 1, "FD");
-        doc.roundedRect(x2, y - 3, w, 6, 1, 1, "FD");
-        addText(v1 || "", x1 + 2, y + 1, { size: 9 });
-        addText(v2 || "", x2 + 2, y + 1, { size: 9 });
-        y += 8;
+      const drawSection = (title: string) => {
+        checkPage(25);
+        y -= 6;
+        page.drawRectangle({ x: margin, y: y - 6, width: contentW, height: 20, color: rgb(42 / 255, 157 / 255, 110 / 255) });
+        drawText(title, margin + 6, y, { size: 11, bold: true, color: [255, 255, 255] });
+        y -= 26;
       };
 
-      const addField = (label: string, value: string) => {
-        if (y > 275) { doc.addPage(); y = 15; }
-        addText(label, margin, y, { size: 7, color: [120, 120, 120] });
-        y += 4;
-        doc.setDrawColor(200, 200, 200);
-        doc.setFillColor(250, 250, 250);
-        doc.roundedRect(margin, y - 3, contentW / 2 - 2, 6, 1, 1, "FD");
-        addText(value || "", margin + 2, y + 1, { size: 9 });
-        y += 8;
+      /** Draw a fillable text field (AcroForm) */
+      const drawEditableField = (label: string, value: string, x: number, yPos: number, w: number) => {
+        fieldCounter++;
+        const fieldName = "field_" + fieldCounter + "_" + label.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
+        drawText(label, x, yPos + 10, { size: 7, color: [120, 120, 120] });
+        // Draw background rect
+        page.drawRectangle({ x, y: yPos - 2, width: w, height: 16, color: rgb(0.98, 0.98, 0.98), borderColor: rgb(0.78, 0.78, 0.78), borderWidth: 0.5 });
+        // Create fillable form field
+        const textField = form.createTextField(fieldName);
+        textField.setText(value || "");
+        textField.addToPage(page, { x: x + 2, y: yPos, width: w - 4, height: 12, borderWidth: 0 });
+        try { textField.setFontSize(9); } catch { /* some viewers handle font size differently */ }
       };
 
-      // Header
-      addText("Selbstauskunft", margin, y, { size: 18, bold: true, color: [42, 157, 110] });
-      y += 5;
-      addText("Erstellt am " + new Date().toLocaleDateString("de-DE") + " \u00b7 ImmoControl", margin, y, { size: 8, color: [150, 150, 150] });
-      y += 8;
+      const drawFieldRow = (l1: string, v1: string, l2: string, v2: string) => {
+        checkPage(30);
+        const hw = contentW / 2 - 4;
+        drawEditableField(l1, v1, margin, y, hw);
+        drawEditableField(l2, v2, margin + contentW / 2 + 4, y, hw);
+        y -= 30;
+      };
 
-      addSection("Pers\u00f6nliche Daten");
-      addFieldRow("Anrede", data.anrede, "Titel", data.titel);
-      addFieldRow("Name", data.name, "Vorname", data.vorname);
-      addFieldRow("Geburtsname", data.geburtsname, "Staatsangeh\u00f6rigkeit", data.staatsangehoerigkeit);
-      addFieldRow("Geburtsdatum", data.geburtsdatum, "Geburtsort", data.geburtsort);
-      addFieldRow("Stra\u00dfe, Hausnummer", data.strasse, "PLZ, Ort", data.plz + " " + data.ort);
-      addField("Voranschrift (bei Umzug in letzten 3 Jahren)", data.voranschrift);
+      const drawSingleField = (label: string, value: string) => {
+        checkPage(30);
+        drawEditableField(label, value, margin, y, contentW / 2 - 4);
+        y -= 30;
+      };
 
-      addSection("Kontaktdaten");
-      addFieldRow("Telefon", data.telefon, "E-Mail", data.email);
+      // ── Header ──
+      drawText("Selbstauskunft", margin, y, { size: 18, bold: true, color: [42, 157, 110] });
+      y -= 14;
+      drawText("Erstellt am " + new Date().toLocaleDateString("de-DE") + " \u00b7 ImmoControl", margin, y, { size: 8, color: [150, 150, 150] });
+      y -= 16;
 
-      addSection("Familienstand");
-      addFieldRow("Familienstand", data.familienstand, "Kinder (Anzahl)", data.kinderAnzahl);
-      addField("davon im Haushalt lebend", data.kinderImHaushalt);
+      // ── Pers\u00f6nliche Daten ──
+      drawSection("Pers\u00f6nliche Daten");
+      drawFieldRow("Anrede", data.anrede, "Titel", data.titel);
+      drawFieldRow("Name", data.name, "Vorname", data.vorname);
+      drawFieldRow("Geburtsname", data.geburtsname, "Staatsangeh\u00f6rigkeit", data.staatsangehoerigkeit);
+      drawFieldRow("Geburtsdatum", data.geburtsdatum, "Geburtsort", data.geburtsort);
+      drawFieldRow("Stra\u00dfe, Hausnummer", data.strasse, "PLZ, Ort", data.plz + " " + data.ort);
+      drawSingleField("Voranschrift (bei Umzug in letzten 3 Jahren)", data.voranschrift);
 
-      addSection("Angaben zur Berufst\u00e4tigkeit");
-      addFieldRow("Arbeitgeber", data.arbeitgeber, "Branche", data.branche);
-      addFieldRow("Berufsbezeichnung", data.berufsbezeichnung, "Besch\u00e4ftigt seit", data.beschaeftigtSeit);
-      addFieldRow("Befristung", data.befristet, "Probezeit", data.probezeit);
+      // ── Kontaktdaten ──
+      drawSection("Kontaktdaten");
+      drawFieldRow("Telefon", data.telefon, "E-Mail", data.email);
 
-      doc.addPage(); y = 15;
-      addSection("Verm\u00f6genswerte");
-      addFieldRow("Giro-/Tagesgeld-/Sparkonten", fmtCur(data.giroKonten), "Wertpapierverm\u00f6gen", fmtCur(data.wertpapiere));
-      addFieldRow("Bausparguthaben", fmtCur(data.bausparGuthaben), "Lebensversicherungen", fmtCur(data.lebensversicherungen));
-      addFieldRow("Rentenversicherungen", fmtCur(data.rentenversicherungen), "Immobilien (eigengenutzt)", fmtCur(data.immobilienEigengenutzt));
-      addFieldRow("Immobilien (fremdgenutzt)", fmtCur(data.immobilienFremdgenutzt), "Sonstiges", fmtCur(data.sonstigesVermoegen));
+      // ── Familienstand ──
+      drawSection("Familienstand");
+      drawFieldRow("Familienstand", data.familienstand, "Kinder (Anzahl)", data.kinderAnzahl);
+      drawSingleField("davon im Haushalt lebend", data.kinderImHaushalt);
 
+      // ── Berufst\u00e4tigkeit ──
+      drawSection("Angaben zur Berufst\u00e4tigkeit");
+      drawFieldRow("Arbeitgeber", data.arbeitgeber, "Branche", data.branche);
+      drawFieldRow("Berufsbezeichnung", data.berufsbezeichnung, "Besch\u00e4ftigt seit", data.beschaeftigtSeit);
+      drawFieldRow("Befristung", data.befristet, "Probezeit", data.probezeit);
+
+      // ── Verm\u00f6genswerte (new page) ──
+      page = pdfDoc.addPage([pageW, pageH]); y = pageH - margin;
+      drawSection("Verm\u00f6genswerte");
+      drawFieldRow("Giro-/Tagesgeld-/Sparkonten", fmtCur(data.giroKonten), "Wertpapierverm\u00f6gen", fmtCur(data.wertpapiere));
+      drawFieldRow("Bausparguthaben", fmtCur(data.bausparGuthaben), "Lebensversicherungen", fmtCur(data.lebensversicherungen));
+      drawFieldRow("Rentenversicherungen", fmtCur(data.rentenversicherungen), "Immobilien (eigengenutzt)", fmtCur(data.immobilienEigengenutzt));
+      drawFieldRow("Immobilien (fremdgenutzt)", fmtCur(data.immobilienFremdgenutzt), "Sonstiges", fmtCur(data.sonstigesVermoegen));
+
+      // ── Bestehende Verbindlichkeiten ──
       const { data: loans } = await supabase.from("loans").select("bank_name, remaining_balance, monthly_payment, fixed_interest_until, loan_type").eq("user_id", user!.id);
       if (loans && loans.length > 0) {
-        addSection("Bestehende Verbindlichkeiten");
-        const cols = [margin, margin + 40, margin + 80, margin + 120];
-        addText("Darlehensart", cols[0], y, { size: 8, bold: true, color: [80, 80, 80] });
-        addText("Restschuld", cols[1], y, { size: 8, bold: true, color: [80, 80, 80] });
-        addText("Monatsrate", cols[2], y, { size: 8, bold: true, color: [80, 80, 80] });
-        addText("Zinsbindung bis", cols[3], y, { size: 8, bold: true, color: [80, 80, 80] });
-        y += 2;
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, y, margin + contentW, y);
-        y += 5;
+        drawSection("Bestehende Verbindlichkeiten");
+        const cols = [margin, margin + 113, margin + 227, margin + 340];
+        drawText("Darlehensart", cols[0], y, { size: 8, bold: true, color: [80, 80, 80] });
+        drawText("Restschuld", cols[1], y, { size: 8, bold: true, color: [80, 80, 80] });
+        drawText("Monatsrate", cols[2], y, { size: 8, bold: true, color: [80, 80, 80] });
+        drawText("Zinsbindung bis", cols[3], y, { size: 8, bold: true, color: [80, 80, 80] });
+        y -= 4;
+        page.drawLine({ start: { x: margin, y }, end: { x: margin + contentW, y }, thickness: 0.5, color: rgb(0.78, 0.78, 0.78) });
+        y -= 14;
         for (const loan of loans) {
-          if (y > 275) { doc.addPage(); y = 15; }
-          addText(loan.bank_name || loan.loan_type, cols[0], y, { size: 9 });
-          addText(fmtCur(String(loan.remaining_balance || 0)), cols[1], y, { size: 9 });
-          addText(fmtCur(String(loan.monthly_payment || 0)), cols[2], y, { size: 9 });
-          addText(loan.fixed_interest_until || "\u2013", cols[3], y, { size: 9 });
-          y += 6;
+          checkPage(18);
+          drawText(loan.bank_name || loan.loan_type || "", cols[0], y, { size: 9 });
+          drawText(fmtCur(String(loan.remaining_balance || 0)), cols[1], y, { size: 9 });
+          drawText(fmtCur(String(loan.monthly_payment || 0)), cols[2], y, { size: 9 });
+          drawText(loan.fixed_interest_until || "\u2013", cols[3], y, { size: 9 });
+          y -= 17;
         }
-        y += 2;
       }
 
-      addSection("Einnahmen pro Monat");
-      addFieldRow("Gehalt netto", fmtCur(data.gehaltNetto), "Renten/Pensionen", fmtCur(data.renten));
-      addFieldRow("Selbstst\u00e4ndige T\u00e4tigkeit", fmtCur(data.selbststaendig), "Mieteinnahmen (kalt)", fmtCur(data.mieteinnahmen));
-      addFieldRow("Kindergeld", fmtCur(data.kindergeld), "Unterhalt", fmtCur(data.unterhaltEinnahmen));
+      // ── Einnahmen pro Monat ──
+      drawSection("Einnahmen pro Monat");
+      drawFieldRow("Gehalt netto", fmtCur(data.gehaltNetto), "Renten/Pensionen", fmtCur(data.renten));
+      drawFieldRow("Selbstst\u00e4ndige T\u00e4tigkeit", fmtCur(data.selbststaendig), "Mieteinnahmen (kalt)", fmtCur(data.mieteinnahmen));
+      drawFieldRow("Kindergeld", fmtCur(data.kindergeld), "Unterhalt", fmtCur(data.unterhaltEinnahmen));
       const sumE = [data.gehaltNetto, data.renten, data.selbststaendig, data.mieteinnahmen, data.kindergeld, data.unterhaltEinnahmen].reduce((s, v) => s + (parseFloat(v) || 0), 0);
-      addField("Summe Gesamteinnahmen", fmtCur(sumE.toFixed(2)));
+      drawSingleField("Summe Gesamteinnahmen", fmtCur(sumE.toFixed(2)));
 
-      addSection("Ausgaben pro Monat");
-      addFieldRow("Lebenshaltungskosten", fmtCur(data.lebenshaltung), "Warmmiete", fmtCur(data.warmmiete));
-      addFieldRow("Private Krankenversicherung", fmtCur(data.krankenversicherung), "Unterhaltszahlungen", fmtCur(data.unterhaltAusgaben));
-      addFieldRow("Kita/Kinderbetreuung", fmtCur(data.kitaBeitrag), "Kreditraten/Leasing", fmtCur(data.kreditraten));
-      addFieldRow("Sparraten", fmtCur(data.sparraten), "Sonstige Ausgaben", fmtCur(data.sonstigeAusgaben));
+      // ── Ausgaben pro Monat ──
+      drawSection("Ausgaben pro Monat");
+      drawFieldRow("Lebenshaltungskosten", fmtCur(data.lebenshaltung), "Warmmiete", fmtCur(data.warmmiete));
+      drawFieldRow("Private Krankenversicherung", fmtCur(data.krankenversicherung), "Unterhaltszahlungen", fmtCur(data.unterhaltAusgaben));
+      drawFieldRow("Kita/Kinderbetreuung", fmtCur(data.kitaBeitrag), "Kreditraten/Leasing", fmtCur(data.kreditraten));
+      drawFieldRow("Sparraten", fmtCur(data.sparraten), "Sonstige Ausgaben", fmtCur(data.sonstigeAusgaben));
       const sumA = [data.lebenshaltung, data.warmmiete, data.krankenversicherung, data.unterhaltAusgaben, data.kitaBeitrag, data.kreditraten, data.sparraten, data.sonstigeAusgaben].reduce((s, v) => s + (parseFloat(v) || 0), 0);
-      addField("Summe Gesamtausgaben", fmtCur(sumA.toFixed(2)));
+      drawSingleField("Summe Gesamtausgaben", fmtCur(sumA.toFixed(2)));
 
+      // ── \u00dcberschuss ──
       const ue = sumE - sumA;
-      y += 2;
-      doc.setFillColor(ue >= 0 ? 230 : 255, ue >= 0 ? 250 : 235, ue >= 0 ? 240 : 235);
-      doc.roundedRect(margin, y - 4, contentW, 10, 2, 2, "F");
-      addText("\u00dcberschuss (Einnahmen \u2212 Ausgaben)", margin + 3, y + 2, { size: 10, bold: true });
-      addText(fmtCur(ue.toFixed(2)), margin + contentW - 40, y + 2, { size: 12, bold: true, color: ue >= 0 ? [42, 157, 110] : [200, 50, 50] });
+      checkPage(30);
+      const ueBg = ue >= 0 ? rgb(230 / 255, 250 / 255, 240 / 255) : rgb(255 / 255, 235 / 255, 235 / 255);
+      page.drawRectangle({ x: margin, y: y - 8, width: contentW, height: 28, color: ueBg, borderColor: rgb(0.78, 0.78, 0.78), borderWidth: 0.5 });
+      drawText("\u00dcberschuss (Einnahmen \u2212 Ausgaben)", margin + 8, y + 4, { size: 10, bold: true });
+      const ueColor: [number, number, number] = ue >= 0 ? [42, 157, 110] : [200, 50, 50];
+      drawText(fmtCur(ue.toFixed(2)), margin + contentW - 120, y + 4, { size: 12, bold: true, color: ueColor });
+      y -= 36;
 
+      // ── Immobilien\u00fcbersicht ──
       if (properties.length > 0) {
-        doc.addPage(); y = 15;
-        addSection("Immobilien\u00fcbersicht");
-        const pCols = [margin, margin + 45, margin + 80, margin + 110, margin + 140];
-        ["Objekt", "Wert", "Miete/M", "Restschuld", "Cashflow/M"].forEach((h, i) => addText(h, pCols[i], y, { size: 8, bold: true, color: [80, 80, 80] }));
-        y += 2;
-        doc.line(margin, y, margin + contentW, y);
-        y += 5;
+        page = pdfDoc.addPage([pageW, pageH]); y = pageH - margin;
+        drawSection("Immobilien\u00fcbersicht");
+        const pCols = [margin, margin + 128, margin + 227, margin + 312, margin + 397];
+        ["Objekt", "Wert", "Miete/M", "Restschuld", "Cashflow/M"].forEach((h, i) => drawText(h, pCols[i], y, { size: 8, bold: true, color: [80, 80, 80] }));
+        y -= 4;
+        page.drawLine({ start: { x: margin, y }, end: { x: margin + contentW, y }, thickness: 0.5, color: rgb(0.78, 0.78, 0.78) });
+        y -= 14;
         for (const p of properties) {
-          if (y > 275) { doc.addPage(); y = 15; }
-          addText(p.name.substring(0, 25), pCols[0], y, { size: 9 });
-          addText(fmtCur(String(p.currentValue)), pCols[1], y, { size: 9 });
-          addText(fmtCur(String(p.monthlyRent)), pCols[2], y, { size: 9 });
-          addText(fmtCur(String(p.remainingDebt)), pCols[3], y, { size: 9 });
-          addText(fmtCur(String(p.monthlyCashflow)), pCols[4], y, { size: 9, color: p.monthlyCashflow >= 0 ? [42, 157, 110] : [200, 50, 50] });
-          y += 6;
+          checkPage(18);
+          drawText(p.name.substring(0, 25), pCols[0], y, { size: 9 });
+          drawText(fmtCur(String(p.currentValue)), pCols[1], y, { size: 9 });
+          drawText(fmtCur(String(p.monthlyRent)), pCols[2], y, { size: 9 });
+          drawText(fmtCur(String(p.remainingDebt)), pCols[3], y, { size: 9 });
+          const cfColor: [number, number, number] = p.monthlyCashflow >= 0 ? [42, 157, 110] : [200, 50, 50];
+          drawText(fmtCur(String(p.monthlyCashflow)), pCols[4], y, { size: 9, color: cfColor });
+          y -= 17;
         }
       }
 
+      // ── Bemerkungen ──
       if (data.bemerkungen) {
-        y += 4;
-        addSection("Bemerkungen");
-        const lines = doc.splitTextToSize(data.bemerkungen, contentW - 4);
-        addText(lines.join("\n"), margin + 2, y, { size: 9 });
+        checkPage(40);
+        drawSection("Bemerkungen");
+        drawText(data.bemerkungen.substring(0, 500), margin + 6, y, { size: 9 });
+        y -= 20;
       }
 
-      doc.addPage(); y = 15;
-      addSection("Vollst\u00e4ndigkeitserkl\u00e4rung");
-      addText("Hiermit best\u00e4tige ich die Richtigkeit und Vollst\u00e4ndigkeit der gemachten Angaben.", margin, y, { size: 9 });
-      y += 15;
-      addFieldRow("Ort, Datum", "", "Unterschrift", "");
-      y += 10;
-      doc.setDrawColor(180, 180, 180);
-      doc.line(margin, y, margin + 70, y);
-      doc.line(margin + contentW / 2 + 2, y, margin + contentW, y);
+      // ── Vollst\u00e4ndigkeitserkl\u00e4rung ──
+      page = pdfDoc.addPage([pageW, pageH]); y = pageH - margin;
+      drawSection("Vollst\u00e4ndigkeitserkl\u00e4rung");
+      drawText("Hiermit best\u00e4tige ich die Richtigkeit und Vollst\u00e4ndigkeit der gemachten Angaben.", margin, y, { size: 9 });
+      y -= 40;
+      drawFieldRow("Ort, Datum", "", "Unterschrift", "");
+      y -= 20;
+      page.drawLine({ start: { x: margin, y }, end: { x: margin + 198, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
+      page.drawLine({ start: { x: margin + contentW / 2 + 6, y }, end: { x: margin + contentW, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
 
-      const tp = doc.getNumberOfPages();
-      for (let i = 1; i <= tp; i++) {
-        doc.setPage(i);
-        doc.setFontSize(7);
-        doc.setTextColor(180, 180, 180);
-        doc.text("Selbstauskunft \u00b7 " + data.vorname + " " + data.name + " \u00b7 Seite " + i + "/" + tp, margin, 290);
-        doc.text("Erstellt mit ImmoControl", pageW - margin - 35, 290);
+      // ── Footer on every page ──
+      const pages = pdfDoc.getPages();
+      const tp = pages.length;
+      for (let i = 0; i < tp; i++) {
+        const pg = pages[i];
+        pg.drawText("Selbstauskunft \u00b7 " + data.vorname + " " + data.name + " \u00b7 Seite " + (i + 1) + "/" + tp, {
+          x: margin, y: 20, size: 7, font: helvetica, color: rgb(0.7, 0.7, 0.7),
+        });
+        pg.drawText("Erstellt mit ImmoControl", {
+          x: pageW - margin - 100, y: 20, size: 7, font: helvetica, color: rgb(0.7, 0.7, 0.7),
+        });
       }
 
-      doc.save("Selbstauskunft_" + (data.name || "Entwurf") + "_" + new Date().toISOString().split("T")[0] + ".pdf");
-      toast.success("Selbstauskunft als PDF heruntergeladen!");
+      // ── Save ──
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Selbstauskunft_" + (data.name || "Entwurf") + "_" + new Date().toISOString().split("T")[0] + ".pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Selbstauskunft als PDF heruntergeladen! (Felder sind editierbar)");
     } catch (err: unknown) {
       toast.error("Fehler beim Erstellen: " + (err instanceof Error ? err.message : "Unbekannt"));
     } finally {
@@ -363,12 +402,26 @@ export const SelbstauskunftGenerator = () => {
               {inp("Geburtsdatum", "geburtsdatum", "date")}
               {inp("Geburtsort", "geburtsort")}
             </div>
-            {inp("Stra\u00dfe, Hausnummer", "strasse")}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Stra\u00dfe, Hausnummer</Label>
+              <AddressAutocomplete
+                value={data.strasse}
+                onChange={(val) => update("strasse", val)}
+                placeholder="Stra\u00dfe und Hausnummer"
+              />
+            </div>
             <div className="grid grid-cols-3 gap-3">
               {inp("PLZ", "plz")}
               <div className="col-span-2">{inp("Ort", "ort")}</div>
             </div>
-            {inp("Voranschrift (bei Umzug in letzten 3 Jahren)", "voranschrift")}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Voranschrift (bei Umzug in letzten 3 Jahren)</Label>
+              <AddressAutocomplete
+                value={data.voranschrift}
+                onChange={(val) => update("voranschrift", val)}
+                placeholder="Vorherige Adresse"
+              />
+            </div>
           </div>
         );
       case 1:

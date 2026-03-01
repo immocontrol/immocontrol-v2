@@ -274,7 +274,8 @@ ${properties.map(p => `<tr>
   const avgHoldingPeriodMonths = useMemo(() => {
     if (properties.length === 0) return 0;
     const totalMonths = properties.reduce((s, p) => {
-      const purchase = (p as any).purchase_date || (p as any).purchaseDate;
+      const purchase = (p as Record<string, unknown>).purchase_date as string | undefined
+        || (p as Record<string, unknown>).purchaseDate as string | undefined;
       if (!purchase) return s;
       const months = Math.floor((Date.now() - new Date(purchase).getTime()) / (1000 * 60 * 60 * 24 * 30));
       return s + months;

@@ -3,6 +3,7 @@ import { Landmark, Building2, Calendar, AlertTriangle, Edit2, Trash2, Search, X,
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";
+import { LoanPdfImport } from "@/components/LoanPdfImport";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -116,7 +117,7 @@ const Loans = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as Loan[];
+      return (data || []) as Loan[];
     },
     enabled: !!user,
   });
@@ -477,6 +478,24 @@ const Loans = () => {
             </div>
           )}
 
+          <LoanPdfImport onImport={(parsed) => {
+            setForm(prev => ({
+              ...prev,
+              bank_name: parsed.bank_name || prev.bank_name,
+              loan_amount: parsed.loan_amount || prev.loan_amount,
+              remaining_balance: parsed.remaining_balance || prev.remaining_balance,
+              interest_rate: parsed.interest_rate || prev.interest_rate,
+              repayment_rate: parsed.repayment_rate || prev.repayment_rate,
+              monthly_payment: parsed.monthly_payment || prev.monthly_payment,
+              fixed_interest_until: parsed.fixed_interest_until || prev.fixed_interest_until,
+              start_date: parsed.start_date || prev.start_date,
+              loan_type: parsed.loan_type || prev.loan_type,
+              notes: parsed.notes || prev.notes,
+            }));
+            setBankSearch(parsed.bank_name || "");
+            setOpen(true);
+          }} />
+
           <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
 
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
@@ -739,7 +758,7 @@ const Loans = () => {
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
                 <RTooltip
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number, _: string, p: any) => [`${v} Monate (${p.payload.end})`, `${p.payload.rate}% · ${formatCurrency(p.payload.balance)}`]}
+                  formatter={(v: number, _: string, p: { payload: { end: string; rate: number; balance: number } }) => [`${v} Monate (${p.payload.end})`, `${p.payload.rate}% · ${formatCurrency(p.payload.balance)}`]}
                 />
                 <Bar dataKey="monate" radius={[0, 4, 4, 0]}>
                   {zinsBindungData.map((entry, i) => (

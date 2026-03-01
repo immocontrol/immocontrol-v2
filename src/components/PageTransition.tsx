@@ -1,11 +1,7 @@
-import { ReactNode, useState, useEffect, useRef } from "react";
+import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
-/* OPT-28: Transition duration constants */
-const FADE_OUT_DURATION = 150;
-const FADE_IN_CLASS = "animate-in fade-in slide-in-from-bottom-1 duration-200 ease-out";
-const FADE_OUT_CLASS = "animate-out fade-out slide-out-to-top-1 duration-150 ease-in";
-
+/* Smooth cross-fade transition: no flicker, no layout shift */
 interface PageTransitionProps {
   children: ReactNode;
 }
@@ -13,27 +9,37 @@ interface PageTransitionProps {
 const PageTransition = ({ children }: PageTransitionProps) => {
   const location = useLocation();
   const [displayChildren, setDisplayChildren] = useState(children);
-  const [transitionStage, setTransitionStage] = useState("fade-in");
+  const [opacity, setOpacity] = useState(1);
   const prevPath = useRef(location.pathname);
+  const isTransitioning = useRef(false);
 
   useEffect(() => {
-    if (location.pathname !== prevPath.current) {
-      setTransitionStage("fade-out");
+    if (location.pathname !== prevPath.current && !isTransitioning.current) {
+      isTransitioning.current = true;
+      /* Fade out quickly */
+      setOpacity(0);
       const timeout = setTimeout(() => {
         setDisplayChildren(children);
-        setTransitionStage("fade-in");
-        prevPath.current = location.pathname;
-      }, FADE_OUT_DURATION);
-      return () => clearTimeout(timeout);
-    } else {
+        /* Fade in */
+        requestAnimationFrame(() => {
+          setOpacity(1);
+          prevPath.current = location.pathname;
+          isTransitioning.current = false;
+        });
+      }, 120);
+      return () => { clearTimeout(timeout); isTransitioning.current = false; };
+    } else if (!isTransitioning.current) {
       setDisplayChildren(children);
     }
   }, [children, location.pathname]);
 
   return (
     <div
-      /* OPT-29: Use constants for transition classes */
-      className={transitionStage === "fade-in" ? FADE_IN_CLASS : FADE_OUT_CLASS}
+      style={{
+        opacity,
+        transition: "opacity 150ms ease-in-out",
+        willChange: "opacity",
+      }}
     >
       {displayChildren}
     </div>

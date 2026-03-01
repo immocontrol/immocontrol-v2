@@ -54,12 +54,68 @@ interface MatchingRule {
   created_at: string;
 }
 
-/* OPT-33: Match confidence threshold constants */
-const MATCH_CONFIDENCE = {
-  HIGH: 90,
-  MEDIUM: 70,
-  LOW: 50,
-} as const;
+/** Feature 1: Parse MT940 (SWIFT) bank statement format */
+const parseMT940 = (text: string, userId: string, accountId: string | null): Record<string, unknown>[] => {
+  const rows: Record<string, unknown>[] = [];
+  const blocks = text.split(":61:").slice(1);
+  for (const block of blocks) {
+    try {
+      const lines = block.split("\n");
+      const line1 = lines[0] || "";
+      // :61: format: YYMMDD[MMDD]C/DAmount... (simplified parsing)
+      const dateMatch = line1.match(/(\d{6})/); 
+      if (!dateMatch) continue;
+      const yy = dateMatch[1].slice(0, 2);
+      const mm = dateMatch[1].slice(2, 4);
+      const dd = dateMatch[1].slice(4, 6);
+      const year = parseInt(yy) > 50 ? `19${yy}` : `20${yy}`;
+      const bookingDate = `${year}-${mm}-${dd}`;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) continue;
+      const amountMatch = line1.match(/([CD])(\d+[,.]\d*)/);
+      if (!amountMatch) continue;
+      const isCredit = amountMatch[1] === "C";
+      const amount = parseFloat(amountMatch[2].replace(",", ".")) * (isCredit ? 1 : -1);
+      // :86: contains reference text
+      const refLine = lines.find(l => l.startsWith(":86:"));
+      const reference = refLine ? refLine.slice(4).trim() : null;
+      rows.push({ user_id: userId, booking_date: bookingDate, amount, account_id: accountId, reference, booking_text: "MT940" });
+    } catch { /* skip malformed */ }
+  }
+  return rows;
+};
+
+/** Feature 1: Parse CAMT.053 XML bank statement format */
+const parseCAMT = (xml: string, userId: string, accountId: string | null): Record<string, unknown>[] => {
+  const rows: Record<string, unknown>[] = [];
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "text/xml");
+    const entries = doc.querySelectorAll("Ntry");
+    entries.forEach(entry => {
+      try {
+        const amtEl = entry.querySelector("Amt");
+        const dateEl = entry.querySelector("BookgDt Dt") || entry.querySelector("ValDt Dt");
+        const cdtEl = entry.querySelector("CdtDbtInd");
+        const refEl = entry.querySelector("RmtInf Ustrd") || entry.querySelector("AddtlNtryInf");
+        const nameEl = entry.querySelector("RltdPties Dbtr Nm") || entry.querySelector("RltdPties Cdtr Nm");
+        if (!amtEl || !dateEl) return;
+        const amount = parseFloat(amtEl.textContent || "0") * (cdtEl?.textContent === "CRDT" ? 1 : -1);
+        const bookingDate = dateEl.textContent || "";
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) return;
+        rows.push({
+          user_id: userId,
+          booking_date: bookingDate,
+          amount,
+          account_id: accountId,
+          reference: refEl?.textContent || null,
+          sender_receiver: nameEl?.textContent || null,
+          booking_text: "CAMT",
+        });
+      } catch { /* skip */ }
+    });
+  } catch { /* skip */ }
+  return rows;
+};
 
 /* FUNC-45: Transaction categorization helper */
 const categorizeTransaction = (description: string): string => {
@@ -92,7 +148,7 @@ const BankMatching = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_accounts").select("*").order("created_at");
       if (error) throw error;
-      return (data as any[]) || [];
+      return (data || []) as BankAccount[];
     },
     enabled: !!user,
   });
@@ -102,7 +158,7 @@ const BankMatching = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_matching_rules").select("*").order("created_at");
       if (error) throw error;
-      return (data as any[]) || [];
+      return (data || []) as MatchingRule[];
     },
     enabled: !!user,
   });
@@ -116,7 +172,7 @@ const BankMatching = () => {
         .order("booking_date", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return (data as any[]) || [];
+      return (data || []) as BankTransaction[];
     },
     enabled: !!user,
   });
@@ -201,7 +257,7 @@ const BankMatching = () => {
     mutationFn: async ({ txId, paymentId, confidence }: { txId: string; paymentId: string; confidence: string }) => {
       const { error: e1 } = await supabase
         .from("bank_transactions")
-        .update({ matched_payment_id: paymentId, match_confidence: confidence } as any)
+        .update({ matched_payment_id: paymentId, match_confidence: confidence } as Record<string, unknown>)
         .eq("id", txId);
       if (e1) throw e1;
       const { error: e2 } = await supabase
@@ -217,7 +273,7 @@ const BankMatching = () => {
     mutationFn: async ({ txId, paymentId }: { txId: string; paymentId: string }) => {
       const { error: e1 } = await supabase
         .from("bank_transactions")
-        .update({ matched_payment_id: null, match_confidence: null } as any)
+        .update({ matched_payment_id: null, match_confidence: null } as Record<string, unknown>)
         .eq("id", txId);
       if (e1) throw e1;
       const { error: e2 } = await supabase
@@ -238,7 +294,7 @@ const BankMatching = () => {
         iban: accountForm.iban || null,
         bic: accountForm.bic || null,
         bank_name: accountForm.bank_name || null,
-      } as any);
+      } as Record<string, unknown>);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -270,7 +326,7 @@ const BankMatching = () => {
         match_value: ruleForm.match_value,
         tenant_id: ruleForm.tenant_id || null,
         property_id: ruleForm.property_id || null,
-      } as any);
+      } as Record<string, unknown>);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -316,6 +372,39 @@ const BankMatching = () => {
     setImporting(true);
     try {
       const text = await file.text();
+
+      /** Feature 1: MT940 / CAMT detection and parsing */
+      const ext = file.name.toLowerCase().split(".").pop() || "";
+      if (ext === "sta" || text.startsWith(":20:") || text.includes(":60F:")) {
+        // MT940 format
+        const mt940Rows = parseMT940(text, user.id, selectedAccount !== "alle" ? selectedAccount : (accounts.find(a => a.is_default)?.id || null));
+        if (mt940Rows.length === 0) { toast.error("Keine Transaktionen im MT940 gefunden"); return; }
+        const batchSize = 100;
+        for (let i = 0; i < mt940Rows.length; i += batchSize) {
+          const { error } = await supabase.from("bank_transactions").insert(mt940Rows.slice(i, i + batchSize) as Record<string, unknown>[]);
+          if (error) throw error;
+        }
+        toast.success(`${mt940Rows.length} MT940-Transaktionen importiert`);
+        queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
+        setImportOpen(false);
+        return;
+      }
+      if (ext === "xml" || text.includes("<Document") || text.includes("camt.053")) {
+        // CAMT.053 format
+        const camtRows = parseCAMT(text, user.id, selectedAccount !== "alle" ? selectedAccount : (accounts.find(a => a.is_default)?.id || null));
+        if (camtRows.length === 0) { toast.error("Keine Transaktionen im CAMT gefunden"); return; }
+        const batchSize = 100;
+        for (let i = 0; i < camtRows.length; i += batchSize) {
+          const { error } = await supabase.from("bank_transactions").insert(camtRows.slice(i, i + batchSize) as Record<string, unknown>[]);
+          if (error) throw error;
+        }
+        toast.success(`${camtRows.length} CAMT-Transaktionen importiert`);
+        queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
+        setImportOpen(false);
+        return;
+      }
+
+      // CSV format
       const lines = text.split("\n").filter(l => l.trim());
       if (lines.length < 2) { toast.error("CSV ist leer"); return; }
       const sep = lines[0].includes(";") ? ";" : ",";
@@ -332,7 +421,7 @@ const BankMatching = () => {
       // Use default account if selected
       const accountId = selectedAccount !== "alle" ? selectedAccount : (accounts.find(a => a.is_default)?.id || null);
 
-      const rows: any[] = [];
+      const rows: Record<string, unknown>[] = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ""));
         if (cols.length <= amountCol) continue;
@@ -361,7 +450,7 @@ const BankMatching = () => {
       if (rows.length === 0) { toast.error("Keine gültigen Transaktionen"); return; }
       const batchSize = 100;
       for (let i = 0; i < rows.length; i += batchSize) {
-        const { error } = await supabase.from("bank_transactions").insert(rows.slice(i, i + batchSize) as any);
+        const { error } = await supabase.from("bank_transactions").insert(rows.slice(i, i + batchSize));
         if (error) throw error;
       }
       toast.success(`${rows.length} Transaktionen importiert`);
@@ -430,9 +519,9 @@ const BankMatching = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
-              <DialogHeader><DialogTitle>CSV Import</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Bank-Import (CSV / MT940 / CAMT)</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Unterstützt: Sparkasse, Volksbank, DKB, ING, Commerzbank u.a.</p>
+                <p className="text-sm text-muted-foreground">Unterstützt: CSV (Sparkasse, Volksbank, DKB, ING, Commerzbank u.a.), MT940 (.sta) und CAMT.053 (.xml)</p>
                 {accounts.length > 0 && (
                   <div>
                     <Label className="text-xs">Konto zuordnen</Label>
@@ -445,8 +534,9 @@ const BankMatching = () => {
                     </Select>
                   </div>
                 )}
-                <input ref={fileRef} type="file" accept=".csv,.CSV" onChange={handleFileUpload} disabled={importing}
+                <input ref={fileRef} type="file" accept=".csv,.CSV,.sta,.STA,.xml,.XML" onChange={handleFileUpload} disabled={importing}
                   className="w-full text-sm file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary file:text-primary-foreground cursor-pointer" />
+                <p className="text-[10px] text-muted-foreground">CSV: Semikolon/Komma-getrennt · MT940: SWIFT-Format (.sta) · CAMT: XML-Format (.xml)</p>
                 {importing && <p className="text-xs text-muted-foreground animate-pulse">Importiere...</p>}
               </div>
             </DialogContent>

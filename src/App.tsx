@@ -34,6 +34,8 @@ const ROUTES = {
   ANALYSE: "/analyse",
   PROPERTY: "/objekt",
   INVITATION: "/einladung",
+  DOKUMENTE: "/dokumente",
+  WARTUNG: "/wartungsplaner",
 } as const;
 
 /* OPT-41: App version constant */
@@ -70,6 +72,8 @@ const immoAIImport = () => import("@/pages/ImmoAI");
 const vertraegeImport = () => import("@/pages/Vertraege");
 const crmImport = () => import("@/pages/CRM");
 const dealsImport = () => import("@/pages/Deals");
+const dokumenteImport = () => import("@/pages/Dokumente");
+const wartungsplanerImport = () => import("@/pages/Wartungsplaner");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -92,6 +96,8 @@ const ImmoAI = lazy(immoAIImport);
 const Vertraege = lazy(vertraegeImport);
 const CRM = lazy(crmImport);
 const Deals = lazy(dealsImport);
+const Dokumente = lazy(dokumenteImport);
+const Wartungsplaner = lazy(wartungsplanerImport);
 
 // Preload all routes after initial render to eliminate loading on tab switch
 const preloadRoutes = () => {
@@ -110,6 +116,8 @@ const preloadRoutes = () => {
   vertraegeImport();
   crmImport();
   dealsImport();
+  dokumenteImport();
+  wartungsplanerImport();
 };
 
 const PageLoader = () => (
@@ -242,6 +250,8 @@ const RoleRouter = () => {
           <Route path={ROUTES.CONTRACTS} element={<Vertraege />} />
           <Route path={ROUTES.CRM} element={<CRM />} />
           <Route path={ROUTES.DEALS} element={<Deals />} />
+          <Route path={ROUTES.DOKUMENTE} element={<Dokumente />} />
+          <Route path={ROUTES.WARTUNG} element={<Wartungsplaner />} />
           <Route path={ROUTES.SETTINGS} element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

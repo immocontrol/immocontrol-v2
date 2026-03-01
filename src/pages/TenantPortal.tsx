@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { TenantTickets } from "@/components/TicketSystem";
 import { TenantPayments } from "@/components/PaymentTracking";
+import { DamageReport } from "@/components/DamageReport";
+import { formatCurrency, formatFileSize } from "@/lib/formatters";
 
 interface TenantInfo {
   id: string;
@@ -36,9 +38,6 @@ interface Message {
   is_read: boolean;
   created_at: string;
 }
-
-import { formatCurrency } from "@/lib/formatters";
-
 
 // ─── Tenant Documents Component ─────────────────────────────
 const TenantDocuments = ({ propertyId }: { propertyId: string }) => {
@@ -69,12 +68,6 @@ const TenantDocuments = ({ propertyId }: { propertyId: string }) => {
     a.download = doc.file_name;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const getIcon = (fileType: string | null, fileName: string) => {
@@ -111,7 +104,7 @@ const TenantDocuments = ({ propertyId }: { propertyId: string }) => {
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                     <span>{doc.category}</span>
                     <span>·</span>
-                    <span>{formatSize(doc.file_size)}</span>
+                    <span>{formatFileSize(doc.file_size)}</span>
                     <span>·</span>
                     <span>{new Date(doc.created_at).toLocaleDateString("de-DE")}</span>
                   </div>
@@ -183,7 +176,7 @@ const TenantDashboard = ({
       .order("due_date", { ascending: true })
       .limit(1)
       .then(({ data }) => {
-        if (data && data.length > 0) setUpcomingPayment(data[0] as any);
+        if (data && data.length > 0) setUpcomingPayment(data[0] as { due_date: string; amount: number; status: string });
       });
 
     // Synergy 12: Fetch total paid amount
@@ -353,7 +346,7 @@ const TenantDashboard = ({
         <h3 className="text-sm font-semibold mb-3">Schnellzugriff</h3>
         <div className="space-y-1">
           {[
-            { label: "Reparatur melden", icon: Wrench, tab: "tickets" as Tab, highlight: true },
+            { label: "Schaden melden", icon: AlertTriangle, tab: "tickets" as Tab, highlight: true },
             { label: "Nachricht an Vermieter", icon: Send, tab: "messages" as Tab },
             { label: "Meine Dokumente", icon: FileText, tab: "documents" as Tab },
             { label: "Zahlungsübersicht", icon: CreditCard, tab: "payments" as Tab },
@@ -628,13 +621,21 @@ const TenantPortal = () => {
           </div>
         )}
 
-        {/* TICKETS TAB */}
+        {/* TICKETS TAB — Feature 5: Enhanced with DamageReport */}
         {activeTab === "tickets" && tenantInfo && (
-          <TenantTickets
-            tenantId={tenantInfo.id}
-            propertyId={tenantInfo.property_id}
-            landlordId={tenantInfo.landlord_id}
-          />
+          <div className="space-y-4">
+            <DamageReport
+              tenantId={tenantInfo.id}
+              propertyId={tenantInfo.property_id}
+              landlordId={tenantInfo.landlord_id}
+              unitLabel={tenantInfo.unit_label}
+            />
+            <TenantTickets
+              tenantId={tenantInfo.id}
+              propertyId={tenantInfo.property_id}
+              landlordId={tenantInfo.landlord_id}
+            />
+          </div>
         )}
 
         {/* DOCUMENTS TAB */}

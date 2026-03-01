@@ -116,14 +116,11 @@ const Mietuebersicht = () => {
   const paymentMethodDist = useMemo(() => {
     const methods: Record<string, number> = {};
     payments.forEach(p => {
-      const method = (p as any).payment_method || "Überweisung";
+      const method = (p as Record<string, unknown>).payment_method as string || "Überweisung";
       methods[method] = (methods[method] || 0) + 1;
     });
     return methods;
   }, [payments]);
-
-  /* OPT-18: Memoized active tenant count and vacancy */
-  const activeTenantCount = activeTenants.length;
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -242,7 +239,7 @@ const Mietuebersicht = () => {
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <div
                   className="h-full bg-profit rounded-full transition-all"
-                  style={{ width: `${properties.reduce((s, p) => s + p.units, 0) > 0 ? (activeTenants.length / properties.reduce((s, p) => s + p.units, 0)) * 100 : 0}%` }}
+                  style={{ width: `${(() => { const total = properties.reduce((s, p) => s + p.units, 0); return total > 0 ? (activeTenants.length / total) * 100 : 0; })()}%` }}
                 />
               </div>
               <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
