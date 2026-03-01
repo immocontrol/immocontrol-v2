@@ -121,9 +121,10 @@ const Deals = () => {
     const rates: Record<string, number> = {};
     STAGES.forEach((stage, idx) => {
       const inStage = deals.filter((d: { stage: string }) => d.stage === stage.key).length;
-      const later = STAGES.slice(idx + 1).map(s => s.key);
+      const later = STAGES.slice(idx + 1).filter(s => s.key !== "abgelehnt").map(s => s.key);
       const progressed = deals.filter((d: { stage: string }) => later.includes(d.stage)).length;
-      rates[stage.key] = inStage > 0 ? Math.round((progressed / (inStage + progressed)) * 100) : 0;
+      const total = inStage + progressed;
+      rates[stage.key] = total > 0 ? Math.round((progressed / total) * 100) : 0;
     });
     return rates;
   }, [deals]);
