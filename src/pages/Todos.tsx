@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import {
   CheckSquare, Plus, Trash2, Circle, CheckCircle2, Flag, Calendar, Tag,
   ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search,
@@ -688,17 +688,17 @@ interface TodoRowProps {
   onDelete: (id: string) => void;
 }
 
-const TodoRow = ({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
+/* IMPROVE-4: Memoize TodoRow to prevent unnecessary re-renders when sibling todos change */
+const TodoRow = memo(({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
   const pConfig = PRIORITY_CONFIG[todo.priority] ?? PRIORITY_CONFIG[4];
   const isOver = todo.due_date && !todo.completed && isOverdue(todo.due_date);
 
   return (
     <div className={cn(
-      /* IMP-41: Add min-w-0 to todo row to prevent overflow on mobile */
       "group flex items-start gap-3 gradient-card border border-border rounded-xl px-4 py-3 hover:border-primary/20 transition-all hover-lift min-w-0",
       todo.completed && "opacity-50",
       isOver && "border-loss/30 bg-loss/5"
-    )}>
+    )} role="listitem" aria-label={`Aufgabe: ${todo.title}${todo.completed ? ' (erledigt)' : ''}`}>
       <button
         onClick={() => onToggle(todo)}
         className={cn(
@@ -752,6 +752,7 @@ const TodoRow = ({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
       </div>
     </div>
   );
-};
+});
+TodoRow.displayName = "TodoRow";
 
 export default Todos;

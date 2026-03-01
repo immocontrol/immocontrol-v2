@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import PortfolioForecast from "@/components/PortfolioForecast";
 import RenditeRanking from "@/components/RenditeRanking";
@@ -98,6 +98,55 @@ const Dashboard = () => {
   /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
   const [chartsCollapsed, setChartsCollapsed] = useState(true);
   const [widgetsCollapsed, setWidgetsCollapsed] = useState(true);
+
+  /* Dashboard charts drag & drop reordering */
+  const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
+  type ChartId = "portfolio" | "cashflow" | "monthly" | "map";
+  const defaultChartOrder: ChartId[] = ["portfolio", "cashflow", "monthly", "map"];
+  const [chartOrder, setChartOrder] = useState<ChartId[]>(() => {
+    try {
+      const stored = localStorage.getItem(CHART_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as ChartId[];
+        if (Array.isArray(parsed) && parsed.length === 4) return parsed;
+      }
+    } catch { /* ignore */ }
+    return defaultChartOrder;
+  });
+  const dragChartRef = useRef<{ idx: number; startY: number } | null>(null);
+  const [dragChartIdx, setDragChartIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  const handleChartDragStart = useCallback((idx: number, clientY: number) => {
+    dragChartRef.current = { idx, startY: clientY };
+    setDragChartIdx(idx);
+  }, []);
+
+  const handleChartDragOver = useCallback((idx: number) => {
+    setDragOverIdx(idx);
+  }, []);
+
+  const handleChartDragEnd = useCallback(() => {
+    if (dragChartIdx !== null && dragOverIdx !== null && dragChartIdx !== dragOverIdx) {
+      setChartOrder(prev => {
+        const next = [...prev];
+        const [removed] = next.splice(dragChartIdx, 1);
+        next.splice(dragOverIdx, 0, removed);
+        try { localStorage.setItem(CHART_STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }
+        return next;
+      });
+    }
+    dragChartRef.current = null;
+    setDragChartIdx(null);
+    setDragOverIdx(null);
+  }, [dragChartIdx, dragOverIdx]);
+
+  const chartComponents: Record<ChartId, { label: string; component: React.ReactNode; span?: number }> = useMemo(() => ({
+    portfolio: { label: "Portfolio-Verteilung", component: <PortfolioChart /> },
+    cashflow: { label: "Cashflow-Übersicht", component: <CashflowChart /> },
+    monthly: { label: "Monatsübersicht", component: <MonthlyOverviewChart />, span: 2 },
+    map: { label: "Standortkarte", component: <PropertyMap />, span: 2 },
+  }), []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -899,7 +948,7 @@ ${properties.map(p => `<tr>
         </div>
       </div>
 
-      {/* Collapsible Charts Section */}
+      {/* Collapsible Charts Section — drag & drop reorderable tiles */}
       <div>
         <button
           onClick={() => setChartsCollapsed(!chartsCollapsed)}
@@ -907,20 +956,45 @@ ${properties.map(p => `<tr>
         >
           {chartsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           Grafiken & Charts {chartsCollapsed ? "einblenden" : "ausblenden"}
+          {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
         </button>
-        <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <Suspense fallback={<div className="grid md:grid-cols-2 gap-3"><div className="h-64 bg-secondary/50 rounded-xl animate-pulse" /><div className="h-64 bg-secondary/50 rounded-xl animate-pulse" /></div>}>
-            <div className="grid md:grid-cols-2 gap-3">
-              <PortfolioChart />
-              <CashflowChart />
-            </div>
-          </Suspense>
-          <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
-            <MonthlyOverviewChart />
-          </Suspense>
-          <Suspense fallback={<div className="h-96 bg-secondary/50 rounded-xl animate-pulse" />}>
-            <PropertyMap />
-          </Suspense>
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
+          <div className="grid md:grid-cols-2 gap-3">
+            {chartOrder.map((chartId, idx) => {
+              const chart = chartComponents[chartId];
+              const isDragging = dragChartIdx === idx;
+              const isOver = dragOverIdx === idx;
+              return (
+                <div
+                  key={chartId}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    handleChartDragStart(idx, e.clientY);
+                  }}
+                  onDragOver={(e) => { e.preventDefault(); handleChartDragOver(idx); }}
+                  onDragEnd={handleChartDragEnd}
+                  onTouchStart={() => handleChartDragStart(idx, 0)}
+                  onTouchEnd={handleChartDragEnd}
+                  className={`relative group transition-all duration-200 rounded-xl ${
+                    chart.span === 2 ? "md:col-span-2" : ""
+                  } ${
+                    isDragging ? "opacity-50 scale-[0.98]" : ""
+                  } ${
+                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
+                  }`}
+                >
+                  {/* Drag handle */}
+                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1 border border-border/50">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <Suspense fallback={<div className={`${chart.span === 2 ? "h-64" : "h-64"} bg-secondary/50 rounded-xl animate-pulse`} />}>
+                    {chart.component}
+                  </Suspense>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

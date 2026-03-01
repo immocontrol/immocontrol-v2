@@ -346,8 +346,9 @@ const Loans = () => {
   }, [filteredLoans]);
 
 
+  /* IMPROVE-7: Memoize zinsBindungData to prevent recalculation on unrelated state changes */
   const now = new Date();
-  const zinsBindungData = filteredLoans
+  const zinsBindungData = useMemo(() => filteredLoans
     .filter(l => l.fixed_interest_until)
     .map(l => {
       const end = new Date(l.fixed_interest_until!);
@@ -361,18 +362,20 @@ const Loans = () => {
         risk: monthsLeft <= 12 ? "high" : monthsLeft <= 24 ? "medium" : "low",
       };
     })
-    .sort((a, b) => a.monate - b.monate);
+    .sort((a, b) => a.monate - b.monate), [filteredLoans, getPropertyName]);
 
-  const ownershipGroups = loans.reduce((acc, l) => {
+  /* IMPROVE-8: Memoize ownershipGroups for stable pie chart data */
+  const ownershipGroups = useMemo(() => loans.reduce((acc, l) => {
     const key = getPropertyOwnership(l.property_id);
     acc[key] = (acc[key] || 0) + l.remaining_balance;
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>), [loans, getPropertyOwnership]);
 
-  const pieData = Object.entries(ownershipGroups).map(([key, val]) => ({
+  /* IMPROVE-9: Memoize pieData derived from ownershipGroups */
+  const pieData = useMemo(() => Object.entries(ownershipGroups).map(([key, val]) => ({
     name: key === "egbr" ? "eGbR" : key === "privat" ? "Privat" : key,
     value: val,
-  }));
+  })), [ownershipGroups]);
 
   /* OPT-48: hslVar helper for theme colors */
   const COLORS = [hslVar("primary"), hslVar("gold"), hslVar("chart-3")];

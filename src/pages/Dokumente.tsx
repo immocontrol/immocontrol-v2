@@ -127,6 +127,16 @@ const Dokumente = () => {
 
   const totalSize = useMemo(() => documents.reduce((s, d) => s + d.file_size, 0), [documents]);
 
+  /* IMPROVE-5: Document count by file type for quick overview */
+  const fileTypeStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    documents.forEach(d => {
+      const ext = d.file_name.split(".").pop()?.toLowerCase() || "other";
+      stats[ext] = (stats[ext] || 0) + 1;
+    });
+    return stats;
+  }, [documents]);
+
   const propMap = useMemo(() => new Map(properties.map(p => [p.id, p.name])), [properties]);
 
   const uploadFile = async (file: File) => {
@@ -229,6 +239,8 @@ const Dokumente = () => {
     a.download = doc.file_name;
     a.click();
     URL.revokeObjectURL(url);
+    /* IMPROVE-6: Show success toast after download */
+    toast.success(`"${doc.file_name}" heruntergeladen`);
   };
 
   return (

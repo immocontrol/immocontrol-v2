@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { Users, Plus, Mail, Shield, CheckCircle2, XCircle, Clock, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Users, Plus, Mail, Shield, CheckCircle2, XCircle, Clock, Trash2, Building2, UserCheck, Share2, Copy } from "lucide-react";
 import { isValidEmail } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -17,8 +18,19 @@ interface TeamMember {
   member_email: string;
   role: string;
   status: string;
+  shared_resources: string[];
   created_at: string;
 }
+
+/** Available shared resource types for team members */
+const SHARED_RESOURCES = [
+  { key: "properties", label: "Objekte", icon: Building2, description: "Gemeinsame Immobilien (z.B. eGbR)" },
+  { key: "contacts", label: "Kontakte", icon: Users, description: "Mieter, Handwerker, Dienstleister" },
+  { key: "loans", label: "Darlehen", icon: Shield, description: "Gemeinsame Finanzierungen" },
+  { key: "documents", label: "Dokumente", icon: Mail, description: "Vertraege, Protokolle, Rechnungen" },
+  { key: "accounts", label: "Konten", icon: Shield, description: "Bank- und Mietkonten" },
+  { key: "tasks", label: "Aufgaben", icon: CheckCircle2, description: "Gemeinsame To-Dos" },
+] as const;
 
 const roleLabels: Record<string, string> = {
   viewer: "Betrachter",
@@ -39,7 +51,24 @@ export const TeamManagement = () => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("viewer");
+  const [selectedResources, setSelectedResources] = useState<string[]>(["properties", "contacts"]);
   const [loading, setLoading] = useState(false);
+
+  const activeMembers = useMemo(() => members.filter(m => m.status === "accepted"), [members]);
+  const pendingMembers = useMemo(() => members.filter(m => m.status === "pending"), [members]);
+
+  /** Generate a shareable invite link */
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/einladung?ref=${user?.id || ""}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Einladungslink kopiert!");
+  };
+
+  const toggleResource = (key: string) => {
+    setSelectedResources(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
 
   const fetchMembers = async () => {
     if (!user) return;
@@ -82,7 +111,8 @@ export const TeamManagement = () => {
       owner_id: user.id,
       member_email: email.trim().toLowerCase(),
       role,
-    });
+      shared_resources: selectedResources,
+    } as never);
     if (error) {
       if (error.code === "23505") {
         toast.error("Dieses Teammitglied wurde bereits eingeladen");
@@ -105,6 +135,7 @@ export const TeamManagement = () => {
       }
       setEmail("");
       setRole("viewer");
+      setSelectedResources(["properties", "contacts"]);
       setOpen(false);
       fetchMembers();
     }
@@ -207,22 +238,73 @@ export const TeamManagement = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Das Teammitglied erhält Zugriff auf dein Portfolio, sobald es die Einladung annimmt.
-                  Ideal für eGbR-Partner oder Hausverwalter.
-                </p>
-                <Button onClick={inviteMember} disabled={loading} className="w-full">
-                  {loading ? "Einladen…" : "Einladung senden"}
+
+                {/* Shared resource selection */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Geteilte Bereiche</Label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {SHARED_RESOURCES.map(res => {
+                      const isSelected = selectedResources.includes(res.key);
+                      const ResIcon = res.icon;
+                      return (
+                        <button
+                          key={res.key}
+                          type="button"
+                          onClick={() => toggleResource(res.key)}
+                          className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all text-xs ${
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:bg-secondary/50"
+                          }`}
+                        >
+                          <ResIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="font-medium">{res.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Waehle welche Bereiche geteilt werden sollen (z.B. gemeinsame eGbR-Objekte).
+                  </p>
+                </div>
+
+                <Button onClick={inviteMember} disabled={loading || !email.trim()} className="w-full">
+                  {loading ? "Einladen..." : "Einladung senden"}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
+        {/* Quick actions */}
+        {members.length > 0 && (
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant="secondary" className="text-[10px]">
+              <UserCheck className="h-3 w-3 mr-1" /> {activeMembers.length} aktiv
+            </Badge>
+            {pendingMembers.length > 0 && (
+              <Badge variant="outline" className="text-[10px] text-gold border-gold/30">
+                <Clock className="h-3 w-3 mr-1" /> {pendingMembers.length} ausstehend
+              </Badge>
+            )}
+            <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1 ml-auto" onClick={copyInviteLink}>
+              <Copy className="h-3 w-3" /> Link kopieren
+            </Button>
+          </div>
+        )}
+
         {members.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-6">
-            Noch keine Teammitglieder. Lade Partner oder Verwalter ein, um gemeinsam dein Portfolio zu verwalten.
-          </p>
+          <div className="text-center py-6 space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+              <Share2 className="h-6 w-6 text-primary" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Lade Partner oder Verwalter ein, um gemeinsam dein Portfolio zu verwalten.
+            </p>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={copyInviteLink}>
+              <Copy className="h-3 w-3" /> Einladungslink kopieren
+            </Button>
+          </div>
         ) : (
           <div className="space-y-1.5">
             {members.map((member) => {
@@ -236,13 +318,18 @@ export const TeamManagement = () => {
                     </div>
                     <div>
                       <div className="text-sm font-medium">{member.member_email}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                           <Shield className="h-2.5 w-2.5" /> {roleLabels[member.role] || member.role}
                         </span>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${status.color}`}>
                           {status.label}
                         </span>
+                        {member.shared_resources && member.shared_resources.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            · {member.shared_resources.length} Bereiche
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

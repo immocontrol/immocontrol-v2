@@ -45,7 +45,13 @@ const Vertraege = () => {
     enabled: !!user,
   });
 
-  const stats = contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 };
+  /* IMPROVE-12: Memoize default stats to avoid object recreation on every render */
+  const stats = useMemo(() => contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 }, [contractStats]);
+
+  /* IMPROVE-13: Total contract value summary for quick reference */
+  const totalMonthlyBurn = useMemo(() => {
+    return (stats.totalServiceCost / 12) + (stats.openInvoiceAmount / 12);
+  }, [stats.totalServiceCost, stats.openInvoiceAmount]);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto" role="main">
@@ -53,7 +59,8 @@ const Vertraege = () => {
       <div>
         <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Mietverträge, Rechnungen und Dienstleisterverträge verwalten
+          {/* IMPROVE-14: Show total active items count in subtitle */}
+          {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
         </p>
       </div>
 

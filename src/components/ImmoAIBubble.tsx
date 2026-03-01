@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Send, Trash2, Sparkles, User, X, MessageSquare, GripVertical } from "lucide-react";
+import { Bot, Send, Trash2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,13 +43,15 @@ export default function ImmoAIBubble() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  /* BUG-8: Draggable AI chat bubble — works on both mobile (touch) and desktop (mouse) */
+  /* Smooth drag via rAF: direct DOM manipulation during drag for 60fps on mobile + desktop,
+     only commit final position to React state on release */
   const [bubblePos, setBubblePos] = useState<{ x: number; y: number } | null>(null);
-  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const dragRef = useRef<{ startY: number; origY: number } | null>(null);
   const isDragging = useRef(false);
+  const bubbleElRef = useRef<HTMLButtonElement>(null);
+  const chatElRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
 
-  /* BUG-8: Only register global drag listeners while actively dragging to avoid
-     permanent non-passive touchmove that degrades mobile scroll performance */
   const boundListenersRef = useRef<{
     mouseMove: (e: MouseEvent) => void;
     mouseUp: () => void;
@@ -68,49 +70,87 @@ export default function ImmoAIBubble() {
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => removeDragListeners, [removeDragListeners]);
+  useEffect(() => () => {
+    removeDragListeners();
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  }, [removeDragListeners]);
 
-  const handleDragStart = useCallback((clientX: number, clientY: number) => {
-    // Keep the bubble pinned to the right; allow vertical-only dragging
-    const fixedX = window.innerWidth - 72;
+  /* Live drag position update via requestAnimationFrame — bypasses React re-renders
+     for 60fps smooth movement on both mobile (touch) and desktop (mouse) */
+  const applyDragPosition = useCallback((newY: number) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (bubbleElRef.current) {
+        bubbleElRef.current.style.top = `${newY}px`;
+        bubbleElRef.current.style.bottom = "auto";
+        bubbleElRef.current.style.transition = "none";
+      }
+      if (chatElRef.current) {
+        chatElRef.current.style.top = `${Math.max(8, newY - 570)}px`;
+        chatElRef.current.style.bottom = "auto";
+        chatElRef.current.style.transition = "none";
+      }
+    });
+  }, []);
+
+  /* Commit final position to React state after drag ends */
+  const commitPosition = useCallback(() => {
+    const el = bubbleElRef.current;
+    if (el) {
+      const top = parseInt(el.style.top, 10);
+      if (!isNaN(top)) setBubblePos({ x: window.innerWidth - 72, y: top });
+      el.style.transition = "";
+    }
+    if (chatElRef.current) chatElRef.current.style.transition = "";
+  }, []);
+
+  const handleDragStart = useCallback((clientY: number) => {
     const currentY = bubblePos?.y ?? (window.innerHeight - 140);
-    dragRef.current = { startX: clientX, startY: clientY, origX: fixedX, origY: currentY };
+    dragRef.current = { startY: clientY, origY: currentY };
     isDragging.current = false;
 
-    // Only add listeners if not already active
     if (boundListenersRef.current) return;
+
+    const clampY = (y: number) => Math.max(8, Math.min(window.innerHeight - 64, y));
 
     const onMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return;
       const dy = e.clientY - dragRef.current.startY;
       if (Math.abs(dy) > 5) isDragging.current = true;
-      const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
-      setBubblePos({ x: dragRef.current.origX, y: newY });
+      applyDragPosition(clampY(dragRef.current.origY + dy));
     };
-    const onMouseUp = () => { dragRef.current = null; removeDragListeners(); };
+    const onMouseUp = () => {
+      commitPosition();
+      dragRef.current = null;
+      removeDragListeners();
+    };
     const onTouchMove = (e: TouchEvent) => {
       if (!dragRef.current) return;
       e.preventDefault();
       const dy = e.touches[0].clientY - dragRef.current.startY;
       if (Math.abs(dy) > 5) isDragging.current = true;
-      const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
-      setBubblePos({ x: dragRef.current.origX, y: newY });
+      /* Live update during touch — visible immediately, no waiting for touchEnd */
+      applyDragPosition(clampY(dragRef.current.origY + dy));
     };
-    const onTouchEnd = () => { dragRef.current = null; removeDragListeners(); };
+    const onTouchEnd = () => {
+      commitPosition();
+      dragRef.current = null;
+      removeDragListeners();
+    };
 
     boundListenersRef.current = { mouseMove: onMouseMove, mouseUp: onMouseUp, touchMove: onTouchMove, touchEnd: onTouchEnd };
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd);
-  }, [bubblePos, removeDragListeners]);
+  }, [bubblePos, removeDragListeners, applyDragPosition, commitPosition]);
 
-  // Improvement 1: Persist chat history
+  // Persist chat history
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-BUBBLE_MAX_MESSAGES))); } catch { /* localStorage may be unavailable */ }
   }, [messages]);
 
-  // Improvement 2: Alt+I keyboard shortcut
+  // Alt+I keyboard shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && (e.key === "i" || e.key === "I")) {
@@ -201,7 +241,7 @@ export default function ImmoAIBubble() {
       toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "❌ Fehler aufgetreten. Bitte erneut versuchen." },
+        { role: "assistant", content: "Fehler aufgetreten. Bitte erneut versuchen." },
       ]);
     } finally {
       setIsLoading(false);
@@ -224,13 +264,13 @@ export default function ImmoAIBubble() {
 
   return (
     <>
-      {/* BUG-8: Draggable Floating Bubble — supports mouse drag + touch drag */}
+      {/* Draggable Floating Bubble — pinned right, vertical-only, rAF-smooth drag */}
       {!open && (
         <button
-          onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
-          onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+          ref={bubbleElRef}
+          onMouseDown={(e) => handleDragStart(e.clientY)}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
           onClick={() => { if (!isDragging.current) setOpen(true); }}
-          /* IMPROVE-42: Drag-affordance cursor (grab/grabbing) and touch-none to prevent scroll interference */
           className="fixed z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
           style={bubblePos ? { right: "1rem", top: bubblePos.y } : { bottom: "5rem", right: "1rem" }}
           aria-label="Immo AI öffnen (Alt+I) — ziehen zum Verschieben"
@@ -244,9 +284,10 @@ export default function ImmoAIBubble() {
         </button>
       )}
 
-      {/* BUG-8: Chat window positioned near bubble position */}
+      {/* Chat window positioned near bubble position */}
       {open && (
         <div
+          ref={chatElRef}
           className="fixed z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
           style={bubblePos ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) } : { bottom: "5rem", right: "1rem" }}
         >
@@ -283,7 +324,7 @@ export default function ImmoAIBubble() {
                   <Bot className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Hallo! 👋</p>
+                  <p className="text-sm font-semibold">Hallo!</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Frag mich zu deinen Objekten, Mietern oder Finanzen.
                   </p>
