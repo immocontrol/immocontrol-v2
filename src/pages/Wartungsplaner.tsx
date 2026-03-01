@@ -39,7 +39,7 @@ const PRIORITIES = [
 
 /** Feature 7: Recurring maintenance intervals */
 const RECURRING_INTERVALS = [
-  { value: "", label: "Einmalig" },
+  { value: "none", label: "Einmalig" },
   { value: "monthly", label: "Monatlich" },
   { value: "quarterly", label: "Vierteljährlich" },
   { value: "semi-annual", label: "Halbjährlich" },
@@ -66,7 +66,7 @@ const MAINTENANCE_TEMPLATES = [
 
 /** Calculate next due date based on interval and last completion */
 const getNextDueDate = (item: MaintenanceItem): Date | null => {
-  if (!item.recurring_interval) return item.planned_date ? new Date(item.planned_date) : null;
+  if (!item.recurring_interval || item.recurring_interval === "none") return item.planned_date ? new Date(item.planned_date) : null;
   const base = item.last_completed_date ? new Date(item.last_completed_date) : item.planned_date ? new Date(item.planned_date) : new Date();
   const next = new Date(base);
   switch (item.recurring_interval) {
@@ -84,7 +84,7 @@ const getNextDueDate = (item: MaintenanceItem): Date | null => {
 
 /** Check if a maintenance item is overdue or due soon */
 const getDueStatus = (item: MaintenanceItem): "overdue" | "due-soon" | "ok" | "completed" => {
-  if (item.completed && !item.recurring_interval) return "completed";
+  if (item.completed && (!item.recurring_interval || item.recurring_interval === "none")) return "completed";
   const nextDue = getNextDueDate(item);
   if (!nextDue) return "ok";
   const now = new Date();
@@ -107,7 +107,7 @@ const Wartungsplaner = () => {
   const [form, setForm] = useState({
     title: "", category: "Sonstiges", priority: "medium" as MaintenanceItem["priority"],
     estimated_cost: 0, planned_date: "", notes: "", property_id: "",
-    recurring_interval: "",
+    recurring_interval: "none",
   });
 
   const { data: allItems = [], isLoading } = useQuery<MaintenanceItem[]>({
@@ -129,7 +129,7 @@ const Wartungsplaner = () => {
     let items = allItems;
     if (filterProperty !== "all") items = items.filter(i => i.property_id === filterProperty);
     if (filterCategory !== "all") items = items.filter(i => i.category === filterCategory);
-    if (!showCompleted) items = items.filter(i => !i.completed || i.recurring_interval);
+    if (!showCompleted) items = items.filter(i => !i.completed || (i.recurring_interval && i.recurring_interval !== "none"));
     return items;
   }, [allItems, filterProperty, filterCategory, showCompleted]);
 
@@ -139,7 +139,7 @@ const Wartungsplaner = () => {
   const completedItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "completed"), [filteredItems]);
 
   const totalEstimated = useMemo(() => filteredItems.filter(i => !i.completed).reduce((s, i) => s + (i.estimated_cost || 0), 0), [filteredItems]);
-  const totalRecurring = useMemo(() => filteredItems.filter(i => i.recurring_interval).length, [filteredItems]);
+  const totalRecurring = useMemo(() => filteredItems.filter(i => i.recurring_interval && i.recurring_interval !== "none").length, [filteredItems]);
 
   const addMutation = useMutation({
     mutationFn: async () => {
@@ -156,7 +156,7 @@ const Wartungsplaner = () => {
         completed: false,
       };
       // Try to include recurring_interval if the column exists
-      if (form.recurring_interval) {
+      if (form.recurring_interval && form.recurring_interval !== "none") {
         insertData.recurring_interval = form.recurring_interval;
       }
       const { error } = await supabase.from("maintenance_items").insert(insertData as Record<string, unknown>);
@@ -164,7 +164,7 @@ const Wartungsplaner = () => {
     },
     onSuccess: () => {
       toast.success("Wartung geplant");
-      setForm({ title: "", category: "Sonstiges", priority: "medium", estimated_cost: 0, planned_date: "", notes: "", property_id: "", recurring_interval: "" });
+      setForm({ title: "", category: "Sonstiges", priority: "medium", estimated_cost: 0, planned_date: "", notes: "", property_id: "", recurring_interval: "none" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
     },

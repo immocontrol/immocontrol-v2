@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -18,20 +18,53 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateTempId, isEqual } from "@/lib/formatters";
 
-const navItems = [
+/* Grouped navigation: primary items shown directly, grouped items in dropdowns */
+interface NavItem {
+  path: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  shortcut: string;
+}
+interface NavGroup {
+  label: string;
+  icon: typeof LayoutDashboard;
+  items: NavItem[];
+}
+type NavEntry = NavItem | NavGroup;
+const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
+
+const navEntries: NavEntry[] = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
-  { path: "/darlehen", label: "Finanzen", icon: Landmark, shortcut: "2" },
-  { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
-  { path: "/vertraege", label: "Verträge", icon: FileText, shortcut: "4" },
-  { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
-  { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
-  { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
-  { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
-  { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
-  { path: "/dokumente", label: "Dokumente", icon: FolderOpen, shortcut: "" },
-  { path: "/wartungsplaner", label: "Wartung", icon: Wrench, shortcut: "" },
+  {
+    label: "Finanzen", icon: Landmark,
+    items: [
+      { path: "/darlehen", label: "Darlehen", icon: Landmark, shortcut: "2" },
+      { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
+      { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
+    ],
+  },
+  {
+    label: "Verwaltung", icon: FileText,
+    items: [
+      { path: "/vertraege", label: "Verträge", icon: FileText, shortcut: "4" },
+      { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
+      { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
+      { path: "/dokumente", label: "Dokumente", icon: FolderOpen, shortcut: "" },
+      { path: "/wartungsplaner", label: "Wartung", icon: Wrench, shortcut: "" },
+    ],
+  },
+  {
+    label: "Akquise", icon: Target,
+    items: [
+      { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
+      { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
+    ],
+  },
   { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
+
+/* Flat list for keyboard shortcuts, mobile nav and dot indicator */
+const navItems: NavItem[] = navEntries.flatMap(e => isGroup(e) ? e.items : [e]);
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -214,28 +247,64 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {breadcrumb}
           </div>
           <div className="flex items-center gap-1">
-            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-1 relative" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
-              {navItems.map((item) => {
-                const isActive = isRouteActive(item.path, location.pathname);
+            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-0.5 relative" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
+              {navEntries.map((entry) => {
+                if (isGroup(entry)) {
+                  const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
+                  return (
+                    <div key={entry.label} className="relative group">
+                      <button
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all touch-target ${
+                          groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        <entry.icon className="h-4 w-4" />
+                        {entry.label}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                      </button>
+                      <div className="absolute top-full left-0 mt-1 min-w-[180px] bg-popover border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        {entry.items.map((item) => {
+                          const isActive = isRouteActive(item.path, location.pathname);
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              data-nav-link
+                              aria-current={isActive ? "page" : undefined}
+                              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                                isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
+                              }`}
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {item.label}
+                              {item.shortcut && <kbd className="ml-auto px-1 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">Alt+{item.shortcut}</kbd>}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+                const isActive = isRouteActive(entry.path, location.pathname);
                 return (
-                  <Tooltip key={item.path}>
+                  <Tooltip key={entry.path}>
                     <TooltipTrigger asChild>
                       <Link
-                        to={item.path}
+                        to={entry.path}
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         }`}
                       >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
+                        <entry.icon className="h-4 w-4" />
+                        {entry.label}
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs tooltip-arrow dropdown-enter">
-                      {item.label} <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Alt+{item.shortcut}</kbd>
+                      {entry.label} {entry.shortcut && <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Alt+{entry.shortcut}</kbd>}
                     </TooltipContent>
                   </Tooltip>
                 );

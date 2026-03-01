@@ -125,7 +125,7 @@ export const AnlageVExport = () => {
       .reduce((s: number, t: { amount: number }) => s + Math.abs(t.amount), 0) + extras.renovierung;
 
     // Fahrtkosten
-    const fahrtkosten = extras.fahrten * extras.kmPauschale * 2; // Hin- und Rückfahrt
+    const fahrtkosten = extras.fahrten * extras.fahrtkosten * extras.kmPauschale * 2; // Hin- und Rückfahrt
 
     // Hausverwaltung
     const hausverwaltung = extras.hausverwaltung;

@@ -78,10 +78,10 @@ const parseMT940 = (text: string, userId: string, accountId: string | null): Rec
       const year = parseInt(yy) > 50 ? `19${yy}` : `20${yy}`;
       const bookingDate = `${year}-${mm}-${dd}`;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) continue;
-      const amountMatch = line1.match(/[CD](\d+[,.]\d*)/);
+      const amountMatch = line1.match(/([CD])(\d+[,.]\d*)/);
       if (!amountMatch) continue;
-      const isCredit = line1.includes("C");
-      const amount = parseFloat(amountMatch[1].replace(",", ".")) * (isCredit ? 1 : -1);
+      const isCredit = amountMatch[1] === "C";
+      const amount = parseFloat(amountMatch[2].replace(",", ".")) * (isCredit ? 1 : -1);
       // :86: contains reference text
       const refLine = lines.find(l => l.startsWith(":86:"));
       const reference = refLine ? refLine.slice(4).trim() : null;
