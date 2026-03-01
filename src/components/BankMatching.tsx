@@ -185,11 +185,33 @@ function detectDelimiter(line: string): string {
   return ",";
 }
 
-function parseBankCsv(text: string): { headers: string[]; rows: string[][] } {
+/**
+ * Detect the actual header row in a CSV file.
+ * Many bank CSVs have metadata rows before the actual header.
+ * Heuristic: the header row is the first row with 3+ columns and
+ * contains at least one keyword that looks like a financial column header.
+ */
+function findHeaderRowIndex(lines: string[], delimiter: string): number {
+  const headerKeywords = [
+    "datum", "date", "betrag", "amount", "soll", "haben", "credit", "debit",
+    "buchung", "valuta", "empfänger", "auftraggeber", "verwendungszweck",
+    "reference", "iban", "bic", "konto", "umsatz", "buchungstext",
+  ];
+  for (let i = 0; i < Math.min(lines.length, 15); i++) {
+    const cols = lines[i].split(delimiter).length;
+    if (cols < 3) continue;
+    const lower = lines[i].toLowerCase();
+    if (headerKeywords.some(kw => lower.includes(kw))) return i;
+  }
+  return 0; // fallback to first line
+}
+
+function parseBankCsv(text: string, headerRowOverride?: number): { headers: string[]; rows: string[][]; headerRow: number } {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(l => l.trim());
   if (lines.length < 2) throw new Error("CSV ist leer");
 
   const delimiter = detectDelimiter(lines[0]);
+  const headerIdx = headerRowOverride ?? findHeaderRowIndex(lines, delimiter);
 
   const parseRow = (line: string): string[] => {
     const result: string[] = [];
@@ -211,9 +233,9 @@ function parseBankCsv(text: string): { headers: string[]; rows: string[][] } {
     return result.map(v => v.replace(/^"|"$/g, ""));
   };
 
-  const headers = parseRow(lines[0]);
-  const rows = lines.slice(1).map(parseRow).filter(r => r.some(v => v.trim()));
-  return { headers, rows };
+  const headers = parseRow(lines[headerIdx]);
+  const rows = lines.slice(headerIdx + 1).map(parseRow).filter(r => r.some(v => v.trim()));
+  return { headers, rows, headerRow: headerIdx };
 }
 
 function toIsoDate(raw: string): string | null {

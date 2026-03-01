@@ -2377,3 +2377,102 @@ input:focus, textarea:focus, select:focus {
     scroll-behavior: auto;
   }
 }
+
+/* UI-UPDATE-1: Tooltip with 1s delay — applied via TooltipProvider delayDuration */
+/* UI-UPDATE-2: Better mobile input centering and alignment */
+@media (max-width: 639px) {
+  input, textarea, select, .select-trigger {
+    font-size: 16px !important; /* Prevent iOS zoom on focus */
+  }
+  .mobile-input-centered {
+    text-align: left;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* UI-UPDATE-3: Smoother card hover transitions */
+.card-hover-smooth {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.2s ease;
+}
+.card-hover-smooth:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* UI-UPDATE-4: Better focus indicators for accessibility */
+.focus-ring-visible:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* UI-UPDATE-5: Mobile-friendly action button row */
+@media (max-width: 639px) {
+  .mobile-action-row {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 1 !important; /* Always show on mobile */
+  }
+  .mobile-action-row button {
+    min-width: 2rem;
+    min-height: 2rem;
+  }
+}
+
+/* UI-UPDATE-6: Improved skeleton loading */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--secondary)) 25%,
+    hsl(var(--secondary) / 0.5) 50%,
+    hsl(var(--secondary)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* UI-UPDATE-7: Better dialog overlay on mobile */
+@media (max-width: 639px) {
+  [role="dialog"] {
+    max-height: 90vh !important;
+    max-width: 95vw !important;
+    margin: 0 auto;
+  }
+}
+
+/* UI-UPDATE-8: Badge animations */
+.badge-pulse {
+  animation: badge-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* UI-UPDATE-9: Better table row hover for list items */
+.list-item-hover {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.list-item-hover:hover {
+  background-color: hsl(var(--secondary) / 0.5);
+}
+
+/* UI-UPDATE-10: Truncate text utility for mobile */
+.mobile-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .mobile-truncate {
+    white-space: normal;
+    overflow: visible;
+  }
+}

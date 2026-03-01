@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import PortfolioForecast from "@/components/PortfolioForecast";
 import RenditeRanking from "@/components/RenditeRanking";
@@ -44,6 +45,7 @@ import { QuickCalculator } from "@/components/QuickCalculator";
 import { PropertyComparison } from "@/components/PropertyComparison";
 import { HandoverProtocol } from "@/components/HandoverProtocol";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
+import { HockeyStickSimulator } from "@/components/HockeyStickSimulator";
 import PropertyCard from "@/components/PropertyCard";
 import { lazy, Suspense } from "react";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
@@ -504,6 +506,7 @@ ${properties.map(p => `<tr>
           <RentIncreaseLetter />
           <SelbstauskunftGenerator />
           <FinanceExportDialog />
+          <HockeyStickSimulator />
         </div>
       </div>
 
@@ -806,13 +809,18 @@ ${properties.map(p => `<tr>
               </button>
             ))}
           </div>
-          <button
-            onClick={handleRefresh}
-            className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-            title="Daten aktualisieren"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
+          {/* UI-UPDATE-37: Tooltip on refresh action */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleRefresh}
+                className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Daten aktualisieren</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

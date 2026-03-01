@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -89,6 +90,7 @@ const Dokumente = () => {
   const [filterProperty, setFilterProperty] = useState("all");
   const [dragActive, setDragActive] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocEntry | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
 
   const { data: documents = [], isLoading } = useQuery<DocEntry[]>({
@@ -394,38 +396,102 @@ const Dokumente = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                {doc.ocr_text && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewDoc(doc)} title="Text anzeigen">
-                    <Eye className="h-4 w-4" />
-                  </Button>
+              {/* UI-UPDATE-18: Keep doc action icons visible on mobile (no hover) */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mobile-action-row">
+                {(doc.file_type?.includes("pdf") || doc.file_name.endsWith(".pdf")) && (
+                  // UI-UPDATE-19: Tooltip on PDF preview action
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={async () => {
+                          const { data } = await supabase.storage.from("property-documents").download(doc.file_path);
+                          if (data) {
+                            const url = URL.createObjectURL(data);
+                            setPdfPreviewUrl(url);
+                            setPreviewDoc(doc);
+                          }
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>PDF Vorschau</TooltipContent>
+                  </Tooltip>
                 )}
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)} title="Herunterladen">
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-loss" onClick={() => deleteMutation.mutate(doc)} title="Löschen">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {doc.ocr_text && !doc.file_type?.includes("pdf") && (
+                  // UI-UPDATE-20: Tooltip on extracted text preview action
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          setPdfPreviewUrl(null);
+                          setPreviewDoc(doc);
+                        }}
+                      >
+                        <ScanText className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Text anzeigen</TooltipContent>
+                  </Tooltip>
+                )}
+                {/* UI-UPDATE-21: Tooltip on download action */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Herunterladen</TooltipContent>
+                </Tooltip>
+                {/* UI-UPDATE-22: Tooltip on delete action */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-loss"
+                      onClick={() => deleteMutation.mutate(doc)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Löschen</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* OCR Text Preview Dialog */}
-      <Dialog open={!!previewDoc} onOpenChange={() => setPreviewDoc(null)}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      {/* PDF Preview + OCR Text Preview Dialog */}
+      <Dialog open={!!previewDoc} onOpenChange={() => { setPreviewDoc(null); if (pdfPreviewUrl) { URL.revokeObjectURL(pdfPreviewUrl); setPdfPreviewUrl(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <ScanText className="h-5 w-5" /> Extrahierter Text
+              {pdfPreviewUrl ? <FileText className="h-5 w-5" /> : <ScanText className="h-5 w-5" />}
+              {pdfPreviewUrl ? "PDF Vorschau" : "Extrahierter Text"}
             </DialogTitle>
           </DialogHeader>
           {previewDoc && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">{previewDoc.file_name}</p>
-              <div className="bg-secondary/50 rounded-lg p-4 text-sm whitespace-pre-wrap max-h-[50vh] overflow-y-auto font-mono text-xs leading-relaxed">
-                {previewDoc.ocr_text || "Kein Text extrahiert"}
-              </div>
+              {pdfPreviewUrl ? (
+                <iframe
+                  src={pdfPreviewUrl}
+                  className="w-full h-[70vh] rounded-lg border border-border"
+                  title={`PDF Vorschau: ${previewDoc.file_name}`}
+                />
+              ) : (
+                <div className="bg-secondary/50 rounded-lg p-4 text-sm whitespace-pre-wrap max-h-[50vh] overflow-y-auto font-mono text-xs leading-relaxed">
+                  {previewDoc.ocr_text || "Kein Text extrahiert"}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

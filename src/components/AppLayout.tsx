@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateTempId, isEqual } from "@/lib/formatters";
+import { useGlobalAutoSave } from "@/hooks/useAutoSave";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -159,6 +160,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const sessionIdRef = useRef<string>(generateTempId());
   const [dotStyle, setDotStyle] = useState<React.CSSProperties>({});
   const [mobileDotStyle, setMobileDotStyle] = useState<React.CSSProperties>({});
+
+  /* Auto-save global state every 10 seconds to protect against crashes */
+  useGlobalAutoSave();
 
   /* BUG-5: Track dropdown open state for click-based dropdowns (fixes hidden dropdowns) */
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -413,7 +417,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                             >
                               <item.icon className="h-4 w-4" />
                               {item.label}
-                              {item.shortcut && <kbd className="ml-auto px-1 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">Alt+{item.shortcut}</kbd>}
                             </Link>
                           );
                         })}

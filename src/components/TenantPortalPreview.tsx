@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Tenant {
@@ -28,11 +29,17 @@ const TenantPortalPreview = ({ tenant }: { tenant: Tenant }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Portal-Vorschau">
-          <Eye className="h-3.5 w-3.5" />
-        </Button>
-      </DialogTrigger>
+      {/* UI-UPDATE-32: Tooltip on tenant portal preview action */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-primary">
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Portal-Vorschau</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

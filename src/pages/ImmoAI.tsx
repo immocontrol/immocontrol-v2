@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, Trash2, Sparkles, User, Copy, Check } from "lucide-react";
@@ -254,13 +255,18 @@ const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
                         <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h3]:mt-3 [&_h3]:mb-1 [&_table]:text-xs">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); copyMessage(msg.content, i); }}
-                          className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-md p-1 shadow-sm hover:bg-secondary"
-                          title="Kopieren"
-                        >
-                          {copiedIdx === i ? <Check className="h-3 w-3 text-profit" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
-                        </button>
+                        {/* UI-UPDATE-47: Tooltip on copy AI message action */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); copyMessage(msg.content, i); }}
+                              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-md p-1 shadow-sm hover:bg-secondary"
+                            >
+                              {copiedIdx === i ? <Check className="h-3 w-3 text-profit" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Kopieren</TooltipContent>
+                        </Tooltip>
                       </div>
                     ) : (
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -302,9 +308,15 @@ const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
                 rows={1}
                 disabled={isLoading}
               />
-              <Button onClick={() => send(input)} disabled={!input.trim() || isLoading} size="icon" className="shrink-0 h-[44px] w-[44px]">
-                <Send className="h-4 w-4" />
-              </Button>
+              {/* UI-UPDATE-48: Tooltip on send AI message action */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={() => send(input)} disabled={!input.trim() || isLoading} size="icon" className="shrink-0 h-[44px] w-[44px]">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Senden</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </CardContent>

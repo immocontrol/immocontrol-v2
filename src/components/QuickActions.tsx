@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface QuickActionsProps {
   onScrollTo: (section: string) => void;
@@ -42,14 +43,19 @@ const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
   return (
     <div ref={ref} className="relative">
       {/* Improvement 20: Better styled quick action button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-primary/20 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
-        title="Schnellaktion (Q)"
-      >
-        <Plus className="h-3.5 w-3.5" /> Schnellaktion
-        <kbd className="hidden sm:inline text-[10px] ml-1 px-1 py-0.5 rounded bg-primary/10 text-primary/70">Q</kbd>
-      </button>
+      {/* UI-UPDATE-49: Tooltip on quick action trigger */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={() => setOpen(!open)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-primary/20 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" /> Schnellaktion
+            <kbd className="hidden sm:inline text-[10px] ml-1 px-1 py-0.5 rounded bg-primary/10 text-primary/70">Q</kbd>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Schnellaktion (Q)</TooltipContent>
+      </Tooltip>
       {open && (
         <div className="absolute right-0 top-full mt-1 w-52 p-1 bg-popover border border-border rounded-lg shadow-lg z-[9999] animate-fade-in">
           {actions.map(action => {

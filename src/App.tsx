@@ -277,7 +277,8 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PropertyProvider>
-            <TooltipProvider delayDuration={1500}>
+            {/* UI-UPDATE-1: 1s tooltip delay on all action icons */}
+            <TooltipProvider delayDuration={1000}>
               <Toaster />
               <Sonner />
               <BrowserRouter>

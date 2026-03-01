@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
@@ -163,13 +164,19 @@ const AddPropertyDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5" data-add-property title="Ctrl+N">
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Objekt hinzufügen</span>
-          <span className="sm:hidden">Hinzufügen</span>
-        </Button>
-      </DialogTrigger>
+      {/* UI-UPDATE-50: Tooltip on add property trigger — avoid double-asChild nesting */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5" data-add-property>
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Objekt hinzufügen</span>
+              <span className="sm:hidden">Hinzufügen</span>
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Neues Objekt anlegen (Ctrl+N)</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Neues Objekt anlegen</DialogTitle>

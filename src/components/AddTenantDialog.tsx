@@ -55,11 +55,12 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
 
   const [form, setForm] = useState({
     first_name: "", last_name: "", email: "", phone: "",
-    unit_label: "", move_in_date: "", monthly_rent: 0, deposit: 0,
+    unit_label: "", move_in_date: "",
+    kaltmiete: 0, nebenkosten: 0, monthly_rent: 0, deposit: 0,
   });
 
   const resetForm = useCallback(() => {
-    setForm({ first_name: "", last_name: "", email: "", phone: "", unit_label: "", move_in_date: "", monthly_rent: 0, deposit: 0 });
+    setForm({ first_name: "", last_name: "", email: "", phone: "", unit_label: "", move_in_date: "", kaltmiete: 0, nebenkosten: 0, monthly_rent: 0, deposit: 0 });
     setStep(0);
   }, []);
 
@@ -159,19 +160,34 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Miete/Monat *</Label>
-                  <NumberInput value={form.monthly_rent} onChange={v => setForm(f => ({ ...f, monthly_rent: v }))} className="h-9 text-sm" placeholder="0" />
+                  <Label className="text-xs">Kaltmiete *</Label>
+                  <NumberInput value={form.kaltmiete} onChange={v => setForm(f => ({ ...f, kaltmiete: v, monthly_rent: v + f.nebenkosten }))} className="h-9 text-sm" placeholder="0" />
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Nebenkosten</Label>
+                  <NumberInput value={form.nebenkosten} onChange={v => setForm(f => ({ ...f, nebenkosten: v, monthly_rent: f.kaltmiete + v }))} className="h-9 text-sm" placeholder="0" />
+                </div>
+              </div>
+              <div className="bg-secondary/50 rounded-lg p-2.5 text-center">
+                <span className="text-[10px] text-muted-foreground uppercase">Warmmiete (automatisch)</span>
+                <p className="text-sm font-bold text-profit">{(form.kaltmiete + form.nebenkosten).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Kaution</Label>
                   <NumberInput value={form.deposit} onChange={v => setForm(f => ({ ...f, deposit: v }))} className="h-9 text-sm" placeholder="0" />
+                  {form.kaltmiete > 0 && form.deposit === 0 && (
+                    <button type="button" onClick={() => setForm(f => ({ ...f, deposit: f.kaltmiete * 3 }))} className="text-[10px] text-primary hover:underline">
+                      3x Kaltmiete ({(form.kaltmiete * 3).toLocaleString("de-DE", { style: "currency", currency: "EUR" })})
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Einzugsdatum</Label>
+                  <Input type="date" value={form.move_in_date} onChange={e => setForm(f => ({ ...f, move_in_date: e.target.value }))} className="h-9 text-sm" />
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Einzugsdatum</Label>
-                <Input type="date" value={form.move_in_date} onChange={e => setForm(f => ({ ...f, move_in_date: e.target.value }))} className="h-9 text-sm" />
-              </div>
-              <p className="text-xs text-muted-foreground">Kaution üblicherweise 2–3 Monatsmieten</p>
+              <p className="text-xs text-muted-foreground">Kaution: max. 3 Kaltmieten (BGB §551). Klicke den Vorschlag an.</p>
             </div>
           )}
 
