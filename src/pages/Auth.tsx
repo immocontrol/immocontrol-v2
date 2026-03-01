@@ -52,7 +52,11 @@ const Auth = () => {
             }
             return;
           }
-        } catch { /* If MFA check fails, proceed with redirect */ }
+        } catch (err: unknown) {
+          toast.error("2FA Statusprüfung fehlgeschlagen. Bitte erneut anmelden.");
+          await supabase.auth.signOut();
+          return;
+        }
         const invitationToken = sessionStorage.getItem("invitation_token");
         if (invitationToken) {
           sessionStorage.removeItem("invitation_token");
@@ -88,6 +92,7 @@ const Auth = () => {
         code: totpCode,
       });
       if (verifyErr) throw verifyErr;
+      bypassMfaCheck.current = true;
       setNeeds2FA(false);
       toast.success("Willkommen zurück!");
       navigate("/");
@@ -112,7 +117,14 @@ const Auth = () => {
   const verifyBackupCode = () => {
     setLoading(true);
     try {
-      const storedCodes = JSON.parse(localStorage.getItem("immocontrol_2fa_backup_codes") || "[]") as string[];
+      const userId = user?.id;
+      if (!userId) {
+        toast.error("Nicht eingeloggt");
+        return;
+      }
+      const backupCodesKey = `immocontrol_2fa_backup_codes_${userId}`;
+      const enabledKey = `immocontrol_2fa_enabled_${userId}`;
+      const storedCodes = JSON.parse(localStorage.getItem(backupCodesKey) || "[]") as string[];
       const normalizedInput = backupCode.trim().toUpperCase();
       const codeIndex = storedCodes.findIndex(c => c === normalizedInput);
       if (codeIndex === -1) {
@@ -122,14 +134,14 @@ const Auth = () => {
       }
       /* Validation succeeded — NOW consume the code */
       storedCodes.splice(codeIndex, 1);
-      localStorage.setItem("immocontrol_2fa_backup_codes", JSON.stringify(storedCodes));
+      localStorage.setItem(backupCodesKey, JSON.stringify(storedCodes));
       /* Bypass the MFA re-check in useEffect — session stays at AAL1 but
        * the factor is still enrolled, so useEffect would re-detect it */
       bypassMfaCheck.current = true;
       setNeeds2FA(false);
       toast.success(`Willkommen zurück! (${storedCodes.length} Backup-Codes verbleibend)`);
       toast.info("Bitte richte 2FA erneut ein, da ein Backup-Code verwendet wurde.", { duration: 8000 });
-      localStorage.removeItem("immocontrol_2fa_enabled");
+      localStorage.removeItem(enabledKey);
       navigate("/");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler bei der Backup-Code-Verifizierung");

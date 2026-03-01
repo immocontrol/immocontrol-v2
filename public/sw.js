@@ -44,14 +44,24 @@ self.addEventListener("fetch", (event) => {
      * served indefinitely while still being fast. */
     event.respondWith(
       caches.match(request).then((cached) => {
-        const fetchPromise = fetch(request).then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        });
-        return cached || fetchPromise;
+        const updatePromise = fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => undefined);
+
+        if (cached) {
+          /* Background update; errors are swallowed above to avoid unhandled rejections */
+          void updatePromise;
+          return cached;
+        }
+
+        /* No cache available — return network result or an error response */
+        return updatePromise.then((response) => response || Response.error());
       })
     );
   }

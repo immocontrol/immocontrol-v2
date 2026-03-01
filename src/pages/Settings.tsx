@@ -265,9 +265,11 @@ const Settings = () => {
       setBackupCodesAcknowledged(false);
       setBackupConfirmText("");
       /* Store hashed backup codes in localStorage (in production, store server-side) */
-      localStorage.setItem("immocontrol_2fa_backup_codes", JSON.stringify(codes));
-      /* Mark 2FA as enabled in localStorage so Auth page can enforce it */
-      localStorage.setItem("immocontrol_2fa_enabled", "true");
+      if (user) {
+        localStorage.setItem(`immocontrol_2fa_backup_codes_${user.id}`, JSON.stringify(codes));
+        /* Mark 2FA as enabled in localStorage so Auth page can enforce it */
+        localStorage.setItem(`immocontrol_2fa_enabled_${user.id}`, "true");
+      }
       toast.success("2FA erfolgreich aktiviert!");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Ungültiger Code");
@@ -284,8 +286,10 @@ const Settings = () => {
       if (error) throw error;
       setTotpEnabled(false);
       setTotpFactorId(null);
-      localStorage.removeItem("immocontrol_2fa_backup_codes");
-      localStorage.removeItem("immocontrol_2fa_enabled");
+      if (user) {
+        localStorage.removeItem(`immocontrol_2fa_backup_codes_${user.id}`);
+        localStorage.removeItem(`immocontrol_2fa_enabled_${user.id}`);
+      }
       toast.success("2FA deaktiviert");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler beim Deaktivieren");
