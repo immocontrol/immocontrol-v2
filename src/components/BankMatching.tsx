@@ -172,9 +172,24 @@ function guessBankMapping(headers: string[]): Record<string, string> {
   return mapping;
 }
 
+/* Auto-detect CSV delimiter from header line (German CSVs use ; with , as decimal) */
+function detectDelimiter(line: string): string {
+  const counts: Record<string, number> = { ";": 0, ",": 0, "\t": 0 };
+  let inQ = false;
+  for (const ch of line) {
+    if (ch === '"') inQ = !inQ;
+    else if (!inQ && ch in counts) counts[ch]++;
+  }
+  if (counts[";"] >= counts[","] && counts[";"] >= counts["\t"]) return ";";
+  if (counts["\t"] >= counts[","]) return "\t";
+  return ",";
+}
+
 function parseBankCsv(text: string): { headers: string[]; rows: string[][] } {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(l => l.trim());
   if (lines.length < 2) throw new Error("CSV ist leer");
+
+  const delimiter = detectDelimiter(lines[0]);
 
   const parseRow = (line: string): string[] => {
     const result: string[] = [];
@@ -185,7 +200,7 @@ function parseBankCsv(text: string): { headers: string[]; rows: string[][] } {
       if (ch === '"') {
         if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
         else inQuotes = !inQuotes;
-      } else if ((ch === "," || ch === ";" || ch === "\t") && !inQuotes) {
+      } else if (ch === delimiter && !inQuotes) {
         result.push(current.trim());
         current = "";
       } else {

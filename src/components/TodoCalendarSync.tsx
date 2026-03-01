@@ -170,7 +170,7 @@ function buildOutlookUrl(todo: Todo): string {
       const [h, m] = todo.due_time.split(":").map(Number);
       const endDate = new Date(todo.due_date);
       endDate.setHours(h, m + 30);
-      params.set("enddt", `${todo.due_date}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`);
+      params.set("enddt", `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`);
     } else {
       params.set("startdt", todo.due_date);
       params.set("allday", "true");

@@ -108,6 +108,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
 
@@ -422,14 +423,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* IMP-43: Ensure mobile nav items never overflow the viewport */}
       {/* BUG-9: Auto-fade bottom menu on scroll down, reappear on scroll up */}
       <nav
-        className={`fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe overflow-x-hidden transition-all duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 z-[200] border-t border-border bg-background/95 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe transition-all duration-300 ${
           mobileNavVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         }`}
         role="navigation"
         aria-label="Mobile Navigation"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative min-w-0">
-          {navItems.map((item) => {
+        <div ref={mobileNavRef} className="flex items-center justify-around py-1.5 relative">
+          {navItems.slice(0, 5).map((item) => {
             const isActive = isRouteActive(item.path, location.pathname);
             return (
               <Link
@@ -437,21 +439,56 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 to={item.path}
                 data-nav-link
                 aria-current={isActive ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors relative nav-label-mobile touch-target ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors relative ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
+                style={{ minHeight: "auto", minWidth: "auto" }}
               >
-                <item.icon className="h-5 w-5" />
-                {item.label}
+                <item.icon className="h-4 w-4" />
+                <span className="truncate max-w-[48px]">{item.label}</span>
               </Link>
             );
           })}
+          {/* More menu for remaining items */}
+          <button
+            onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
+            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+              mobileMoreOpen || navItems.slice(5).some(i => isRouteActive(i.path, location.pathname))
+                ? "text-primary" : "text-muted-foreground"
+            }`}
+            style={{ minHeight: "auto", minWidth: "auto" }}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+            <span>Mehr</span>
+          </button>
           {/* Mobile sliding dot */}
           <span
             className="absolute -top-1 w-1 h-1 rounded-full bg-primary pointer-events-none"
             style={mobileDotStyle}
           />
         </div>
+        {/* Expanded more menu */}
+        {mobileMoreOpen && (
+          <div className="border-t border-border bg-background/95 backdrop-blur-xl px-4 py-2 grid grid-cols-3 gap-1.5 animate-fade-in">
+            {navItems.slice(5).map((item) => {
+              const isActive = isRouteActive(item.path, location.pathname);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileMoreOpen(false)}
+                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-[10px] font-medium transition-colors ${
+                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-secondary/50"
+                  }`}
+                  style={{ minHeight: "auto", minWidth: "auto" }}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
     </div>
   );
