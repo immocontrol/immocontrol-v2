@@ -104,7 +104,10 @@ function simulate(params: SimParams): DataPoint[] {
   const mReno = renovationBudgetPct / 100 / 12;
 
   let pv = initialPropertyValue, debt = initialDebt, invested = startCapital;
-  let cumRent = 0, cumCF = 0, cumMaint = 0, nProps = 1, rentMul = 1, yrNet = 0;
+  /* baseRent tracks rent growth independently of property appreciation to avoid
+   * double-compounding. rentGrowthRate applies to the base rent only. */
+  let cumRent = 0, cumCF = 0, cumMaint = 0, nProps = 1, yrNet = 0;
+  let baseMonthlyRent = initialPropertyValue * mRentYield;
 
   for (let y = 0; y <= years; y++) {
     const eq = pv - debt;
@@ -134,8 +137,9 @@ function simulate(params: SimParams): DataPoint[] {
     yrNet = 0;
     for (let m = 0; m < 12; m++) {
       pv *= (1 + mApp);
-      rentMul *= (1 + mRentGrowth);
-      const gross = pv * mRentYield * rentMul;
+      /* Rent grows independently of property appreciation */
+      baseMonthlyRent *= (1 + mRentGrowth);
+      const gross = baseMonthlyRent * nProps;
       const eff = gross * (1 - vac);
       const maint = pv * mMaint;
       const mgmtCost = eff * mgmtRate;

@@ -86,8 +86,12 @@ const Auth = () => {
     }
   };
 
-  /* Backup code verification */
-  const verifyBackupCode = async () => {
+  /* Backup code verification — client-side only.
+   * We do NOT call mfa.unenroll here because that requires AAL2 (the user
+   * is still at AAL1). Instead we validate the backup code against
+   * localStorage and let the user through. The code is only consumed
+   * AFTER validation succeeds so it isn't lost on failure. */
+  const verifyBackupCode = () => {
     setLoading(true);
     try {
       const storedCodes = JSON.parse(localStorage.getItem("immocontrol_2fa_backup_codes") || "[]") as string[];
@@ -98,14 +102,9 @@ const Auth = () => {
         setLoading(false);
         return;
       }
-      /* Remove used code */
+      /* Validation succeeded — NOW consume the code */
       storedCodes.splice(codeIndex, 1);
       localStorage.setItem("immocontrol_2fa_backup_codes", JSON.stringify(storedCodes));
-      /* Complete MFA via TOTP challenge (we need to bypass — sign out and back in without MFA) */
-      /* Since Supabase MFA requires TOTP, backup codes work by disabling MFA temporarily */
-      if (mfaFactorId) {
-        await supabase.auth.mfa.unenroll({ factorId: mfaFactorId });
-      }
       setNeeds2FA(false);
       toast.success(`Willkommen zurück! (${storedCodes.length} Backup-Codes verbleibend)`);
       toast.info("Bitte richte 2FA erneut ein, da ein Backup-Code verwendet wurde.", { duration: 8000 });
