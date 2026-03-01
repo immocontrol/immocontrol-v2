@@ -124,6 +124,8 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     setAddingNewBank(false);
     setNewBankName("");
     setStep(0);
+    setValidationErrors([]);
+    setHighlightFields([]);
   }, []);
 
   const handleOpenChange = useCallback((v: boolean) => {
