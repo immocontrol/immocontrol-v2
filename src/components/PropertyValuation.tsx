@@ -229,7 +229,7 @@ const PropertyValuation = ({
                 <Label className="text-[10px]">Bodenrichtwert €/m²</Label>
                 <NumberInput
                   value={bodenrichtwertResult || form.bodenrichtwertManual}
-                  onChange={v => setForm(f => ({ ...f, bodenrichtwertManual: v }))}
+                  onChange={v => { setBodenrichtwertResult(null); setForm(f => ({ ...f, bodenrichtwertManual: v })); }}
                   className="h-8 text-xs"
                 />
               </div>
