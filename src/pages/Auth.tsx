@@ -31,16 +31,27 @@ const Auth = () => {
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      const invitationToken = sessionStorage.getItem("invitation_token");
-      if (invitationToken) {
-        sessionStorage.removeItem("invitation_token");
-        navigate(`/einladung?token=${invitationToken}`, { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+    if (user && !needs2FA) {
+      /* Only redirect after 2FA is completed (or not required) */
+      const check2FA = async () => {
+        try {
+          const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
+            /* 2FA is required but not yet verified — don't redirect */
+            return;
+          }
+        } catch { /* If MFA check fails, proceed with redirect */ }
+        const invitationToken = sessionStorage.getItem("invitation_token");
+        if (invitationToken) {
+          sessionStorage.removeItem("invitation_token");
+          navigate(`/einladung?token=${invitationToken}`, { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      };
+      check2FA();
     }
-  }, [user, navigate]);
+  }, [user, navigate, needs2FA]);
 
   const translateError = (msg: string): string => {
     if (msg.includes("Invalid login")) return "E-Mail oder Passwort ist falsch";

@@ -664,16 +664,29 @@ export function HockeyStickSimulator() {
               </ResponsiveContainer>
             )}
 
-            {chartView === "comparison" && compareData && (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10 }} tickFormatter={v => formatCurrencyCompact(v)} tickLine={false} axisLine={false} width={55} />
-                  <RechartsTooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v: number) => [formatCurrency(v)]} />
-                  <Area type="monotone" dataKey="netWorth" stroke="hsl(var(--profit))" fill="none" strokeWidth={2} name="Aktuell" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+            {chartView === "comparison" && compareData && (() => {
+              const mergedData = data.map((d, i) => ({
+                ...d,
+                compareNetWorth: compareData[i]?.netWorth ?? null,
+              }));
+              return (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={mergedData}>
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 10 }} tickFormatter={v => formatCurrencyCompact(v)} tickLine={false} axisLine={false} width={55} />
+                    <RechartsTooltip
+                      contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))" }}
+                      formatter={(v: number, name: string) => {
+                        const labels: Record<string, string> = { netWorth: "Aktuell", compareNetWorth: "Vergleich" };
+                        return [formatCurrency(v), labels[name] || name];
+                      }}
+                    />
+                    <Area type="monotone" dataKey="compareNetWorth" stroke="hsl(var(--muted-foreground))" fill="none" strokeWidth={1.5} strokeDasharray="4 4" name="compareNetWorth" />
+                    <Area type="monotone" dataKey="netWorth" stroke="hsl(var(--profit))" fill="none" strokeWidth={2} name="netWorth" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              );
+            })()}
 
             {chartView === "comparison" && !compareData && (
               <div className="h-full flex items-center justify-center text-xs text-muted-foreground">

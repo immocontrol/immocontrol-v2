@@ -13,6 +13,7 @@ import React, { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ErrorInterceptor } from "@/components/ErrorScanner";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -281,6 +282,7 @@ const App = () => {
             <TooltipProvider delayDuration={1000}>
               <Toaster />
               <Sonner />
+              <ErrorInterceptor />
               <BrowserRouter>
                 <ScrollToTop />
                 <CommandPalette />

@@ -66,46 +66,39 @@ const severityBadge: Record<ErrorSeverity, string> = {
   info: "bg-secondary text-muted-foreground border-border",
 };
 
-export function ErrorScanner() {
-  const [errors, setErrors] = useState<AppError[]>(loadErrors);
-  const [filter, setFilter] = useState("");
-  const [severityFilter, setSeverityFilter] = useState<ErrorSeverity | "all">("all");
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const interceptedRef = useRef(false);
+/* Global error interception — runs once at app root, never cleaned up */
+function addErrorToStore(severity: ErrorSeverity, message: string, source: string, stack?: string): void {
+  const id = errorId(message, source);
+  const now = new Date().toISOString();
+  const errors = loadErrors();
+  const existIdx = errors.findIndex(e => e.id === id);
+  if (existIdx >= 0) {
+    errors[existIdx] = { ...errors[existIdx], count: errors[existIdx].count + 1, lastSeen: now };
+  } else {
+    errors.unshift({
+      id, timestamp: now, severity,
+      message: message.slice(0, 500), source,
+      stack: stack?.slice(0, 1000),
+      count: 1, lastSeen: now,
+    });
+  }
+  saveErrors(errors.slice(0, MAX_ERRORS));
+}
 
+let _intercepted = false;
+
+/** Mount this component once at the App root to capture errors app-wide */
+export function ErrorInterceptor() {
   useEffect(() => {
-    if (interceptedRef.current) return;
-    interceptedRef.current = true;
-
-    const addError = (severity: ErrorSeverity, message: string, source: string, stack?: string) => {
-      setErrors(prev => {
-        const id = errorId(message, source);
-        const now = new Date().toISOString();
-        const existing = prev.find(e => e.id === id);
-        let updated: AppError[];
-        if (existing) {
-          updated = prev.map(e => e.id === id ? { ...e, count: e.count + 1, lastSeen: now } : e);
-        } else {
-          const newError: AppError = {
-            id, timestamp: now, severity,
-            message: message.slice(0, 500), source,
-            stack: stack?.slice(0, 1000),
-            count: 1, lastSeen: now,
-          };
-          updated = [newError, ...prev].slice(0, MAX_ERRORS);
-        }
-        saveErrors(updated);
-        return updated;
-      });
-    };
+    if (_intercepted) return;
+    _intercepted = true;
 
     const origError = console.error;
     console.error = (...args: unknown[]) => {
       origError.apply(console, args);
       const msg = args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ");
       if (!msg.includes("immocontrol_error_log")) {
-        addError("error", msg, "console.error");
+        addErrorToStore("error", msg, "console.error");
       }
     };
 
@@ -113,27 +106,40 @@ export function ErrorScanner() {
     console.warn = (...args: unknown[]) => {
       origWarn.apply(console, args);
       const msg = args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ");
-      addError("warning", msg, "console.warn");
+      addErrorToStore("warning", msg, "console.warn");
     };
 
     const onError = (event: ErrorEvent) => {
-      addError("error", event.message, event.filename || "unknown", event.error?.stack);
+      addErrorToStore("error", event.message, event.filename || "unknown", event.error?.stack);
     };
     window.addEventListener("error", onError);
 
     const onRejection = (event: PromiseRejectionEvent) => {
       const msg = event.reason instanceof Error ? event.reason.message : String(event.reason);
       const stack = event.reason instanceof Error ? event.reason.stack : undefined;
-      addError("error", msg, "unhandledrejection", stack);
+      addErrorToStore("error", msg, "unhandledrejection", stack);
     };
     window.addEventListener("unhandledrejection", onRejection);
 
-    return () => {
-      console.error = origError;
-      console.warn = origWarn;
-      window.removeEventListener("error", onError);
-      window.removeEventListener("unhandledrejection", onRejection);
-    };
+    /* Never clean up — interception stays active for the entire app lifetime */
+  }, []);
+
+  return null;
+}
+
+export function ErrorScanner() {
+  const [errors, setErrors] = useState<AppError[]>(loadErrors);
+  const [filter, setFilter] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<ErrorSeverity | "all">("all");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+
+  /* Refresh errors from localStorage periodically so we see app-wide captures */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setErrors(loadErrors());
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const runScan = useCallback(() => {
