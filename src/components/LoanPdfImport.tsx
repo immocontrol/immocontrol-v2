@@ -244,7 +244,8 @@ export function LoanPdfImport({ onImport }: LoanPdfImportProps) {
 
       setParsed(result);
       toast.success(`${fieldCount} Felder aus PDF extrahiert`);
-    } catch (e) {
+    /* FIX-44: Type catch variable as `unknown` for proper error handling */
+    } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Fehler beim Lesen der PDF";
       setError(msg);
       toast.error(msg);

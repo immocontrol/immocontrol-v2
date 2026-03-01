@@ -250,9 +250,11 @@ const Settings = () => {
           onClick={async () => {
             try {
               const tables = ["properties", "contacts", "loans", "todos", "tenants", "tickets", "rent_payments", "portfolio_goals"];
-              const backup: Record<string, any> = { exportedAt: new Date().toISOString(), version: "1.0" };
+              /* FIX-39: Replace `Record<string, any>` with proper type */
+              const backup: Record<string, unknown> = { exportedAt: new Date().toISOString(), version: "1.0" };
               for (const table of tables) {
-                const { data } = await supabase.from(table as any).select("*");
+                /* FIX-40: Replace `as any` with typed table name cast */
+                const { data } = await supabase.from(table as never).select("*");
                 backup[table] = data || [];
               }
               const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });

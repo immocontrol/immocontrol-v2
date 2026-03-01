@@ -97,7 +97,8 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
 
   const onSubmit = useCallback(async (data: FormData) => {
     const monthlyCashflow = data.monthlyRent - data.monthlyExpenses - data.monthlyCreditRate;
-    await updateProperty(property.id, { ...data, monthlyCashflow } as any);
+    /* FIX-35: Replace `as any` with proper type assertion */
+    await updateProperty(property.id, { ...data, monthlyCashflow } as Partial<Property>);
     toast.success(`${data.name} wurde aktualisiert!`);
     setOpen(false);
   }, [property.id, updateProperty]);

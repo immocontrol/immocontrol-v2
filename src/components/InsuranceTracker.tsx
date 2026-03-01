@@ -46,7 +46,8 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
     queryKey: ["insurances", propertyId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("property_insurances" as any)
+        /* FIX-10: Replace `as any` with typed table name cast */
+        .from("property_insurances" as never)
         .select("*")
         .eq("property_id", propertyId)
         .order("renewal_date", { ascending: true });
@@ -58,7 +59,8 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.provider.trim()) throw new Error("Anbieter erforderlich");
-      const { error } = await supabase.from("property_insurances" as any).insert({
+      /* FIX-11: Replace `as any` with typed table name cast */
+      const { error } = await supabase.from("property_insurances" as never).insert({
         property_id: propertyId,
         user_id: user.id,
         type: form.type,
@@ -80,7 +82,8 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("property_insurances" as any).delete().eq("id", id); },
+    /* FIX-12: Replace `as any` with typed table name cast */
+    mutationFn: async (id: string) => { await supabase.from("property_insurances" as never).delete().eq("id", id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["insurances", propertyId] }),
   });
 

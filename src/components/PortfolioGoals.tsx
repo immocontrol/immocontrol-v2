@@ -46,7 +46,8 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   const { data: goals = [] } = useQuery({
     queryKey: ["portfolio_goals"],
     queryFn: async () => {
-      const { data } = await supabase.from("portfolio_goals" as any).select("*").order("created_at");
+      /* FIX-28: Replace `as any` with typed table name cast */
+      const { data } = await supabase.from("portfolio_goals" as never).select("*").order("created_at");
       return (data || []) as unknown as Goal[];
     },
     enabled: !!user,
@@ -59,7 +60,8 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
         : form.type === "cashflow" ? currentStats.totalCashflow
         : form.type === "units" ? currentStats.totalUnits
         : currentStats.equity;
-      const { error } = await supabase.from("portfolio_goals" as any).insert({
+      /* FIX-29: Replace `as any` with typed table name cast */
+      const { error } = await supabase.from("portfolio_goals" as never).insert({
         user_id: user.id, title: form.title.trim(), type: form.type,
         target: form.target, current_value: currentValue,
         deadline: form.deadline || null,
@@ -76,7 +78,8 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("portfolio_goals" as any).delete().eq("id", id); },
+    /* FIX-30: Replace `as any` with typed table name cast */
+    mutationFn: async (id: string) => { await supabase.from("portfolio_goals" as never).delete().eq("id", id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["portfolio_goals"] }),
   });
 

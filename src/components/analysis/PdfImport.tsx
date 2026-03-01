@@ -23,7 +23,8 @@ const fieldLabels: Record<string, string> = {
   baujahr: "Baujahr",
 };
 
-const formatValue = (key: string, value: any): string => {
+/* FIX-49: Replace `any` parameter with `unknown` */
+const formatValue = (key: string, value: unknown): string => {
   if (value == null) return "–";
   if (typeof value === "number") {
     if (key.includes("Provision") || key.includes("provision")) return `${value}%`;
@@ -50,7 +51,8 @@ async function extractTextFromPdf(file: File): Promise<string> {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const pageText = content.items
-      .map((item: any) => ("str" in item ? item.str : ""))
+      /* FIX-50: Replace `any` with proper TextItem type */
+      .map((item: { str?: string }) => (item.str || ""))
       .join(" ");
     textParts.push(pageText);
   }
@@ -62,7 +64,8 @@ const PdfImport = ({ onImport }: Props) => {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<"reading" | "analyzing">("reading");
   const [fileName, setFileName] = useState<string | null>(null);
-  const [result, setResult] = useState<{ data: Record<string, any>; imported: boolean } | null>(null);
+  /* FIX-49b: Replace `Record<string, any>` with proper type in PdfImport state */
+  const [result, setResult] = useState<{ data: Record<string, unknown>; imported: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -122,7 +125,8 @@ const PdfImport = ({ onImport }: Props) => {
         importedAt: new Date().toISOString(),
       });
       toast.success("PDF-Daten erfolgreich extrahiert!");
-    } catch (e) {
+    /* FIX-48: Type catch variable as `unknown` for proper error handling */
+    } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Netzwerkfehler";
       setError(msg);
       toast.error(msg);

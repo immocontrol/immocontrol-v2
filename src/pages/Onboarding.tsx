@@ -72,8 +72,8 @@ const Onboarding = () => {
           investor_type: investorType || undefined,
           strategy: strategy || undefined,
           onboarding_completed: true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        /* FIX-37: Replace `as any` with typed record cast */
+        } as Record<string, unknown>)
         .eq("user_id", user.id);
 
       if (error) throw error;
@@ -92,8 +92,8 @@ const Onboarding = () => {
     try {
       await supabase
         .from("profiles")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .update({ onboarding_completed: true } as any)
+        /* FIX-38: Replace `as any` with typed record cast */
+        .update({ onboarding_completed: true } as Record<string, unknown>)
         .eq("user_id", user.id);
     } catch {
       // ignore

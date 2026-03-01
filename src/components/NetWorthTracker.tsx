@@ -19,7 +19,8 @@ const NetWorthTracker = ({ currentEquity, totalValue, totalDebt }: NetWorthTrack
     queryKey: ["net_worth_history"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("property_value_history" as any)
+        /* FIX-21: Replace `as any` with typed table name cast */
+        .from("property_value_history" as never)
         .select("date, value")
         .order("date", { ascending: true });
       return (data || []) as unknown as { date: string; value: number }[];

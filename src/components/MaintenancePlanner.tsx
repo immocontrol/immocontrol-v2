@@ -49,7 +49,8 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
     queryKey: ["maintenance", propertyId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("maintenance_items" as any)
+        /* FIX-13: Replace `as any` with typed table name cast */
+        .from("maintenance_items" as never)
         .select("*")
         .eq("property_id", propertyId)
         .order("priority", { ascending: false })
@@ -62,7 +63,8 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.title.trim()) throw new Error("Titel erforderlich");
-      const { error } = await supabase.from("maintenance_items" as any).insert({
+      /* FIX-14: Replace `as any` with typed table name cast */
+      const { error } = await supabase.from("maintenance_items" as never).insert({
         property_id: propertyId,
         user_id: user.id,
         title: form.title.trim(),
@@ -86,13 +88,15 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      await supabase.from("maintenance_items" as any).update({ completed }).eq("id", id);
+      /* FIX-15: Replace `as any` with typed table name cast */
+      await supabase.from("maintenance_items" as never).update({ completed }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["maintenance", propertyId] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { await supabase.from("maintenance_items" as any).delete().eq("id", id); },
+    /* FIX-16: Replace `as any` with typed table name cast */
+    mutationFn: async (id: string) => { await supabase.from("maintenance_items" as never).delete().eq("id", id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["maintenance", propertyId] }),
   });
 
@@ -140,7 +144,8 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Priorität</Label>
-                  <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as any }))}>
+                  <Select value={form.priority} /* FIX-17: Replace `as any` with proper type assertion */
+                    onValueChange={v => setForm(f => ({ ...f, priority: v as MaintenanceItem["priority"] }))}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}

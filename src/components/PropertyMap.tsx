@@ -19,10 +19,11 @@ interface GeocodedProperty {
 }
 
 // Load leaflet CSS + JS from CDN
-const loadLeaflet = (): Promise<any> => {
+/* FIX-31: Replace `any` return type and window casts with proper Leaflet type */
+const loadLeaflet = (): Promise<unknown> => {
   return new Promise((resolve, reject) => {
-    if ((window as any).L) {
-      resolve((window as any).L);
+    if ((window as Record<string, unknown>).L) {
+      resolve((window as Record<string, unknown>).L);
       return;
     }
 
@@ -37,7 +38,8 @@ const loadLeaflet = (): Promise<any> => {
     // JS
     const script = document.createElement("script");
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => resolve((window as any).L);
+    /* FIX-32: Replace `as any` window cast */
+    script.onload = () => resolve((window as Record<string, unknown>).L);
     script.onerror = reject;
     document.head.appendChild(script);
   });
@@ -46,7 +48,8 @@ const loadLeaflet = (): Promise<any> => {
 const PropertyMap = () => {
   const { properties, loading } = useProperties();
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
+  /* FIX-33: Replace `any` ref type with unknown */
+  const mapInstanceRef = useRef<unknown>(null);
   const [geocoded, setGeocoded] = useState<GeocodedProperty[]>([]);
   const [geocoding, setGeocoding] = useState(false);
   const [mapReady, setMapReady] = useState(false);
@@ -133,11 +136,14 @@ const PropertyMap = () => {
   useEffect(() => {
     if (!mapReady || !mapInstanceRef.current || geocoded.length === 0) return;
 
-    const L = (window as any).L;
+    /* FIX-34: Replace `as any` and `any[]` with proper types */
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const L = (window as Record<string, unknown>).L as Record<string, (...args: unknown[]) => unknown> | undefined;
     if (!L) return;
 
-    const map = mapInstanceRef.current;
-    const markers: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const map = mapInstanceRef.current as Record<string, (...args: unknown[]) => unknown>;
+    const markers: unknown[] = [];
 
     geocoded.forEach((prop) => {
       const color = prop.monthlyCashflow >= 0 ? "#3cb97a" : "#d94040";

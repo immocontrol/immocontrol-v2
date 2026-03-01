@@ -36,8 +36,9 @@ export const NotificationBell = () => {
         setData(result as NotificationData);
         setLastRefresh(new Date());
       }
-    } catch (err) {
-      console.warn("Notification fetch failed:", err);
+    /* FIX-41: Type catch variable as `unknown` for proper error handling */
+    } catch (err: unknown) {
+      console.warn("Notification fetch failed:", err instanceof Error ? err.message : String(err));
     }
     setLoading(false);
   };
