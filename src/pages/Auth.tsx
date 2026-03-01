@@ -37,7 +37,14 @@ const Auth = () => {
         try {
           const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
-            /* 2FA is required but not yet verified — don't redirect */
+            /* 2FA is required but not yet verified — show the TOTP UI
+             * instead of silently returning (handles page refresh / direct nav) */
+            const { data: factors } = await supabase.auth.mfa.listFactors();
+            const totpFactor = factors?.totp?.find(f => f.status === "verified");
+            if (totpFactor) {
+              setMfaFactorId(totpFactor.id);
+              setNeeds2FA(true);
+            }
             return;
           }
         } catch { /* If MFA check fails, proceed with redirect */ }
@@ -90,7 +97,13 @@ const Auth = () => {
    * We do NOT call mfa.unenroll here because that requires AAL2 (the user
    * is still at AAL1). Instead we validate the backup code against
    * localStorage and let the user through. The code is only consumed
-   * AFTER validation succeeds so it isn't lost on failure. */
+   * AFTER validation succeeds so it isn't lost on failure.
+   *
+   * KNOWN LIMITATION: The Supabase session stays at AAL1 after backup code
+   * login. If any RLS policies check for AAL2, queries will fail silently.
+   * This app does not use AAL-based RLS, so this is acceptable. For
+   * production use, backup codes should be verified server-side via an
+   * admin endpoint that can unenroll the factor at elevated privileges. */
   const verifyBackupCode = () => {
     setLoading(true);
     try {
