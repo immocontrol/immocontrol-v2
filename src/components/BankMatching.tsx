@@ -130,6 +130,192 @@ const categorizeTransaction = (description: string): string => {
   return "Sonstiges";
 };
 
+/* CSV column mapping fields for bank import — modeled after ContactCsvImport */
+const BANK_CSV_FIELDS = [
+  { key: "date", label: "Buchungsdatum", required: true },
+  /* Some banks have a single signed amount column, others split Soll/Haben */
+  { key: "amount", label: "Betrag (Signed)" },
+  { key: "credit", label: "Haben (Eingang)" },
+  { key: "debit", label: "Soll (Ausgang)" },
+  { key: "name", label: "Empf\u00e4nger/Auftraggeber" },
+  { key: "reference", label: "Verwendungszweck" },
+  { key: "iban", label: "IBAN" },
+  { key: "bic", label: "BIC" },
+  { key: "text", label: "Buchungstext" },
+] as const;
+
+const SKIP_VALUE = "__skip__";
+
+/** Guess column mapping from CSV headers */
+function guessBankMapping(headers: string[]): Record<string, string> {
+  const mapping: Record<string, string> = {};
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u00e4\u00f6\u00fc]/g, "");
+  const patterns: Record<string, string[]> = {
+    date: ["buchung", "datum", "date", "valuta", "wertstellung"],
+    amount: ["betrag", "amount", "umsatz"],
+    credit: ["haben", "credit", "gutschrift", "eingang"],
+    debit: ["soll", "debit", "lastschrift", "ausgang"],
+    name: ["empf", "auftrag", "name", "sender", "beguenstigter", "zahlungspflichtiger"],
+    reference: ["verwendung", "referenz", "reference", "zweck", "buchungsdetails"],
+    iban: ["iban"],
+    bic: ["bic", "swift"],
+    text: ["buchungstext", "text", "type", "art"],
+  };
+  headers.forEach(header => {
+    const n = norm(header);
+    for (const [field, pats] of Object.entries(patterns)) {
+      if (!mapping[field] && pats.some(p => n.includes(p))) {
+        mapping[field] = header;
+      }
+    }
+  });
+  return mapping;
+}
+
+function parseBankCsv(text: string): { headers: string[]; rows: string[][] } {
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(l => l.trim());
+  if (lines.length < 2) throw new Error("CSV ist leer");
+
+  const parseRow = (line: string): string[] => {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if ((ch === "," || ch === ";" || ch === "\t") && !inQuotes) {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result.map(v => v.replace(/^"|"$/g, ""));
+  };
+
+  const headers = parseRow(lines[0]);
+  const rows = lines.slice(1).map(parseRow).filter(r => r.some(v => v.trim()));
+  return { headers, rows };
+}
+
+function toIsoDate(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  const dot = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  if (dot) {
+    const d = dot[1].padStart(2, "0");
+    const m = dot[2].padStart(2, "0");
+    const y = dot[3].length === 2 ? `20${dot[3]}` : dot[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slash) {
+    const d = slash[1].padStart(2, "0");
+    const m = slash[2].padStart(2, "0");
+    const y = slash[3].length === 2 ? `20${slash[3]}` : slash[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  return null;
+}
+
+function parseEuroAmount(raw: string): number | null {
+  const s0 = raw.trim();
+  if (!s0) return null;
+  const negative = s0.includes("-") || (s0.includes("(") && s0.includes(")"));
+  const cleaned = s0
+    .replace(/[^0-9,.-]/g, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "") /* remove thousand separators */
+    .replace(/,/g, ".");
+  const n = parseFloat(cleaned);
+  if (isNaN(n)) return null;
+  return negative ? -Math.abs(n) : n;
+}
+
+async function importBankCsvWithMapping(args: {
+  userId: string;
+  accountId: string | null;
+  headers: string[];
+  rows: string[][];
+  mapping: Record<string, string>;
+}): Promise<number> {
+  const { userId, accountId, headers, rows, mapping } = args;
+  const idxForHeader = (header: string | undefined) => header ? headers.findIndex(h => h === header) : -1;
+
+  const dateIdx = idxForHeader(mapping.date);
+  const amountIdx = idxForHeader(mapping.amount);
+  const creditIdx = idxForHeader(mapping.credit);
+  const debitIdx = idxForHeader(mapping.debit);
+
+  if (dateIdx < 0) throw new Error("Buchungsdatum ist erforderlich");
+  if (amountIdx < 0 && creditIdx < 0 && debitIdx < 0) {
+    throw new Error("Bitte Betrag oder Soll/Haben zuweisen");
+  }
+
+  const nameIdx = idxForHeader(mapping.name);
+  const refIdx = idxForHeader(mapping.reference);
+  const ibanIdx = idxForHeader(mapping.iban);
+  const bicIdx = idxForHeader(mapping.bic);
+  const textIdx = idxForHeader(mapping.text);
+
+  const insertRows: Record<string, unknown>[] = [];
+
+  for (const cols of rows) {
+    const rawDate = cols[dateIdx] || "";
+    const bookingDate = toIsoDate(rawDate);
+    if (!bookingDate) continue;
+
+    const signedAmount = amountIdx >= 0 ? parseEuroAmount(cols[amountIdx] || "") : null;
+    const credit = creditIdx >= 0 ? parseEuroAmount(cols[creditIdx] || "") : null;
+    const debit = debitIdx >= 0 ? parseEuroAmount(cols[debitIdx] || "") : null;
+
+    let amount: number | null = signedAmount;
+    if (amount === null) {
+      const creditVal = credit ? Math.abs(credit) : 0;
+      const debitVal = debit ? Math.abs(debit) : 0;
+      if (creditVal || debitVal) amount = creditVal - debitVal;
+    }
+
+    if (amount === null || isNaN(amount)) continue;
+
+    insertRows.push({
+      user_id: userId,
+      booking_date: bookingDate,
+      amount,
+      account_id: accountId,
+      sender_receiver: nameIdx >= 0 ? (cols[nameIdx] || null) : null,
+      reference: refIdx >= 0 ? (cols[refIdx] || null) : null,
+      iban: ibanIdx >= 0 ? (cols[ibanIdx] || null) : null,
+      bic: bicIdx >= 0 ? (cols[bicIdx] || null) : null,
+      booking_text: textIdx >= 0 ? (cols[textIdx] || null) : null,
+    });
+  }
+
+  if (insertRows.length === 0) throw new Error("Keine gültigen Transaktionen");
+
+  const batchSize = 100;
+  for (let i = 0; i < insertRows.length; i += batchSize) {
+    const { error } = await supabase.from("bank_transactions").insert(insertRows.slice(i, i + batchSize));
+    if (error) throw error;
+  }
+
+  return insertRows.length;
+}
+
 const BankMatching = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
@@ -141,6 +327,20 @@ const BankMatching = () => {
   const [selectedAccount, setSelectedAccount] = useState("alle");
   const [accountForm, setAccountForm] = useState({ name: "", iban: "", bic: "", bank_name: "" });
   const [ruleForm, setRuleForm] = useState({ name: "", match_type: "iban", match_value: "", tenant_id: "", property_id: "" });
+
+  /* CSV column mapping state */
+  const [csvStep, setCsvStep] = useState<"upload" | "map" | "preview">("upload");
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvRows, setCsvRows] = useState<string[][]>([]);
+  const [csvMapping, setCsvMapping] = useState<Record<string, string>>({});
+  const [csvFileName, setCsvFileName] = useState("");
+  const resetCsvState = () => {
+    setCsvStep("upload");
+    setCsvHeaders([]);
+    setCsvRows([]);
+    setCsvMapping({});
+    setCsvFileName("");
+  };
 
   // ── Queries ──
   const { data: accounts = [] } = useQuery<BankAccount[]>({
@@ -403,60 +603,82 @@ const BankMatching = () => {
         return;
       }
 
-      // CSV format
-      const lines = text.split("\n").filter(l => l.trim());
-      if (lines.length < 2) { toast.error("CSV ist leer"); return; }
-      const sep = lines[0].includes(";") ? ";" : ",";
-      const headers = lines[0].split(sep).map(h => h.trim().replace(/"/g, "").toLowerCase());
-      const dateCol = headers.findIndex(h => h.includes("buchung") || h.includes("datum") || h.includes("date"));
-      const amountCol = headers.findIndex(h => h.includes("betrag") || h.includes("amount") || h.includes("soll") || h.includes("haben"));
-      const nameCol = headers.findIndex(h => h.includes("empf") || h.includes("auftrag") || h.includes("name") || h.includes("sender"));
-      const refCol = headers.findIndex(h => h.includes("verwendung") || h.includes("referenz") || h.includes("reference") || h.includes("zweck"));
-      const ibanCol = headers.findIndex(h => h.includes("iban"));
-      const bicCol = headers.findIndex(h => h.includes("bic"));
-      const textCol = headers.findIndex(h => h.includes("buchungstext") || h.includes("text") || h.includes("type"));
-      if (dateCol === -1 || amountCol === -1) { toast.error("CSV-Format nicht erkannt."); return; }
-
-      // Use default account if selected
-      const accountId = selectedAccount !== "alle" ? selectedAccount : (accounts.find(a => a.is_default)?.id || null);
-
-      const rows: Record<string, unknown>[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ""));
-        if (cols.length <= amountCol) continue;
-        const rawDate = cols[dateCol];
-        let bookingDate: string;
-        if (rawDate.includes(".")) {
-          const [d, m, y] = rawDate.split(".");
-          bookingDate = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-        } else { bookingDate = rawDate; }
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) continue;
-        const rawAmount = cols[amountCol].replace(/\./g, "").replace(",", ".");
-        const amount = parseFloat(rawAmount);
-        if (isNaN(amount)) continue;
-        rows.push({
-          user_id: user.id,
-          booking_date: bookingDate,
-          amount,
-          account_id: accountId,
-          sender_receiver: nameCol >= 0 ? cols[nameCol] || null : null,
-          reference: refCol >= 0 ? cols[refCol] || null : null,
-          iban: ibanCol >= 0 ? cols[ibanCol] || null : null,
-          bic: bicCol >= 0 ? cols[bicCol] || null : null,
-          booking_text: textCol >= 0 ? cols[textCol] || null : null,
-        });
-      }
-      if (rows.length === 0) { toast.error("Keine gültigen Transaktionen"); return; }
-      const batchSize = 100;
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const { error } = await supabase.from("bank_transactions").insert(rows.slice(i, i + batchSize));
-        if (error) throw error;
-      }
-      toast.success(`${rows.length} Transaktionen importiert`);
-      queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
-      setImportOpen(false);
+      // CSV format — show column mapping UI (like contact import)
+      const { headers, rows } = parseBankCsv(text);
+      setCsvHeaders(headers);
+      setCsvRows(rows);
+      setCsvMapping(guessBankMapping(headers));
+      setCsvFileName(file.name);
+      setCsvStep("map");
+      toast.info("CSV erkannt – bitte Spalten zuordnen");
+      return; /* keep dialog open */
     } catch (err: unknown) {
       toast.error("Import fehlgeschlagen: " + (err instanceof Error ? err.message : "Fehler"));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const csvPreview = useMemo(() => {
+    if (csvHeaders.length === 0 || csvRows.length === 0) return [] as { date: string; amount: number; name: string; reference: string }[];
+
+    const idxForHeader = (header: string | undefined) => header ? csvHeaders.findIndex(h => h === header) : -1;
+    const dateIdx = idxForHeader(csvMapping.date);
+    const amountIdx = idxForHeader(csvMapping.amount);
+    const creditIdx = idxForHeader(csvMapping.credit);
+    const debitIdx = idxForHeader(csvMapping.debit);
+    const nameIdx = idxForHeader(csvMapping.name);
+    const refIdx = idxForHeader(csvMapping.reference);
+
+    if (dateIdx < 0) return [];
+
+    const preview: { date: string; amount: number; name: string; reference: string }[] = [];
+    for (const cols of csvRows.slice(0, 8)) {
+      const bookingDate = toIsoDate(cols[dateIdx] || "");
+      if (!bookingDate) continue;
+
+      const signedAmount = amountIdx >= 0 ? parseEuroAmount(cols[amountIdx] || "") : null;
+      const credit = creditIdx >= 0 ? parseEuroAmount(cols[creditIdx] || "") : null;
+      const debit = debitIdx >= 0 ? parseEuroAmount(cols[debitIdx] || "") : null;
+
+      let amount: number | null = signedAmount;
+      if (amount === null) {
+        const creditVal = credit ? Math.abs(credit) : 0;
+        const debitVal = debit ? Math.abs(debit) : 0;
+        if (creditVal || debitVal) amount = creditVal - debitVal;
+      }
+      if (amount === null || isNaN(amount)) continue;
+
+      preview.push({
+        date: bookingDate,
+        amount,
+        name: nameIdx >= 0 ? (cols[nameIdx] || "") : "",
+        reference: refIdx >= 0 ? (cols[refIdx] || "") : "",
+      });
+      if (preview.length >= 5) break;
+    }
+
+    return preview;
+  }, [csvHeaders, csvRows, csvMapping]);
+
+  const handleCsvImport = async () => {
+    if (!user) return;
+    setImporting(true);
+    try {
+      const accountId = selectedAccount !== "alle" ? selectedAccount : (accounts.find(a => a.is_default)?.id || null);
+      const count = await importBankCsvWithMapping({
+        userId: user.id,
+        accountId,
+        headers: csvHeaders,
+        rows: csvRows,
+        mapping: csvMapping,
+      });
+      toast.success(`${count} Transaktionen importiert`);
+      queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
+      setImportOpen(false);
+      resetCsvState();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Import fehlgeschlagen");
     } finally {
       setImporting(false);
     }
@@ -510,17 +732,30 @@ const BankMatching = () => {
           <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={autoMatchAll}>
             <Link2 className="h-3 w-3" /> Auto-Match
           </Button>
-          <Dialog open={importOpen} onOpenChange={setImportOpen}>
+          <Dialog
+            open={importOpen}
+            onOpenChange={(open) => {
+              setImportOpen(open);
+              if (!open) resetCsvState();
+            }}
+          >
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1 text-xs">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 text-xs"
+                onClick={() => resetCsvState()}
+              >
                 <Upload className="h-3 w-3" /> Import
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader><DialogTitle>Bank-Import (CSV / MT940 / CAMT)</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                {/* IMPROVE-20: Use FileImportPicker so mobile users can import bank files from apps/cloud */}
-                <p className="text-sm text-muted-foreground">Unterstützt: CSV (Sparkasse, Volksbank, DKB, ING, Commerzbank u.a.), MT940 (.sta) und CAMT.053 (.xml)</p>
+                <p className="text-sm text-muted-foreground">
+                  Unterstützt: CSV (Sparkasse, Volksbank, DKB, ING, Commerzbank u.a.), MT940 (.sta) und CAMT.053 (.xml)
+                </p>
+
                 {accounts.length > 0 && (
                   <div>
                     <Label className="text-xs">Konto zuordnen</Label>
@@ -533,17 +768,122 @@ const BankMatching = () => {
                     </Select>
                   </div>
                 )}
-                <FileImportPicker
-                  accept=".csv,.CSV,.sta,.STA,.xml,.XML"
-                  onFile={handleFileUpload}
-                  label={importing ? "Importiere..." : "Datei auswählen"}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-center"
-                  disabled={importing}
-                />
-                <p className="text-[10px] text-muted-foreground">CSV: Semikolon/Komma-getrennt · MT940: SWIFT-Format (.sta) · CAMT: XML-Format (.xml)</p>
-                {importing && <p className="text-xs text-muted-foreground animate-pulse">Importiere...</p>}
+
+                {csvStep === "upload" && (
+                  <>
+                    {/* IMPROVE-20: Use FileImportPicker so mobile users can import bank files from apps/cloud */}
+                    <FileImportPicker
+                      accept=".csv,.CSV,.sta,.STA,.xml,.XML"
+                      onFile={handleFileUpload}
+                      label={importing ? "Importiere..." : "Datei auswählen"}
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center"
+                      disabled={importing}
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      CSV: Semikolon/Komma/Tab · MT940: SWIFT-Format (.sta) · CAMT: XML-Format (.xml)
+                    </p>
+                  </>
+                )}
+
+                {csvStep === "map" && (
+                  <div className="space-y-3">
+                    <div className="bg-secondary/50 rounded-lg p-3 text-xs text-muted-foreground">
+                      <strong>{csvRows.length} Zeilen</strong> in <strong>{csvFileName}</strong> erkannt. Weise die Spalten zu.
+                    </div>
+
+                    <div className="space-y-2">
+                      {BANK_CSV_FIELDS.map((field) => (
+                        <div key={field.key} className="flex items-center gap-2">
+                          <div className="w-28 text-xs shrink-0">
+                            {field.label}
+                            {(field as { required?: boolean }).required && <span className="text-loss ml-0.5">*</span>}
+                          </div>
+                          <Select
+                            value={csvMapping[field.key] || SKIP_VALUE}
+                            onValueChange={(v) => setCsvMapping(prev => ({ ...prev, [field.key]: v === SKIP_VALUE ? "" : v }))}
+                          >
+                            <SelectTrigger className="h-8 text-xs flex-1">
+                              <SelectValue placeholder="Spalte auswählen…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={SKIP_VALUE}>
+                                <span className="text-muted-foreground">— Überspringen —</span>
+                              </SelectItem>
+                              {csvHeaders.map(h => (
+                                <SelectItem key={`${field.key}-${h}`} value={h}>{h}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+
+                    {(!csvMapping.date || (!csvMapping.amount && !csvMapping.credit && !csvMapping.debit)) && (
+                      <div className="text-xs text-gold bg-gold/10 rounded-lg p-2">
+                        Bitte mindestens Buchungsdatum und Betrag (oder Soll/Haben) zuweisen.
+                      </div>
+                    )}
+
+                    <div className="flex justify-between pt-1">
+                      <Button variant="ghost" size="sm" onClick={resetCsvState}>
+                        <X className="h-3.5 w-3.5 mr-1" /> Zurück
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setCsvStep("preview")}
+                        disabled={!csvMapping.date || (!csvMapping.amount && !csvMapping.credit && !csvMapping.debit)}
+                        className="gap-1"
+                      >
+                        Vorschau <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {csvStep === "preview" && (
+                  <div className="space-y-3">
+                    <div className="bg-secondary/50 rounded-lg p-3 text-xs text-muted-foreground">
+                      Vorschau der ersten {csvPreview.length} Transaktion{csvPreview.length !== 1 ? "en" : ""}:
+                    </div>
+
+                    <div className="space-y-2">
+                      {csvPreview.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-2">
+                          Keine gültigen Zeilen gefunden. Prüfe die Zuordnung.
+                        </p>
+                      ) : (
+                        csvPreview.map((tx, i) => (
+                          <div key={i} className="border border-border rounded-lg p-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-medium">{tx.date}</span>
+                              <span className={`text-xs font-semibold ${tx.amount >= 0 ? "text-profit" : "text-loss"}`}>
+                                {formatCurrency(tx.amount)}
+                              </span>
+                            </div>
+                            {(tx.name || tx.reference) && (
+                              <div className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+                                {[tx.name, tx.reference].filter(Boolean).join(" · ")}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="flex justify-between pt-1">
+                      <Button variant="ghost" size="sm" onClick={() => setCsvStep("map")}> 
+                        <X className="h-3.5 w-3.5 mr-1" /> Zurück
+                      </Button>
+                      <Button size="sm" className="gap-1" onClick={handleCsvImport} disabled={importing}>
+                        <Upload className="h-3.5 w-3.5" /> {importing ? "Importiere…" : "Import starten"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {importing && <p className="text-xs text-muted-foreground animate-pulse">Importiere…</p>}
               </div>
             </DialogContent>
           </Dialog>

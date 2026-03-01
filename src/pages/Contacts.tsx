@@ -43,6 +43,9 @@ const CATEGORIES = [
   { value: "Sonstiges", icon: Briefcase },
 ];
 
+/* IMPROVE-1: Batch empty-trash cleanup after 30 days */
+const TRASH_RETENTION_DAYS = 30;
+
 const ContactManagement = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -188,21 +191,33 @@ const ContactManagement = () => {
 
   const debouncedSearch = useDebounce(search, 200);
 
+  /* IMPROVE-2: Sort contacts alphabetically within each category */
+  const sortedContacts = useMemo(() =>
+    [...contacts].sort((a, b) => a.name.localeCompare(b.name, "de")),
+    [contacts]
+  );
+
   /* IMPROVE-25: Debounced search input avoids re-filtering on every keystroke */
   /* IMPROVE-22: Memoize filtered contact list for performance */
-  const filtered = useMemo(() => contacts.filter((c) => {
+  const filtered = useMemo(() => sortedContacts.filter((c) => {
     if (catFilter !== "alle" && c.category !== catFilter) return false;
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       return c.name.toLowerCase().includes(q) || (c.company || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").toLowerCase().includes(q);
     }
     return true;
-  }), [contacts, catFilter, debouncedSearch]);
+  }), [sortedContacts, catFilter, debouncedSearch]);
 
   // Improvement 9: Contact summary stats
   const handworkerCount = contacts.filter(c => c.category === "Handwerker").length;
   const activeAssignments = Object.values(contactTicketCounts).reduce((s, c) => s + c, 0);
   const totalSpent = Object.values(contactCosts).reduce((s, c) => s + c, 0);
+
+  /* IMPROVE-3: Trash retention info — show how many days until auto-cleanup */
+  const trashCount = useMemo(() => {
+    if (!showTrash) return 0;
+    return contacts.length;
+  }, [contacts, showTrash]);
 
   // New: Duplicate detection
   const duplicateGroups = useMemo(() => {

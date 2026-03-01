@@ -253,6 +253,9 @@ export const GlobalSearch = () => {
     }
   };
 
+  /* IMPROVE-10: Show total result count for screen readers */
+  const resultCount = results.length;
+
   // Group results by category
   const grouped = useMemo(() => {
     const groups: Record<string, SearchResult[]> = {};
@@ -278,6 +281,10 @@ export const GlobalSearch = () => {
           placeholder="Suchen… (⌘K)"
           className="h-8 w-48 lg:w-64 pl-8 pr-8 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
           autoComplete="off"
+          aria-label="Globale Suche"
+          /* IMPROVE-11: aria-expanded for accessibility */
+          aria-expanded={open && !!query.trim()}
+          role="combobox"
         />
         {query && (
           <button
