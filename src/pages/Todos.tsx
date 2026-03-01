@@ -110,6 +110,7 @@ const Todos = () => {
     () => createDebounce((value: string) => setSearch(value), 250),
     [setSearch]
   );
+  useEffect(() => () => { debouncedSetSearch.cancel(); }, [debouncedSetSearch]);
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [quickInput, setQuickInput] = useState("");
   const [editTodo, setEditTodo] = useState<Todo | null>(null);

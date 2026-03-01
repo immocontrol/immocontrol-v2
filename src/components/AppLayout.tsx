@@ -222,7 +222,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         to={item.path}
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative sidebar-item-hover touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
