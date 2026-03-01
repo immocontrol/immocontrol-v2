@@ -51,11 +51,12 @@ const fmtCur = (v: string) => {
 const NAME_FIELDS: (keyof SelbstauskunftData)[] = ["name", "vorname", "geburtsname", "geburtsort"];
 
 /* FUNC-47: Selbstauskunft field validation */
+const CURRENCY_FIELDS: string[] = ["gehaltNetto", "renten", "selbststaendig", "mieteinnahmen", "kindergeld", "unterhaltEinnahmen", "lebenshaltung", "warmmiete", "krankenversicherung", "unterhaltAusgaben", "kitaBeitrag", "kreditraten", "sparraten", "sonstigeAusgaben"];
 const validateSelbstauskunftField = (field: string, value: string): string | null => {
   if (!value.trim()) return null;
   if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Ungültige E-Mail";
-  if (field === "phone" && !/^[+\d\s()-]{6,}$/.test(value)) return "Ungültige Telefonnummer";
-  if (field === "income" && isNaN(Number(value.replace(/\./g, "").replace(",", ".")))) return "Ungültige Zahl";
+  if (field === "telefon" && !/^[+\d\s()-]{6,}$/.test(value)) return "Ungültige Telefonnummer";
+  if (CURRENCY_FIELDS.includes(field) && isNaN(Number(value.replace(/\./g, "").replace(",", ".")))) return "Ungültige Zahl";
   return null;
 };
 

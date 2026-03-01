@@ -166,8 +166,7 @@ export default function ImmoAIBubble() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-          style={{ bottom: BUBBLE_POSITION.mobileBottom, right: BUBBLE_POSITION.right }}
+          className="fixed bottom-20 md:bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
           aria-label="Immo AI öffnen (Alt+0)"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
@@ -181,7 +180,7 @@ export default function ImmoAIBubble() {
 
       {/* Chat Window */}
       {open && (
-        <div className="fixed z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200" style={{ bottom: BUBBLE_POSITION.mobileBottom, right: BUBBLE_POSITION.right }}>
+        <div className="fixed bottom-20 md:bottom-6 right-4 z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">
             <div className="flex items-center gap-2">
