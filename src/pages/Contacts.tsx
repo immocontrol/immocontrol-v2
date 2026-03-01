@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download } from "lucide-react";
+import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
 import AddContactDialog from "@/components/AddContactDialog";
@@ -55,6 +55,7 @@ const ContactManagement = () => {
   const [open, setOpen] = useState(false);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editContact, setEditContact] = useState<ContactItem | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
   const [form, setForm] = useState({
     name: "", company: "", category: "Handwerker",
     email: "", phone: "", address: "", notes: "",
@@ -62,12 +63,17 @@ const ContactManagement = () => {
 
   // Improvement 5: React Query for contacts
   const { data: contacts = [] } = useQuery({
-    queryKey: queryKeys.contacts.all,
+    queryKey: [...queryKeys.contacts.all, showTrash ? "trash" : "active"],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("contacts")
-        .select("*")
-        .order("name");
+        .select("*");
+      if (showTrash) {
+        query = query.not("deleted_at", "is", null).order("deleted_at", { ascending: false });
+      } else {
+        query = query.is("deleted_at", null).order("name");
+      }
+      const { data } = await query;
       return (data || []) as ContactItem[];
     },
     enabled: !!user,
@@ -146,11 +152,28 @@ const ContactManagement = () => {
     onError: (e: Error) => toast.error(e.message || "Fehler"),
   });
 
+  // Soft delete: move to trash
   const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    },
+    onSuccess: () => { toast.success("Kontakt in Papierkorb verschoben"); invalidate(); },
+  });
+
+  // Restore from trash
+  const restoreMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("contacts").update({ deleted_at: null }).eq("id", id);
+    },
+    onSuccess: () => { toast.success("Kontakt wiederhergestellt"); invalidate(); },
+  });
+
+  // Permanently delete
+  const permanentDeleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("contacts").delete().eq("id", id);
     },
-    onSuccess: () => { toast.success("Kontakt entfernt"); invalidate(); },
+    onSuccess: () => { toast.success("Kontakt endg\u00fcltig gel\u00f6scht"); invalidate(); },
   });
 
   const openEdit = (c: ContactItem) => {
@@ -226,6 +249,14 @@ const ContactManagement = () => {
           )}
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCsvImportOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> CSV importieren
+          </Button>
+          <Button
+            variant={showTrash ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowTrash(!showTrash)}
+          >
+            <Archive className="h-3.5 w-3.5" /> {showTrash ? "Zur\u00fcck" : "Papierkorb"}
           </Button>
           <AddContactDialog onCreated={() => invalidate()} />
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
@@ -355,7 +386,8 @@ const ContactManagement = () => {
       ) : (
         <>
           <ContactStats contacts={contacts} />
-          <div className="grid gap-3 md:grid-cols-2">
+          {/* Improvement 14: Contact list with stagger animation */}
+          <div className="grid gap-3 md:grid-cols-2 list-stagger">
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
             return (
@@ -407,33 +439,60 @@ const ContactManagement = () => {
                     )}
                   </div>
                   <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
-                    {c.phone && (
-                      <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]" title="WhatsApp">
-                          <MessageCircle className="h-3 w-3" />
+                    {showTrash ? (
+                      <>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Wiederherstellen" onClick={() => restoreMutation.mutate(c.id)}>
+                          <RotateCcw className="h-3 w-3" />
                         </Button>
-                      </a>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" title="Endgültig löschen">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Endgültig löschen?</AlertDialogTitle>
+                              <AlertDialogDescription>„{c.name}" wird unwiderruflich entfernt und kann nicht wiederhergestellt werden.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => permanentDeleteMutation.mutate(c.id)}>Endgültig löschen</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    ) : (
+                      <>
+                        {c.phone && (
+                          <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]" title="WhatsApp">
+                              <MessageCircle className="h-3 w-3" />
+                            </Button>
+                          </a>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Kontakt löschen?</AlertDialogTitle>
+                              <AlertDialogDescription>„{c.name}" wird in den Papierkorb verschoben.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(c.id)}>Löschen</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
                     )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Kontakt löschen?</AlertDialogTitle>
-                          <AlertDialogDescription>„{c.name}" wird unwiderruflich entfernt.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate(c.id)}>Löschen</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </div>
                 </div>
               </div>

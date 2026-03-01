@@ -69,6 +69,21 @@ export const formatCurrencyCompact = (value: number): string => {
   return currencyFormatter.format(value);
 };
 
+/** Format a number with German thousand separators (1.000, 10.000 etc.) */
+export const formatNumberDE = (value: number | string): string => {
+  const num = typeof value === "string" ? parseFloat(value.replace(/\./g, "").replace(",", ".")) : value;
+  if (isNaN(num)) return "";
+  return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(num);
+};
+
+/** Parse a German-formatted number string back to a number */
+export const parseNumberDE = (value: string): number => {
+  if (!value) return 0;
+  const cleaned = value.replace(/\./g, "").replace(",", ".");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
 export const getISOWeek = (date: Date): number => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));

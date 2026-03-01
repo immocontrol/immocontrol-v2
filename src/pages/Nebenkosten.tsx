@@ -195,9 +195,10 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
 
   return (
     <div className="space-y-6" role="main" aria-label="Nebenkostenabrechnung">
-      <div className="flex items-center justify-between">
+      {/* Improvement 12: Mobile responsive header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Nebenkostenabrechnung</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Nebenkostenabrechnung</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {billings.length} Abrechnungen
             {billings.length > 0 && (
@@ -373,7 +374,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             <p className="text-sm text-muted-foreground mb-4">Erstelle deine erste Nebenkostenabrechnung</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 list-stagger">
             {billings.map(b => {
               const property = properties.find(p => p.id === b.property_id);
               const tenant = tenants.find(t => t.id === b.tenant_id);
@@ -381,7 +382,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                 <button
                   key={b.id}
                   onClick={() => setSelectedBilling(b.id)}
-                  className="w-full gradient-card rounded-xl border border-border p-4 text-left hover:border-primary/20 transition-all group"
+                  className="w-full gradient-card rounded-xl border border-border p-4 text-left hover:border-primary/20 transition-all group card-hover-glow"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

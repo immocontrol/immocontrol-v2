@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail } from "lucide-react";
+import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail, Edit2, Save, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -37,6 +37,7 @@ interface NearbyBusiness {
   email: string | null;
   distance: number;
   address: string | null;
+  opening_hours: string | null;
 }
 
 interface BuildingInfo {
@@ -59,9 +60,22 @@ async function searchNominatim(query: string): Promise<SearchPlace[]> {
   });
   if (!res.ok) throw new Error("Nominatim-Suche fehlgeschlagen");
   const data = await res.json();
-  return data.map((item: { place_id: number; display_name: string; lat: string; lon: string }) => ({
+  return data.map((item: { place_id: number; display_name: string; lat: string; lon: string; address?: { road?: string; house_number?: string; city?: string; town?: string; village?: string; suburb?: string } }) => {
+    // Build a proper name: street + house number, or first two parts of display_name
+    const addr = item.address;
+    let displayName: string;
+    if (addr?.road) {
+      displayName = addr.house_number ? `${addr.road} ${addr.house_number}` : addr.road;
+      const locality = addr.city || addr.town || addr.village || addr.suburb;
+      if (locality) displayName += `, ${locality}`;
+    } else {
+      // Fallback: take first 2 parts of display_name for a reasonable title
+      const parts = item.display_name.split(",").map(s => s.trim());
+      displayName = parts.slice(0, 2).join(", ");
+    }
+    return {
     place_id: `nominatim-${item.place_id}`,
-    name: item.display_name.split(",")[0] || item.display_name,
+    name: displayName,
     address: item.display_name,
     lat: parseFloat(item.lat),
     lng: parseFloat(item.lon),
@@ -71,7 +85,8 @@ async function searchNominatim(query: string): Promise<SearchPlace[]> {
     open_now: null,
     source: "nominatim" as const,
     buildingInfo: null,
-  }));
+  };
+  });
 }
 
 // Shoelace formula for polygon area in m2 (from lat/lng coordinates)
@@ -90,10 +105,27 @@ function calculatePolygonArea(coords: { lat: number; lon: number }[]): number {
   return Math.abs(area) / 2;
 }
 
-// OSM Overpass API: estimate building size near a coordinate — sums ALL buildings on the plot
+// Helper: calculate centroid of a building's nodes
+function buildingCentroid(nodeIds: number[], nodeMap: Map<number, { lat: number; lon: number }>): { lat: number; lon: number } | null {
+  const coords = nodeIds.map(id => nodeMap.get(id)).filter(Boolean) as { lat: number; lon: number }[];
+  if (coords.length === 0) return null;
+  const sumLat = coords.reduce((s, c) => s + c.lat, 0);
+  const sumLon = coords.reduce((s, c) => s + c.lon, 0);
+  return { lat: sumLat / coords.length, lon: sumLon / coords.length };
+}
+
+// Helper: distance between two lat/lon points in meters
+function distanceMeters(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const dlat = (b.lat - a.lat) * 111320;
+  const dlon = (b.lon - a.lon) * 111320 * Math.cos(a.lat * Math.PI / 180);
+  return Math.sqrt(dlat * dlat + dlon * dlon);
+}
+
+// OSM Overpass API: estimate building size — finds the nearest building, then includes
+// all buildings sharing the same street address (same Flurstück/plot)
 async function estimateBuildingSize(lat: number, lng: number): Promise<BuildingInfo | null> {
-  // Use 50m radius to capture Vorderhaus, Hinterhaus, Remise, Seitenflügel etc.
-  const radius = 50;
+  // Step 1: Small radius (20m) to find the building at the exact address
+  const radius = 20;
   const query = `[out:json][timeout:15];
 (
   way["building"](around:${radius},${lat},${lng});
@@ -119,22 +151,71 @@ out skel qt;`;
     const nodeMap = new Map<number, { lat: number; lon: number }>();
     nodes.forEach((n: { id: number; lat: number; lon: number }) => nodeMap.set(n.id, { lat: n.lat, lon: n.lon }));
 
-    // Calculate area & levels for EACH building on the plot
+    // Find the nearest building to the search coordinate
+    const target = { lat, lon: lng };
+    let nearestBuilding = allBuildings[0];
+    let nearestDist = Infinity;
+    for (const b of allBuildings) {
+      if (b.nodes) {
+        const cent = buildingCentroid(b.nodes, nodeMap);
+        if (cent) {
+          const d = distanceMeters(target, cent);
+          if (d < nearestDist) { nearestDist = d; nearestBuilding = b; }
+        }
+      }
+    }
+
+    // Step 2: Filter to only buildings sharing the same address (street + housenumber)
+    const refTags = nearestBuilding.tags || {};
+    const refStreet = refTags["addr:street"] || "";
+    const refNumber = refTags["addr:housenumber"] || "";
+    let plotBuildings;
+    if (refStreet && refNumber) {
+      // If the nearest building has address tags, match all buildings with same address
+      plotBuildings = allBuildings.filter((b: { tags?: Record<string, string> }) => {
+        const t = b.tags || {};
+        return (t["addr:street"] === refStreet && t["addr:housenumber"] === refNumber);
+      });
+      // Also include buildings without address tags that are very close (< 15m)
+      // to capture garages, Remise etc. that often lack address tags
+      for (const b of allBuildings) {
+        const t = b.tags || {};
+        if (!t["addr:street"] && b.nodes) {
+          const cent = buildingCentroid(b.nodes, nodeMap);
+          if (cent) {
+            const nearestPlotBuilding = plotBuildings.some((pb: { nodes?: number[] }) => {
+              if (!pb.nodes) return false;
+              const pCent = buildingCentroid(pb.nodes, nodeMap);
+              return pCent && distanceMeters(cent, pCent) < 15;
+            });
+            if (nearestPlotBuilding && !plotBuildings.includes(b)) {
+              plotBuildings.push(b);
+            }
+          }
+        }
+      }
+    } else {
+      // No address tags on nearest building — use only buildings within 15m of search point
+      plotBuildings = allBuildings.filter((b: { nodes?: number[] }) => {
+        if (!b.nodes) return false;
+        const cent = buildingCentroid(b.nodes, nodeMap);
+        return cent && distanceMeters(target, cent) < 15;
+      });
+      if (plotBuildings.length === 0) plotBuildings = [nearestBuilding];
+    }
+
+    // Step 3: Calculate area & levels for EACH building individually
     const buildingDetails: { area: number; levels: number | null; type: string | null }[] = [];
     let totalFootprint = 0;
     let totalGross = 0;
-    let maxLevels = 0;
     let hasLevelData = false;
 
-    for (const building of allBuildings) {
+    for (const building of plotBuildings) {
       const tags = building.tags || {};
       const bLevels = parseInt(tags["building:levels"]) || null;
       const roofLevels = parseInt(tags["roof:levels"]) || 0;
       const totalLevels = bLevels ? bLevels + roofLevels : null;
-      if (totalLevels) {
-        hasLevelData = true;
-        if (totalLevels > maxLevels) maxLevels = totalLevels;
-      }
+      if (totalLevels) hasLevelData = true;
 
       let bArea = 0;
       if (building.nodes && building.nodes.length > 2) {
@@ -148,7 +229,8 @@ out skel qt;`;
 
       if (bArea > 0) {
         totalFootprint += bArea;
-        const effectiveLevels = totalLevels || (bArea > 100 ? 3 : 2); // default estimate
+        // Use INDIVIDUAL floor count per building, not a shared max
+        const effectiveLevels = totalLevels || (bArea > 100 ? 2 : 1);
         totalGross += bArea * effectiveLevels;
       }
 
@@ -160,12 +242,16 @@ out skel qt;`;
     }
 
     const footprintArea = totalFootprint > 0 ? totalFootprint : null;
-    const levels = hasLevelData ? maxLevels : null;
+    // Show individual building levels in detail, but use weighted average for summary
+    const levelsWithData = buildingDetails.filter(b => b.levels !== null);
+    const levels = levelsWithData.length > 0
+      ? Math.round(levelsWithData.reduce((s, b) => s + (b.levels || 0), 0) / levelsWithData.length)
+      : null;
     const estimatedGrossArea = totalGross > 0 ? Math.round(totalGross) : null;
 
-    const isMFH = allBuildings.some((b: { tags?: Record<string, string> }) =>
+    const isMFH = plotBuildings.some((b: { tags?: Record<string, string> }) =>
       b.tags?.building === "apartments" || b.tags?.building === "residential"
-    ) || (levels !== null && levels >= 3) || (footprintArea !== null && footprintArea > 200) || allBuildings.length >= 2;
+    ) || (levels !== null && levels >= 3) || (footprintArea !== null && footprintArea > 200) || plotBuildings.length >= 2;
 
     const confidence: "high" | "medium" | "low" =
       (footprintArea && hasLevelData) ? "high" :
@@ -175,10 +261,10 @@ out skel qt;`;
       footprintArea,
       levels,
       estimatedGrossArea,
-      buildingType: allBuildings[0]?.tags?.building || null,
+      buildingType: nearestBuilding.tags?.building || null,
       isMFH,
       confidence,
-      buildingCount: allBuildings.length,
+      buildingCount: plotBuildings.length,
       buildings: buildingDetails,
       nearbyBusinesses: [],
     };
@@ -224,6 +310,7 @@ out body;`;
         email: tags.email || tags["contact:email"] || null,
         distance: dist,
         address: tags["addr:street"] ? `${tags["addr:street"]} ${tags["addr:housenumber"] || ""}`.trim() : null,
+        opening_hours: tags.opening_hours || null,
       };
     }).sort((a: NearbyBusiness, b: NearbyBusiness) => a.distance - b.distance);
   } catch {
@@ -295,6 +382,8 @@ const CRM = () => {
   const [selectedLead, setSelectedLead] = useState<string | null>(null);
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const [logForm, setLogForm] = useState({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 });
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  const [editLogForm, setEditLogForm] = useState({ notes: "", outcome: "" });
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addForm, setAddForm] = useState({ name: "", company: "", phone: "", email: "", address: "", category: "geschaeft", notes: "" });
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -518,6 +607,32 @@ const CRM = () => {
       toast.success("Gespräch geloggt");
       setLogDialogOpen(false);
       setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Edit a call log entry
+  const editCallLog = useMutation({
+    mutationFn: async ({ id, notes, outcome }: { id: string; notes: string; outcome: string }) => {
+      // Append edit history to notes
+      const originalLog = callLogs.find((l: { id: string }) => l.id === id);
+      const editTimestamp = new Date().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+      const historyEntry = `\n--- Bearbeitet am ${editTimestamp} ---`;
+      const oldNotes = originalLog?.notes || "";
+      const updatedNotes = oldNotes !== notes
+        ? `${notes}${historyEntry}\nVorher: ${oldNotes}`
+        : notes;
+      const { error } = await supabase.from("crm_call_logs").update({
+        notes: updatedNotes,
+        outcome,
+      }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crm_call_logs"] });
+      toast.success("Gesprächsnotiz aktualisiert");
+      setEditingLogId(null);
+      setEditLogForm({ notes: "", outcome: "" });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -797,42 +912,48 @@ const CRM = () => {
                                     {place.buildingInfo.nearbyBusinesses.length} Geschäfte in der Nähe
                                   </span>
                                 </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {place.buildingInfo.nearbyBusinesses.slice(0, 6).map((biz, idx) => (
-                                    <Tooltip key={idx}>
-                                      <TooltipTrigger asChild>
-                                        <Badge variant="secondary" className="text-[10px] gap-1 cursor-help">
-                                          <Store className="h-2.5 w-2.5" />
-                                          {biz.name}
-                                          {biz.phone && <Phone className="h-2 w-2 text-green-600" />}
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="text-xs max-w-[280px] space-y-1">
-                                        <div className="font-medium">{biz.name}</div>
-                                        <div className="text-muted-foreground capitalize">{biz.type} · {biz.distance}m entfernt</div>
-                                        {biz.address && <div>{biz.address}</div>}
-                                        {biz.phone && (
-                                          <a href={`tel:${biz.phone}`} className="text-primary hover:underline flex items-center gap-1">
-                                            <Phone className="h-3 w-3" /> {biz.phone}
-                                          </a>
+                                <div className="space-y-1.5">
+                                  {place.buildingInfo.nearbyBusinesses.slice(0, 8).map((biz, idx) => (
+                                    <div key={idx} className="flex items-start gap-2 p-1.5 rounded bg-secondary/30 text-[11px]">
+                                      <Store className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="font-medium">{biz.name}</span>
+                                          <span className="text-muted-foreground capitalize">{biz.type}</span>
+                                          <span className="text-muted-foreground">{biz.distance}m</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                          {biz.phone && (
+                                            <a href={`tel:${biz.phone}`} className="text-primary hover:underline flex items-center gap-0.5">
+                                              <Phone className="h-2.5 w-2.5" /> {biz.phone}
+                                            </a>
+                                          )}
+                                          {biz.email && (
+                                            <a href={`mailto:${biz.email}`} className="text-primary hover:underline flex items-center gap-0.5">
+                                              <Mail className="h-2.5 w-2.5" /> {biz.email}
+                                            </a>
+                                          )}
+                                          {biz.website && (
+                                            <a href={biz.website} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
+                                              <Globe className="h-2.5 w-2.5" /> Web
+                                            </a>
+                                          )}
+                                          {biz.opening_hours && (
+                                            <span className="text-muted-foreground flex items-center gap-0.5">
+                                              <Clock className="h-2.5 w-2.5" /> {biz.opening_hours}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {biz.address && (
+                                          <span className="text-muted-foreground text-[10px]">{biz.address}</span>
                                         )}
-                                        {biz.email && (
-                                          <a href={`mailto:${biz.email}`} className="text-primary hover:underline flex items-center gap-1">
-                                            <Mail className="h-3 w-3" /> {biz.email}
-                                          </a>
-                                        )}
-                                        {biz.website && (
-                                          <a href={biz.website} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                                            <Globe className="h-3 w-3" /> Website
-                                          </a>
-                                        )}
-                                      </TooltipContent>
-                                    </Tooltip>
+                                      </div>
+                                    </div>
                                   ))}
-                                  {place.buildingInfo.nearbyBusinesses.length > 6 && (
-                                    <Badge variant="secondary" className="text-[10px]">
-                                      +{place.buildingInfo.nearbyBusinesses.length - 6} weitere
-                                    </Badge>
+                                  {place.buildingInfo.nearbyBusinesses.length > 8 && (
+                                    <p className="text-[10px] text-muted-foreground pl-5">
+                                      +{place.buildingInfo.nearbyBusinesses.length - 8} weitere Geschäfte
+                                    </p>
                                   )}
                                 </div>
                               </div>
@@ -1003,19 +1124,86 @@ const CRM = () => {
                       ) : (
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {callLogs.map((log: { id: string; outcome: string; call_date: string; duration_minutes: number; notes?: string }) => (
-                            <div key={log.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-secondary/50 text-sm">
+                            <div key={log.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-secondary/50 text-sm group">
                               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-[10px]">{outcomeLabels[log.outcome] || log.outcome}</Badge>
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {new Date(log.call_date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                                  </span>
-                                  {log.duration_minutes > 0 && (
-                                    <span className="text-[10px] text-muted-foreground">{log.duration_minutes} Min.</span>
-                                  )}
-                                </div>
-                                {log.notes && <p className="text-xs mt-1 text-muted-foreground">{log.notes}</p>}
+                                {editingLogId === log.id ? (
+                                  <div className="space-y-2">
+                                    <Select value={editLogForm.outcome} onValueChange={v => setEditLogForm(p => ({ ...p, outcome: v }))}>
+                                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        {Object.entries(outcomeLabels).map(([k, v]) => (
+                                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <Textarea
+                                      value={editLogForm.notes}
+                                      onChange={e => setEditLogForm(p => ({ ...p, notes: e.target.value }))}
+                                      rows={3}
+                                      className="text-xs"
+                                      placeholder="Notizen bearbeiten..."
+                                    />
+                                    <div className="flex gap-1">
+                                      <Button size="sm" className="h-6 text-xs" onClick={() => editCallLog.mutate({ id: log.id, notes: editLogForm.notes, outcome: editLogForm.outcome })}>
+                                        <Save className="h-3 w-3 mr-1" /> Speichern
+                                      </Button>
+                                      <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setEditingLogId(null)}>
+                                        Abbrechen
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-[10px]">{outcomeLabels[log.outcome] || log.outcome}</Badge>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {new Date(log.call_date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                                      </span>
+                                      {log.duration_minutes > 0 && (
+                                        <span className="text-[10px] text-muted-foreground">{log.duration_minutes} Min.</span>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity ml-auto"
+                                        onClick={() => {
+                                          setEditingLogId(log.id);
+                                          // Strip edit history from displayed notes for editing
+                                          const rawNotes = log.notes || "";
+                                          const historyIdx = rawNotes.indexOf("\n--- Bearbeitet am");
+                                          setEditLogForm({
+                                            notes: historyIdx > -1 ? rawNotes.substring(0, historyIdx) : rawNotes,
+                                            outcome: log.outcome,
+                                          });
+                                        }}
+                                      >
+                                        <Edit2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                    {log.notes && (
+                                      <div className="mt-1">
+                                        {log.notes.includes("--- Bearbeitet am") ? (
+                                          <>
+                                            <p className="text-xs text-muted-foreground whitespace-pre-line">
+                                              {log.notes.substring(0, log.notes.indexOf("\n--- Bearbeitet am"))}
+                                            </p>
+                                            <details className="mt-1">
+                                              <summary className="text-[10px] text-muted-foreground/60 cursor-pointer flex items-center gap-1">
+                                                <History className="h-2.5 w-2.5" /> Bearbeitungsverlauf
+                                              </summary>
+                                              <p className="text-[10px] text-muted-foreground/50 whitespace-pre-line mt-0.5">
+                                                {log.notes.substring(log.notes.indexOf("\n--- Bearbeitet am"))}
+                                              </p>
+                                            </details>
+                                          </>
+                                        ) : (
+                                          <p className="text-xs text-muted-foreground whitespace-pre-line">{log.notes}</p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                )}
                               </div>
                             </div>
                           ))}

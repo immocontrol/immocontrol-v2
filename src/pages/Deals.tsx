@@ -116,6 +116,14 @@ const Deals = () => {
     ? Math.round(activeDeals.reduce((s: number, d: { created_at: string }) => s + Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000), 0) / activeDeals.length)
     : 0;
 
+  // Improvement 1: Pipeline value per stage
+  const stageValues = STAGES.reduce((acc, s) => {
+    acc[s.key] = deals
+      .filter((d: { stage: string; purchase_price?: number }) => d.stage === s.key)
+      .reduce((sum: number, d: { purchase_price?: number }) => sum + (d.purchase_price || 0), 0);
+    return acc;
+  }, {} as Record<string, number>);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -154,6 +162,9 @@ const Deals = () => {
                   <div className={cn("w-2.5 h-2.5 rounded-full", stage.color)} />
                   <span className="text-sm font-semibold">{stage.label}</span>
                   <Badge variant="outline" className="text-[10px] ml-auto">{stageDeals.length}</Badge>
+                  {stageValues[stage.key] > 0 && (
+                    <span className="text-[9px] text-muted-foreground">{fmt(stageValues[stage.key])}</span>
+                  )}
                 </div>
                 <div className="space-y-2">
                   {stageDeals.map((deal: any) => {

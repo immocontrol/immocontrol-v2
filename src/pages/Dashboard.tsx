@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3 } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import PortfolioForecast from "@/components/PortfolioForecast";
 import RenditeRanking from "@/components/RenditeRanking";
@@ -94,6 +94,8 @@ const Dashboard = () => {
   const [sort, setSort] = useState<SortType>("name");
   const [refreshing, setRefreshing] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const [chartsCollapsed, setChartsCollapsed] = useState(false);
+  const [widgetsCollapsed, setWidgetsCollapsed] = useState(false);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -448,21 +450,21 @@ ${properties.map(p => `<tr>
         />
       </div>
 
-      {/* Quick KPI row */}
+      {/* Improvement 15: Quick KPI row with card-hover-glow */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "210ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "210ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "220ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "220ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "230ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "230ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
           <p className="text-lg font-bold">{formatCurrency(annualIncome)}</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in" style={{ animationDelay: "240ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "240ms" }}>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahres-Cashflow</p>
           <p className={`text-lg font-bold ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
         </div>
@@ -584,111 +586,7 @@ ${properties.map(p => `<tr>
       {/* Overdue Payment Banner */}
       <OverduePaymentBanner />
 
-      {/* Portfolio Forecast + Rendite Ranking */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <PortfolioForecast />
-        <RenditeRanking />
-      </div>
-
-      {/* Cashflow Waterfall + Diversification */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <WasserfallChart />
-        <DiversifikationsScore />
-      </div>
-
-      {/* Tilgungs Progress + Steuer Helfer */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <TilgungsProgress />
-        <SteuerHelfer />
-      </div>
-
-      {/* NEW: Annual Summary + Cash Reserve */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <AnnualSummaryCard />
-        <CashReserveWidget />
-      </div>
-
-      {/* NEW: Stress Test + Milestones */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <MortgageStressTest />
-        <PortfolioMilestones />
-      </div>
-
-      {/* NEW: Tax + GEG + Mietpreisbremse */}
-      <div className="grid md:grid-cols-3 gap-3">
-        <TaxDeadlineReminder />
-        <GEGComplianceChecker />
-        <MietpreisbremseChecker />
-      </div>
-
-      {/* NEW: Refinancing + Grundsteuer + Hausgeld */}
-      <div className="grid md:grid-cols-3 gap-3">
-        <LoanRefinancingCalc />
-        <GrundsteuerCalculator />
-        <HausgeldTracker />
-      </div>
-
-      {/* NEW: Vacancy Cost + Renovation ROI */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <VacancyCostCalc />
-        <RenovationROICalc />
-      </div>
-
-      {/* Budget vs Actual + Rent Collection */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <BudgetVsActual />
-        <RentCollectionChart />
-      </div>
-
-      {/* Year over Year + Contract Expiry */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <YearOverYear />
-        <ContractExpiryCountdown />
-      </div>
-
-      {/* Expense Breakdown + Maintenance Trend */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <ExpenseCategoryBreakdown />
-        <MaintenanceCostTrend />
-      </div>
-
-      {/* Portfolio Allocation + Loan Amortization */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <PortfolioAllocationWidget />
-        <LoanAmortizationMini />
-      </div>
-
-      {/* Debt/Equity + Net Worth */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />
-        <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />
-      </div>
-
-      {/* Tenant Lease Alerts */}
-      <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />
-
-      {/* Action Center */}
-      <DashboardActionCenter />
-
-      {/* Charts */}
-      <Suspense fallback={<div className="grid md:grid-cols-2 gap-3"><div className="h-64 bg-secondary/50 rounded-xl animate-pulse" /><div className="h-64 bg-secondary/50 rounded-xl animate-pulse" /></div>}>
-        <div className="grid md:grid-cols-2 gap-3">
-          <PortfolioChart />
-          <CashflowChart />
-        </div>
-      </Suspense>
-
-      {/* Monthly Overview */}
-      <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
-        <MonthlyOverviewChart />
-      </Suspense>
-
-      {/* Map */}
-      <Suspense fallback={<div className="h-96 bg-secondary/50 rounded-xl animate-pulse" />}>
-        <PropertyMap />
-      </Suspense>
-
-      {/* Search + Sort + Filter */}
+      {/* Search + Sort + Filter - MOVED UP for sticky properties */}
       <div className="flex flex-col gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -782,6 +680,35 @@ ${properties.map(p => `<tr>
         </div>
       )}
 
+      {/* Properties - STICKY AT TOP */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pb-3 -mx-1 px-1">
+        {filteredProperties.length === 0 ? (
+          <div className="text-center py-8 animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
+              <Search className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium mb-1">Keine Ergebnisse</p>
+            <p className="text-xs text-muted-foreground">Keine Objekte gefunden für „{search}“</p>
+            <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => setSearch("")}>
+              Suche zurücksetzen
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 list-stagger">
+            {filteredProperties.map((property, i) => (
+              <PropertyCard
+                key={property.id}
+                {...property}
+                monthlyExpenses={property.monthlyExpenses}
+                monthlyCreditRate={property.monthlyCreditRate}
+                ownership={property.ownership}
+                delay={i * 60}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Occupancy Tracker */}
       {allTenants.length > 0 && (
         <OccupancyTracker
@@ -805,32 +732,99 @@ ${properties.map(p => `<tr>
         <QuickNoteWidget />
       </div>
 
-      {/* Properties */}
-      {filteredProperties.length === 0 ? (
-        <div className="text-center py-12 animate-fade-in">
-          <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
-            <Search className="h-6 w-6 text-muted-foreground" />
+      {/* Collapsible Widgets Section */}
+      <div>
+        <button
+          onClick={() => setWidgetsCollapsed(!widgetsCollapsed)}
+          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3 w-full"
+        >
+          {widgetsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          Analyse & Widgets {widgetsCollapsed ? "einblenden" : "ausblenden"}
+        </button>
+        <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[10000px] opacity-100"}`}>
+          <div className="grid md:grid-cols-2 gap-3">
+            <PortfolioForecast />
+            <RenditeRanking />
           </div>
-          <p className="text-sm font-medium mb-1">Keine Ergebnisse</p>
-          <p className="text-xs text-muted-foreground">Keine Objekte gefunden für „{search}"</p>
-          <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => setSearch("")}>
-            Suche zurücksetzen
-          </Button>
+          <div className="grid md:grid-cols-2 gap-3">
+            <WasserfallChart />
+            <DiversifikationsScore />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <TilgungsProgress />
+            <SteuerHelfer />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <AnnualSummaryCard />
+            <CashReserveWidget />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <MortgageStressTest />
+            <PortfolioMilestones />
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <TaxDeadlineReminder />
+            <GEGComplianceChecker />
+            <MietpreisbremseChecker />
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <LoanRefinancingCalc />
+            <GrundsteuerCalculator />
+            <HausgeldTracker />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <VacancyCostCalc />
+            <RenovationROICalc />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <BudgetVsActual />
+            <RentCollectionChart />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <YearOverYear />
+            <ContractExpiryCountdown />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <ExpenseCategoryBreakdown />
+            <MaintenanceCostTrend />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <PortfolioAllocationWidget />
+            <LoanAmortizationMini />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />
+            <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />
+          </div>
+          <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />
+          <DashboardActionCenter />
         </div>
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {filteredProperties.map((property, i) => (
-            <PropertyCard
-              key={property.id}
-              {...property}
-              monthlyExpenses={property.monthlyExpenses}
-              monthlyCreditRate={property.monthlyCreditRate}
-              ownership={property.ownership}
-              delay={i * 60}
-            />
-          ))}
+      </div>
+
+      {/* Collapsible Charts Section */}
+      <div>
+        <button
+          onClick={() => setChartsCollapsed(!chartsCollapsed)}
+          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3 w-full"
+        >
+          {chartsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          Grafiken & Charts {chartsCollapsed ? "einblenden" : "ausblenden"}
+        </button>
+        <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
+          <Suspense fallback={<div className="grid md:grid-cols-2 gap-3"><div className="h-64 bg-secondary/50 rounded-xl animate-pulse" /><div className="h-64 bg-secondary/50 rounded-xl animate-pulse" /></div>}>
+            <div className="grid md:grid-cols-2 gap-3">
+              <PortfolioChart />
+              <CashflowChart />
+            </div>
+          </Suspense>
+          <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
+            <MonthlyOverviewChart />
+          </Suspense>
+          <Suspense fallback={<div className="h-96 bg-secondary/50 rounded-xl animate-pulse" />}>
+            <PropertyMap />
+          </Suspense>
         </div>
-      )}
+      </div>
     </div>
   );
 };
