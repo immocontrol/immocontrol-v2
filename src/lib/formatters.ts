@@ -277,3 +277,61 @@ export const normalizeString = (str: string): string =>
 /* IMPROVE-50: Format price per square meter with German locale */
 export const formatEuroPerSqm = (totalPrice: number, sqm: number): string =>
   sqm > 0 ? `${numberFormatterDE.format(Math.round(totalPrice / sqm))} €/m²` : "–";
+
+/* NEW-51: Validate German postal code (PLZ) — 5 digits */
+export const isValidPLZ = (plz: string): boolean => /^\d{5}$/.test(plz.trim());
+
+/* NEW-52: Format large area values (m²) with appropriate unit */
+export const formatArea = (sqm: number): string => {
+  if (sqm >= 10_000) return `${(sqm / 10_000).toFixed(2).replace(".", ",")} ha`;
+  return `${numberFormatterDE.format(Math.round(sqm))} m²`;
+};
+
+/* NEW-53: Calculate monthly mortgage payment (annuity formula) */
+export const calcMonthlyPayment = (principal: number, annualRate: number, years: number): number => {
+  if (annualRate <= 0 || years <= 0) return principal / (years * 12 || 1);
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+};
+
+/* NEW-54: Format a date range in German locale */
+export const formatDateRange = (start: string, end: string): string =>
+  `${formatDate(start)} – ${formatDate(end)}`;
+
+/* NEW-55: Calculate remaining loan term in months */
+export const calcRemainingMonths = (balance: number, monthlyPayment: number, annualRate: number): number => {
+  if (monthlyPayment <= 0 || balance <= 0) return 0;
+  const r = annualRate / 100 / 12;
+  if (r <= 0) return Math.ceil(balance / monthlyPayment);
+  const months = -Math.log(1 - (balance * r) / monthlyPayment) / Math.log(1 + r);
+  return Math.ceil(Math.max(0, isFinite(months) ? months : 0));
+};
+
+/* NEW-56: Capitalize first letter of each word (German-aware) */
+export const capitalizeWords = (str: string): string =>
+  str.replace(/\b\w/g, c => c.toUpperCase());
+
+/* NEW-57: Check if a value is within a percentage tolerance of a target */
+export const isWithinTolerance = (value: number, target: number, tolerancePct: number): boolean =>
+  target > 0 ? Math.abs(value - target) / target * 100 <= tolerancePct : value === 0;
+
+/* NEW-58: Format interest rate with German decimal separator */
+export const formatInterestRate = (rate: number): string =>
+  `${rate.toFixed(2).replace(".", ",")} %`;
+
+/* NEW-59: Generate a color from a string (for consistent avatar/chart colors) */
+export const stringToColor = (str: string): string => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 55%, 50%)`;
+};
+
+/* NEW-60: Format a number as a compact German string with sign */
+export const formatSignedCompact = (value: number): string => {
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${formatCompactDE(value)}`;
+};

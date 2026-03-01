@@ -1,6 +1,6 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Home, TrendingUp, ChevronRight, Percent, Wallet } from "lucide-react";
+import { MapPin, Home, TrendingUp, ChevronRight, Percent, Wallet, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
 interface PropertyCardProps {
@@ -20,6 +20,7 @@ interface PropertyCardProps {
   ownership?: string;
   imageUrl?: string;
   delay?: number;
+  yearBuilt?: number;
 }
 
 const PropertyCard = memo(({
@@ -38,13 +39,21 @@ const PropertyCard = memo(({
   sqm,
   ownership,
   delay = 0,
+  yearBuilt,
 }: PropertyCardProps) => {
-  const appreciation = purchasePrice > 0 ? ((currentValue - purchasePrice) / purchasePrice) * 100 : 0;
-  const pricePerSqm = sqm && sqm > 0 ? currentValue / sqm : null;
-  const bruttoRendite = purchasePrice > 0 ? ((monthlyRent * 12) / purchasePrice) * 100 : 0;
-  const ltv = currentValue > 0 ? (remainingDebt / currentValue) * 100 : 0;
-  // Improvement 1: Expense ratio
-  const expenseRatio = monthlyRent > 0 ? ((monthlyExpenses + monthlyCreditRate) / monthlyRent) * 100 : 0;
+  /* NEW-61: Memoize all derived calculations to prevent re-computation on parent re-renders */
+  const metrics = useMemo(() => {
+    const appreciation = purchasePrice > 0 ? ((currentValue - purchasePrice) / purchasePrice) * 100 : 0;
+    const pricePerSqm = sqm && sqm > 0 ? currentValue / sqm : null;
+    const bruttoRendite = purchasePrice > 0 ? ((monthlyRent * 12) / purchasePrice) * 100 : 0;
+    const ltv = currentValue > 0 ? (remainingDebt / currentValue) * 100 : 0;
+    const expenseRatio = monthlyRent > 0 ? ((monthlyExpenses + monthlyCreditRate) / monthlyRent) * 100 : 0;
+    /* NEW-62: Net yield after expenses */
+    const nettoRendite = purchasePrice > 0 ? (((monthlyRent - monthlyExpenses) * 12) / purchasePrice) * 100 : 0;
+    return { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite };
+  }, [purchasePrice, currentValue, monthlyRent, sqm, remainingDebt, monthlyExpenses, monthlyCreditRate]);
+
+  const { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio } = metrics;
 
   return (
     <Link
@@ -92,6 +101,12 @@ const PropertyCard = memo(({
         {pricePerSqm && (
           <span className="text-xs text-muted-foreground">
             · {formatCurrency(pricePerSqm)}/m²
+          </span>
+        )}
+        {/* NEW-63: Show building year if available */}
+        {yearBuilt && yearBuilt > 0 && (
+          <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+            <Calendar className="h-3 w-3" /> {yearBuilt}
           </span>
         )}
       </div>
