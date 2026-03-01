@@ -327,7 +327,6 @@
 
   /* IMP-9: Ensure all containers respect viewport width */
   .container {
-    max-width: 100%;
     overflow-x: hidden;
   }
 
