@@ -8,6 +8,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,13 +22,13 @@ const DEFAULT_SHORTCUTS: Record<string, string> = {
   "Navigation: Portfolio": "Alt+1",
   "Navigation: Darlehen": "Alt+2",
   "Navigation: Mieten": "Alt+3",
-  "Navigation: Vertraege": "Alt+4",
+  "Navigation: Verträge": "Alt+4",
   "Navigation: Kontakte": "Alt+5",
   "Navigation: Aufgaben": "Alt+6",
   "Navigation: Berichte": "Alt+7",
   "Navigation: CRM": "Alt+8",
   "Navigation: Einstellungen": "Alt+9",
-  "Suche oeffnen": "Ctrl+K",
+  "Suche öffnen": "Ctrl+K",
   "Neues Objekt": "Ctrl+N",
 };
 
@@ -165,7 +166,7 @@ const Settings = () => {
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Passwoerter stimmen nicht ueberein");
+      toast.error("Passwörter stimmen nicht überein");
       return;
     }
     if (newPassword.length < 6) {
@@ -193,7 +194,7 @@ const Settings = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Passwort geaendert!");
+      toast.success("Passwort geändert!");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -239,7 +240,7 @@ const Settings = () => {
       setTotpVerifyCode("");
       toast.success("2FA erfolgreich aktiviert!");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Ungueltiger Code");
+      toast.error(err instanceof Error ? err.message : "Ungültiger Code");
     } finally {
       setTotpLoading(false);
     }
@@ -337,7 +338,7 @@ const Settings = () => {
       ([key, val]) => key !== action && val.toLowerCase() === trimmed.toLowerCase()
     );
     if (duplicate) {
-      toast.error(`Diese Kombination wird bereits verwendet fuer: ${duplicate[0]}`);
+      toast.error(`Diese Kombination wird bereits für: ${duplicate[0]} verwendet`);
       return;
     }
     const updated = { ...shortcuts, [action]: trimmed };
@@ -353,13 +354,13 @@ const Settings = () => {
     setEditingValue(value);
     const upper = value.toUpperCase().replace(/\s/g, "");
     if (CRITICAL_KEYS.some(k => k.toUpperCase().replace(/\s/g, "") === upper)) {
-      setShortcutWarning("Achtung: Diese Tastenkombination wird vom Browser verwendet und koennte Konflikte verursachen!");
+      setShortcutWarning("Achtung: Diese Tastenkombination wird vom Browser verwendet und könnte Konflikte verursachen!");
     } else {
       const dup = Object.entries(shortcuts).find(
         ([key, val]) => key !== editingShortcut && val.toLowerCase().replace(/\s/g, "") === upper.toLowerCase()
       );
       if (dup) {
-        setShortcutWarning(`Duplikat: Wird bereits fuer "${dup[0]}" verwendet`);
+        setShortcutWarning(`Duplikat: Wird bereits für "${dup[0]}" verwendet`);
       } else {
         setShortcutWarning("");
       }
@@ -369,7 +370,7 @@ const Settings = () => {
   const resetShortcuts = () => {
     setShortcuts({ ...DEFAULT_SHORTCUTS });
     saveCustomShortcuts({ ...DEFAULT_SHORTCUTS });
-    toast.success("Tastenkombinationen zurueckgesetzt");
+    toast.success("Tastenkombinationen zurückgesetzt");
   };
 
   const handleLogout = async () => {
@@ -494,7 +495,7 @@ const Settings = () => {
       {/* Password — requires old password + eye icons */}
       <form onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
         <h2 className="text-sm font-semibold flex items-center gap-2">
-          <Lock className="h-4 w-4 text-muted-foreground" /> Passwort aendern
+          <Lock className="h-4 w-4 text-muted-foreground" /> Passwort ändern
         </h2>
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Aktuelles Passwort *</Label>
@@ -543,7 +544,7 @@ const Settings = () => {
           <PasswordStrength password={newPassword} />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Passwort bestaetigen *</Label>
+          <Label className="text-xs text-muted-foreground">Passwort bestätigen *</Label>
           <div className="relative">
             <Input
               type={showConfirmPassword ? "text" : "password"}
@@ -564,17 +565,17 @@ const Settings = () => {
           </div>
           {confirmPassword && newPassword !== confirmPassword && (
             <p className="text-[10px] text-loss flex items-center gap-1">
-              <X className="h-3 w-3" /> Passwoerter stimmen nicht ueberein
+              <X className="h-3 w-3" /> Passwörter stimmen nicht überein
             </p>
           )}
           {confirmPassword && newPassword === confirmPassword && confirmPassword.length >= 6 && (
             <p className="text-[10px] text-profit flex items-center gap-1">
-              <Check className="h-3 w-3" /> Passwoerter stimmen ueberein
+              <Check className="h-3 w-3" /> Passwörter stimmen überein
             </p>
           )}
         </div>
         <Button type="submit" size="sm" disabled={loading || !oldPassword || !newPassword || newPassword !== confirmPassword}>
-          Passwort aendern
+          Passwort ändern
         </Button>
       </form>
 
@@ -584,7 +585,7 @@ const Settings = () => {
           <Shield className="h-4 w-4 text-muted-foreground" /> Zwei-Faktor-Authentifizierung (2FA)
         </h2>
         <p className="text-xs text-muted-foreground">
-          Schuetze dein Konto mit einer Authenticator-App (Google Authenticator, Authy, 1Password etc.)
+          Schütze dein Konto mit einer Authenticator-App (Google Authenticator, Authy, 1Password etc.)
         </p>
         {totpEnabled ? (
           <div className="flex items-center justify-between p-3 bg-profit/10 rounded-lg border border-profit/20">
@@ -616,20 +617,21 @@ const Settings = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Scanne den QR-Code mit deiner Authenticator-App oder gib den Schluessel manuell ein.
+              Scanne den QR-Code mit deiner Authenticator-App oder gib den Schlüssel manuell ein.
             </p>
             {totpQrUri && (
               <div className="flex flex-col items-center gap-3 p-4 bg-white rounded-lg">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpQrUri)}`}
-                  alt="2FA QR Code"
-                  className="w-48 h-48"
+                <QRCodeSVG
+                  value={totpQrUri}
+                  size={192}
+                  level="M"
+                  includeMargin
                 />
               </div>
             )}
             {totpSecret && (
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Manueller Schluessel</Label>
+                <Label className="text-xs text-muted-foreground">Manueller Schlüssel</Label>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs bg-secondary p-2 rounded font-mono break-all select-all">
                     {totpSecret}
@@ -638,7 +640,7 @@ const Settings = () => {
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 shrink-0"
-                    onClick={() => { navigator.clipboard.writeText(totpSecret); toast.success("Schluessel kopiert"); }}
+                    onClick={() => { navigator.clipboard.writeText(totpSecret); toast.success("Schlüssel kopiert"); }}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
@@ -646,7 +648,7 @@ const Settings = () => {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Bestaetigungscode (6 Ziffern)</Label>
+              <Label className="text-xs text-muted-foreground">Bestätigungscode (6 Ziffern)</Label>
               <Input
                 type="text"
                 inputMode="numeric"
@@ -670,11 +672,11 @@ const Settings = () => {
           <Fingerprint className="h-4 w-4 text-muted-foreground" /> Passkeys
         </h2>
         <p className="text-xs text-muted-foreground">
-          Melde dich mit Fingerabdruck, Gesichtserkennung oder deinem Geraete-PIN an.
+          Melde dich mit Fingerabdruck, Gesichtserkennung oder deinem Geräte-PIN an.
         </p>
         {!passkeySupported ? (
           <p className="text-xs text-loss flex items-center gap-1">
-            <AlertCircle className="h-3.5 w-3.5" /> Dein Browser unterstuetzt keine Passkeys
+            <AlertCircle className="h-3.5 w-3.5" /> Dein Browser unterstützt keine Passkeys
           </p>
         ) : (
           <>
@@ -700,7 +702,7 @@ const Settings = () => {
             )}
             <Button variant="outline" size="sm" className="gap-1.5" onClick={registerPasskey} disabled={passkeyLoading}>
               <Fingerprint className="h-3.5 w-3.5" />
-              {passkeyLoading ? "Registriere..." : "Passkey hinzufuegen"}
+              {passkeyLoading ? "Registriere..." : "Passkey hinzufügen"}
             </Button>
           </>
         )}
@@ -776,7 +778,7 @@ const Settings = () => {
             <Keyboard className="h-4 w-4 text-muted-foreground" /> Tastenkombinationen
           </h2>
           <Button variant="ghost" size="sm" className="h-7 text-[10px] text-muted-foreground" onClick={resetShortcuts}>
-            Zuruecksetzen
+            Zurücksetzen
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">

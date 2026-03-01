@@ -77,9 +77,46 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
-/* OPT-25: Keyboard shortcut map for quick lookup */
-const SHORTCUT_MAP: Record<string, string> = {};
-navItems.forEach(n => { SHORTCUT_MAP[n.shortcut] = n.path; });
+/* OPT-25: Default keyboard shortcut map for quick lookup */
+const DEFAULT_SHORTCUT_MAP: Record<string, string> = {};
+navItems.forEach(n => { if (n.shortcut) DEFAULT_SHORTCUT_MAP[`Alt+${n.shortcut}`] = n.path; });
+
+/* Map action labels to paths for custom shortcut resolution */
+const ACTION_TO_PATH: Record<string, string> = {
+  "Navigation: Portfolio": "/",
+  "Navigation: Darlehen": "/darlehen",
+  "Navigation: Mieten": "/mietuebersicht",
+  "Navigation: Verträge": "/vertraege",
+  "Navigation: Kontakte": "/kontakte",
+  "Navigation: Aufgaben": "/aufgaben",
+  "Navigation: Berichte": "/berichte",
+  "Navigation: CRM": "/crm",
+  "Navigation: Einstellungen": "/einstellungen",
+};
+
+/** Load custom shortcuts from localStorage and build combo→path map */
+function buildShortcutMap(): Record<string, string> {
+  try {
+    const stored = localStorage.getItem("immocontrol_shortcuts");
+    if (stored) {
+      const custom = JSON.parse(stored) as Record<string, string>;
+      const map: Record<string, string> = {};
+      for (const [action, combo] of Object.entries(custom)) {
+        const path = ACTION_TO_PATH[action];
+        if (path && combo) {
+          map[combo.toLowerCase().replace(/\s/g, "")] = path;
+        }
+      }
+      if (Object.keys(map).length > 0) return map;
+    }
+  } catch { /* ignore corrupt localStorage */ }
+  /* Fallback to defaults */
+  const map: Record<string, string> = {};
+  for (const [combo, path] of Object.entries(DEFAULT_SHORTCUT_MAP)) {
+    map[combo.toLowerCase().replace(/\s/g, "")] = path;
+  }
+  return map;
+}
 
 /* OPT-26: Route matching helper */
 const isRouteActive = (itemPath: string, currentPath: string): boolean =>
@@ -181,19 +218,44 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return null;
   }, [location.pathname, propertyName]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — load custom shortcuts from localStorage
   const navigateTo = useCallback((path: string) => {
     navigate(path);
   }, [navigate]);
+
+  /* Rebuild shortcut map when Settings saves to localStorage */
+  const shortcutMapRef = useRef<Record<string, string>>(buildShortcutMap());
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "immocontrol_shortcuts") {
+        shortcutMapRef.current = buildShortcutMap();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    /* Also rebuild on focus (covers same-tab localStorage writes) */
+    const onFocus = () => { shortcutMapRef.current = buildShortcutMap(); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      // removed quick todo shortcut
-      if (!e.altKey || e.ctrlKey || e.metaKey) return;
-      /* OPT-25: O(1) keyboard shortcut lookup */
-      const path = SHORTCUT_MAP[e.key];
+
+      /* Build normalised combo string from the event */
+      const parts: string[] = [];
+      if (e.ctrlKey || e.metaKey) parts.push("ctrl");
+      if (e.altKey) parts.push("alt");
+      if (e.shiftKey) parts.push("shift");
+      const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      if (!["Control", "Alt", "Shift", "Meta"].includes(e.key)) parts.push(key.toLowerCase());
+      const combo = parts.join("+");
+
+      const path = shortcutMapRef.current[combo];
       if (path) {
         e.preventDefault();
         navigateTo(path);
