@@ -264,14 +264,9 @@ const RoleRouter = () => {
 };
 
 const App = () => {
-  React.useEffect(() => {
-    const handler = (e: PromiseRejectionEvent) => {
-      console.error("Unhandled rejection:", e.reason);
-      e.preventDefault();
-    };
-    window.addEventListener("unhandledrejection", handler);
-    return () => window.removeEventListener("unhandledrejection", handler);
-  }, []);
+  /* Unhandled rejection logging is handled by ErrorInterceptor (ErrorScanner.tsx)
+   * which registers its own window.unhandledrejection listener. No duplicate
+   * handler needed here — that would cause double-logging in the error store. */
 
   return (
     <ThemeProvider defaultTheme="dark">
