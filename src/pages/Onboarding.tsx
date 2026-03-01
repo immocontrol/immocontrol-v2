@@ -158,7 +158,8 @@ const Onboarding = () => {
         </div>
 
         {/* Progress */}
-        <div className="flex gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={totalSteps} aria-label={`Schritt ${step + 1} von ${totalSteps}`}>
+        {/* IMP-47: Add proper ARIA attributes to progress bar for accessibility */}
+        <div className="flex gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={totalSteps} aria-label={`Onboarding Fortschritt: Schritt ${step + 1} von ${totalSteps} — ${ONBOARDING_STEPS[step]?.label}`}>
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}

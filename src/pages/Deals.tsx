@@ -93,7 +93,8 @@ const Deals = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["deals"] }),
   });
 
-  const openEdit = (deal: any) => {
+  /* IMP-21: Replace `any` with proper deal record type */
+  const openEdit = (deal: Record<string, unknown>) => {
     setEditDeal(deal);
     setForm({
       title: deal.title, address: deal.address || "", description: deal.description || "",
@@ -130,9 +131,10 @@ const Deals = () => {
   }, [deals]);
 
   /* FUNC-16: Deal source analytics */
+  /* IMP-18: Replace `any` with proper deal type */
   const sourceAnalytics = useMemo(() => {
     const sources: Record<string, number> = {};
-    deals.forEach((d: any) => {
+    deals.forEach((d: { source?: string }) => {
       const src = d.source || "Unbekannt";
       sources[src] = (sources[src] || 0) + 1;
     });
@@ -147,10 +149,11 @@ const Deals = () => {
   }, [deals]);
 
   /* FUNC-18: Pipeline velocity - avg days in current stage */
+  /* IMP-19: Replace `any` with proper deal type */
   const pipelineVelocity = useMemo(() => {
-    const active = deals.filter((d: any) => d.stage !== "abgeschlossen" && d.stage !== "abgelehnt");
+    const active = deals.filter((d: { stage: string }) => d.stage !== "abgeschlossen" && d.stage !== "abgelehnt");
     if (active.length === 0) return 0;
-    const totalDays = active.reduce((s: number, d: any) => {
+    const totalDays = active.reduce((s: number, d: { created_at: string }) => {
       const created = new Date(d.created_at || Date.now()).getTime();
       return s + (Date.now() - created) / (1000 * 60 * 60 * 24);
     }, 0);
@@ -158,9 +161,10 @@ const Deals = () => {
   }, [deals]);
 
   /* OPT-15: Memoized deal property type distribution */
+  /* IMP-20: Replace `any` with proper deal type */
   const dealTypeDistribution = useMemo(() => {
     const types: Record<string, number> = {};
-    deals.forEach((d: any) => {
+    deals.forEach((d: { property_type?: string }) => {
       const t = d.property_type || "Sonstige";
       types[t] = (types[t] || 0) + 1;
     });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -146,13 +146,15 @@ const Nebenkosten = () => {
     qc.invalidateQueries({ queryKey: ["utility_billings"] });
   };
 
-  const finalizeBilling = async (id: string) => {
+  /* IMP-17: Wrap finalizeBilling in useCallback for stable reference */
+  const finalizeBilling = useCallback(async (id: string) => {
     await supabase.from("utility_billings").update({ status: "final" }).eq("id", id);
     toast.success("Abrechnung finalisiert");
     qc.invalidateQueries({ queryKey: ["utility_billings"] });
-  };
+  }, [qc]);
 
-  const exportBillingPDF = (billing: any) => {
+  /* IMP-16: Replace `any` with proper billing record type */
+  const exportBillingPDF = (billing: { id: string; property_id: string; tenant_id: string | null; billing_period_start: string; billing_period_end: string; prepayments: number; total_costs: number; tenant_share: number; balance: number; status: string }) => {
     const property = properties.find(p => p.id === billing.property_id);
     const tenant = tenants.find(t => t.id === billing.tenant_id);
     const items = billingItems.filter(i => i.billing_id === billing.id);

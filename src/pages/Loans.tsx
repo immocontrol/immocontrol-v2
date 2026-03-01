@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Landmark, Building2, Calendar, AlertTriangle, Edit2, Trash2, Search, X, Plus } from "lucide-react";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
@@ -262,12 +262,14 @@ const Loans = () => {
     setOpen(true);
   };
 
-  const getPropertyOwnership = (propId: string) => properties.find(p => p.id === propId)?.ownership || "privat";
-  const getPropertyName = (propId: string) => properties.find(p => p.id === propId)?.name || "–";
+  /* IMP-24: Memoize property lookup helpers to avoid re-creation on every render */
+  const getPropertyOwnership = useCallback((propId: string) => properties.find(p => p.id === propId)?.ownership || "privat", [properties]);
+  const getPropertyName = useCallback((propId: string) => properties.find(p => p.id === propId)?.name || "–", [properties]);
 
-  const filteredLoans = loans
+  /* IMP-25: Memoize filteredLoans to prevent recalculation on unrelated state changes */
+  const filteredLoans = useMemo(() => loans
     .filter(l => filterOwnership === "alle" || getPropertyOwnership(l.property_id) === filterOwnership)
-    .filter(l => filterBank === "alle" || l.bank_name === filterBank);
+    .filter(l => filterBank === "alle" || l.bank_name === filterBank), [loans, filterOwnership, filterBank, getPropertyOwnership]);
 
   const totalBalance = filteredLoans.reduce((s, l) => s + l.remaining_balance, 0);
   const totalMonthly = filteredLoans.reduce((s, l) => s + l.monthly_payment, 0);
@@ -815,10 +817,11 @@ const Loans = () => {
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Landmark className="h-5 w-5 text-primary" />
                 </div>
-                  <div className="flex-1 min-w-0">
+                  {/* IMP-26: Ensure loan card text never overflows on mobile */}
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold truncate">{l.bank_name}</span>
-                      <Badge variant="secondary" className="text-[10px] h-4">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
+                      <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-none">{l.bank_name}</span>
+                      <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
                       {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
                       {monthsLeft !== null && monthsLeft <= 12 && (
                         <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
@@ -826,7 +829,8 @@ const Loans = () => {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
+                    {/* IMP-27: Responsive loan details — wrap properly on small screens */}
+                    <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-muted-foreground mt-0.5 flex-wrap min-w-0">
                       <span>Restschuld: {formatCurrency(l.remaining_balance)}</span>
                       <span>{l.interest_rate}% Zins · {l.repayment_rate}% Tilgung</span>
                       <span className="hidden sm:inline">{formatCurrency(l.monthly_payment)}/M</span>

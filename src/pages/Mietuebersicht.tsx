@@ -122,6 +122,20 @@ const Mietuebersicht = () => {
     return methods;
   }, [payments]);
 
+  /* IMP-31: Memoize stats to avoid recalculation on every render */
+  /* IMP-37: Include pending amount in memoized stats */
+  const stats = useMemo(() => {
+    const pendingAmount = pending.reduce((s, p) => s + Number(p.amount), 0);
+    return {
+      totalDue,
+      totalConfirmed,
+      totalOverdue,
+      collectionRate,
+      pendingCount: pending.length,
+      pendingAmount,
+    };
+  }, [totalDue, totalConfirmed, totalOverdue, collectionRate, pending]);
+
   const statusIcon = (status: string) => {
     switch (status) {
       case "confirmed": return <CheckCircle className="h-3.5 w-3.5 text-profit" />;
@@ -146,11 +160,11 @@ const Mietuebersicht = () => {
         <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat
-          {totalDue > 0 && (
+          {stats.totalDue > 0 && (
             <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-              collectionRate >= 90 ? "bg-profit/10 text-profit" : collectionRate >= 70 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
+              stats.collectionRate >= 90 ? "bg-profit/10 text-profit" : stats.collectionRate >= 70 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
             }`}>
-              {collectionRate}% Eingangsquote
+              {stats.collectionRate}% Eingangsquote
             </span>
           )}
         </p>
@@ -169,23 +183,23 @@ const Mietuebersicht = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="gradient-card rounded-xl border border-border p-4">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Soll gesamt</div>
-              <div className="text-xl font-bold">{formatCurrency(totalDue)}</div>
+              <div className="text-xl font-bold">{formatCurrency(stats.totalDue)}</div>
               <div className="text-[10px] text-muted-foreground">{filteredPayments.length} Buchungen</div>
             </div>
             <div className="gradient-card rounded-xl border border-border p-4">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Eingegangen</div>
-              <div className="text-xl font-bold text-profit">{formatCurrency(totalConfirmed)}</div>
+              <div className="text-xl font-bold text-profit">{formatCurrency(stats.totalConfirmed)}</div>
               <div className="text-[10px] text-muted-foreground">{confirmed.length} bestätigt</div>
             </div>
             <div className="gradient-card rounded-xl border border-border p-4">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Überfällig</div>
-              <div className="text-xl font-bold text-loss">{formatCurrency(totalOverdue)}</div>
+              <div className="text-xl font-bold text-loss">{formatCurrency(stats.totalOverdue)}</div>
               <div className="text-[10px] text-muted-foreground">{overdue.length} Zahlungen</div>
             </div>
             <div className="gradient-card rounded-xl border border-border p-4">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Offen</div>
-              <div className="text-xl font-bold text-gold">{formatCurrency(pending.reduce((s, p) => s + Number(p.amount), 0))}</div>
-              <div className="text-[10px] text-muted-foreground">{pending.length} ausstehend</div>
+              <div className="text-xl font-bold text-gold">{formatCurrency(stats.pendingAmount)}</div>
+              <div className="text-[10px] text-muted-foreground">{stats.pendingCount} ausstehend</div>
             </div>
           </div>
 
@@ -299,12 +313,14 @@ const Mietuebersicht = () => {
               {filteredPayments.map(p => {
                 const tenant = tenantMap[p.tenant_id];
                 const property = propertyMap[p.property_id];
+                /* IMP-32: Add min-w-0 to prevent payment items from overflowing */
                 return (
-                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors min-w-0">
                     {statusIcon(p.status)}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium truncate">
+                        {/* IMP-33: Limit tenant name width on mobile to prevent overflow */}
+                        <span className="text-sm font-medium truncate max-w-[120px] sm:max-w-none">
                           {tenant ? `${tenant.first_name} ${tenant.last_name}` : "–"}
                         </span>
                         <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded truncate">
