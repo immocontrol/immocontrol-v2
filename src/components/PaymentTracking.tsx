@@ -188,7 +188,9 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
       .order("due_date", { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
     if (data) {
-      setPayments(prev => append ? [...prev, ...(data as any)] : (data as any));
+      /* FIX-5: Replace `as any` with proper typed cast for landlord payments */
+      const typed = data as unknown as (Payment & { tenants?: { first_name: string; last_name: string; unit_label: string; monthly_rent: number } })[];
+      setPayments(prev => append ? [...prev, ...typed] : typed);
       setHasMore(data.length === PAGE_SIZE);
     }
     setLoadingMore(false);
@@ -200,7 +202,8 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
       .select("id, first_name, last_name, unit_label, monthly_rent")
       .eq("property_id", propertyId)
       .eq("is_active", true);
-    if (data) setTenants(data as any);
+    /* FIX-6: Replace `as any` with proper typed cast for tenants */
+    if (data) setTenants(data as unknown as { id: string; first_name: string; last_name: string; unit_label: string; monthly_rent: number }[]);
   };
 
   useEffect(() => {
@@ -252,7 +255,8 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
   };
 
   const updateStatus = async (paymentId: string, newStatus: PaymentStatus, paidDate?: string) => {
-    const update: any = { status: newStatus };
+    /* FIX-7: Replace `any` with proper typed update object */
+    const update: { status: PaymentStatus; paid_date?: string | null } = { status: newStatus };
     if (newStatus === "confirmed") update.paid_date = paidDate || new Date().toISOString().split("T")[0];
     if (newStatus !== "confirmed") update.paid_date = null;
     const { error } = await supabase.from("rent_payments").update(update).eq("id", paymentId);

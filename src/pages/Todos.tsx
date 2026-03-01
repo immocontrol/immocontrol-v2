@@ -688,7 +688,8 @@ const TodoRow = ({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
 
   return (
     <div className={cn(
-      "group flex items-start gap-3 gradient-card border border-border rounded-xl px-4 py-3 hover:border-primary/20 transition-all hover-lift",
+      /* IMP-41: Add min-w-0 to todo row to prevent overflow on mobile */
+      "group flex items-start gap-3 gradient-card border border-border rounded-xl px-4 py-3 hover:border-primary/20 transition-all hover-lift min-w-0",
       todo.completed && "opacity-50",
       isOver && "border-loss/30 bg-loss/5"
     )}>
@@ -706,7 +707,8 @@ const TodoRow = ({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
       </button>
 
       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onEdit(todo)}>
-        <p className={cn("text-sm font-medium leading-tight", todo.completed && "line-through text-muted-foreground")}>
+        {/* IMP-42: Truncate long todo titles on mobile to prevent overflow */}
+        <p className={cn("text-sm font-medium leading-tight truncate sm:whitespace-normal", todo.completed && "line-through text-muted-foreground")}>
           {todo.title}
         </p>
         {todo.description && (

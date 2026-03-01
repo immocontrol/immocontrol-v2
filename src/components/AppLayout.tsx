@@ -376,8 +376,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <ImmoAIBubble />
 
       {/* Mobile nav with sliding dot */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe" role="navigation" aria-label="Mobile Navigation">
-        <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative">
+      {/* IMP-43: Ensure mobile nav items never overflow the viewport */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe overflow-x-hidden" role="navigation" aria-label="Mobile Navigation">
+        <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative min-w-0">
           {navItems.map((item) => {
             const isActive = isRouteActive(item.path, location.pathname);
             return (

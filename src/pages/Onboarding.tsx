@@ -72,8 +72,8 @@ const Onboarding = () => {
           investor_type: investorType || undefined,
           strategy: strategy || undefined,
           onboarding_completed: true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        /* FIX-37: Replace `as any` with typed record cast */
+        } as Record<string, unknown>)
         .eq("user_id", user.id);
 
       if (error) throw error;
@@ -92,8 +92,8 @@ const Onboarding = () => {
     try {
       await supabase
         .from("profiles")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .update({ onboarding_completed: true } as any)
+        /* FIX-38: Replace `as any` with typed record cast */
+        .update({ onboarding_completed: true } as Record<string, unknown>)
         .eq("user_id", user.id);
     } catch {
       // ignore
@@ -158,7 +158,8 @@ const Onboarding = () => {
         </div>
 
         {/* Progress */}
-        <div className="flex gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={totalSteps} aria-label={`Schritt ${step + 1} von ${totalSteps}`}>
+        {/* IMP-47: Add proper ARIA attributes to progress bar for accessibility */}
+        <div className="flex gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={totalSteps} aria-label={`Onboarding Fortschritt: Schritt ${step + 1} von ${totalSteps} — ${ONBOARDING_STEPS[step]?.label}`}>
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}

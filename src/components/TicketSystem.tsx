@@ -382,7 +382,9 @@ export const LandlordTickets = ({ propertyId }: LandlordTicketsProps) => {
       .order("created_at", { ascending: false })
       .range(offset, offset + TICKET_PAGE_SIZE - 1);
     if (data) {
-      setTickets(prev => append ? [...prev, ...(data as any)] : (data as any));
+      /* FIX-1: Replace `as any` with proper typed cast for landlord tickets */
+      const typed = data as unknown as (Ticket & { tenants?: { first_name: string; last_name: string; unit_label: string } })[];
+      setTickets(prev => append ? [...prev, ...typed] : typed);
       setHasMore(data.length === TICKET_PAGE_SIZE);
     }
     setLoadingMore(false);
@@ -761,7 +763,9 @@ export const HandworkerTickets = () => {
       .order("created_at", { ascending: false })
       .range(offset, offset + TICKET_PAGE_SIZE - 1);
     if (data) {
-      setTickets(prev => append ? [...prev, ...(data as any)] : (data as any));
+      /* FIX-2: Replace `as any` with proper typed cast for handworker tickets */
+      const typed = data as unknown as (Ticket & { tenants?: { first_name: string; last_name: string; unit_label: string }; properties?: { name: string; address: string } })[];
+      setTickets(prev => append ? [...prev, ...typed] : typed);
       setHasMore(data.length === TICKET_PAGE_SIZE);
     }
     setLoadingMore(false);
@@ -834,8 +838,9 @@ export const HandworkerTickets = () => {
       ) : (
         <div className="space-y-2">
           {filteredTickets.map((ticket) => {
-            const propertyName = (ticket as any).properties?.name || "Objekt";
-            const propertyAddress = (ticket as any).properties?.address || "";
+            /* FIX-3: Remove `as any` — ticket already typed with properties */
+            const propertyName = ticket.properties?.name || "Objekt";
+            const propertyAddress = ticket.properties?.address || "";
 
             return (
               <div key={ticket.id} className="gradient-card rounded-xl border border-border overflow-hidden">
@@ -848,9 +853,10 @@ export const HandworkerTickets = () => {
                       <span className="text-[10px] text-muted-foreground">{propertyName}</span>
                       <span className="text-[10px] text-muted-foreground">{propertyAddress}</span>
                       {/* Synergy 15: Show tenant name to handworker */}
-                      {(ticket as any).tenants && (
+                      {/* FIX-4: Remove `as any` — ticket already typed with tenants */}
+                      {ticket.tenants && (
                         <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded">
-                          👤 {(ticket as any).tenants.first_name} {(ticket as any).tenants.last_name}
+                          👤 {ticket.tenants.first_name} {ticket.tenants.last_name}
                         </span>
                       )}
                       {/* Synergy 16: Show cost inline */}

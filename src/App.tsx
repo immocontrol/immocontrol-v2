@@ -194,7 +194,8 @@ const RoleRouter = () => {
           .select("onboarding_completed")
           .eq("user_id", user.id)
           .maybeSingle();
-        setOnboardingDone((data as any)?.onboarding_completed ?? false);
+        /* FIX-36: Replace `as any` with proper typed cast */
+        setOnboardingDone((data as { onboarding_completed?: boolean } | null)?.onboarding_completed ?? false);
       } catch {
         setOnboardingDone(true);
       }

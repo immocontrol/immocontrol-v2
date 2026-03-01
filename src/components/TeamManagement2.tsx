@@ -48,7 +48,8 @@ export const TeamManagement = () => {
       .select("*")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
-    if (data) setMembers(data as any);
+    /* FIX-8: Replace `as any` with proper typed cast for team members */
+    if (data) setMembers(data as unknown as TeamMember[]);
   };
 
   const fetchInvitations = async () => {
@@ -58,7 +59,8 @@ export const TeamManagement = () => {
       .select("*")
       .eq("member_email", user.email.toLowerCase())
       .eq("status", "pending");
-    if (data) setInvitations(data as any);
+    /* FIX-9: Replace `as any` with proper typed cast for invitations */
+    if (data) setInvitations(data as unknown as TeamMember[]);
   };
 
   useEffect(() => {

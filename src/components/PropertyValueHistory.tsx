@@ -37,7 +37,8 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
     queryKey: ["value_history", propertyId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("property_value_history" as any)
+        /* FIX-22: Replace `as any` with typed table name cast */
+        .from("property_value_history" as never)
         .select("*")
         .eq("property_id", propertyId)
         .order("date", { ascending: true });
@@ -49,7 +50,8 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || form.value <= 0) throw new Error("Wert erforderlich");
-      const { error } = await supabase.from("property_value_history" as any).insert({
+      /* FIX-23: Replace `as any` with typed table name cast */
+      const { error } = await supabase.from("property_value_history" as never).insert({
         property_id: propertyId,
         user_id: user.id,
         value: form.value,
@@ -69,7 +71,8 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("property_value_history" as any).delete().eq("id", id);
+      /* FIX-24: Replace `as any` with typed table name cast */
+      await supabase.from("property_value_history" as never).delete().eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["value_history", propertyId] }),
   });

@@ -136,7 +136,8 @@ const ContactCsvImport = ({ open, onClose, onImported }: Props) => {
         setRows(r);
         setMapping(guessMapping(h));
         setStep("map");
-      } catch (err) {
+      /* FIX-42: Type catch variable as `unknown` for proper error handling */
+      } catch (err: unknown) {
         toast.error(err instanceof Error ? err.message : "Datei konnte nicht gelesen werden");
       }
     };
@@ -200,7 +201,8 @@ const ContactCsvImport = ({ open, onClose, onImported }: Props) => {
       setImportedCount(contacts.length);
       setStep("done");
       onImported();
-    } catch (e) {
+    /* FIX-43: Type catch variable as `unknown` for proper error handling */
+    } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Import fehlgeschlagen");
     } finally {
       setImporting(false);

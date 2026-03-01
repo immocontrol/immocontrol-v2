@@ -135,7 +135,8 @@ const PropertyDetail = () => {
       <div className="animate-fade-in">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{property.name}</h1>
+            {/* IMP-46: Truncate long property names on mobile to prevent overflow */}
+            <h1 className="text-2xl font-bold truncate max-w-[250px] sm:max-w-none">{property.name}</h1>
             <button
               onClick={copyAddress}
               className="flex items-center gap-1 text-sm text-muted-foreground mt-1 hover:text-foreground transition-colors group/addr"
@@ -219,8 +220,8 @@ const PropertyDetail = () => {
         </div>
       </div>
 
-      {/* Financials */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Financials — IMP-45: Add min-w-0 to stat cards grid to prevent overflow */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0">
         <StatCard
           label="Kaufpreis"
           value={formatCurrency(property.purchasePrice)}

@@ -94,8 +94,9 @@ const Dashboard = () => {
   const [sort, setSort] = useState<SortType>("name");
   const [refreshing, setRefreshing] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-  const [chartsCollapsed, setChartsCollapsed] = useState(false);
-  const [widgetsCollapsed, setWidgetsCollapsed] = useState(false);
+  /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
+  const [chartsCollapsed, setChartsCollapsed] = useState(true);
+  const [widgetsCollapsed, setWidgetsCollapsed] = useState(true);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -422,7 +423,8 @@ ${properties.map(p => `<tr>
   const annualCashflow = stats.totalCashflow * 12;
 
   return (
-    <div className="space-y-6" role="main" aria-label="Portfolio Dashboard">
+    /* IMP-3: Reduced spacing for less crowded layout */
+    <div className="space-y-4" role="main" aria-label="Portfolio Dashboard">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           {/* UI-11: heading-gradient for page title */}
@@ -659,105 +661,26 @@ ${properties.map(p => `<tr>
         </div>
       </div>
 
-      {/* Feature: Average holding period */}
-      {properties.length > 0 && (
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in flex items-center gap-3" style={{ animationDelay: "240ms" }}>
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Clock className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Ø Haltedauer</p>
-            <p className="text-sm font-semibold">
-              {avgHoldingYears > 0 ? `${avgHoldingYears} Jahre ${avgHoldingRemMonths} Monate` : `${avgHoldingRemMonths} Monate`}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Best/Worst performer */}
+      {/* IMP-4: Consolidated best/worst performer — removed redundant advanced metrics row, holding period, and top 3 */}
       {properties.length >= 2 && bestPerformer && worstPerformer && bestPerformer.id !== worstPerformer.id && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "260ms" }}>
-          <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Trophy className="h-4 w-4 text-primary" />
-            </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Bester Cashflow</p>
-              <p className="text-sm font-semibold truncate">{bestPerformer.name}</p>
-              <p className="text-xs text-profit font-medium">{formatCurrency(bestPerformer.monthlyCashflow)}/M</p>
+              <p className="text-[10px] text-muted-foreground">Top Cashflow</p>
+              <p className="text-xs font-semibold truncate">{bestPerformer.name}</p>
+              <p className="text-[10px] text-profit font-medium">{formatCurrency(bestPerformer.monthlyCashflow)}/M</p>
             </div>
           </div>
-          <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-              <AlertTriangle className="h-4 w-4 text-loss" />
-            </div>
+          <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-loss shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Schwächster Cashflow</p>
-              <p className="text-sm font-semibold truncate">{worstPerformer.name}</p>
-              <p className={`text-xs font-medium ${worstPerformer.monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
+              <p className="text-[10px] text-muted-foreground">Schwächster</p>
+              <p className="text-xs font-semibold truncate">{worstPerformer.name}</p>
+              <p className={`text-[10px] font-medium ${worstPerformer.monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
                 {formatCurrency(worstPerformer.monthlyCashflow)}/M
               </p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* FUNC-1/2/3: Portfolio advanced metrics row */}
-      {properties.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 stagger-list">
-          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Miete/m²</p>
-            <p className="text-base font-bold">{formatCurrency(portfolioMetrics.totalRentPerSqm)}</p>
-          </div>
-          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Ø Wert/Einheit</p>
-            <p className="text-base font-bold">{formatCurrency(portfolioMetrics.avgValuePerUnit)}</p>
-          </div>
-          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cash-on-Cash</p>
-            <p className={`text-base font-bold ${portfolioMetrics.cashOnCashReturn >= 0 ? "text-profit" : "text-loss"}`}>{portfolioMetrics.cashOnCashReturn.toFixed(1)}%</p>
-          </div>
-          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">FK/EK-Quote</p>
-            <p className={`text-base font-bold ${portfolioMetrics.debtToEquityRatio <= 3 ? "text-profit" : "text-loss"}`}>{portfolioMetrics.debtToEquityRatio.toFixed(2)}</p>
-          </div>
-          {Object.keys(propertyTypeCounts).length > 0 && (
-            <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Objekttypen</p>
-              <div className="flex gap-1 justify-center flex-wrap mt-0.5">
-                {Object.entries(propertyTypeCounts).map(([type, count]) => (
-                  <span key={type} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{type}: {count}</span>
-                ))}
-              </div>
-            </div>
-          )}
-          {vacantProperties.length > 0 && (
-            <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
-              <p className="text-base font-bold text-loss">{vacantProperties.length} Objekte</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Feature: Top 3 Cashflow Ranking */}
-      {top3Cashflow.length >= 2 && (
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "280ms" }}>
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">🏆 Top 3 Cashflow</h3>
-          <div className="space-y-2">
-            {top3Cashflow.map((p, i) => (
-              <div key={p.id} className="flex items-center gap-3">
-                <span className={`text-sm font-bold w-6 text-center ${i === 0 ? "text-gold" : i === 1 ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.name}</p>
-                </div>
-                <span className={`text-sm font-semibold tabular-nums ${p.monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
-                  {formatCurrency(p.monthlyCashflow)}/M
-                </span>
-              </div>
-            ))}
           </div>
         </div>
       )}
@@ -859,8 +782,8 @@ ${properties.map(p => `<tr>
         </div>
       )}
 
-      {/* Properties - STICKY AT TOP */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pb-3 -mx-1 px-1">
+      {/* IMP-5: Properties — removed sticky to reduce visual clutter */}
+      <div>
         {filteredProperties.length === 0 ? (
           <div className="text-center py-8 animate-fade-in">
             <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
@@ -888,29 +811,7 @@ ${properties.map(p => `<tr>
         )}
       </div>
 
-      {/* Occupancy Tracker */}
-      {allTenants.length > 0 && (
-        <OccupancyTracker
-          properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))}
-          tenants={allTenants}
-        />
-      )}
-
-      {/* Yield Heatmap */}
-      <YieldHeatmap properties={properties} />
-
-      {/* Portfolio Type + Cashflow per sqm */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <PortfolioTypeChart properties={properties} />
-        <CashflowPerSqmWidget properties={properties} />
-      </div>
-
-      {/* Portfolio Goals + Quick Note */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />
-        <QuickNoteWidget />
-      </div>
-
+      {/* IMP-6: Moved occupancy, heatmap, type chart, goals into collapsible widgets for cleaner layout */}
       {/* Collapsible Widgets Section */}
       <div>
         <button
@@ -921,6 +822,22 @@ ${properties.map(p => `<tr>
           Analyse & Widgets {widgetsCollapsed ? "einblenden" : "ausblenden"}
         </button>
         <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[10000px] opacity-100"}`}>
+          {/* Occupancy, Heatmap, Type, Goals moved here */}
+          {allTenants.length > 0 && (
+            <OccupancyTracker
+              properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))}
+              tenants={allTenants}
+            />
+          )}
+          <YieldHeatmap properties={properties} />
+          <div className="grid md:grid-cols-2 gap-3">
+            <PortfolioTypeChart properties={properties} />
+            <CashflowPerSqmWidget properties={properties} />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />
+            <QuickNoteWidget />
+          </div>
           <div className="grid md:grid-cols-2 gap-3">
             <PortfolioForecast />
             <RenditeRanking />

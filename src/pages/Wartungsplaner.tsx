@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +98,9 @@ const Wartungsplaner = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();
+
+  /* IMP-28: Set document title for Wartungsplaner */
+  useEffect(() => { document.title = "Wartungsplaner \u2013 ImmoControl"; }, []);
   const [open, setOpen] = useState(false);
   const [filterProperty, setFilterProperty] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -219,8 +222,9 @@ const Wartungsplaner = () => {
     const nextDue = getNextDueDate(item);
     const intervalLabel = RECURRING_INTERVALS.find(r => r.value === item.recurring_interval)?.label;
 
+    /* IMP-29: Add min-w-0 to prevent maintenance items from overflowing on mobile */
     return (
-      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors group ${item.completed && !item.recurring_interval ? "opacity-40" : ""}`}>
+      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors group min-w-0 ${item.completed && !item.recurring_interval ? "opacity-40" : ""}`}>
         <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="shrink-0">
           {item.completed && !item.recurring_interval ? (
             <Check className="h-4 w-4 text-profit" />
@@ -243,7 +247,8 @@ const Wartungsplaner = () => {
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5 flex-wrap">
+          {/* IMP-30: Ensure maintenance item details wrap on small screens */}
+          <div className="flex items-center gap-2 sm:gap-3 text-[10px] text-muted-foreground mt-0.5 flex-wrap min-w-0">
             <span>{propMap.get(item.property_id) || "–"}</span>
             {item.estimated_cost > 0 && <span>~{formatCurrency(item.estimated_cost)}</span>}
             {nextDue && (

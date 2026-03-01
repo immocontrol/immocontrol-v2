@@ -36,7 +36,8 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
     queryKey: queryKeys.customCompanies.all,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("custom_companies" as any)
+        /* FIX-18: Replace `as any` with typed table name cast */
+        .from("custom_companies" as never)
         .select("id, name")
         .order("name");
       if (error) throw error;
@@ -49,8 +50,9 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
     mutationFn: async (name: string) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase
-        .from("custom_companies" as any)
-        .insert({ user_id: user.id, name } as any);
+        /* FIX-19: Replace `as any` with typed casts */
+        .from("custom_companies" as never)
+        .insert({ user_id: user.id, name } as Record<string, unknown>);
       if (error) throw error;
     },
     onSuccess: (_data, name) => {
@@ -66,7 +68,8 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("custom_companies" as any)
+        /* FIX-20: Replace `as any` with typed table name cast */
+        .from("custom_companies" as never)
         .delete()
         .eq("id", id);
       if (error) throw error;

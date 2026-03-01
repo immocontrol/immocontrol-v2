@@ -212,6 +212,10 @@ export const sortByKey = <T>(arr: T[], key: keyof T, desc = false): T[] =>
     return desc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
   });
 
+/* IMP-48: Format percentage with German locale (comma as decimal separator) */
+export const formatPercentDE = (value: number, decimals = 1): string =>
+  `${value.toFixed(decimals).replace(".", ",")}%`;
+
 /* OPT-50: Group array by key */
 export const groupBy = <T>(arr: T[], keyFn: (item: T) => string): Record<string, T[]> => {
   return arr.reduce((groups, item) => {

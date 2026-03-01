@@ -20,8 +20,9 @@ const SUPPORTED_HOSTS = [
 const ExposeImport = ({ onImport }: Props) => {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  /* FIX-46: Replace `Record<string, any>` with proper type */
   const [result, setResult] = useState<{
-    data: Record<string, any>;
+    data: Record<string, unknown>;
     imported: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +64,8 @@ const ExposeImport = ({ onImport }: Props) => {
         importedAt: new Date().toISOString(),
       });
       toast.success("Exposé-Daten erfolgreich extrahiert!");
-    } catch (e) {
+    /* FIX-45: Type catch variable as `unknown` for proper error handling */
+    } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Netzwerkfehler";
       setError(msg);
       toast.error(msg);
@@ -93,7 +95,8 @@ const ExposeImport = ({ onImport }: Props) => {
     toast.success("Daten in Analyse übernommen!");
   }, [result, onImport]);
 
-  const formatValue = (key: string, value: any): string => {
+  /* FIX-47: Replace `any` parameter with `unknown` */
+  const formatValue = (key: string, value: unknown): string => {
     if (value == null) return "–";
     if (typeof value === "number") {
       if (key.includes("Provision") || key.includes("provision")) return `${value}%`;

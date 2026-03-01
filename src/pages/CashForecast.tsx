@@ -72,10 +72,17 @@ const CashForecast = () => {
     return result;
   }, [properties, stats, loans, forecastWeeks, scenario]);
 
-  const totalIncome13W = forecastData.reduce((s, w) => s + w.einnahmen, 0);
-  const totalExpenses13W = forecastData.reduce((s, w) => s + Math.abs(w.ausgaben), 0);
-  const netCashflow13W = totalIncome13W - totalExpenses13W;
-  const lowestPoint = forecastData.length > 0 ? Math.min(...forecastData.map(w => w.kumulativ)) : 0;
+  /* IMP-39: Memoize KPI summary values to avoid recalculation on unrelated renders */
+  const { totalIncome13W, totalExpenses13W, netCashflow13W, lowestPoint } = useMemo(() => {
+    const income = forecastData.reduce((s, w) => s + w.einnahmen, 0);
+    const expenses = forecastData.reduce((s, w) => s + Math.abs(w.ausgaben), 0);
+    return {
+      totalIncome13W: income,
+      totalExpenses13W: expenses,
+      netCashflow13W: income - expenses,
+      lowestPoint: forecastData.length > 0 ? Math.min(...forecastData.map(w => w.kumulativ)) : 0,
+    };
+  }, [forecastData]);
 
   // Feature: Break-even week
   const breakEvenWeek = forecastData.findIndex((w, i) => i > 0 && forecastData[i - 1].kumulativ < 0 && w.kumulativ >= 0);
@@ -253,9 +260,10 @@ const CashForecast = () => {
       </div>
 
       {/* Detail Table */}
-      <div className="gradient-card rounded-xl border border-border p-5">
+      {/* IMP-40: Ensure detail table scrolls horizontally on mobile without cutting off */}
+      <div className="gradient-card rounded-xl border border-border p-3 sm:p-5">
         <h3 className="text-sm font-semibold mb-3">Wochendetails</h3>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-1">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border">

@@ -31,7 +31,8 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
     queryKey: ["doc_expiry", propertyId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("document_expiries" as any)
+        /* FIX-25: Replace `as any` with typed table name cast */
+        .from("document_expiries" as never)
         .select("*")
         .eq("property_id", propertyId)
         .order("expiry_date", { ascending: true });
@@ -43,7 +44,8 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.name.trim() || !form.expiry_date) throw new Error("Pflichtfelder");
-      const { error } = await supabase.from("document_expiries" as any).insert({
+      /* FIX-26: Replace `as any` with typed table name cast */
+      const { error } = await supabase.from("document_expiries" as never).insert({
         property_id: propertyId,
         user_id: user.id,
         name: form.name.trim(),
@@ -63,7 +65,8 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("document_expiries" as any).delete().eq("id", id);
+      /* FIX-27: Replace `as any` with typed table name cast */
+      await supabase.from("document_expiries" as never).delete().eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["doc_expiry", propertyId] }),
   });
