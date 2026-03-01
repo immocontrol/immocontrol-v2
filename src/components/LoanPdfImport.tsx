@@ -94,8 +94,10 @@ function parseLoanFromText(text: string): Partial<ParsedLoan> {
 
   // Darlehensbetrag / Kreditbetrag / Nennbetrag
   const amountPatterns = [
-    /(?:darlehensbetrag|kreditbetrag|nennbetrag|darlehenssumme|urspr[uü]nglicher?\s*betrag|auszahlungsbetrag|finanzierungsbetrag)[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
+    /(?:darlehensbetrag|kreditbetrag|nennbetrag|darlehenssumme|urspr[uü]nglicher?\s*betrag|auszahlungsbetrag|finanzierungsbetrag|nettodarlehensbetrag|bruttobetrag|kreditsumme|gesamtbetrag\s*des?\s*darlehens)[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
     /(?:darlehen|kredit)\s*(?:in\s*h[oö]he\s*von|[uü]ber|:)\s*([0-9.,]+)\s*(?:eur|€)?/i,
+    /(?:EUR|€)\s*([0-9.,]{5,})\s*(?:darlehen|kredit)/i,
+    /(?:betrag|summe)[:\s]*(?:EUR|€)?\s*([0-9.,]{5,})/i,
   ];
   for (const pat of amountPatterns) {
     const m = text.match(pat);
@@ -107,7 +109,8 @@ function parseLoanFromText(text: string): Partial<ParsedLoan> {
 
   // Restschuld / Saldo
   const balancePatterns = [
-    /(?:restschuld|restsaldo|aktueller?\s*saldo|restvaluta|offener?\s*betrag)[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
+    /(?:restschuld|restsaldo|aktueller?\s*saldo|restvaluta|offener?\s*betrag|ausstehender?\s*betrag|restdarlehen|restkapital|kapitalstand)[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
+    /(?:saldo|stand)\s*(?:per|zum|am)\s*[0-9.]+\s*[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
   ];
   for (const pat of balancePatterns) {
     const m = text.match(pat);
@@ -119,8 +122,10 @@ function parseLoanFromText(text: string): Partial<ParsedLoan> {
 
   // Zinssatz / Sollzins / Nominalzins
   const interestPatterns = [
-    /(?:sollzins(?:satz)?|nominalzins(?:satz)?|zinssatz|jahreszins|fester?\s*zins(?:satz)?)[:\s]*([0-9.,]+)\s*%/i,
+    /(?:sollzins(?:satz)?|nominalzins(?:satz)?|zinssatz|jahreszins|fester?\s*zins(?:satz)?|debit\s*interest)[:\s]*([0-9.,]+)\s*%/i,
     /(?:gebundener?\s*sollzins(?:satz)?)[:\s]*([0-9.,]+)\s*%/i,
+    /([0-9.,]+)\s*%\s*(?:p\.?\s*a\.?|pro\s*jahr|jahreszins|sollzins|nominalzins)/i,
+    /(?:zins|interest)[:\s]*([0-9]+[,.][0-9]{1,3})\s*%/i,
   ];
   for (const pat of interestPatterns) {
     const m = text.match(pat);
@@ -132,7 +137,8 @@ function parseLoanFromText(text: string): Partial<ParsedLoan> {
 
   // Tilgung / Tilgungssatz
   const repaymentPatterns = [
-    /(?:tilgung(?:ssatz)?|anf[aä]ngliche\s*tilgung)[:\s]*([0-9.,]+)\s*%/i,
+    /(?:tilgung(?:ssatz)?|anf[aä]ngliche\s*tilgung|j[aä]hrliche\s*tilgung|tilgungsleistung)[:\s]*([0-9.,]+)\s*%/i,
+    /([0-9.,]+)\s*%\s*(?:tilgung|repayment)/i,
   ];
   for (const pat of repaymentPatterns) {
     const m = text.match(pat);
@@ -144,7 +150,8 @@ function parseLoanFromText(text: string): Partial<ParsedLoan> {
 
   // Monatliche Rate / Annuität
   const ratePatterns = [
-    /(?:monatliche?\s*rate|annuit[aä]t|monatliche?\s*zahlung|rate\s*monatlich|monatsrate)[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
+    /(?:monatliche?\s*rate|annuit[aä]t|monatliche?\s*zahlung|rate\s*monatlich|monatsrate|mtl\.?\s*rate|monatliche?\s*belastung|monatliche?\s*leistung)[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
+    /(?:rate|zahlung)\s*(?:je|pro)\s*monat[:\s]*([0-9.,]+)\s*(?:eur|€)?/i,
   ];
   for (const pat of ratePatterns) {
     const m = text.match(pat);
@@ -155,27 +162,44 @@ function parseLoanFromText(text: string): Partial<ParsedLoan> {
   }
 
   // Zinsbindung bis
+  let fixedYears: number | null = null;
   const fixedPatterns = [
-    /(?:zinsbindung(?:\s*bis)?|zinsfestschreibung(?:\s*bis)?|festzins(?:\s*bis)?)[:\s]*(\d{1,2}\.\d{1,2}\.\d{4})/i,
+    /(?:zinsbindung(?:\s*bis)?|zinsfestschreibung(?:\s*bis)?|festzins(?:\s*bis)?|ende\s*der\s*zinsbindung|zinsbindungsende)[:\s]*(\d{1,2}\.\d{1,2}\.\d{4})/i,
     /(?:zinsbindung|zinsfestschreibung)[:\s]*(?:bis\s+)?(?:zum\s+)?(\d{1,2}\.\d{1,2}\.\d{4})/i,
+    /(?:zinsbindung|festschreibung)[:\s]*(\d+)\s*(?:jahre|j\.)/i,
   ];
   for (const pat of fixedPatterns) {
     const m = text.match(pat);
     if (m) {
-      result.fixed_interest_until = parseGermanDate(m[1]);
+      if (m[1].includes(".")) {
+        result.fixed_interest_until = parseGermanDate(m[1]);
+      } else {
+        const years = parseInt(m[1], 10);
+        if (!isNaN(years) && years > 0) fixedYears = years;
+      }
       break;
     }
   }
 
   // Vertragsbeginn / Auszahlungsdatum
   const startPatterns = [
-    /(?:vertragsbeginn|auszahlungsdatum|darlehensbeginn|beginn|valutierung)[:\s]*(\d{1,2}\.\d{1,2}\.\d{4})/i,
+    /(?:vertragsbeginn|auszahlungsdatum|darlehensbeginn|beginn|valutierung|auszahlung\s*am|datum\s*der\s*auszahlung|laufzeitbeginn)[:\s]*(\d{1,2}\.\d{1,2}\.\d{4})/i,
+    /(?:vertrag|darlehen)\s*(?:vom|ab|seit)\s*(\d{1,2}\.\d{1,2}\.\d{4})/i,
   ];
   for (const pat of startPatterns) {
     const m = text.match(pat);
     if (m) {
       result.start_date = parseGermanDate(m[1]);
       break;
+    }
+  }
+
+  // If we only have "Zinsbindung 10 Jahre", approximate end date based on start_date
+  if (!result.fixed_interest_until && fixedYears && result.start_date) {
+    const start = new Date(`${result.start_date}T00:00:00`);
+    if (!isNaN(start.getTime())) {
+      start.setFullYear(start.getFullYear() + fixedYears);
+      result.fixed_interest_until = start.toISOString().slice(0, 10);
     }
   }
 

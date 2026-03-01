@@ -282,8 +282,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <ScrollProgress />
       <KeyboardShortcuts />
       {/* UI-6/UI-27: glass-header + page-header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header">
-        <div className="container flex h-14 items-center justify-between">
+      <header className="sticky top-0 z-[150] border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header overflow-visible">
+        <div className="container flex h-14 items-center justify-between overflow-visible">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="ImmoControl Home">
               <Building2 className="h-6 w-6 text-primary" />
@@ -292,8 +292,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             </Link>
             {breadcrumb}
           </div>
-          <div className="flex items-center gap-1">
-            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-0.5 relative" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
+          <div className="flex items-center gap-1 overflow-visible">
+            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-0.5 relative overflow-visible" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navEntries.map((entry) => {
                 if (isGroup(entry)) {
                   const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
@@ -311,7 +311,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         {entry.label}
                         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
-                      <div className={`absolute top-full left-0 mt-1 min-w-[180px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[60] ${
+                      <div className={`absolute top-full left-0 mt-1 min-w-[180px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] ${
                         openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                       }`}>
                         {entry.items.map((item) => {

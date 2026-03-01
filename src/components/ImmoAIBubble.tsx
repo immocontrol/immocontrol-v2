@@ -71,9 +71,10 @@ export default function ImmoAIBubble() {
   useEffect(() => removeDragListeners, [removeDragListeners]);
 
   const handleDragStart = useCallback((clientX: number, clientY: number) => {
-    const currentX = bubblePos?.x ?? (window.innerWidth - 72);
+    // Keep the bubble pinned to the right; allow vertical-only dragging
+    const fixedX = window.innerWidth - 72;
     const currentY = bubblePos?.y ?? (window.innerHeight - 140);
-    dragRef.current = { startX: clientX, startY: clientY, origX: currentX, origY: currentY };
+    dragRef.current = { startX: clientX, startY: clientY, origX: fixedX, origY: currentY };
     isDragging.current = false;
 
     // Only add listeners if not already active
@@ -81,23 +82,19 @@ export default function ImmoAIBubble() {
 
     const onMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return;
-      const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging.current = true;
-      const newX = Math.max(8, Math.min(window.innerWidth - 64, dragRef.current.origX + dx));
+      if (Math.abs(dy) > 5) isDragging.current = true;
       const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
-      setBubblePos({ x: newX, y: newY });
+      setBubblePos({ x: dragRef.current.origX, y: newY });
     };
     const onMouseUp = () => { dragRef.current = null; removeDragListeners(); };
     const onTouchMove = (e: TouchEvent) => {
       if (!dragRef.current) return;
       e.preventDefault();
-      const dx = e.touches[0].clientX - dragRef.current.startX;
       const dy = e.touches[0].clientY - dragRef.current.startY;
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging.current = true;
-      const newX = Math.max(8, Math.min(window.innerWidth - 64, dragRef.current.origX + dx));
+      if (Math.abs(dy) > 5) isDragging.current = true;
       const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
-      setBubblePos({ x: newX, y: newY });
+      setBubblePos({ x: dragRef.current.origX, y: newY });
     };
     const onTouchEnd = () => { dragRef.current = null; removeDragListeners(); };
 
@@ -235,7 +232,7 @@ export default function ImmoAIBubble() {
           onClick={() => { if (!isDragging.current) setOpen(true); }}
           /* IMPROVE-42: Drag-affordance cursor (grab/grabbing) and touch-none to prevent scroll interference */
           className="fixed z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
-          style={bubblePos ? { left: bubblePos.x, top: bubblePos.y } : { bottom: "5rem", right: "1rem" }}
+          style={bubblePos ? { right: "1rem", top: bubblePos.y } : { bottom: "5rem", right: "1rem" }}
           aria-label="Immo AI öffnen (Alt+I) — ziehen zum Verschieben"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
@@ -251,7 +248,7 @@ export default function ImmoAIBubble() {
       {open && (
         <div
           className="fixed z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
-          style={bubblePos ? { left: Math.min(bubblePos.x, window.innerWidth - 416), top: Math.max(8, bubblePos.y - 570) } : { bottom: "5rem", right: "1rem" }}
+          style={bubblePos ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) } : { bottom: "5rem", right: "1rem" }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">

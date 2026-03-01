@@ -436,6 +436,7 @@ ${properties.map(p => `<tr>
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <AddPropertyDialog />
           <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
             <Share2 className="h-3.5 w-3.5" />
             Teilen
@@ -454,7 +455,6 @@ ${properties.map(p => `<tr>
           <RentIncreaseLetter />
           <SelbstauskunftGenerator />
           <FinanceExportDialog />
-          <AddPropertyDialog />
         </div>
       </div>
 

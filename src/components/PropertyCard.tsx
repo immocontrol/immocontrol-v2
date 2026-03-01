@@ -55,8 +55,8 @@ const PropertyCard = memo(({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate min-w-0 flex-1 pr-1 leading-tight">
               {name}
             </h3>
             {ownership && (
