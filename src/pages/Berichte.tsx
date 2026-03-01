@@ -81,14 +81,14 @@ const Berichte = () => {
   ], []);
 
   /* OPT-19: Memoized year list */
+  /* IMP-34: Memoize year list to prevent recreation on every render */
+  const years = useMemo(() => Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString()), []);
 
-  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
-
-  // Helper: open print window
-  const openPrint = (html: string) => {
+  /* IMP-35: Wrap openPrint in useCallback for stable reference */
+  const openPrint = useCallback((html: string) => {
     const w = window.open("", "_blank");
     if (w) { w.document.write(html); w.document.close(); w.print(); }
-  };
+  }, []);
 
   const baseStyle = `body{font-family:system-ui,sans-serif;padding:40px;color:#222;max-width:800px;margin:0 auto}
 h1{font-size:22px;border-bottom:2px solid #2a9d6e;padding-bottom:8px}h2{font-size:16px;margin-top:24px;color:#555}
@@ -327,7 +327,8 @@ ${properties.map(p => {
       </div>
 
       {/* Quick Summary */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* IMP-38: Make KPI cards responsive on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
         <div className="gradient-card rounded-xl border border-border p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
           <p className="text-lg font-bold text-profit">{formatCurrency(properties.reduce((s, p) => s + p.monthlyRent * 12, 0))}</p>
@@ -364,7 +365,8 @@ ${properties.map(p => {
       </div>
 
       {/* Improvement 11: Report cards with stagger animation + hover glow */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 list-stagger">
+      {/* IMP-36: Ensure report cards grid never overflows */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 list-stagger min-w-0">
         {/* Mietbericht */}
         <div className="gradient-card rounded-xl border border-border p-5 space-y-3">
           <div className="flex items-center gap-2">
