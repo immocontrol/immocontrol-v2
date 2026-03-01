@@ -27,6 +27,7 @@ const DEFAULT_SHORTCUTS: Record<string, string> = {
   "Navigation: Aufgaben": "Alt+6",
   "Navigation: Berichte": "Alt+7",
   "Navigation: CRM": "Alt+8",
+  "Navigation: Deals": "Alt+0",
   "Navigation: Einstellungen": "Alt+9",
   "Suche öffnen": "Ctrl+K",
   "Neues Objekt": "Ctrl+N",

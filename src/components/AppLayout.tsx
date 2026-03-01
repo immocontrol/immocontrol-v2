@@ -91,6 +91,7 @@ const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Aufgaben": "/aufgaben",
   "Navigation: Berichte": "/berichte",
   "Navigation: CRM": "/crm",
+  "Navigation: Deals": "/deals",
   "Navigation: Einstellungen": "/einstellungen",
 };
 
@@ -305,6 +306,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }
 
     const links = mobileNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
+    /* If active route is in the "Mehr" overflow menu (index >= 5), hide the dot */
+    if (activeIdx >= links.length) {
+      setMobileDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
+      return;
+    }
     const activeLink = links[activeIdx];
     if (!activeLink) return;
     const navRect = mobileNavRef.current.getBoundingClientRect();
