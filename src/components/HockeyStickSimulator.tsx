@@ -248,15 +248,20 @@ export function HockeyStickSimulator() {
     const wertMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(wertsteigerung|appreciation)/i);
     if (wertMatch) updates.annualAppreciation = parseFloat(wertMatch[1].replace(",", "."));
 
-    /* Keyword-based scenario selection */
+    /* Keyword-based scenario selection — only set keys not already parsed from explicit values */
+    const applyScenarioDefaults = (scenarioParams: Partial<SimParams>) => {
+      for (const [k, v] of Object.entries(scenarioParams)) {
+        if (!(k in updates)) (updates as Record<string, unknown>)[k] = v;
+      }
+    };
     if (text.includes("konservativ") || text.includes("sicher") || text.includes("vorsichtig")) {
-      Object.assign(updates, SCENARIOS[0].params);
+      applyScenarioDefaults(SCENARIOS[0].params);
     } else if (text.includes("aggressiv") || text.includes("riskant") || text.includes("maximal")) {
-      Object.assign(updates, SCENARIOS[2].params);
-    } else if (text.includes("cashflow") || text.includes("miete")) {
-      Object.assign(updates, SCENARIOS[3].params);
+      applyScenarioDefaults(SCENARIOS[2].params);
+    } else if (/\bcashflow\b/.test(text) || /\bmiete\b/.test(text)) {
+      applyScenarioDefaults(SCENARIOS[3].params);
     } else if (text.includes("einsteiger") || text.includes("anfang") || text.includes("klein")) {
-      Object.assign(updates, SCENARIOS[5].params);
+      applyScenarioDefaults(SCENARIOS[5].params);
     }
 
     if (Object.keys(updates).length > 0) {
@@ -359,9 +364,9 @@ export function HockeyStickSimulator() {
     toast.success(`Profil "${p.name}" gespeichert`);
   }, [profileName, params, savedProfiles]);
 
-  /* FEAT-25: Profile load */
+  /* FEAT-25: Profile load — merge with defaults to handle profiles saved before new fields were added */
   const loadProfile = useCallback((p: SavedProfile) => {
-    setParams(p.params);
+    setParams({ ...DEFAULT_PARAMS, ...p.params });
     toast.success(`Profil "${p.name}" geladen`);
   }, []);
 
