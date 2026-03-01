@@ -173,7 +173,7 @@ const PropertyValuation = ({
     const vergleichswert = form.sqm * preisProQm;
 
     // Durchschnitt der drei Verfahren
-    const validValues = [ertragswert, sachwert].filter(v => v > 0);
+    const validValues = [ertragswert, sachwert].filter(val => val > 0);
     const durchschnitt = validValues.length > 0 ? validValues.reduce((a, b) => a + b, 0) / validValues.length : 0;
 
     return {

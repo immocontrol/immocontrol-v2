@@ -118,7 +118,7 @@ const Wartungsplaner = () => {
         .select("*")
         .order("planned_date", { ascending: true });
       if (error) throw error;
-      return (data || []) as unknown as MaintenanceItem[];
+      return (data || []) as MaintenanceItem[];
     },
     enabled: !!user,
   });

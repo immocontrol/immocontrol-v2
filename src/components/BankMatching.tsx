@@ -54,13 +54,6 @@ interface MatchingRule {
   created_at: string;
 }
 
-/* OPT-33: Match confidence threshold constants */
-const MATCH_CONFIDENCE = {
-  HIGH: 90,
-  MEDIUM: 70,
-  LOW: 50,
-} as const;
-
 /** Feature 1: Parse MT940 (SWIFT) bank statement format */
 const parseMT940 = (text: string, userId: string, accountId: string | null): Record<string, unknown>[] => {
   const rows: Record<string, unknown>[] = [];
@@ -155,7 +148,7 @@ const BankMatching = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_accounts").select("*").order("created_at");
       if (error) throw error;
-      return (data as any[]) || [];
+      return (data || []) as BankAccount[];
     },
     enabled: !!user,
   });
@@ -165,7 +158,7 @@ const BankMatching = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_matching_rules").select("*").order("created_at");
       if (error) throw error;
-      return (data as any[]) || [];
+      return (data || []) as MatchingRule[];
     },
     enabled: !!user,
   });
@@ -179,7 +172,7 @@ const BankMatching = () => {
         .order("booking_date", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return (data as any[]) || [];
+      return (data || []) as BankTransaction[];
     },
     enabled: !!user,
   });
@@ -264,7 +257,7 @@ const BankMatching = () => {
     mutationFn: async ({ txId, paymentId, confidence }: { txId: string; paymentId: string; confidence: string }) => {
       const { error: e1 } = await supabase
         .from("bank_transactions")
-        .update({ matched_payment_id: paymentId, match_confidence: confidence } as any)
+        .update({ matched_payment_id: paymentId, match_confidence: confidence } as Record<string, unknown>)
         .eq("id", txId);
       if (e1) throw e1;
       const { error: e2 } = await supabase
@@ -280,7 +273,7 @@ const BankMatching = () => {
     mutationFn: async ({ txId, paymentId }: { txId: string; paymentId: string }) => {
       const { error: e1 } = await supabase
         .from("bank_transactions")
-        .update({ matched_payment_id: null, match_confidence: null } as any)
+        .update({ matched_payment_id: null, match_confidence: null } as Record<string, unknown>)
         .eq("id", txId);
       if (e1) throw e1;
       const { error: e2 } = await supabase
@@ -301,7 +294,7 @@ const BankMatching = () => {
         iban: accountForm.iban || null,
         bic: accountForm.bic || null,
         bank_name: accountForm.bank_name || null,
-      } as any);
+      } as Record<string, unknown>);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -333,7 +326,7 @@ const BankMatching = () => {
         match_value: ruleForm.match_value,
         tenant_id: ruleForm.tenant_id || null,
         property_id: ruleForm.property_id || null,
-      } as any);
+      } as Record<string, unknown>);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -388,7 +381,7 @@ const BankMatching = () => {
         if (mt940Rows.length === 0) { toast.error("Keine Transaktionen im MT940 gefunden"); return; }
         const batchSize = 100;
         for (let i = 0; i < mt940Rows.length; i += batchSize) {
-          const { error } = await supabase.from("bank_transactions").insert(mt940Rows.slice(i, i + batchSize) as any);
+          const { error } = await supabase.from("bank_transactions").insert(mt940Rows.slice(i, i + batchSize) as Record<string, unknown>[]);
           if (error) throw error;
         }
         toast.success(`${mt940Rows.length} MT940-Transaktionen importiert`);
@@ -402,7 +395,7 @@ const BankMatching = () => {
         if (camtRows.length === 0) { toast.error("Keine Transaktionen im CAMT gefunden"); return; }
         const batchSize = 100;
         for (let i = 0; i < camtRows.length; i += batchSize) {
-          const { error } = await supabase.from("bank_transactions").insert(camtRows.slice(i, i + batchSize) as any);
+          const { error } = await supabase.from("bank_transactions").insert(camtRows.slice(i, i + batchSize) as Record<string, unknown>[]);
           if (error) throw error;
         }
         toast.success(`${camtRows.length} CAMT-Transaktionen importiert`);
@@ -428,7 +421,7 @@ const BankMatching = () => {
       // Use default account if selected
       const accountId = selectedAccount !== "alle" ? selectedAccount : (accounts.find(a => a.is_default)?.id || null);
 
-      const rows: any[] = [];
+      const rows: Record<string, unknown>[] = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ""));
         if (cols.length <= amountCol) continue;
@@ -457,7 +450,7 @@ const BankMatching = () => {
       if (rows.length === 0) { toast.error("Keine gültigen Transaktionen"); return; }
       const batchSize = 100;
       for (let i = 0; i < rows.length; i += batchSize) {
-        const { error } = await supabase.from("bank_transactions").insert(rows.slice(i, i + batchSize) as any);
+        const { error } = await supabase.from("bank_transactions").insert(rows.slice(i, i + batchSize));
         if (error) throw error;
       }
       toast.success(`${rows.length} Transaktionen importiert`);

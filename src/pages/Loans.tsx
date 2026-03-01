@@ -117,7 +117,7 @@ const Loans = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as Loan[];
+      return (data || []) as Loan[];
     },
     enabled: !!user,
   });
@@ -758,7 +758,7 @@ const Loans = () => {
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
                 <RTooltip
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number, _: string, p: any) => [`${v} Monate (${p.payload.end})`, `${p.payload.rate}% · ${formatCurrency(p.payload.balance)}`]}
+                  formatter={(v: number, _: string, p: { payload: { end: string; rate: number; balance: number } }) => [`${v} Monate (${p.payload.end})`, `${p.payload.rate}% · ${formatCurrency(p.payload.balance)}`]}
                 />
                 <Bar dataKey="monate" radius={[0, 4, 4, 0]}>
                   {zinsBindungData.map((entry, i) => (
