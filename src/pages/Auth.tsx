@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,8 +29,13 @@ const Auth = () => {
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState("");
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  /* Ref to bypass the MFA re-check after backup code login or explicit back navigation.
+   * Without this, setNeeds2FA(false) triggers the useEffect which re-detects
+   * AAL1 < AAL2 (factor still enrolled server-side) and sets needs2FA back to true. */
+  const bypassMfaCheck = useRef(false);
 
   useEffect(() => {
+    if (bypassMfaCheck.current) return;
     if (user && !needs2FA) {
       /* Only redirect after 2FA is completed (or not required) */
       const check2FA = async () => {
@@ -118,6 +123,9 @@ const Auth = () => {
       /* Validation succeeded — NOW consume the code */
       storedCodes.splice(codeIndex, 1);
       localStorage.setItem("immocontrol_2fa_backup_codes", JSON.stringify(storedCodes));
+      /* Bypass the MFA re-check in useEffect — session stays at AAL1 but
+       * the factor is still enrolled, so useEffect would re-detect it */
+      bypassMfaCheck.current = true;
       setNeeds2FA(false);
       toast.success(`Willkommen zurück! (${storedCodes.length} Backup-Codes verbleibend)`);
       toast.info("Bitte richte 2FA erneut ein, da ein Backup-Code verwendet wurde.", { duration: 8000 });
@@ -265,7 +273,7 @@ const Auth = () => {
               </button>
               <button
                 type="button"
-                onClick={() => { setNeeds2FA(false); setTotpCode(""); setBackupCode(""); }}
+                onClick={async () => { await supabase.auth.signOut(); setNeeds2FA(false); setTotpCode(""); setBackupCode(""); }}
                 className="text-xs text-muted-foreground hover:text-foreground text-center"
               >
                 Zurück zur Anmeldung

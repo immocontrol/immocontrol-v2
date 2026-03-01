@@ -96,7 +96,7 @@ export function ErrorInterceptor() {
     const origError = console.error;
     console.error = (...args: unknown[]) => {
       origError.apply(console, args);
-      const msg = args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ");
+      const msg = args.map(a => { if (typeof a === "object" && a !== null) { try { return JSON.stringify(a); } catch { return String(a); } } return String(a); }).join(" ");
       if (!msg.includes("immocontrol_error_log")) {
         addErrorToStore("error", msg, "console.error");
       }
@@ -105,7 +105,7 @@ export function ErrorInterceptor() {
     const origWarn = console.warn;
     console.warn = (...args: unknown[]) => {
       origWarn.apply(console, args);
-      const msg = args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ");
+      const msg = args.map(a => { if (typeof a === "object" && a !== null) { try { return JSON.stringify(a); } catch { return String(a); } } return String(a); }).join(" ");
       addErrorToStore("warning", msg, "console.warn");
     };
 
