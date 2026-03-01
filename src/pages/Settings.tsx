@@ -46,6 +46,8 @@ function loadCustomShortcuts(): Record<string, string> {
 
 function saveCustomShortcuts(sc: Record<string, string>) {
   localStorage.setItem("immocontrol_shortcuts", JSON.stringify(sc));
+  /* Notify AppLayout in same tab to rebuild shortcut map immediately */
+  window.dispatchEvent(new Event("shortcuts-updated"));
 }
 
 const Settings = () => {

@@ -95,6 +95,25 @@ const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Einstellungen": "/einstellungen",
 };
 
+/** Normalize a combo string to canonical modifier order: ctrl+alt+shift+key */
+function normalizeCombo(raw: string): string {
+  const parts = raw.toLowerCase().replace(/\s/g, "").split("+");
+  const modifiers: string[] = [];
+  const keys: string[] = [];
+  for (const p of parts) {
+    if (p === "ctrl" || p === "meta") { if (!modifiers.includes("ctrl")) modifiers.push("ctrl"); }
+    else if (p === "alt") { if (!modifiers.includes("alt")) modifiers.push("alt"); }
+    else if (p === "shift") { if (!modifiers.includes("shift")) modifiers.push("shift"); }
+    else keys.push(p);
+  }
+  /* Canonical order: ctrl → alt → shift → key */
+  const ordered: string[] = [];
+  if (modifiers.includes("ctrl")) ordered.push("ctrl");
+  if (modifiers.includes("alt")) ordered.push("alt");
+  if (modifiers.includes("shift")) ordered.push("shift");
+  return [...ordered, ...keys].join("+");
+}
+
 /** Load custom shortcuts from localStorage and build combo→path map */
 function buildShortcutMap(): Record<string, string> {
   try {
@@ -105,7 +124,7 @@ function buildShortcutMap(): Record<string, string> {
       for (const [action, combo] of Object.entries(custom)) {
         const path = ACTION_TO_PATH[action];
         if (path && combo) {
-          map[combo.toLowerCase().replace(/\s/g, "")] = path;
+          map[normalizeCombo(combo)] = path;
         }
       }
       if (Object.keys(map).length > 0) return map;
@@ -114,7 +133,7 @@ function buildShortcutMap(): Record<string, string> {
   /* Fallback to defaults */
   const map: Record<string, string> = {};
   for (const [combo, path] of Object.entries(DEFAULT_SHORTCUT_MAP)) {
-    map[combo.toLowerCase().replace(/\s/g, "")] = path;
+    map[normalizeCombo(combo)] = path;
   }
   return map;
 }
@@ -227,18 +246,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   /* Rebuild shortcut map when Settings saves to localStorage */
   const shortcutMapRef = useRef<Record<string, string>>(buildShortcutMap());
   useEffect(() => {
+    const onRebuild = () => { shortcutMapRef.current = buildShortcutMap(); };
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "immocontrol_shortcuts") {
-        shortcutMapRef.current = buildShortcutMap();
-      }
+      if (e.key === "immocontrol_shortcuts") onRebuild();
     };
     window.addEventListener("storage", onStorage);
-    /* Also rebuild on focus (covers same-tab localStorage writes) */
-    const onFocus = () => { shortcutMapRef.current = buildShortcutMap(); };
-    window.addEventListener("focus", onFocus);
+    /* CustomEvent dispatched by Settings.tsx saveCustomShortcuts — works same-tab */
+    window.addEventListener("shortcuts-updated", onRebuild);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("shortcuts-updated", onRebuild);
     };
   }, []);
 
