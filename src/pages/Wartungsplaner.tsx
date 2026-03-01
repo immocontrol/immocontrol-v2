@@ -1,0 +1,500 @@
+import { useState, useMemo, useCallback } from "react";
+import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/NumberInput";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useProperties } from "@/context/PropertyContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+
+interface MaintenanceItem {
+  id: string;
+  property_id: string;
+  title: string;
+  category: string;
+  priority: "low" | "medium" | "high";
+  estimated_cost: number;
+  planned_date: string | null;
+  completed: boolean;
+  notes: string | null;
+  recurring_interval?: string | null;
+  last_completed_date?: string | null;
+}
+
+const CATEGORIES = ["Heizung", "Dach", "Elektrik", "Sanitär", "Fassade", "Fenster", "Keller", "Aufzug", "Brandschutz", "Wasser", "Garten", "Sonstiges"];
+
+const PRIORITIES = [
+  { value: "high", label: "Dringend", color: "bg-loss/10 text-loss", dotColor: "bg-loss" },
+  { value: "medium", label: "Mittel", color: "bg-gold/10 text-gold", dotColor: "bg-gold" },
+  { value: "low", label: "Geplant", color: "bg-secondary text-muted-foreground", dotColor: "bg-muted-foreground" },
+];
+
+/** Feature 7: Recurring maintenance intervals */
+const RECURRING_INTERVALS = [
+  { value: "", label: "Einmalig" },
+  { value: "monthly", label: "Monatlich" },
+  { value: "quarterly", label: "Vierteljährlich" },
+  { value: "semi-annual", label: "Halbjährlich" },
+  { value: "annual", label: "Jährlich" },
+  { value: "2-years", label: "Alle 2 Jahre" },
+  { value: "3-years", label: "Alle 3 Jahre" },
+  { value: "5-years", label: "Alle 5 Jahre" },
+  { value: "10-years", label: "Alle 10 Jahre" },
+];
+
+/** Feature 7: Pre-defined maintenance templates with legal requirements */
+const MAINTENANCE_TEMPLATES = [
+  { title: "Heizungswartung", category: "Heizung", priority: "high" as const, interval: "annual", cost: 200, notes: "Jährliche Pflicht gem. GEG/EnEV. Brenner, Abgaswerte, Dichtigkeit prüfen." },
+  { title: "Legionellenprüfung", category: "Wasser", priority: "high" as const, interval: "3-years", cost: 300, notes: "Pflicht bei >400L Warmwasserspeicher oder >3L Leitungsinhalt (TrinkwV §14)." },
+  { title: "Rauchwarnmelder prüfen", category: "Brandschutz", priority: "high" as const, interval: "annual", cost: 50, notes: "Jährliche Funktionsprüfung Pflicht in allen Bundesländern." },
+  { title: "Dachinspektion", category: "Dach", priority: "medium" as const, interval: "2-years", cost: 500, notes: "Ziegel, Rinnen, Fallrohre, Anschlüsse prüfen. Nach Stürmen zusätzlich." },
+  { title: "Schornsteinfeger", category: "Heizung", priority: "high" as const, interval: "annual", cost: 80, notes: "Kehr- und Überprüfungspflicht gem. SchfHwG." },
+  { title: "Aufzugsprüfung (TÜV)", category: "Aufzug", priority: "high" as const, interval: "2-years", cost: 800, notes: "Pflichtprüfung gem. BetrSichV durch zugelassene Überwachungsstelle." },
+  { title: "Elektroprüfung (E-Check)", category: "Elektrik", priority: "medium" as const, interval: "5-years", cost: 400, notes: "Empfohlen: Alle 4 Jahre in Mietwohnungen. DGUV V3." },
+  { title: "Fassadenanstrich", category: "Fassade", priority: "low" as const, interval: "10-years", cost: 15000, notes: "Werterhalt. Risse, Abplatzungen, Feuchtigkeitsschäden prüfen." },
+  { title: "Dachrinnen reinigen", category: "Dach", priority: "medium" as const, interval: "annual", cost: 150, notes: "Vor dem Winter reinigen. Verstopfung kann Wasserschäden verursachen." },
+  { title: "Gartenpflege / Baumschnitt", category: "Garten", priority: "low" as const, interval: "annual", cost: 300, notes: "Verkehrssicherungspflicht beachten. Totholz entfernen." },
+];
+
+/** Calculate next due date based on interval and last completion */
+const getNextDueDate = (item: MaintenanceItem): Date | null => {
+  if (!item.recurring_interval) return item.planned_date ? new Date(item.planned_date) : null;
+  const base = item.last_completed_date ? new Date(item.last_completed_date) : item.planned_date ? new Date(item.planned_date) : new Date();
+  const next = new Date(base);
+  switch (item.recurring_interval) {
+    case "monthly": next.setMonth(next.getMonth() + 1); break;
+    case "quarterly": next.setMonth(next.getMonth() + 3); break;
+    case "semi-annual": next.setMonth(next.getMonth() + 6); break;
+    case "annual": next.setFullYear(next.getFullYear() + 1); break;
+    case "2-years": next.setFullYear(next.getFullYear() + 2); break;
+    case "3-years": next.setFullYear(next.getFullYear() + 3); break;
+    case "5-years": next.setFullYear(next.getFullYear() + 5); break;
+    case "10-years": next.setFullYear(next.getFullYear() + 10); break;
+  }
+  return next;
+};
+
+/** Check if a maintenance item is overdue or due soon */
+const getDueStatus = (item: MaintenanceItem): "overdue" | "due-soon" | "ok" | "completed" => {
+  if (item.completed && !item.recurring_interval) return "completed";
+  const nextDue = getNextDueDate(item);
+  if (!nextDue) return "ok";
+  const now = new Date();
+  const diffDays = Math.floor((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return "overdue";
+  if (diffDays <= 30) return "due-soon";
+  return "ok";
+};
+
+const Wartungsplaner = () => {
+  const { user } = useAuth();
+  const { properties } = useProperties();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [filterProperty, setFilterProperty] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [overdueOpen, setOverdueOpen] = useState(true);
+  const [upcomingOpen, setUpcomingOpen] = useState(true);
+  const [form, setForm] = useState({
+    title: "", category: "Sonstiges", priority: "medium" as MaintenanceItem["priority"],
+    estimated_cost: 0, planned_date: "", notes: "", property_id: "",
+    recurring_interval: "",
+  });
+
+  const { data: allItems = [], isLoading } = useQuery<MaintenanceItem[]>({
+    queryKey: ["all_maintenance"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance_items")
+        .select("*")
+        .order("planned_date", { ascending: true });
+      if (error) throw error;
+      return (data || []) as unknown as MaintenanceItem[];
+    },
+    enabled: !!user,
+  });
+
+  const propMap = useMemo(() => new Map(properties.map(p => [p.id, p.name])), [properties]);
+
+  const filteredItems = useMemo(() => {
+    let items = allItems;
+    if (filterProperty !== "all") items = items.filter(i => i.property_id === filterProperty);
+    if (filterCategory !== "all") items = items.filter(i => i.category === filterCategory);
+    if (!showCompleted) items = items.filter(i => !i.completed || i.recurring_interval);
+    return items;
+  }, [allItems, filterProperty, filterCategory, showCompleted]);
+
+  const overdueItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "overdue"), [filteredItems]);
+  const dueSoonItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "due-soon"), [filteredItems]);
+  const okItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "ok"), [filteredItems]);
+  const completedItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "completed"), [filteredItems]);
+
+  const totalEstimated = useMemo(() => filteredItems.filter(i => !i.completed).reduce((s, i) => s + (i.estimated_cost || 0), 0), [filteredItems]);
+  const totalRecurring = useMemo(() => filteredItems.filter(i => i.recurring_interval).length, [filteredItems]);
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !form.title.trim() || !form.property_id) throw new Error("Pflichtfelder");
+      const insertData: Record<string, unknown> = {
+        property_id: form.property_id,
+        user_id: user.id,
+        title: form.title.trim(),
+        category: form.category,
+        priority: form.priority,
+        estimated_cost: form.estimated_cost,
+        planned_date: form.planned_date || null,
+        notes: form.notes || null,
+        completed: false,
+      };
+      // Try to include recurring_interval if the column exists
+      if (form.recurring_interval) {
+        insertData.recurring_interval = form.recurring_interval;
+      }
+      const { error } = await supabase.from("maintenance_items").insert(insertData as Record<string, unknown>);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Wartung geplant");
+      setForm({ title: "", category: "Sonstiges", priority: "medium", estimated_cost: 0, planned_date: "", notes: "", property_id: "", recurring_interval: "" });
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["all_maintenance"] });
+    },
+    onError: () => toast.error("Fehler beim Anlegen"),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const updateData: Record<string, unknown> = { completed };
+      if (completed) {
+        updateData.last_completed_date = new Date().toISOString().slice(0, 10);
+      }
+      await supabase.from("maintenance_items").update(updateData as Record<string, unknown>).eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all_maintenance"] });
+      toast.success("Status aktualisiert");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("maintenance_items").delete().eq("id", id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["all_maintenance"] });
+      toast.success("Gelöscht");
+    },
+  });
+
+  const addTemplate = useCallback((template: typeof MAINTENANCE_TEMPLATES[0]) => {
+    if (properties.length === 0) {
+      toast.error("Bitte erst ein Objekt anlegen");
+      return;
+    }
+    setForm({
+      title: template.title,
+      category: template.category,
+      priority: template.priority,
+      estimated_cost: template.cost,
+      planned_date: new Date().toISOString().slice(0, 10),
+      notes: template.notes,
+      property_id: properties[0].id,
+      recurring_interval: template.interval,
+    });
+    setOpen(true);
+  }, [properties]);
+
+  const renderItem = (item: MaintenanceItem) => {
+    const priorityCfg = PRIORITIES.find(p => p.value === item.priority);
+    const status = getDueStatus(item);
+    const nextDue = getNextDueDate(item);
+    const intervalLabel = RECURRING_INTERVALS.find(r => r.value === item.recurring_interval)?.label;
+
+    return (
+      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors group ${item.completed && !item.recurring_interval ? "opacity-40" : ""}`}>
+        <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="shrink-0">
+          {item.completed && !item.recurring_interval ? (
+            <Check className="h-4 w-4 text-profit" />
+          ) : status === "overdue" ? (
+            <AlertTriangle className="h-4 w-4 text-loss" />
+          ) : status === "due-soon" ? (
+            <Bell className="h-4 w-4 text-gold animate-pulse" />
+          ) : (
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`text-sm font-medium ${item.completed && !item.recurring_interval ? "line-through" : ""} truncate`}>{item.title}</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${priorityCfg?.color}`}>{priorityCfg?.label}</span>
+            <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{item.category}</span>
+            {item.recurring_interval && (
+              <Badge variant="outline" className="text-[10px] h-4 gap-0.5">
+                <RefreshCw className="h-2.5 w-2.5" /> {intervalLabel}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5 flex-wrap">
+            <span>{propMap.get(item.property_id) || "–"}</span>
+            {item.estimated_cost > 0 && <span>~{formatCurrency(item.estimated_cost)}</span>}
+            {nextDue && (
+              <span className={status === "overdue" ? "text-loss font-medium" : status === "due-soon" ? "text-gold font-medium" : ""}>
+                Fällig: {nextDue.toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric" })}
+              </span>
+            )}
+            {item.last_completed_date && <span>Zuletzt: {formatDate(item.last_completed_date)}</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="p-1.5 rounded-md hover:bg-secondary" title={item.completed ? "Als offen markieren" : "Als erledigt markieren"}>
+            <Check className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={() => deleteMutation.mutate(item.id)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-loss" title="Löschen">
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Wrench className="h-6 w-6 text-primary" /> Wartungsplaner
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {allItems.length} Einträge · {totalRecurring} wiederkehrend · ~{formatCurrency(totalEstimated)} geplant
+          </p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" /> Wartung planen
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Wartung planen</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Objekt *</Label>
+                <Select value={form.property_id} onValueChange={v => setForm(f => ({ ...f, property_id: v }))}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Titel *</Label>
+                <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="h-9 text-sm" placeholder="z.B. Heizungswartung" autoFocus />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Kategorie</Label>
+                  <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Priorität</Label>
+                  <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as MaintenanceItem["priority"] }))}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>{PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Schätzkosten €</Label>
+                  <NumberInput value={form.estimated_cost} onChange={v => setForm(f => ({ ...f, estimated_cost: v }))} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Geplant für</Label>
+                  <input type="date" value={form.planned_date} onChange={e => setForm(f => ({ ...f, planned_date: e.target.value }))} className="h-9 text-sm w-full rounded-md border border-input bg-background px-3 py-1" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Wiederholung</Label>
+                <Select value={form.recurring_interval} onValueChange={v => setForm(f => ({ ...f, recurring_interval: v }))}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Einmalig" /></SelectTrigger>
+                  <SelectContent>{RECURRING_INTERVALS.map(r => <SelectItem key={r.value || "none"} value={r.value || "none"}>{r.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Notiz</Label>
+                <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
+              </div>
+              <Button onClick={() => addMutation.mutate()} className="w-full" disabled={addMutation.isPending || !form.title.trim() || !form.property_id}>
+                Wartung planen
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="gradient-card rounded-xl border border-border p-4">
+          <div className="text-[10px] text-muted-foreground uppercase">Überfällig</div>
+          <div className={`text-xl font-bold ${overdueItems.length > 0 ? "text-loss" : ""}`}>{overdueItems.length}</div>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-4">
+          <div className="text-[10px] text-muted-foreground uppercase">Bald fällig</div>
+          <div className={`text-xl font-bold ${dueSoonItems.length > 0 ? "text-gold" : ""}`}>{dueSoonItems.length}</div>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-4">
+          <div className="text-[10px] text-muted-foreground uppercase">Wiederkehrend</div>
+          <div className="text-xl font-bold">{totalRecurring}</div>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-4">
+          <div className="text-[10px] text-muted-foreground uppercase">Geplante Kosten</div>
+          <div className="text-xl font-bold">{formatCurrency(totalEstimated)}</div>
+        </div>
+      </div>
+
+      {/* Templates */}
+      <div className="gradient-card rounded-xl border border-border p-5">
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" /> Pflicht-Wartungen (Vorlagen)
+        </h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Klicke auf eine Vorlage, um sie als wiederkehrende Wartung für ein Objekt anzulegen.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {MAINTENANCE_TEMPLATES.map((t, i) => (
+            <button
+              key={i}
+              onClick={() => addTemplate(t)}
+              className="flex items-start gap-3 p-3 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors text-left"
+            >
+              <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${PRIORITIES.find(p => p.value === t.priority)?.dotColor}`} />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium">{t.title}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{t.notes.slice(0, 60)}...</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className="text-[10px] h-4">{t.category}</Badge>
+                  <span className="text-[10px] text-muted-foreground">~{formatCurrency(t.cost)}</span>
+                  <span className="text-[10px] text-muted-foreground">{RECURRING_INTERVALS.find(r => r.value === t.interval)?.label}</span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <Select value={filterProperty} onValueChange={setFilterProperty}>
+          <SelectTrigger className="w-[160px] h-9 text-sm">
+            <Building2 className="h-3.5 w-3.5 mr-1.5" />
+            <SelectValue placeholder="Alle Objekte" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Objekte</SelectItem>
+            {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-[140px] h-9 text-sm">
+            <Filter className="h-3.5 w-3.5 mr-1.5" />
+            <SelectValue placeholder="Kategorie" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Kategorien</SelectItem>
+            {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button variant={showCompleted ? "secondary" : "outline"} size="sm" onClick={() => setShowCompleted(!showCompleted)} className="h-9 text-xs gap-1.5">
+          <Check className="h-3.5 w-3.5" /> Erledigte {showCompleted ? "ausblenden" : "anzeigen"}
+        </Button>
+      </div>
+
+      {/* Maintenance Lists */}
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground text-center py-12 animate-pulse">Laden...</div>
+      ) : filteredItems.length === 0 ? (
+        <div className="text-center py-12">
+          <Wrench className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
+          <p className="text-sm text-muted-foreground">Keine Wartungseinträge vorhanden</p>
+          <p className="text-xs text-muted-foreground mt-1">Nutze die Vorlagen oben oder erstelle eine eigene Wartung</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Overdue */}
+          {overdueItems.length > 0 && (
+            <Collapsible open={overdueOpen} onOpenChange={setOverdueOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-2 w-full text-left">
+                  {overdueOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <AlertTriangle className="h-4 w-4 text-loss" />
+                  <span className="text-sm font-semibold text-loss">Überfällig ({overdueItems.length})</span>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2">
+                {overdueItems.map(renderItem)}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
+          {/* Due Soon */}
+          {dueSoonItems.length > 0 && (
+            <Collapsible open={upcomingOpen} onOpenChange={setUpcomingOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-2 w-full text-left">
+                  {upcomingOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <Bell className="h-4 w-4 text-gold" />
+                  <span className="text-sm font-semibold text-gold">Bald fällig ({dueSoonItems.length})</span>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2">
+                {dueSoonItems.map(renderItem)}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
+          {/* OK Items */}
+          {okItems.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold">Geplant ({okItems.length})</span>
+              </div>
+              <div className="space-y-2">
+                {okItems.map(renderItem)}
+              </div>
+            </div>
+          )}
+
+          {/* Completed */}
+          {showCompleted && completedItems.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Check className="h-4 w-4 text-profit" />
+                <span className="text-sm font-semibold text-muted-foreground">Erledigt ({completedItems.length})</span>
+              </div>
+              <div className="space-y-2">
+                {completedItems.map(renderItem)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Wartungsplaner;

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { TenantTickets } from "@/components/TicketSystem";
 import { TenantPayments } from "@/components/PaymentTracking";
+import { DamageReport } from "@/components/DamageReport";
 
 interface TenantInfo {
   id: string;
@@ -353,7 +354,7 @@ const TenantDashboard = ({
         <h3 className="text-sm font-semibold mb-3">Schnellzugriff</h3>
         <div className="space-y-1">
           {[
-            { label: "Reparatur melden", icon: Wrench, tab: "tickets" as Tab, highlight: true },
+            { label: "Schaden melden", icon: AlertTriangle, tab: "tickets" as Tab, highlight: true },
             { label: "Nachricht an Vermieter", icon: Send, tab: "messages" as Tab },
             { label: "Meine Dokumente", icon: FileText, tab: "documents" as Tab },
             { label: "Zahlungsübersicht", icon: CreditCard, tab: "payments" as Tab },
@@ -628,13 +629,21 @@ const TenantPortal = () => {
           </div>
         )}
 
-        {/* TICKETS TAB */}
+        {/* TICKETS TAB — Feature 5: Enhanced with DamageReport */}
         {activeTab === "tickets" && tenantInfo && (
-          <TenantTickets
-            tenantId={tenantInfo.id}
-            propertyId={tenantInfo.property_id}
-            landlordId={tenantInfo.landlord_id}
-          />
+          <div className="space-y-4">
+            <DamageReport
+              tenantId={tenantInfo.id}
+              propertyId={tenantInfo.property_id}
+              landlordId={tenantInfo.landlord_id}
+              unitLabel={tenantInfo.unit_label}
+            />
+            <TenantTickets
+              tenantId={tenantInfo.id}
+              propertyId={tenantInfo.property_id}
+              landlordId={tenantInfo.landlord_id}
+            />
+          </div>
         )}
 
         {/* DOCUMENTS TAB */}

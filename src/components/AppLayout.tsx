@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -28,6 +28,8 @@ const navItems = [
   { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
   { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
   { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
+  { path: "/dokumente", label: "Dokumente", icon: FolderOpen, shortcut: "" },
+  { path: "/wartungsplaner", label: "Wartung", icon: Wrench, shortcut: "" },
   { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
 ];
 

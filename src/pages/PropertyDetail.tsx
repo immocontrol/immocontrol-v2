@@ -29,6 +29,8 @@ import ServiceContracts from "@/components/ServiceContracts";
 import PropertyQuickSwitcher from "@/components/PropertyQuickSwitcher";
 import DocumentTemplateGenerator from "@/components/DocumentTemplateGenerator";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
+import { AnlageVExport } from "@/components/AnlageVExport";
+import PropertyValuation from "@/components/PropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -373,8 +375,23 @@ const PropertyDetail = () => {
         monthlyCashflow={property.monthlyCashflow}
       />
 
+      {/* Feature 6: Automatische Wertermittlung */}
+      <PropertyValuation
+        propertyName={property.name}
+        address={property.address}
+        sqm={property.sqm}
+        monthlyRent={property.monthlyRent}
+        yearBuilt={property.yearBuilt}
+        purchasePrice={property.purchasePrice}
+        currentValue={property.currentValue}
+        type={property.type}
+      />
+
       {/* Benchmark */}
       <PropertyBenchmark propertyId={property.id} />
+
+      {/* Feature 4: Steuer-Export Anlage V */}
+      <AnlageVExport />
 
       {/* AfA Calculator */}
       <AfACalculator />
