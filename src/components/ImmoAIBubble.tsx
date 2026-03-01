@@ -48,10 +48,10 @@ export default function ImmoAIBubble() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-BUBBLE_MAX_MESSAGES))); } catch { /* localStorage may be unavailable */ }
   }, [messages]);
 
-  // Improvement 2: Alt+0 keyboard shortcut
+  // Improvement 2: Alt+I keyboard shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.altKey && e.key === "0") {
+      if (e.altKey && (e.key === "i" || e.key === "I")) {
         e.preventDefault();
         setOpen(prev => !prev);
       }
@@ -167,7 +167,7 @@ export default function ImmoAIBubble() {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-20 md:bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
-          aria-label="Immo AI öffnen (Alt+0)"
+          aria-label="Immo AI öffnen (Alt+I)"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
           {unreadCount > 0 && (
@@ -200,7 +200,7 @@ export default function ImmoAIBubble() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)} title="Schließen (Alt+0)">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)} title="Schließen (Alt+I)">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -278,7 +278,7 @@ export default function ImmoAIBubble() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Frage stellen... (Alt+0 zum Öffnen/Schließen)"
+                placeholder="Frage stellen... (Alt+I zum Öffnen/Schließen)"
                 className="min-h-[36px] max-h-[80px] resize-none text-xs"
                 rows={1}
                 disabled={isLoading}
