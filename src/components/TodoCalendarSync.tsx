@@ -62,7 +62,9 @@ function generateIcs(todos: Todo[]): string {
           const d = new Date(t.due_date!);
           const end = new Date(d);
           end.setHours(h, m + 30);
-          return toIcsDate(t.due_date!, `${pad(end.getHours())}:${pad(end.getMinutes())}`);
+          /* Use end Date for date portion — handles midnight rollover (e.g. 23:45 + 30min → 00:15 next day) */
+          const endDateStr = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
+          return toIcsDate(endDateStr, `${pad(end.getHours())}:${pad(end.getMinutes())}`);
         })();
 
     const priorityMap: Record<number, number> = { 1: 1, 2: 3, 3: 5, 4: 9 };
@@ -170,7 +172,7 @@ function buildOutlookUrl(todo: Todo): string {
       const [h, m] = todo.due_time.split(":").map(Number);
       const endDate = new Date(todo.due_date);
       endDate.setHours(h, m + 30);
-      params.set("enddt", `${todo.due_date}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`);
+      params.set("enddt", `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`);
     } else {
       params.set("startdt", todo.due_date);
       params.set("allday", "true");

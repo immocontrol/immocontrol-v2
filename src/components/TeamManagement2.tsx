@@ -120,18 +120,39 @@ export const TeamManagement = () => {
         toast.error("Fehler beim Einladen");
       }
     } else {
-      // Send invitation email via built-in auth invite
+      /* Send invitation email: try Edge Function first, then fall back to
+         Supabase built-in auth invite, then graceful degradation */
+      let emailSent = false;
       try {
-        await supabase.functions.invoke("invite-team-member", {
+        const fnRes = await supabase.functions.invoke("invite-team-member", {
           body: {
             email: email.trim().toLowerCase(),
             role,
+            shared_resources: selectedResources,
             redirect_origin: window.location.origin,
           },
         });
-        toast.success(`Einladung per E-Mail an ${email} gesendet`);
+        if (fnRes.error) throw fnRes.error;
+        emailSent = true;
       } catch {
-        toast.success(`Einladung an ${email} erstellt – das Mitglied sieht sie nach dem Login.`);
+        /* Edge Function unavailable — try Supabase auth invite as fallback */
+        try {
+          const { error: inviteErr } = await supabase.auth.signInWithOtp({
+            email: email.trim().toLowerCase(),
+            options: {
+              shouldCreateUser: false,
+              emailRedirectTo: `${window.location.origin}/einstellungen`,
+            },
+          });
+          if (!inviteErr) emailSent = true;
+        } catch {
+          /* OTP also failed — silent fallback */
+        }
+      }
+      if (emailSent) {
+        toast.success(`Einladung per E-Mail an ${email} gesendet`);
+      } else {
+        toast.success(`Einladung an ${email} erstellt. Das Mitglied sieht sie nach dem Login.`);
       }
       setEmail("");
       setRole("viewer");

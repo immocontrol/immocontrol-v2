@@ -77,9 +77,66 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
-/* OPT-25: Keyboard shortcut map for quick lookup */
-const SHORTCUT_MAP: Record<string, string> = {};
-navItems.forEach(n => { SHORTCUT_MAP[n.shortcut] = n.path; });
+/* OPT-25: Default keyboard shortcut map for quick lookup */
+const DEFAULT_SHORTCUT_MAP: Record<string, string> = {};
+navItems.forEach(n => { if (n.shortcut) DEFAULT_SHORTCUT_MAP[`Alt+${n.shortcut}`] = n.path; });
+
+/* Map action labels to paths for custom shortcut resolution */
+const ACTION_TO_PATH: Record<string, string> = {
+  "Navigation: Portfolio": "/",
+  "Navigation: Darlehen": "/darlehen",
+  "Navigation: Mieten": "/mietuebersicht",
+  "Navigation: Verträge": "/vertraege",
+  "Navigation: Kontakte": "/kontakte",
+  "Navigation: Aufgaben": "/aufgaben",
+  "Navigation: Berichte": "/berichte",
+  "Navigation: CRM": "/crm",
+  "Navigation: Deals": "/deals",
+  "Navigation: Einstellungen": "/einstellungen",
+};
+
+/** Normalize a combo string to canonical modifier order: ctrl+alt+shift+key */
+function normalizeCombo(raw: string): string {
+  const parts = raw.toLowerCase().replace(/\s/g, "").split("+");
+  const modifiers: string[] = [];
+  const keys: string[] = [];
+  for (const p of parts) {
+    if (p === "ctrl" || p === "meta") { if (!modifiers.includes("ctrl")) modifiers.push("ctrl"); }
+    else if (p === "alt") { if (!modifiers.includes("alt")) modifiers.push("alt"); }
+    else if (p === "shift") { if (!modifiers.includes("shift")) modifiers.push("shift"); }
+    else keys.push(p);
+  }
+  /* Canonical order: ctrl → alt → shift → key */
+  const ordered: string[] = [];
+  if (modifiers.includes("ctrl")) ordered.push("ctrl");
+  if (modifiers.includes("alt")) ordered.push("alt");
+  if (modifiers.includes("shift")) ordered.push("shift");
+  return [...ordered, ...keys].join("+");
+}
+
+/** Load custom shortcuts from localStorage and build combo→path map */
+function buildShortcutMap(): Record<string, string> {
+  try {
+    const stored = localStorage.getItem("immocontrol_shortcuts");
+    if (stored) {
+      const custom = JSON.parse(stored) as Record<string, string>;
+      const map: Record<string, string> = {};
+      for (const [action, combo] of Object.entries(custom)) {
+        const path = ACTION_TO_PATH[action];
+        if (path && combo) {
+          map[normalizeCombo(combo)] = path;
+        }
+      }
+      if (Object.keys(map).length > 0) return map;
+    }
+  } catch { /* ignore corrupt localStorage */ }
+  /* Fallback to defaults */
+  const map: Record<string, string> = {};
+  for (const [combo, path] of Object.entries(DEFAULT_SHORTCUT_MAP)) {
+    map[normalizeCombo(combo)] = path;
+  }
+  return map;
+}
 
 /* OPT-26: Route matching helper */
 const isRouteActive = (itemPath: string, currentPath: string): boolean =>
@@ -108,6 +165,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
 
@@ -180,19 +238,42 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return null;
   }, [location.pathname, propertyName]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — load custom shortcuts from localStorage
   const navigateTo = useCallback((path: string) => {
     navigate(path);
   }, [navigate]);
+
+  /* Rebuild shortcut map when Settings saves to localStorage */
+  const shortcutMapRef = useRef<Record<string, string>>(buildShortcutMap());
+  useEffect(() => {
+    const onRebuild = () => { shortcutMapRef.current = buildShortcutMap(); };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "immocontrol_shortcuts") onRebuild();
+    };
+    window.addEventListener("storage", onStorage);
+    /* CustomEvent dispatched by Settings.tsx saveCustomShortcuts — works same-tab */
+    window.addEventListener("shortcuts-updated", onRebuild);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("shortcuts-updated", onRebuild);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      // removed quick todo shortcut
-      if (!e.altKey || e.ctrlKey || e.metaKey) return;
-      /* OPT-25: O(1) keyboard shortcut lookup */
-      const path = SHORTCUT_MAP[e.key];
+
+      /* Build normalised combo string from the event */
+      const parts: string[] = [];
+      if (e.ctrlKey || e.metaKey) parts.push("ctrl");
+      if (e.altKey) parts.push("alt");
+      if (e.shiftKey) parts.push("shift");
+      const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      if (!["Control", "Alt", "Shift", "Meta"].includes(e.key)) parts.push(key.toLowerCase());
+      const combo = parts.join("+");
+
+      const path = shortcutMapRef.current[combo];
       if (path) {
         e.preventDefault();
         navigateTo(path);
@@ -242,6 +323,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }
 
     const links = mobileNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
+    /* If active route is in the "Mehr" overflow menu (index >= 5), hide the dot */
+    if (activeIdx >= links.length) {
+      setMobileDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
+      return;
+    }
     const activeLink = links[activeIdx];
     if (!activeLink) return;
     const navRect = mobileNavRef.current.getBoundingClientRect();
@@ -422,14 +508,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* IMP-43: Ensure mobile nav items never overflow the viewport */}
       {/* BUG-9: Auto-fade bottom menu on scroll down, reappear on scroll up */}
       <nav
-        className={`fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe overflow-x-hidden transition-all duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 z-[200] border-t border-border bg-background/95 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe transition-all duration-300 ${
           mobileNavVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
         }`}
         role="navigation"
         aria-label="Mobile Navigation"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative min-w-0">
-          {navItems.map((item) => {
+        <div ref={mobileNavRef} className="flex items-center justify-around py-1.5 relative">
+          {navItems.slice(0, 5).map((item) => {
             const isActive = isRouteActive(item.path, location.pathname);
             return (
               <Link
@@ -437,21 +524,56 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 to={item.path}
                 data-nav-link
                 aria-current={isActive ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors relative nav-label-mobile touch-target ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors relative ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
+                style={{ minHeight: "auto", minWidth: "auto" }}
               >
-                <item.icon className="h-5 w-5" />
-                {item.label}
+                <item.icon className="h-4 w-4" />
+                <span className="truncate max-w-[48px]">{item.label}</span>
               </Link>
             );
           })}
+          {/* More menu for remaining items */}
+          <button
+            onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
+            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+              mobileMoreOpen || navItems.slice(5).some(i => isRouteActive(i.path, location.pathname))
+                ? "text-primary" : "text-muted-foreground"
+            }`}
+            style={{ minHeight: "auto", minWidth: "auto" }}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+            <span>Mehr</span>
+          </button>
           {/* Mobile sliding dot */}
           <span
             className="absolute -top-1 w-1 h-1 rounded-full bg-primary pointer-events-none"
             style={mobileDotStyle}
           />
         </div>
+        {/* Expanded more menu */}
+        {mobileMoreOpen && (
+          <div className="border-t border-border bg-background/95 backdrop-blur-xl px-4 py-2 grid grid-cols-3 gap-1.5 animate-fade-in">
+            {navItems.slice(5).map((item) => {
+              const isActive = isRouteActive(item.path, location.pathname);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileMoreOpen(false)}
+                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-[10px] font-medium transition-colors ${
+                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-secondary/50"
+                  }`}
+                  style={{ minHeight: "auto", minWidth: "auto" }}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
     </div>
   );

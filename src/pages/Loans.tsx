@@ -347,8 +347,9 @@ const Loans = () => {
 
 
   /* IMPROVE-7: Memoize zinsBindungData to prevent recalculation on unrelated state changes */
+  const zinsBindungData = useMemo(() => {
   const now = new Date();
-  const zinsBindungData = useMemo(() => filteredLoans
+  return filteredLoans
     .filter(l => l.fixed_interest_until)
     .map(l => {
       const end = new Date(l.fixed_interest_until!);
@@ -362,7 +363,8 @@ const Loans = () => {
         risk: monthsLeft <= 12 ? "high" : monthsLeft <= 24 ? "medium" : "low",
       };
     })
-    .sort((a, b) => a.monate - b.monate), [filteredLoans, getPropertyName]);
+    .sort((a, b) => a.monate - b.monate);
+  }, [filteredLoans, getPropertyName]);
 
   /* IMPROVE-8: Memoize ownershipGroups for stable pie chart data */
   const ownershipGroups = useMemo(() => loans.reduce((acc, l) => {
