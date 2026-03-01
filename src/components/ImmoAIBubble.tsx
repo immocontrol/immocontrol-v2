@@ -48,43 +48,65 @@ export default function ImmoAIBubble() {
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const isDragging = useRef(false);
 
+  /* BUG-8: Only register global drag listeners while actively dragging to avoid
+     permanent non-passive touchmove that degrades mobile scroll performance */
+  const boundListenersRef = useRef<{
+    mouseMove: (e: MouseEvent) => void;
+    mouseUp: () => void;
+    touchMove: (e: TouchEvent) => void;
+    touchEnd: () => void;
+  } | null>(null);
+
+  const removeDragListeners = useCallback(() => {
+    const b = boundListenersRef.current;
+    if (!b) return;
+    window.removeEventListener("mousemove", b.mouseMove);
+    window.removeEventListener("mouseup", b.mouseUp);
+    window.removeEventListener("touchmove", b.touchMove);
+    window.removeEventListener("touchend", b.touchEnd);
+    boundListenersRef.current = null;
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => removeDragListeners, [removeDragListeners]);
+
   const handleDragStart = useCallback((clientX: number, clientY: number) => {
     const currentX = bubblePos?.x ?? (window.innerWidth - 72);
     const currentY = bubblePos?.y ?? (window.innerHeight - 140);
     dragRef.current = { startX: clientX, startY: clientY, origX: currentX, origY: currentY };
     isDragging.current = false;
-  }, [bubblePos]);
 
-  const handleDragMove = useCallback((clientX: number, clientY: number) => {
-    if (!dragRef.current) return;
-    const dx = clientX - dragRef.current.startX;
-    const dy = clientY - dragRef.current.startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging.current = true;
-    const newX = Math.max(8, Math.min(window.innerWidth - 64, dragRef.current.origX + dx));
-    const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
-    setBubblePos({ x: newX, y: newY });
-  }, []);
+    // Only add listeners if not already active
+    if (boundListenersRef.current) return;
 
-  const handleDragEnd = useCallback(() => {
-    dragRef.current = null;
-  }, []);
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging.current = true;
+      const newX = Math.max(8, Math.min(window.innerWidth - 64, dragRef.current.origX + dx));
+      const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
+      setBubblePos({ x: newX, y: newY });
+    };
+    const onMouseUp = () => { dragRef.current = null; removeDragListeners(); };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!dragRef.current) return;
+      e.preventDefault();
+      const dx = e.touches[0].clientX - dragRef.current.startX;
+      const dy = e.touches[0].clientY - dragRef.current.startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragging.current = true;
+      const newX = Math.max(8, Math.min(window.innerWidth - 64, dragRef.current.origX + dx));
+      const newY = Math.max(8, Math.min(window.innerHeight - 64, dragRef.current.origY + dy));
+      setBubblePos({ x: newX, y: newY });
+    };
+    const onTouchEnd = () => { dragRef.current = null; removeDragListeners(); };
 
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY);
-    const onMouseUp = () => handleDragEnd();
-    const onTouchMove = (e: TouchEvent) => { if (dragRef.current) { e.preventDefault(); handleDragMove(e.touches[0].clientX, e.touches[0].clientY); } };
-    const onTouchEnd = () => handleDragEnd();
+    boundListenersRef.current = { mouseMove: onMouseMove, mouseUp: onMouseUp, touchMove: onTouchMove, touchEnd: onTouchEnd };
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-    };
-  }, [handleDragMove, handleDragEnd]);
+  }, [bubblePos, removeDragListeners]);
 
   // Improvement 1: Persist chat history
   useEffect(() => {

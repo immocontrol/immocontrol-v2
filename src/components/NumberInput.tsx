@@ -73,10 +73,19 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         }
         const formattedInt = formatInteger(intRaw);
         const newDisplay = decRaw !== undefined ? `${formattedInt},${decRaw}` : formattedInt;
-        /* BUG-10: Calculate caret offset based on dot count difference */
-        const dotsBeforeCaret = (raw.slice(0, caretPos).match(/\./g) || []).length;
-        const dotsInNew = (newDisplay.slice(0, Math.min(caretPos + 5, newDisplay.length)).match(/\./g) || []).length;
-        const newCaret = Math.max(0, Math.min(caretPos + (dotsInNew - dotsBeforeCaret), newDisplay.length));
+        /* BUG-10: Calculate caret using digit-counting (same approach as integer branch) */
+        const oldDotsBeforeCaret = (raw.slice(0, caretPos).match(/\./g) || []).length;
+        const charsBeforeCaret = caretPos - oldDotsBeforeCaret; // digits + commas before caret
+        let charsSeen = 0;
+        let newCaret = 0;
+        for (let i = 0; i < newDisplay.length; i++) {
+          if (newDisplay[i] !== ".") {
+            charsSeen++;
+            if (charsSeen >= charsBeforeCaret) { newCaret = i + 1; break; }
+          }
+        }
+        if (charsBeforeCaret === 0) newCaret = 0;
+        if (charsSeen < charsBeforeCaret) newCaret = newDisplay.length;
         setDisplay(newDisplay);
         onChange(parseGerman(newDisplay));
         requestAnimationFrame(() => {
