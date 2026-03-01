@@ -9,7 +9,7 @@ const ScrollProgress = () => {
     const onScroll = createThrottle(() => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(safeDivide(scrollTop * 100, docHeight, 0));
+      setProgress(docHeight > 0 ? safeDivide(scrollTop * 100, docHeight, 0) : 0);
     }, 100);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
