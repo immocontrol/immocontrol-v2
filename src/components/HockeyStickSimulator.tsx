@@ -459,14 +459,18 @@ export function HockeyStickSimulator() {
       `Mieteinnahmen: ${formatCurrency(last.rentalIncome)}`,
       inflectionYear !== null ? `Hockey Stick ab Jahr ${inflectionYear}` : "",
     ].filter(Boolean).join("\n");
-    navigator.clipboard.writeText(lines);
-    toast.success("Kopiert");
+    navigator.clipboard.writeText(lines).then(
+      () => toast.success("Kopiert"),
+      () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
+    );
   }, [params.years, last, totalReturn, cagr, inflectionYear]);
 
   /* FEAT-32: Share simulation link */
   const shareSimulation = useCallback(() => {
-    navigator.clipboard.writeText(`${window.location.origin}?sim=${btoa(JSON.stringify(params))}`);
-    toast.success("Link kopiert");
+    navigator.clipboard.writeText(`${window.location.origin}?sim=${btoa(JSON.stringify(params))}`).then(
+      () => toast.success("Link kopiert"),
+      () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
+    );
   }, [params]);
 
   /* FEAT-33: Export profiles as JSON */

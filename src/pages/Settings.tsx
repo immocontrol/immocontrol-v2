@@ -434,14 +434,18 @@ const Settings = () => {
     navigate("/auth");
   };
 
-  /* FUNC-36: Data usage estimation */
+  /* FUNC-36: Data usage estimation — iterate all localStorage keys for accuracy */
   const dataUsageEstimate = useMemo(() => {
-    const storedKeys = ["immoai_chat", "theme", "onboarding_complete"];
     let totalSize = 0;
-    storedKeys.forEach(key => {
-      const item = localStorage.getItem(key);
-      if (item) totalSize += item.length * 2;
-    });
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const item = localStorage.getItem(key);
+          if (item) totalSize += (key.length + item.length) * 2; /* UTF-16 = 2 bytes per char */
+        }
+      }
+    } catch { /* localStorage may be unavailable */ }
     return totalSize;
   }, []);
 
