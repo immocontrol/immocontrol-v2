@@ -134,7 +134,7 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
           <ClipboardList className="h-3.5 w-3.5" /> Übergabeprotokoll
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-primary" /> Wohnungsübergabeprotokoll
@@ -191,19 +191,19 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
           {/* Rooms */}
           {rooms.map((room, ri) => (
             <div key={ri} className="border border-border rounded-lg p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">{room.name}</h3>
-                <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center justify-between gap-1">
+                <h3 className="text-sm font-semibold min-w-0 truncate">{room.name}</h3>
+                <div className="flex items-center gap-0.5 shrink-0">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
                       key={star}
                       onClick={() => updateRoom(ri, { condition: star })}
-                      className={`text-sm ${star <= room.condition ? "text-accent" : "text-muted-foreground/30"}`}
+                      className={`text-xs leading-none p-0.5 ${star <= room.condition ? "text-accent" : "text-muted-foreground/30"}`}
                     >
                       ★
                     </button>
                   ))}
-                  <span className="text-[10px] text-muted-foreground ml-1">{CONDITION_LABELS[room.condition]}</span>
+                  <span className="text-[9px] text-muted-foreground ml-0.5 hidden xs:inline">{CONDITION_LABELS[room.condition]}</span>
                 </div>
               </div>
               <div className="space-y-1">
@@ -222,7 +222,7 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
                       value={item.note}
                       onChange={e => updateItem(ri, ii, { note: e.target.value })}
                       placeholder="Anmerkung..."
-                      className="h-7 text-[11px] w-40"
+                      className="h-7 text-[11px] w-24 sm:w-40 min-w-0"
                     />
                   </div>
                 ))}

@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency, formatDurationMonths, safeDivide, pluralDE, hslVar } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/NumberInput";
 import { Label } from "@/components/ui/label";
@@ -595,17 +596,22 @@ const Loans = () => {
                                     {bank}
                                   </button>
                                   {isCustomBank(bank) && (
-                                    <button
-                                      className="opacity-0 group-hover/bank:opacity-100 p-1 mr-1 text-muted-foreground hover:text-destructive transition-all"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeletingBank(bank);
-                                        setDeleteConfirmText("");
-                                      }}
-                                      title="Bank löschen"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </button>
+                                    // UI-UPDATE-46: Tooltip on delete bank action
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          className="opacity-0 group-hover/bank:opacity-100 p-1 mr-1 text-muted-foreground hover:text-destructive transition-all"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeletingBank(bank);
+                                            setDeleteConfirmText("");
+                                          }}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Bank löschen</TooltipContent>
+                                    </Tooltip>
                                   )}
                                 </div>
                               ))}

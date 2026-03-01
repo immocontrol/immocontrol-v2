@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
@@ -259,13 +260,24 @@ const Wartungsplaner = () => {
             {item.last_completed_date && <span>Zuletzt: {formatDate(item.last_completed_date)}</span>}
           </div>
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="p-1.5 rounded-md hover:bg-secondary" title={item.completed ? "Als offen markieren" : "Als erledigt markieren"}>
-            <Check className="h-3.5 w-3.5" />
-          </button>
-          <button onClick={() => deleteMutation.mutate(item.id)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-loss" title="Löschen">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+        {/* UI-UPDATE-41: Tooltips on maintenance item actions + mobile visible */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mobile-action-row">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="p-1.5 rounded-md hover:bg-secondary">
+                <Check className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{item.completed ? "Als offen markieren" : "Als erledigt markieren"}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => deleteMutation.mutate(item.id)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-loss">
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Löschen</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     );

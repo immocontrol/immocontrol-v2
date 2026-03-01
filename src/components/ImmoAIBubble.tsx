@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Send, Trash2, Sparkles, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Bot, Send, Trash2, Sparkles, X, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
@@ -260,6 +261,53 @@ export default function ImmoAIBubble() {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  /* Auto-minimize on outside click */
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (chatElRef.current && !chatElRef.current.contains(target)) {
+        setOpen(false);
+      }
+    };
+    /* Delay to avoid triggering on the same click that opened the chat */
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
+  /* Auto-minimize after 30s of inactivity */
+  const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const resetTimer = () => {
+      if (inactivityRef.current) clearTimeout(inactivityRef.current);
+      inactivityRef.current = setTimeout(() => {
+        if (!isLoading) setOpen(false);
+      }, 30000);
+    };
+    resetTimer();
+    /* Reset on any user interaction within the chat */
+    const chatEl = chatElRef.current;
+    if (chatEl) {
+      chatEl.addEventListener("mousemove", resetTimer);
+      chatEl.addEventListener("keydown", resetTimer);
+      chatEl.addEventListener("touchstart", resetTimer);
+    }
+    return () => {
+      if (inactivityRef.current) clearTimeout(inactivityRef.current);
+      if (chatEl) {
+        chatEl.removeEventListener("mousemove", resetTimer);
+        chatEl.removeEventListener("keydown", resetTimer);
+        chatEl.removeEventListener("touchstart", resetTimer);
+      }
+    };
+  }, [open, isLoading]);
+
   const unreadCount = messages.length;
 
   return (
@@ -271,7 +319,7 @@ export default function ImmoAIBubble() {
           onMouseDown={(e) => handleDragStart(e.clientY)}
           onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
           onClick={() => { if (!isDragging.current) setOpen(true); }}
-          className="fixed z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
+          className="fixed z-[9999] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
           style={bubblePos ? { right: "1rem", top: bubblePos.y } : { bottom: "5rem", right: "1rem" }}
           aria-label="Immo AI öffnen (Alt+I) — ziehen zum Verschieben"
         >
@@ -288,7 +336,7 @@ export default function ImmoAIBubble() {
       {open && (
         <div
           ref={chatElRef}
-          className="fixed z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
+          className="fixed z-[9999] w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
           style={bubblePos ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) } : { bottom: "5rem", right: "1rem" }}
         >
           {/* Header */}
@@ -306,13 +354,25 @@ export default function ImmoAIBubble() {
             </div>
             <div className="flex items-center gap-1">
               {messages.length > 0 && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat} title="Chat leeren">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                // UI-UPDATE-23: Tooltip on "clear chat" action
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Chat leeren</TooltipContent>
+                </Tooltip>
               )}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)} title="Schließen (Alt+I)">
-                <X className="h-4 w-4" />
-              </Button>
+              {/* UI-UPDATE-24: Tooltip on "close chat" action */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Schließen (Alt+I)</TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
@@ -393,9 +453,15 @@ export default function ImmoAIBubble() {
                 rows={1}
                 disabled={isLoading}
               />
-              <Button onClick={() => send(input)} disabled={!input.trim() || isLoading} size="icon" className="shrink-0 h-9 w-9">
-                <Send className="h-3.5 w-3.5" />
-              </Button>
+              {/* UI-UPDATE-25: Tooltip on "send" action */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={() => send(input)} disabled={!input.trim() || isLoading} size="icon" className="shrink-0 h-9 w-9">
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Senden</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard, Eye, EyeOff, Shield, Fingerprint, Smartphone, Copy, Check, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -204,10 +205,19 @@ const Settings = () => {
     }
   };
 
-  /* 2FA TOTP setup */
+  /* 2FA TOTP setup — unenroll existing unverified factors first to avoid duplicate error */
   const startTotpSetup = async () => {
     setTotpLoading(true);
     try {
+      /* Remove any existing unverified TOTP factors to prevent "already exists" error */
+      const { data: existingFactors } = await supabase.auth.mfa.listFactors();
+      if (existingFactors?.totp) {
+        for (const factor of existingFactors.totp) {
+          if (factor.status === "unverified") {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+          }
+        }
+      }
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
         friendlyName: "ImmoControl Authenticator",
@@ -273,10 +283,17 @@ const Settings = () => {
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
       const userId = new TextEncoder().encode(user.id);
+      /* Use effective domain for rp.id — strip port, handle localhost */
+      const effectiveDomain = window.location.hostname;
+      const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
+      /* Only set rp.id for non-localhost domains — localhost causes rp.id mismatch errors */
+      if (effectiveDomain !== "localhost" && effectiveDomain !== "127.0.0.1") {
+        rpConfig.id = effectiveDomain;
+      }
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
-          rp: { name: "ImmoControl", id: window.location.hostname },
+          rp: rpConfig,
           user: {
             id: userId,
             name: user.email || "user",
@@ -804,21 +821,51 @@ const Settings = () => {
                     autoFocus
                     placeholder="z.B. Alt+1"
                   />
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-profit" onClick={() => saveShortcut(action, editingValue)}>
-                    <Check className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground" onClick={() => { setEditingShortcut(null); setShortcutWarning(""); }}>
-                    <X className="h-3 w-3" />
-                  </Button>
+                  {/* UI-UPDATE-39: Tooltip on save shortcut action */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-profit"
+                        onClick={() => saveShortcut(action, editingValue)}
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Speichern</TooltipContent>
+                  </Tooltip>
+                  {/* UI-UPDATE-40: Tooltip on cancel shortcut edit action */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground"
+                        onClick={() => {
+                          setEditingShortcut(null);
+                          setShortcutWarning("");
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Abbrechen</TooltipContent>
+                  </Tooltip>
                 </div>
               ) : (
-                <button
-                  onClick={() => startEditShortcut(action)}
-                  className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-mono transition-colors cursor-pointer"
-                  title="Klicken zum Bearbeiten"
-                >
-                  {keys}
-                </button>
+                // UI-UPDATE-38: Tooltip on shortcut edit trigger
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => startEditShortcut(action)}
+                      className="px-2 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-mono transition-colors cursor-pointer"
+                    >
+                      {keys}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Klicken zum Bearbeiten</TooltipContent>
+                </Tooltip>
               )}
             </div>
           ))}

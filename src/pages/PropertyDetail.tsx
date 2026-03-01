@@ -33,6 +33,7 @@ import { AnlageVExport } from "@/components/AnlageVExport";
 import PropertyValuation from "@/components/PropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,45 +138,62 @@ const PropertyDetail = () => {
           <div>
             {/* IMP-46: Truncate long property names on mobile to prevent overflow */}
             <h1 className="text-2xl font-bold truncate max-w-[250px] sm:max-w-none">{property.name}</h1>
-            <button
-              onClick={copyAddress}
-              className="flex items-center gap-1 text-sm text-muted-foreground mt-1 hover:text-foreground transition-colors group/addr"
-              title="Adresse kopieren"
-            >
-              <MapPin className="h-3.5 w-3.5" /> {property.address}
-              <ClipboardCopy className="h-3 w-3 opacity-0 group-hover/addr:opacity-100 transition-opacity" />
-            </button>
+            {/* UI-UPDATE-43: Tooltip on copy address action */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={copyAddress}
+                  className="flex items-center gap-1 text-sm text-muted-foreground mt-1 hover:text-foreground transition-colors group/addr"
+                >
+                  <MapPin className="h-3.5 w-3.5" /> {property.address}
+                  <ClipboardCopy className="h-3 w-3 opacity-0 group-hover/addr:opacity-100 transition-opacity" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Adresse kopieren</TooltipContent>
+            </Tooltip>
           </div>
           <div className="flex items-center gap-1">
             <QuickActions onScrollTo={scrollToSection} />
             <EditPropertyDialog property={property} />
             {/* Share/Copy property summary */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              aria-label="Objektdaten teilen"
-              onClick={() => {
-                const summary = `📊 ${property.name}\n📍 ${property.address}\n💰 Wert: ${formatCurrency(property.currentValue)}\n🏠 Miete: ${formatCurrency(property.monthlyRent)}/M\n📈 Cashflow: ${formatCurrency(property.monthlyCashflow)}/M\n📊 Brutto-Rendite: ${bruttoRendite.toFixed(1)}%\n🏦 Restschuld: ${formatCurrency(property.remainingDebt)}`;
-                navigator.clipboard.writeText(summary);
-                toast.success("Objektzusammenfassung kopiert!");
-              }}
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              aria-label="Objekt duplizieren"
-              onClick={async () => {
-                await duplicateProperty(property.id);
-                toast.success(`${property.name} wurde dupliziert`);
-                navigate("/");
-              }}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+            {/* UI-UPDATE-44: Tooltip on share property action */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  aria-label="Objektdaten teilen"
+                  onClick={() => {
+                    const summary = `📊 ${property.name}\n📍 ${property.address}\n💰 Wert: ${formatCurrency(property.currentValue)}\n🏠 Miete: ${formatCurrency(property.monthlyRent)}/M\n📈 Cashflow: ${formatCurrency(property.monthlyCashflow)}/M\n📊 Brutto-Rendite: ${bruttoRendite.toFixed(1)}%\n🏦 Restschuld: ${formatCurrency(property.remainingDebt)}`;
+                    navigator.clipboard.writeText(summary);
+                    toast.success("Objektzusammenfassung kopiert!");
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Objektdaten teilen</TooltipContent>
+            </Tooltip>
+            {/* UI-UPDATE-45: Tooltip on duplicate property action */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  aria-label="Objekt duplizieren"
+                  onClick={async () => {
+                    await duplicateProperty(property.id);
+                    toast.success(`${property.name} wurde dupliziert`);
+                    navigate("/");
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Objekt duplizieren</TooltipContent>
+            </Tooltip>
             <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
               property.ownership === "egbr" ? "bg-gold/15 text-gold" : "bg-primary/15 text-primary"
             }`}>

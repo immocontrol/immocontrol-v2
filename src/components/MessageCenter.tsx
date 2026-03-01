@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, CheckCheck, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -222,8 +223,13 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                               : "bg-secondary text-foreground rounded-bl-sm"
                           }`}>
                             <p>{msg.content}</p>
-                            <span className={`text-[10px] mt-1 block ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                            <span className={`text-[10px] mt-1 flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                               {new Date(msg.created_at).toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                              {isMine && (
+                                msg.is_read
+                                  ? <CheckCheck className="h-3 w-3 text-blue-400" />
+                                  : <Check className="h-3 w-3" />
+                              )}
                             </span>
                           </div>
                         </div>
@@ -242,9 +248,15 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                   className="h-9 text-sm"
                 />
-                <Button size="icon" className="h-9 w-9 shrink-0" onClick={sendMessage} disabled={sending || !newMessage.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
+                {/* UI-UPDATE-42: Tooltip on send message action */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="icon" className="h-9 w-9 shrink-0" onClick={sendMessage} disabled={sending || !newMessage.trim()}>
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Senden</TooltipContent>
+                </Tooltip>
               </div>
             </>
           )}

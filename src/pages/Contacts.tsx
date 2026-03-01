@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
 import AddContactDialog from "@/components/AddContactDialog";
@@ -413,6 +414,7 @@ const ContactManagement = () => {
         <>
           <ContactStats contacts={contacts} />
           {/* Improvement 14: Contact list with stagger animation */}
+                    {/* UI-UPDATE-14: Card hover animation for contacts */}
           <div className="grid gap-3 md:grid-cols-2 list-stagger">
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
@@ -464,18 +466,28 @@ const ContactManagement = () => {
                       </p>
                     )}
                   </div>
-                  <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
+                  {/* UI-UPDATE-13: Always show action buttons on mobile */}
+                  <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 mobile-action-row">
                     {showTrash ? (
                       <>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Wiederherstellen" onClick={() => restoreMutation.mutate(c.id)}>
+                        {/* UI-UPDATE-11: Tooltip on restore action */}
+                        <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => restoreMutation.mutate(c.id)}>
                           <RotateCcw className="h-3 w-3" />
                         </Button>
+                        </TooltipTrigger><TooltipContent>Wiederherstellen</TooltipContent></Tooltip>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" title="Endgültig löschen">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
+                          {/* UI-UPDATE-15: Tooltip on permanent delete action */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Endgültig löschen</TooltipContent>
+                          </Tooltip>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Endgültig löschen?</AlertDialogTitle>
@@ -491,21 +503,36 @@ const ContactManagement = () => {
                     ) : (
                       <>
                         {c.phone && (
-                          <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]" title="WhatsApp">
-                              <MessageCircle className="h-3 w-3" />
-                            </Button>
-                          </a>
+                          <Tooltip>
+                            {/* UI-UPDATE-16: Tooltip on WhatsApp action */}
+                            <TooltipTrigger asChild>
+                              <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]">
+                                  <MessageCircle className="h-3 w-3" />
+                                </Button>
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent>WhatsApp</TooltipContent>
+                          </Tooltip>
                         )}
+                        {/* UI-UPDATE-12: Tooltip on edit action */}
+                        <Tooltip><TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                           <Edit2 className="h-3 w-3" />
                         </Button>
+                        </TooltipTrigger><TooltipContent>Bearbeiten</TooltipContent></Tooltip>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
+                          {/* UI-UPDATE-17: Tooltip on trash action */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Löschen</TooltipContent>
+                          </Tooltip>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Kontakt löschen?</AlertDialogTitle>

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { History, Trash2, ChevronDown, ChevronUp, ExternalLink, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import type { AnalysisInputState } from "@/hooks/useAnalysisCalculations";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
@@ -115,25 +116,36 @@ const ExposeHistory = ({ onImport }: Props) => {
                 <span>· {entry.source === "url" ? "Link" : "PDF"}</span>
               </div>
             </div>
-            <div className="flex gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => applyEntry(entry)}
-                title="Übernehmen"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-destructive"
-                onClick={() => removeEntry(entry.id)}
-                title="Entfernen"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+            {/* UI-UPDATE-34: Keep expose history actions visible on mobile (no hover) */}
+            <div className="flex gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mobile-action-row">
+              {/* UI-UPDATE-35: Tooltip on apply entry action */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => applyEntry(entry)}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Übernehmen</TooltipContent>
+              </Tooltip>
+              {/* UI-UPDATE-36: Tooltip on remove entry action */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive"
+                    onClick={() => removeEntry(entry.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Entfernen</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         ))}

@@ -5,6 +5,7 @@ import { isValidEmail } from "@/lib/validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -350,13 +351,22 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                 </div>
                 <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
                   {t.email && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(t.email!); toast.success("E-Mail kopiert"); }}
-                      className="flex items-center gap-0.5 hover:text-foreground transition-colors"
-                      title="E-Mail kopieren"
-                    >
-                      <Mail className="h-2.5 w-2.5" /> {t.email}
-                    </button>
+                    // UI-UPDATE-26: Tooltip on "copy email" action
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(t.email!);
+                            toast.success("E-Mail kopiert");
+                          }}
+                          className="flex items-center gap-0.5 hover:text-foreground transition-colors"
+                        >
+                          <Mail className="h-2.5 w-2.5" /> {t.email}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>E-Mail kopieren</TooltipContent>
+                    </Tooltip>
                   )}
                   {t.phone && (
                     <a href={`tel:${t.phone}`} className="flex items-center gap-0.5 hover:text-foreground transition-colors">
@@ -371,7 +381,8 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* UI-UPDATE-27: Keep tenant action icons visible on mobile (no hover) */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity mobile-action-row">
                 {t.is_active && (
                   <TenantPortalPreview tenant={{
                     id: t.id, first_name: t.first_name, last_name: t.last_name,
@@ -383,32 +394,60 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                   }} />
                 )}
                 {t.email && t.is_active && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-primary"
-                    onClick={() => handleInvite(t)}
-                    disabled={inviting === t.id}
-                    title="Ins Mieterportal einladen"
-                  >
-                    {inviting === t.id ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : copiedLink === t.id ? (
-                      <Check className="h-3 w-3" />
-                    ) : (
-                      <Send className="h-3 w-3" />
-                    )}
-                  </Button>
+                  // UI-UPDATE-28: Tooltip on "invite to tenant portal" action
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-primary"
+                        onClick={() => handleInvite(t)}
+                        disabled={inviting === t.id}
+                      >
+                        {inviting === t.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : copiedLink === t.id ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <Send className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Ins Mieterportal einladen</TooltipContent>
+                  </Tooltip>
                 )}
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
-                  <Edit2 className="h-3 w-3" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deactivateMutation.mutate(t)}>
-                  <Home className="h-3 w-3" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate(t.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {/* UI-UPDATE-29: Tooltip on edit tenant action */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Bearbeiten</TooltipContent>
+                </Tooltip>
+                {/* UI-UPDATE-30: Tooltip on deactivate tenant action */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deactivateMutation.mutate(t)}>
+                      <Home className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Ausziehen / deaktivieren</TooltipContent>
+                </Tooltip>
+                {/* UI-UPDATE-31: Tooltip on delete tenant action */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteMutation.mutate(t.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Löschen</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           ))}
