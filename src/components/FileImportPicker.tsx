@@ -35,14 +35,14 @@ interface FileImportPickerProps {
   children?: React.ReactNode;
 }
 
-/* BUG-11: Cloud storage sources for mobile import */
+/* BUG-11: Cloud storage sources for mobile import — ordered by popularity on iOS/Android */
 const CLOUD_SOURCES = [
-  { id: "device", label: "Vom Gerät", description: "Lokaler Speicher / Dateien App", icon: Smartphone, color: "text-primary" },
-  { id: "onedrive", label: "OneDrive", description: "Microsoft OneDrive", icon: Cloud, color: "text-blue-500" },
-  { id: "gdrive", label: "Google Drive", description: "Google Drive", icon: Cloud, color: "text-green-500" },
+  { id: "device", label: "Vom Gerät", description: "Fotos, Kamera & lokale Dateien", icon: Smartphone, color: "text-primary" },
   { id: "icloud", label: "iCloud", description: "Apple iCloud Drive", icon: Cloud, color: "text-gray-500" },
-  { id: "dropbox", label: "Dropbox", description: "Dropbox", icon: Cloud, color: "text-blue-600" },
-  { id: "files", label: "Andere App", description: "Telegram, WhatsApp, etc.", icon: FolderOpen, color: "text-orange-500" },
+  { id: "gdrive", label: "Google Drive", description: "Google Drive Dateien", icon: Cloud, color: "text-green-500" },
+  { id: "onedrive", label: "OneDrive", description: "Microsoft OneDrive", icon: Cloud, color: "text-blue-500" },
+  { id: "dropbox", label: "Dropbox", description: "Dropbox Dateien", icon: Cloud, color: "text-blue-600" },
+  { id: "files", label: "Andere App", description: "Telegram, WhatsApp, E-Mail", icon: FolderOpen, color: "text-orange-500" },
 ] as const;
 
 /** Detect if running on a mobile device */
@@ -149,7 +149,7 @@ export function FileImportPicker({
         </Button>
       )}
 
-      {/* BUG-11: Mobile app picker dialog */}
+      {/* BUG-11: Mobile app picker dialog — improved UX with better layout and hints */}
       <Dialog open={showPicker} onOpenChange={setShowPicker}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -159,14 +159,14 @@ export function FileImportPicker({
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground -mt-2">
-            Wähle eine Quelle, um Dateien zu importieren:
+            Tippe auf eine Quelle — dein Gerät öffnet dann die passende App zum Auswählen:
           </p>
           <div className="grid grid-cols-2 gap-2">
             {CLOUD_SOURCES.map((source) => (
               <button
                 key={source.id}
                 onClick={() => handleSourceSelect(source.id)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-center group"
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all text-center group"
               >
                 <source.icon className={`h-6 w-6 ${source.color} group-hover:scale-110 transition-transform`} />
                 <span className="text-xs font-medium">{source.label}</span>
@@ -174,8 +174,14 @@ export function FileImportPicker({
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-muted-foreground text-center mt-1">
-            Unterstützt: PDF, CSV, Bilder, Dokumente · Max. {Math.round(maxSize / (1024 * 1024))} MB
+          <div className="bg-secondary/50 rounded-lg p-2.5 text-center">
+            <p className="text-[10px] text-muted-foreground">
+              <strong>Tipp:</strong> Auf dem iPhone wähle &quot;Durchsuchen&quot; im Datei-Dialog,
+              um auf iCloud, Google Drive, OneDrive und Dropbox zuzugreifen.
+            </p>
+          </div>
+          <p className="text-[10px] text-muted-foreground text-center">
+            PDF, CSV, Bilder, Dokumente · Max. {Math.round(maxSize / (1024 * 1024))} MB
           </p>
         </DialogContent>
       </Dialog>

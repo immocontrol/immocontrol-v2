@@ -1,4 +1,5 @@
-/** Centralised React Query key factory – keeps cache keys consistent across the app. */
+/** Centralised React Query key factory – keeps cache keys consistent across the app.
+ * Item 7: Added reports, nebenkosten, forecast keys for new nav entries */
 export const queryKeys = {
   properties: {
     all: ["properties"] as const,
@@ -45,5 +46,17 @@ export const queryKeys = {
   },
   customCompanies: {
     all: ["custom_companies"] as const,
+  },
+  /* Item 7: New query keys for financial pages */
+  reports: {
+    all: ["reports"] as const,
+    byProperty: (propertyId: string) => ["reports", propertyId] as const,
+  },
+  nebenkosten: {
+    all: ["nebenkosten"] as const,
+    byProperty: (propertyId: string) => ["nebenkosten", propertyId] as const,
+  },
+  forecast: {
+    all: ["forecast"] as const,
   },
 } as const;

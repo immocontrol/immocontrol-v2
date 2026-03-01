@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { TrendingUp, Sliders, RotateCcw, Download, Save, Upload, Bookmark, Target, Zap, BarChart3, PieChart, Table, Copy, Share2, Euro, Building2, Calculator, AlertTriangle, Check } from "lucide-react";
+import { TrendingUp, Sliders, RotateCcw, Download, Save, Upload, Bookmark, Target, Zap, BarChart3, PieChart, Table, Copy, Share2, Euro, Building2, Calculator, AlertTriangle, Check, Sparkles, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -53,7 +54,7 @@ const DEFAULT_PARAMS: SimParams = {
 /* FEAT-10: 6 preset scenarios */
 const SCENARIOS: Scenario[] = [
   { name: "Konservativ", description: "Niedrige Rendite, wenig Fremdkapital", params: { annualAppreciation: 1.5, rentYield: 3.5, leverageRatio: 50, annualReturn: 4, vacancyRate: 5 } },
-  { name: "Ausgewogen", description: "Typisches Immobilieninvestment", params: { ...DEFAULT_PARAMS } },
+  { name: "Ausgewogen", description: "Typisches Immobilieninvestment", params: { annualAppreciation: 2, rentYield: 4, leverageRatio: 75, annualReturn: 5, vacancyRate: 3, maintenancePct: 1 } },
   { name: "Aggressiv", description: "Hoher Hebel, maximale Rendite", params: { leverageRatio: 85, annualAppreciation: 3, rentYield: 5, annualReturn: 4.5, monthlyInvestment: 2000, vacancyRate: 2 } },
   { name: "Cashflow-Fokus", description: "Maximaler Cashflow, wenig Wertsteigerung", params: { rentYield: 6, annualAppreciation: 1, leverageRatio: 60, maintenancePct: 1.5, vacancyRate: 4 } },
   { name: "Wachstum", description: "Fokus auf Wertsteigerung in Top-Lagen", params: { annualAppreciation: 4, rentYield: 2.5, leverageRatio: 70, startCapital: 100000, vacancyRate: 1 } },
@@ -208,6 +209,65 @@ export function HockeyStickSimulator() {
   const [sensitivityKey, setSensitivityKey] = useState<keyof SimParams>("annualAppreciation");
   const [compareParams, setCompareParams] = useState<SimParams | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  /* Item 3: AI text field for natural language parameter input */
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  /* Item 3: Parse natural language into simulation parameters */
+  const handleAiPrompt = useCallback(() => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    const text = aiPrompt.toLowerCase();
+    const updates: Partial<SimParams> = {};
+
+    /* Parse common natural language patterns */
+    const capitalMatch = text.match(/(\d+[.,]?\d*)\s*(k|tsd|tausend)?\s*(euro|\u20ac|eur|startkapital|eigenkapital)/i);
+    if (capitalMatch) {
+      let val = parseFloat(capitalMatch[1].replace(",", "."));
+      if (capitalMatch[2]) val *= 1000;
+      updates.startCapital = val;
+    }
+
+    const monthlyMatch = text.match(/(\d+[.,]?\d*)\s*(euro|\u20ac)?\s*(monat|mtl|pro monat|monthly)/i);
+    if (monthlyMatch) {
+      updates.monthlyInvestment = parseFloat(monthlyMatch[1].replace(",", "."));
+    }
+
+    const yearsMatch = text.match(/(\d+)\s*(jahre|j\.|year)/i);
+    if (yearsMatch) updates.years = parseInt(yearsMatch[1]);
+
+    const renditeMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(rendite|mietrendite|yield)/i);
+    if (renditeMatch) updates.rentYield = parseFloat(renditeMatch[1].replace(",", "."));
+
+    const zinsMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(zins|zinssatz|interest)/i);
+    if (zinsMatch) updates.annualReturn = parseFloat(zinsMatch[1].replace(",", "."));
+
+    const hebelMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(hebel|fremdkapital|leverage|fk)/i);
+    if (hebelMatch) updates.leverageRatio = parseFloat(hebelMatch[1].replace(",", "."));
+
+    const wertMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(wertsteigerung|appreciation)/i);
+    if (wertMatch) updates.annualAppreciation = parseFloat(wertMatch[1].replace(",", "."));
+
+    /* Keyword-based scenario selection */
+    if (text.includes("konservativ") || text.includes("sicher") || text.includes("vorsichtig")) {
+      Object.assign(updates, SCENARIOS[0].params);
+    } else if (text.includes("aggressiv") || text.includes("riskant") || text.includes("maximal")) {
+      Object.assign(updates, SCENARIOS[2].params);
+    } else if (text.includes("cashflow") || text.includes("miete")) {
+      Object.assign(updates, SCENARIOS[3].params);
+    } else if (text.includes("einsteiger") || text.includes("anfang") || text.includes("klein")) {
+      Object.assign(updates, SCENARIOS[5].params);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setParams(prev => ({ ...prev, ...updates }));
+      toast.success(`${Object.keys(updates).length} Parameter angepasst`);
+    } else {
+      toast.info("Tipp: Beschreibe dein Szenario, z.B. '50k Eigenkapital, 1000 Euro monatlich, 20 Jahre, 4% Rendite'");
+    }
+    setAiPrompt("");
+    setAiLoading(false);
+  }, [aiPrompt]);
 
   const data = useMemo(() => simulate(params), [params]);
   const compareData = useMemo(() => compareParams ? simulate(compareParams) : null, [compareParams]);
@@ -495,6 +555,31 @@ export function HockeyStickSimulator() {
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Item 3: AI-Textfeld for natural language parameter input */}
+          <div className="bg-secondary/30 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> KI-Assistent
+            </div>
+            <div className="flex gap-2">
+              <Textarea
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                placeholder='Beschreibe dein Szenario, z.B. "50k Eigenkapital, 1000€ monatlich, 4% Rendite, 20 Jahre, konservativ"'
+                className="min-h-[40px] max-h-[80px] text-xs resize-none flex-1"
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAiPrompt(); } }}
+              />
+              <Button
+                variant="default"
+                size="sm"
+                className="h-10 px-3 shrink-0"
+                onClick={handleAiPrompt}
+                disabled={aiLoading || !aiPrompt.trim()}
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
           {/* Scenario quick-select buttons */}
           <div className="flex gap-1.5 flex-wrap">
             {SCENARIOS.map(sc => (

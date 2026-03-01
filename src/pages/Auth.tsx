@@ -193,16 +193,17 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center glow-primary">
-              <Building2 className="h-6 w-6 text-primary" />
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center glow-primary transition-transform hover:scale-105">
+              <Building2 className="h-7 w-7 text-primary" />
             </div>
             <span className="text-2xl font-bold tracking-tight">ImmoControl</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground transition-all duration-300">
             {mode === "login" && "Melde dich an, um dein Portfolio zu verwalten"}
             {mode === "register" && "Erstelle ein Konto für dein Portfolio"}
             {mode === "forgot" && "Setze dein Passwort zurück"}
