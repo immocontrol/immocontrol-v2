@@ -11,7 +11,7 @@ const BackToTop = forwardRef<HTMLButtonElement>((_, ref) => {
     const onScroll = createThrottle(() => setVisible(window.scrollY > 400), 150);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); onScroll.cancel(); };
   }, []);
 
   if (!visible) return null;

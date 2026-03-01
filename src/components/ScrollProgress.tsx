@@ -13,7 +13,7 @@ const ScrollProgress = () => {
     }, 100);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); onScroll.cancel(); };
   }, []);
 
   if (progress < 2) return null;

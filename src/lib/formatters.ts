@@ -149,32 +149,35 @@ export const pluralDE = (count: number, singular: string, plural: string): strin
 
 /* OPT-43: Debounce utility for search inputs */
 export const createDebounce = <T extends (...args: unknown[]) => void>(fn: T, delay: number) => {
-  let timer: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => { fn(...args); timer = null; }, delay);
   };
+  debounced.cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  return debounced;
 };
 
 /* OPT-44: Throttle utility for scroll/resize events */
 export const createThrottle = <T extends (...args: unknown[]) => void>(fn: T, limit: number) => {
   let inThrottle = false;
   let lastArgs: Parameters<T> | null = null;
-  return (...args: Parameters<T>) => {
+  let timerId: ReturnType<typeof setTimeout> | null = null;
+  const throttled = (...args: Parameters<T>) => {
     if (!inThrottle) {
       fn(...args);
       inThrottle = true;
-      setTimeout(() => {
+      timerId = setTimeout(() => {
         inThrottle = false;
-        if (lastArgs) {
-          fn(...lastArgs);
-          lastArgs = null;
-        }
+        if (lastArgs) { fn(...lastArgs); lastArgs = null; }
+        timerId = null;
       }, limit);
     } else {
       lastArgs = args;
     }
   };
+  throttled.cancel = () => { if (timerId) { clearTimeout(timerId); timerId = null; } };
+  return throttled;
 };
 
 /* OPT-45: Deep equality check for objects */
