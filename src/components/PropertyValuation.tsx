@@ -128,12 +128,12 @@ const PropertyValuation = ({
     if (addr.includes("heidelberg")) return 800;
     if (addr.includes("mainz") || addr.includes("wiesbaden")) return 650;
 
-    // Regional estimation based on latitude/longitude
+    // Regional estimation based on latitude/longitude (check north→south)
     // Southern Germany tends to be more expensive
-    if (lat > 48.5) return 500; // Bayern/BaWü
-    if (lat > 50.5) return 300; // Hessen/Thüringen
-    if (lat > 52.0) return 200; // NRW/Niedersachsen/Sachsen
-    return 120; // Brandenburg/MV/SH
+    if (lat > 53.0) return 120; // Brandenburg/MV/SH
+    if (lat > 51.5) return 200; // NRW/Niedersachsen/Sachsen
+    if (lat > 49.5) return 300; // Hessen/Thüringen
+    return 500; // Bayern/BaWü
   };
 
   const brw = bodenrichtwertResult || form.bodenrichtwertManual || 0;
