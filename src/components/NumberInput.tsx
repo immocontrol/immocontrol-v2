@@ -31,10 +31,12 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     const numToDisplay = React.useCallback((num: number): string => {
       if (num === 0 || isNaN(num)) return "";
       if (decimals) {
-        const str = num.toString();
-        const parts = str.includes(".") ? str.split(".") : [str, ""];
+        const str = parseFloat(num.toPrecision(15)).toString();
+        const isNeg = str.startsWith("-");
+        const absStr = isNeg ? str.slice(1) : str;
+        const parts = absStr.includes(".") ? absStr.split(".") : [absStr, ""];
         const intFormatted = formatInteger(parts[0]);
-        return parts[1] ? `${intFormatted},${parts[1]}` : intFormatted;
+        return (isNeg ? "-" : "") + (parts[1] ? `${intFormatted},${parts[1]}` : intFormatted);
       }
       return formatInteger(Math.round(num).toString());
     }, [decimals]);
