@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
