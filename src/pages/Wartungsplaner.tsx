@@ -181,22 +181,26 @@ const Wartungsplaner = () => {
       if (completed) {
         updateData.last_completed_date = new Date().toISOString().slice(0, 10);
       }
-      await supabase.from("maintenance_items").update(updateData as Record<string, unknown>).eq("id", id);
+      const { error } = await supabase.from("maintenance_items").update(updateData as Record<string, unknown>).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
       toast.success("Status aktualisiert");
     },
+    onError: () => toast.error("Fehler beim Aktualisieren"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("maintenance_items").delete().eq("id", id);
+      const { error } = await supabase.from("maintenance_items").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
       toast.success("Gelöscht");
     },
+    onError: () => toast.error("Fehler beim Löschen"),
   });
 
   const addTemplate = useCallback((template: typeof MAINTENANCE_TEMPLATES[0]) => {
