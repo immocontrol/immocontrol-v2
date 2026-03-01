@@ -164,19 +164,19 @@ const AddPropertyDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {/* UI-UPDATE-50: Tooltip on add property trigger */}
-        <Tooltip>
-          <TooltipTrigger asChild>
+      {/* UI-UPDATE-50: Tooltip on add property trigger — avoid double-asChild nesting */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5" data-add-property>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Objekt hinzufügen</span>
               <span className="sm:hidden">Hinzufügen</span>
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Neues Objekt anlegen (Ctrl+N)</TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Neues Objekt anlegen (Ctrl+N)</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Neues Objekt anlegen</DialogTitle>

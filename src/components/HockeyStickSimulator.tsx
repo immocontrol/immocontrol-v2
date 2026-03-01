@@ -99,7 +99,8 @@ function simulate(params: SimParams): DataPoint[] {
       const monthlyPayment = monthlyInvestment;
       if (debt > 0) {
         const interestPayment = debt * interestRate;
-        const principalPayment = Math.min(debt, monthlyPayment - interestPayment);
+        /* Fix: clamp principal to 0 when interest exceeds monthly payment to prevent debt growth */
+        const principalPayment = Math.min(debt, Math.max(0, monthlyPayment - interestPayment));
         debt = Math.max(0, debt - principalPayment);
         cumulativeCashflow += afterTaxRent - interestPayment;
       } else {
@@ -157,7 +158,8 @@ export function HockeyStickSimulator() {
     a.href = url;
     a.download = "hockey-stick-simulation.csv";
     a.click();
-    URL.revokeObjectURL(url);
+    /* Delay revocation to ensure download starts before URL is freed */
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [data]);
 
   return (
