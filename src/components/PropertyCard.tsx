@@ -53,7 +53,7 @@ const PropertyCard = memo(({
     return { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite };
   }, [purchasePrice, currentValue, monthlyRent, sqm, remainingDebt, monthlyExpenses, monthlyCreditRate]);
 
-  const { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio } = metrics;
+  const { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite } = metrics;
 
   return (
     <Link
@@ -146,6 +146,10 @@ const PropertyCard = memo(({
             <Percent className="h-3 w-3" />
             {bruttoRendite.toFixed(1)}%
           </div>
+          {/* NEW-62: Display net yield below gross yield */}
+          {nettoRendite > 0 && nettoRendite !== bruttoRendite && (
+            <div className="text-[10px] text-muted-foreground mt-0.5">Netto {nettoRendite.toFixed(1)}%</div>
+          )}
           {remainingDebt > 0 && (
             <div className="text-[10px] text-muted-foreground mt-0.5">
               Schuld: {(remainingDebt / 1000).toFixed(0)}k

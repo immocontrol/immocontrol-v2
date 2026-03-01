@@ -1557,8 +1557,8 @@ input:focus, textarea:focus, select:focus {
   to { transform: rotate(360deg); }
 }
 
-/* NEW-7: Better placeholder text styling for inputs */
-input::placeholder, textarea::placeholder {
+/* NEW-7: Better placeholder text styling for inputs (scoped) */
+.placeholder-styled::placeholder {
   color: hsl(var(--muted-foreground) / 0.6);
   font-size: 0.875em;
 }
@@ -1601,8 +1601,8 @@ input::placeholder, textarea::placeholder {
   .stat-card-responsive .text-xs { font-size: 0.625rem; }
 }
 
-/* NEW-12: Improved button disabled state */
-button:disabled, [role="button"]:disabled {
+/* NEW-12: Improved button disabled state (scoped to avoid tooltip regressions) */
+.btn-disabled-style:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -2319,9 +2319,9 @@ button:disabled, [role="button"]:disabled {
   }
 }
 
-/* NEW-95: Improved dark mode divider visibility */
-.dark .border-border { border-color: hsl(220 13% 20%); }
-.dark .divide-border > :not([hidden]) ~ :not([hidden]) {
+/* NEW-95: Improved dark mode divider visibility (scoped to opt-in class) */
+.dark .divider-enhanced { border-color: hsl(220 13% 20%); }
+.dark .divide-enhanced > :not([hidden]) ~ :not([hidden]) {
   border-color: hsl(220 13% 20%);
 }
 
