@@ -176,7 +176,7 @@ export const createThrottle = <T extends (...args: unknown[]) => void>(fn: T, li
       lastArgs = args;
     }
   };
-  throttled.cancel = () => { if (timerId) { clearTimeout(timerId); timerId = null; } };
+  throttled.cancel = () => { if (timerId) { clearTimeout(timerId); timerId = null; } inThrottle = false; lastArgs = null; };
   return throttled;
 };
 

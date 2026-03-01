@@ -148,7 +148,7 @@ const Deals = () => {
 
   /* FUNC-18: Pipeline velocity - avg days in current stage */
   const pipelineVelocity = useMemo(() => {
-    const active = deals.filter((d: any) => d.stage !== "closed" && d.stage !== "lost");
+    const active = deals.filter((d: any) => d.stage !== "abgeschlossen" && d.stage !== "abgelehnt");
     if (active.length === 0) return 0;
     const totalDays = active.reduce((s: number, d: any) => {
       const created = new Date(d.created_at || Date.now()).getTime();
