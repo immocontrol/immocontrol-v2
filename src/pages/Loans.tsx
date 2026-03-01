@@ -3,6 +3,7 @@ import { Landmark, Building2, Calendar, AlertTriangle, Edit2, Trash2, Search, X,
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";
+import { LoanPdfImport } from "@/components/LoanPdfImport";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -476,6 +477,24 @@ const Loans = () => {
               )}
             </div>
           )}
+
+          <LoanPdfImport onImport={(parsed) => {
+            setForm(prev => ({
+              ...prev,
+              bank_name: parsed.bank_name || prev.bank_name,
+              loan_amount: parsed.loan_amount || prev.loan_amount,
+              remaining_balance: parsed.remaining_balance || prev.remaining_balance,
+              interest_rate: parsed.interest_rate || prev.interest_rate,
+              repayment_rate: parsed.repayment_rate || prev.repayment_rate,
+              monthly_payment: parsed.monthly_payment || prev.monthly_payment,
+              fixed_interest_until: parsed.fixed_interest_until || prev.fixed_interest_until,
+              start_date: parsed.start_date || prev.start_date,
+              loan_type: parsed.loan_type || prev.loan_type,
+              notes: parsed.notes || prev.notes,
+            }));
+            setBankSearch(parsed.bank_name || "");
+            setOpen(true);
+          }} />
 
           <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
 

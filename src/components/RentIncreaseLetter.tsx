@@ -46,18 +46,18 @@ export function RentIncreaseLetter() {
   const [effectiveDate, setEffectiveDate] = useState("");
   const [reason, setReason] = useState("Anpassung an die ortsübliche Vergleichsmiete gemäß § 558 BGB");
   const [mietspiegelRef, setMietspiegelRef] = useState("");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("none");
   const [sqm, setSqm] = useState(0);
   const [isBallungsraum, setIsBallungsraum] = useState(false);
 
   const mietspiegelInfo = useMemo(() => {
-    if (!city) return null;
+    if (!city || city === "none") return null;
     const key = city.toLowerCase().trim();
     return MIETSPIEGEL_DATA[key] || null;
   }, [city]);
 
   const kappungsgrenze = useMemo(() => {
-    const key = city.toLowerCase().trim();
+    const key = city && city !== "none" ? city.toLowerCase().trim() : "";
     return isBallungsraum || BALLUNGSRAEUME.includes(key) ? 15 : 20;
   }, [city, isBallungsraum]);
 
@@ -220,10 +220,10 @@ export function RentIncreaseLetter() {
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Stadt (für Mietspiegel)</Label>
-              <Select value={city} onValueChange={v => setCity(v)}>
+              <Select value={city} onValueChange={v => setCity(v === "none" ? "none" : v)}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Stadt wählen" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Keine</SelectItem>
+                  <SelectItem value="none">Keine</SelectItem>
                   {Object.keys(MIETSPIEGEL_DATA).map(c => (
                     <SelectItem key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</SelectItem>
                   ))}
@@ -254,7 +254,7 @@ export function RentIncreaseLetter() {
               {sqm > 0 && newRent > 0 && (
                 <div className={`flex justify-between font-medium ${isInMietspiegel ? "text-profit" : "text-loss"}`}>
                   <span>Neue Miete/m²:</span>
-                  <span>{rentPerSqm.toFixed(2)} €/m² {isInMietspiegel ? "✓ im Mietspiegel" : "⚠ über Mietspiegel"}</span>
+                  <span>{rentPerSqm.toFixed(2)} €/m² {isInMietspiegel ? "✓ im Mietspiegel" : rentPerSqm > (mietspiegelInfo?.max ?? 0) ? "⚠ über Mietspiegel" : "⚠ unter Mietspiegel"}</span>
                 </div>
               )}
             </div>

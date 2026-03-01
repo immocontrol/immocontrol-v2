@@ -139,9 +139,9 @@ export const AnlageVExport = () => {
     // Einkünfte aus V+V
     const einkuenfteVV = einnahmenGesamt - werbungskostenGesamt;
 
-    // Steuerersparnis
-    const ersparnis42 = werbungskostenGesamt * 0.42;
-    const ersparnis35 = werbungskostenGesamt * 0.35;
+    // Steuerersparnis (nur bei Verlust aus V+V)
+    const ersparnis42 = einkuenfteVV < 0 ? Math.abs(einkuenfteVV) * 0.42 : 0;
+    const ersparnis35 = einkuenfteVV < 0 ? Math.abs(einkuenfteVV) * 0.35 : 0;
 
     return {
       mieteinnahmen, umlagen, einnahmenGesamt,
@@ -241,9 +241,13 @@ export const AnlageVExport = () => {
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100);
-      doc.text(`Geschätzte Steuerersparnis bei 42%: ${formatCurrency(anlageV.ersparnis42)}`, margin, y);
-      y += 5;
-      doc.text(`Geschätzte Steuerersparnis bei 35%: ${formatCurrency(anlageV.ersparnis35)}`, margin, y);
+      if (anlageV.einkuenfteVV < 0) {
+        doc.text(`Geschätzte Steuerersparnis bei 42%: ${formatCurrency(anlageV.ersparnis42)}`, margin, y);
+        y += 5;
+        doc.text(`Geschätzte Steuerersparnis bei 35%: ${formatCurrency(anlageV.ersparnis35)}`, margin, y);
+      } else {
+        doc.text("Keine Steuerersparnis – Einkünfte aus V+V sind positiv.", margin, y);
+      }
       doc.setTextColor(0);
 
       // Footer
@@ -382,8 +386,14 @@ export const AnlageVExport = () => {
                 <span className="font-semibold text-base">Einkünfte aus V+V</span>
                 <span className={`font-bold text-lg ${anlageV.einkuenfteVV <= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(anlageV.einkuenfteVV)}</span>
               </div>
-              <div className="flex justify-between text-xs"><span className="text-muted-foreground">Geschätzte Ersparnis (42%)</span><span className="text-profit font-medium">{formatCurrency(anlageV.ersparnis42)}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-muted-foreground">Geschätzte Ersparnis (35%)</span><span className="text-profit font-medium">{formatCurrency(anlageV.ersparnis35)}</span></div>
+              {anlageV.einkuenfteVV < 0 ? (
+                <>
+                  <div className="flex justify-between text-xs"><span className="text-muted-foreground">Geschätzte Ersparnis (42%)</span><span className="text-profit font-medium">{formatCurrency(anlageV.ersparnis42)}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-muted-foreground">Geschätzte Ersparnis (35%)</span><span className="text-profit font-medium">{formatCurrency(anlageV.ersparnis35)}</span></div>
+                </>
+              ) : (
+                <div className="text-xs text-muted-foreground">Keine Steuerersparnis – Einkünfte aus V+V sind positiv.</div>
+              )}
             </div>
           </div>
 

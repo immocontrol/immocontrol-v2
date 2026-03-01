@@ -66,6 +66,13 @@ const navEntries: NavEntry[] = [
 /* Flat list for keyboard shortcuts, mobile nav and dot indicator */
 const navItems: NavItem[] = navEntries.flatMap(e => isGroup(e) ? e.items : [e]);
 
+/* Desktop top-level entries for dot positioning: groups map to their trigger button index */
+const desktopTopLevelEntries = navEntries.map((entry, idx) => ({
+  idx,
+  isGroup: isGroup(entry),
+  paths: isGroup(entry) ? entry.items.map(i => i.path) : [(entry as NavItem).path],
+}));
+
 interface AppLayoutProps {
   children: ReactNode;
 }
@@ -159,24 +166,27 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => window.removeEventListener("keydown", handler);
   }, [navigateTo]);
 
-  // Sliding indicator for desktop nav
+  // Sliding indicator for desktop nav — positions under top-level buttons/links
   const updateDotPosition = useCallback(() => {
     if (!desktopNavRef.current) return;
-    /* OPT-26: use route matching helper */
-    const activeIdx = navItems.findIndex((item) => isRouteActive(item.path, location.pathname));
-    if (activeIdx === -1) {
+    /* Find which top-level entry (button or link) contains the active route */
+    const activeTopLevel = desktopTopLevelEntries.find(e =>
+      e.paths.some(p => isRouteActive(p, location.pathname))
+    );
+    if (!activeTopLevel) {
       setDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
       return;
     }
 
-    const links = desktopNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
-    const activeLink = links[activeIdx];
-    if (!activeLink) return;
+    /* Query only top-level nav triggers (links and group buttons marked with data-nav-top) */
+    const topLevelElements = desktopNavRef.current.querySelectorAll<HTMLElement>("[data-nav-top]");
+    const activeEl = topLevelElements[activeTopLevel.idx];
+    if (!activeEl) return;
     const navRect = desktopNavRef.current.getBoundingClientRect();
-    const linkRect = activeLink.getBoundingClientRect();
+    const elRect = activeEl.getBoundingClientRect();
 
     const next: React.CSSProperties = {
-      left: linkRect.left - navRect.left + linkRect.width / 2 - 3,
+      left: elRect.left - navRect.left + elRect.width / 2 - 3,
       opacity: 1,
       transition: "left 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
     };
@@ -254,6 +264,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   return (
                     <div key={entry.label} className="relative group">
                       <button
+                        data-nav-top
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all touch-target ${
                           groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         }`}
@@ -269,7 +280,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                             <Link
                               key={item.path}
                               to={item.path}
-                              data-nav-link
                               aria-current={isActive ? "page" : undefined}
                               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg ${
                                 isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
@@ -291,6 +301,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     <TooltipTrigger asChild>
                       <Link
                         to={entry.path}
+                        data-nav-top
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${

@@ -91,7 +91,7 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
         landlord_id: landlordId,
         title: `[Schadensmeldung] ${form.title}`,
         description: `**Kategorie:** ${form.category}\n**Dringlichkeit:** ${URGENCY_LEVELS.find(u => u.value === form.urgency)?.label}\n**Ort:** ${form.location}\n\n${form.description}${photoUrls.length > 0 ? `\n\n**Fotos:** ${photoUrls.length} Bild(er) hochgeladen` : ""}`,
-        status: form.urgency === "high" ? "open" : "open",
+        status: "open",
         priority: form.urgency,
       });
 
