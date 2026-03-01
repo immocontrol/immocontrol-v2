@@ -200,7 +200,49 @@ const Deals = () => {
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Gewonnen</p><p className="text-xl font-bold text-green-600">{wonDeals.length}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Conversion</p><p className="text-xl font-bold">{deals.length ? Math.round((wonDeals.length / deals.length) * 100) : 0}%</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Alter (Tage)</p><p className="text-xl font-bold flex items-center gap-1">{avgDealAge}{avgDealAge > 30 && <AlertTriangle className="h-4 w-4 text-gold" />}</p></CardContent></Card>
+        {/* FUNC-17: Average deal value */}
+        {avgDealValue > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Dealwert</p><p className="text-xl font-bold">{fmt(avgDealValue)}</p></CardContent></Card>}
+        {/* FUNC-18: Pipeline velocity */}
+        {pipelineVelocity > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Ø Tage im Stage</p><p className="text-xl font-bold">{pipelineVelocity}d</p></CardContent></Card>}
       </div>
+
+      {/* FUNC-15/16: Stage conversion rates & source analytics */}
+      {deals.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Conversion pro Stage</p>
+              <div className="space-y-1.5">
+                {STAGES.filter(s => s.key !== "abgelehnt" && s.key !== "abgeschlossen").map(s => (
+                  <div key={s.key} className="flex items-center gap-2">
+                    <div className={cn("w-2 h-2 rounded-full shrink-0", s.color)} />
+                    <span className="text-xs flex-1">{s.label}</span>
+                    <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${stageConversionRates[s.key] || 0}%` }} />
+                    </div>
+                    <span className="text-xs font-medium w-8 text-right">{stageConversionRates[s.key] || 0}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          {Object.keys(sourceAnalytics).length > 0 && (
+            <Card>
+              <CardContent className="p-3">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Quellen</p>
+                <div className="space-y-1.5">
+                  {Object.entries(sourceAnalytics).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([source, count]) => (
+                    <div key={source} className="flex items-center justify-between">
+                      <span className="text-xs truncate">{source}</span>
+                      <span className="text-xs font-medium bg-secondary px-1.5 py-0.5 rounded">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Kanban View */}
       {viewMode === "kanban" ? (

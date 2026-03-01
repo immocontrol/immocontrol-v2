@@ -91,6 +91,19 @@ const Mietuebersicht = () => {
     return { thisYear: thisYearTotal, lastYear: lastYearTotal, change };
   }, [payments]);
 
+  // Stats
+  const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
+  const confirmed = filteredPayments.filter(p => p.status === "confirmed");
+  const totalConfirmed = confirmed.reduce((s, p) => s + Number(p.amount), 0);
+  const overdue = filteredPayments.filter(p => p.status === "overdue");
+  const totalOverdue = overdue.reduce((s, p) => s + Number(p.amount), 0);
+  const pending = filteredPayments.filter(p => p.status === "pending");
+  const collectionRate = totalDue > 0 ? Math.round((totalConfirmed / totalDue) * 100) : 0;
+
+  // Active tenants with rent
+  const activeTenants = tenants.filter(t => t.is_active);
+  const totalMonthlyRent = activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0);
+
   /* FUNC-23: Top paying tenants */
   const topTenants = useMemo(() => {
     return activeTenants
@@ -111,20 +124,6 @@ const Mietuebersicht = () => {
 
   /* OPT-18: Memoized active tenant count and vacancy */
   const activeTenantCount = activeTenants.length;
-
-
-  // Stats
-  const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
-  const confirmed = filteredPayments.filter(p => p.status === "confirmed");
-  const totalConfirmed = confirmed.reduce((s, p) => s + Number(p.amount), 0);
-  const overdue = filteredPayments.filter(p => p.status === "overdue");
-  const totalOverdue = overdue.reduce((s, p) => s + Number(p.amount), 0);
-  const pending = filteredPayments.filter(p => p.status === "pending");
-  const collectionRate = totalDue > 0 ? Math.round((totalConfirmed / totalDue) * 100) : 0;
-
-  // Active tenants with rent
-  const activeTenants = tenants.filter(t => t.is_active);
-  const totalMonthlyRent = activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0);
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -191,6 +190,41 @@ const Mietuebersicht = () => {
               <div className="text-xl font-bold text-gold">{formatCurrency(pending.reduce((s, p) => s + Number(p.amount), 0))}</div>
               <div className="text-[10px] text-muted-foreground">{pending.length} ausstehend</div>
             </div>
+          </div>
+
+          {/* FUNC-22/23/24: Payment trend, top tenants, payment methods */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {paymentTrend.lastYear > 0 && (
+              <div className="glass-card rounded-xl border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vorjahresvergleich</p>
+                <p className={`text-lg font-bold ${paymentTrend.change >= 0 ? "text-profit" : "text-loss"}`}>
+                  {paymentTrend.change >= 0 ? "+" : ""}{paymentTrend.change.toFixed(1)}%
+                </p>
+                <p className="text-[10px] text-muted-foreground">{formatCurrency(paymentTrend.thisYear)} vs {formatCurrency(paymentTrend.lastYear)}</p>
+              </div>
+            )}
+            {topTenants.length > 0 && (
+              <div className="glass-card rounded-xl border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Top Mieter</p>
+                {topTenants.slice(0, 3).map((t, i) => (
+                  <div key={t.id} className="flex justify-between text-xs">
+                    <span className="truncate">{i + 1}. {t.first_name} {t.last_name}</span>
+                    <span className="font-medium">{formatCurrency(t.rent)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {Object.keys(paymentMethodDist).length > 0 && (
+              <div className="glass-card rounded-xl border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Zahlungsarten</p>
+                {Object.entries(paymentMethodDist).map(([method, count]) => (
+                  <div key={method} className="flex justify-between text-xs">
+                    <span>{method}</span>
+                    <span className="font-medium">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Vermietungsquote */}

@@ -64,7 +64,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
 
 type FilterType = "alle" | "egbr" | "privat";
@@ -239,6 +239,37 @@ ${properties.map(p => `<tr>
     setTimeout(() => setRefreshing(false), 600);
   }, [qc]);
 
+  /* FUNC-1: Portfolio summary metrics */
+  const portfolioMetrics = useMemo(() => {
+    /* OPT-8: safeDivide for stable calculations */
+    const totalRentPerSqm = safeDivide(stats.totalRent, stats.totalSqm, 0);
+    const avgValuePerUnit = safeDivide(stats.totalValue, stats.totalUnits, 0);
+    const debtToEquityRatio = safeDivide(stats.totalDebt, stats.equity, 0);
+    const annualCashflow = stats.totalCashflow * 12;
+    const cashOnCashReturn = safeDivide(annualCashflow * 100, stats.equity, 0);
+    return { totalRentPerSqm, avgValuePerUnit, debtToEquityRatio, annualCashflow, cashOnCashReturn };
+  }, [stats]);
+
+  /* FUNC-2: Property count by type */
+  const propertyTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    properties.forEach(p => { counts[p.type] = (counts[p.type] || 0) + 1; });
+    return counts;
+  }, [properties]);
+
+  /* FUNC-3: Vacancy detection - properties with no active tenants */
+  const vacantProperties = useMemo(() => {
+    return properties.filter(p => {
+      const propTenants = allTenants.filter(t => t.property_id === p.id && t.is_active);
+      return propTenants.length === 0;
+    });
+  }, [properties, allTenants]);
+
+  /* OPT-11: Memoized total rent from tenants for accuracy */
+  const totalTenantRent = useMemo(() => {
+    return allTenants.filter(t => t.is_active).reduce((s, t) => s + (t.monthly_rent || 0), 0);
+  }, [allTenants]);
+
   /* FUNC-4: Average holding period calculation */
   const avgHoldingPeriodMonths = useMemo(() => {
     if (properties.length === 0) return 0;
@@ -275,24 +306,26 @@ ${properties.map(p => `<tr>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="h-8 w-48 shimmer rounded-lg" />
-            <div className="h-4 w-32 shimmer rounded-lg mt-2" />
+            {/* UI-4: skeleton-wave for loading */}
+            <div className="h-8 w-48 skeleton-wave rounded-lg" />
+            <div className="h-4 w-32 skeleton-wave rounded-lg mt-2" />
           </div>
-          <div className="h-9 w-36 shimmer rounded-lg" />
+          <div className="h-9 w-36 skeleton-wave rounded-lg" />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        {/* UI-2: card-stagger-enter for stagger animation */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="gradient-card rounded-xl border border-border p-4 space-y-3">
-              <div className="h-3 w-20 shimmer rounded" />
-              <div className="h-7 w-28 shimmer rounded" />
-              <div className="h-3 w-24 shimmer rounded" />
+              <div className="h-3 w-20 skeleton-wave rounded" />
+              <div className="h-7 w-28 skeleton-wave rounded" />
+              <div className="h-3 w-24 skeleton-wave rounded" />
             </div>
           ))}
         </div>
-        <div className="h-20 shimmer rounded-xl" />
+        <div className="h-20 skeleton-wave rounded-xl" />
         <div className="grid md:grid-cols-2 gap-3">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-56 shimmer rounded-xl" />
+            <div key={i} className="h-56 skeleton-wave rounded-xl" />
           ))}
         </div>
       </div>
@@ -327,7 +360,8 @@ ${properties.map(p => `<tr>
         </div>
 
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+          {/* UI-10: empty-state-float for floating animation */}
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 empty-state-float">
             <Building2 className="h-10 w-10 text-primary" />
           </div>
           <h2 className="text-xl font-bold mb-2">Noch keine Objekte</h2>
@@ -339,37 +373,6 @@ ${properties.map(p => `<tr>
       </div>
     );
   }
-
-  /* FUNC-1: Portfolio summary metrics */
-  const portfolioMetrics = useMemo(() => {
-    const totalRentPerSqm = stats.totalSqm > 0 ? (stats.totalRent / stats.totalSqm) : 0;
-    const avgValuePerUnit = stats.totalUnits > 0 ? (stats.totalValue / stats.totalUnits) : 0;
-    const debtToEquityRatio = stats.equity > 0 ? (stats.totalDebt / stats.equity) : 0;
-    const annualCashflow = stats.totalCashflow * 12;
-    const cashOnCashReturn = stats.equity > 0 ? (annualCashflow / stats.equity * 100) : 0;
-    return { totalRentPerSqm, avgValuePerUnit, debtToEquityRatio, annualCashflow, cashOnCashReturn };
-  }, [stats]);
-
-  /* FUNC-2: Property count by type */
-  const propertyTypeCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    properties.forEach(p => { counts[p.type] = (counts[p.type] || 0) + 1; });
-    return counts;
-  }, [properties]);
-
-  /* FUNC-3: Vacancy detection - properties with no active tenants */
-  const vacantProperties = useMemo(() => {
-    return properties.filter(p => {
-      const propTenants = allTenants.filter(t => t.property_id === p.id && t.is_active);
-      return propTenants.length === 0;
-    });
-  }, [properties, allTenants]);
-
-  /* OPT-11: Memoized total rent from tenants for accuracy */
-  const totalTenantRent = useMemo(() => {
-    return allTenants.filter(t => t.is_active).reduce((s, t) => s + (t.monthly_rent || 0), 0);
-  }, [allTenants]);
-
 
   // Improvement 10: Greeting with user name
   const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
@@ -421,9 +424,11 @@ ${properties.map(p => `<tr>
     <div className="space-y-6" role="main" aria-label="Portfolio Dashboard">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{greeting}</h1>
+          {/* UI-11: heading-gradient for page title */}
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient">{greeting}</h1>
           <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
-            {stats.propertyCount} Objekte · {stats.totalUnits} Einheiten · {totalSqm.toLocaleString("de-DE")} m²
+            {/* OPT-10: pluralDE for correct pluralization */}
+            {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")} · {totalSqm.toLocaleString("de-DE")} m²
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -464,8 +469,8 @@ ${properties.map(p => `<tr>
         propertyCount={stats.propertyCount}
       />
 
-      {/* Key stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* Key stats — UI-2: card-stagger-enter */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
         <StatCard
           label="Gesamtwert"
           value={formatCurrency(stats.totalValue)}
@@ -505,29 +510,108 @@ ${properties.map(p => `<tr>
         />
       </div>
 
-      {/* Improvement 15: Quick KPI row with card-hover-glow */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "210ms" }}>
+      {/* Improvement 15: Quick KPI row — UI-2/UI-15/UI-42: card-stagger-enter, card-accent-shadow, currency-display */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 card-stagger-enter">
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "220ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "230ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
-          <p className="text-lg font-bold">{formatCurrency(annualIncome)}</p>
+          <p className="text-lg font-bold currency-display">{formatCurrency(annualIncome)}</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center animate-fade-in card-hover-glow" style={{ animationDelay: "240ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahres-Cashflow</p>
-          <p className={`text-lg font-bold ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
+          <p className={`text-lg font-bold currency-display ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
+        </div>
+      </div>
+
+      {/* FUNC-1/2/3/5 + OPT-11: render memoized portfolio insights */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Insights</h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground pill-badge">
+              {formatCompactDE(stats.totalValue)} Wert
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <div className="rounded-lg bg-secondary/40 p-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Miete/m²</p>
+              <p className="text-sm font-bold currency-display">{formatCurrency(portfolioMetrics.totalRentPerSqm)}</p>
+            </div>
+            <div className="rounded-lg bg-secondary/40 p-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Wert/Einheit</p>
+              <p className="text-sm font-bold currency-display">{formatCurrency(portfolioMetrics.avgValuePerUnit)}</p>
+            </div>
+            <div className="rounded-lg bg-secondary/40 p-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Debt/Equity</p>
+              <p className="text-sm font-bold">{portfolioMetrics.debtToEquityRatio.toFixed(2)}</p>
+            </div>
+            <div className="rounded-lg bg-secondary/40 p-2">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">CoC-Rendite</p>
+              <p className="text-sm font-bold">{portfolioMetrics.cashOnCashReturn.toFixed(1)}%</p>
+            </div>
+          </div>
+
+          {/* OPT-11: Tenant-rent vs. property-rent */}
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>Aktive Mieten (Mieter)</span>
+              <span className="currency-display">{formatCurrency(totalTenantRent)}</span>
+            </div>
+            <div className="h-1.5 bg-secondary rounded-full overflow-hidden mt-1">
+              <div
+                className="h-full bg-primary rounded-full progress-smooth"
+                style={{ width: `${Math.min(100, safeDivide(totalTenantRent * 100, stats.totalRent, 0))}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Objekttypen</h3>
+            {vacantProperties.length > 0 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-loss/10 text-loss font-semibold pill-badge">
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-loss status-dot-pulse" />
+                  {pluralDE(vacantProperties.length, "Leerstand", "Leerstände")}
+                </span>
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 space-y-1.5">
+            {Object.entries(propertyTypeCounts).map(([type, count]) => (
+              <div key={type} className="flex items-center justify-between rounded-lg px-2 py-1 table-row-hover">
+                <span className="text-xs font-medium">{truncate(type, 18)}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground pill-badge">
+                  {formatCompactDE(count)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {yieldExtremes.highest && (
+            <div className="mt-3 text-[11px] text-muted-foreground">
+              <p>
+                Top Rendite: <span className="font-medium text-foreground">{truncate(yieldExtremes.highest.name, 22)}</span> · {yieldExtremes.highest.yieldPct.toFixed(1)}%
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Debt overview + Improvement 3: Monthly cost summary */}
+      {/* UI-14: progress-smooth for animated progress bars */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "200ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Landmark className="h-4 w-4 text-muted-foreground" />
@@ -536,8 +620,9 @@ ${properties.map(p => `<tr>
             <span className="text-lg font-bold">{formatCurrency(stats.totalDebt)}</span>
           </div>
           <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+            {/* UI-14: progress-smooth */}
             <div
-              className="h-full bg-primary rounded-full progress-animated"
+              className="h-full bg-primary rounded-full progress-smooth"
               style={{ width: `${stats.totalValue > 0 ? ((stats.totalValue - stats.totalDebt) / stats.totalValue) * 100 : 0}%` }}
             />
           </div>
@@ -546,7 +631,7 @@ ${properties.map(p => `<tr>
             <span>{stats.totalValue > 0 ? (((stats.totalValue - stats.totalDebt) / stats.totalValue) * 100).toFixed(0) : 0}%</span>
           </div>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "220ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Banknote className="h-4 w-4 text-muted-foreground" />
@@ -613,6 +698,44 @@ ${properties.map(p => `<tr>
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* FUNC-1/2/3: Portfolio advanced metrics row */}
+      {properties.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 stagger-list">
+          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Miete/m²</p>
+            <p className="text-base font-bold">{formatCurrency(portfolioMetrics.totalRentPerSqm)}</p>
+          </div>
+          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Ø Wert/Einheit</p>
+            <p className="text-base font-bold">{formatCurrency(portfolioMetrics.avgValuePerUnit)}</p>
+          </div>
+          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cash-on-Cash</p>
+            <p className={`text-base font-bold ${portfolioMetrics.cashOnCashReturn >= 0 ? "text-profit" : "text-loss"}`}>{portfolioMetrics.cashOnCashReturn.toFixed(1)}%</p>
+          </div>
+          <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">FK/EK-Quote</p>
+            <p className={`text-base font-bold ${portfolioMetrics.debtToEquityRatio <= 3 ? "text-profit" : "text-loss"}`}>{portfolioMetrics.debtToEquityRatio.toFixed(2)}</p>
+          </div>
+          {Object.keys(propertyTypeCounts).length > 0 && (
+            <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Objekttypen</p>
+              <div className="flex gap-1 justify-center flex-wrap mt-0.5">
+                {Object.entries(propertyTypeCounts).map(([type, count]) => (
+                  <span key={type} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{type}: {count}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {vacantProperties.length > 0 && (
+            <div className="glass-card rounded-xl border border-border p-3 text-center stagger-item card-hover-glow">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
+              <p className="text-base font-bold text-loss">{vacantProperties.length} Objekte</p>
+            </div>
+          )}
         </div>
       )}
 

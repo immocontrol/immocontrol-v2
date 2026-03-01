@@ -148,7 +148,7 @@ export const pluralDE = (count: number, singular: string, plural: string): strin
   `${count} ${count === 1 ? singular : plural}`;
 
 /* OPT-43: Debounce utility for search inputs */
-export const createDebounce = <T extends (...args: any[]) => void>(fn: T, delay: number) => {
+export const createDebounce = <T extends (...args: unknown[]) => void>(fn: T, delay: number) => {
   let timer: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timer);
@@ -157,7 +157,7 @@ export const createDebounce = <T extends (...args: any[]) => void>(fn: T, delay:
 };
 
 /* OPT-44: Throttle utility for scroll/resize events */
-export const createThrottle = <T extends (...args: any[]) => void>(fn: T, limit: number) => {
+export const createThrottle = <T extends (...args: unknown[]) => void>(fn: T, limit: number) => {
   let inThrottle = false;
   return (...args: Parameters<T>) => {
     if (!inThrottle) {

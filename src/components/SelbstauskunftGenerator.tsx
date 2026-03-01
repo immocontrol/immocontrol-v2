@@ -314,19 +314,24 @@ export const SelbstauskunftGenerator = () => {
   }, [data, user, properties]);
 
   // Render helpers as plain functions (not components) to fix focus bug
-  const inp = (label: string, field: keyof SelbstauskunftData, type = "text", placeholder = "") => (
-    <div className="space-y-1" key={field}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      <Input
-        type={type}
-        value={data[field]}
-        onChange={(e) => update(field, e.target.value)}
-        placeholder={placeholder}
-        className="h-9 text-sm"
-        inputMode={type === "number" ? "decimal" : undefined}
-      />
-    </div>
-  );
+  const inp = (label: string, field: keyof SelbstauskunftData, type = "text", placeholder = "") => {
+    /* FUNC-47: Wire up field validation */
+    const validationError = validateSelbstauskunftField(field, data[field]);
+    return (
+      <div className="space-y-1" key={field}>
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+        <Input
+          type={type}
+          value={data[field]}
+          onChange={(e) => update(field, e.target.value)}
+          placeholder={placeholder}
+          className={`h-9 text-sm ${validationError ? "border-loss" : ""}`}
+          inputMode={type === "number" ? "decimal" : undefined}
+        />
+        {validationError && <p className="text-[10px] text-loss">{validationError}</p>}
+      </div>
+    );
+  };
 
   const sel = (label: string, field: keyof SelbstauskunftData, options: { value: string; label: string }[]) => (
     <div className="space-y-1" key={field}>

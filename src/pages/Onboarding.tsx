@@ -20,6 +20,21 @@ const STRATEGIES = [
   { value: "mixed", label: "Gemischt", description: "Kombination mehrerer Strategien" },
 ];
 
+/* FUNC-42: Onboarding step labels */
+const ONBOARDING_STEPS = [
+  { key: "welcome", label: "Willkommen" },
+  { key: "profile", label: "Profil" },
+  { key: "strategy", label: "Strategie" },
+] as const;
+
+/* FUNC-43: Onboarding progress percentage */
+const getOnboardingProgress = (step: number, total: number): number =>
+  Math.round((step / total) * 100);
+
+/* OPT-31: Onboarding completion check */
+const isOnboardingComplete = (): boolean =>
+  localStorage.getItem("onboarding_complete") === "true";
+
 const Onboarding = () => {
   const [step, setStep] = useState(0);
   const [displayName, setDisplayName] = useState("");
@@ -29,7 +44,8 @@ const Onboarding = () => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const { user } = useAuth();
 
-  const totalSteps = 3;
+  const totalSteps = ONBOARDING_STEPS.length;
+  const progress = getOnboardingProgress(step + 1, totalSteps);
 
   const nextStep = useCallback(() => {
     if (step < totalSteps - 1) {
@@ -135,6 +151,9 @@ const Onboarding = () => {
           </div>
           <p className="text-sm text-muted-foreground">
             Richte dein Profil ein – dauert nur 30 Sekunden
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Schritt {step + 1}/{totalSteps}: {ONBOARDING_STEPS[step]?.label} · {progress}%
           </p>
         </div>
 
@@ -272,22 +291,5 @@ const Onboarding = () => {
     </div>
   );
 };
-
-/* FUNC-42: Onboarding step labels */
-const ONBOARDING_STEPS = [
-  { key: "welcome", label: "Willkommen" },
-  { key: "profile", label: "Profil" },
-  { key: "property", label: "Erstes Objekt" },
-  { key: "complete", label: "Fertig" },
-] as const;
-
-/* FUNC-43: Onboarding progress percentage */
-const getOnboardingProgress = (step: number, total: number): number =>
-  Math.round((step / total) * 100);
-
-/* OPT-31: Onboarding completion check */
-const isOnboardingComplete = (): boolean =>
-  localStorage.getItem("onboarding_complete") === "true";
-
 
 export default Onboarding;

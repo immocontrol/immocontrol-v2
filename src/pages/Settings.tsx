@@ -380,9 +380,30 @@ const Settings = () => {
         </AlertDialog>
       </div>
 
+      {/* FUNC-36/37: Data usage & session info */}
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in" style={{ animationDelay: "180ms" }}>
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Database className="h-4 w-4 text-muted-foreground" /> System-Info
+        </h2>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="p-2 rounded-lg bg-secondary/30">
+            <span className="text-muted-foreground">Lokaler Speicher</span>
+            <p className="font-medium">{(dataUsageEstimate / 1024).toFixed(1)} KB</p>
+          </div>
+          <div className="p-2 rounded-lg bg-secondary/30">
+            <span className="text-muted-foreground">Letzter Login</span>
+            <p className="font-medium">{sessionInfo.lastLogin}</p>
+          </div>
+          <div className="p-2 rounded-lg bg-secondary/30">
+            <span className="text-muted-foreground">Auth-Methode</span>
+            <p className="font-medium capitalize">{sessionInfo.provider}</p>
+          </div>
+        </div>
+      </div>
+
       {/* App info footer */}
       <div className="text-center py-4 space-y-1 animate-fade-in" style={{ animationDelay: "250ms" }}>
-        <p className="text-[10px] text-muted-foreground">ImmoControl v1.0 · Made with ❤️</p>
+        <p className="text-[10px] text-muted-foreground">ImmoControl v2.0 · Made with ❤️</p>
         <p className="text-[10px] text-muted-foreground">
           Support: <a href="mailto:support@immocontrol.de" className="text-primary hover:underline">support@immocontrol.de</a>
         </p>

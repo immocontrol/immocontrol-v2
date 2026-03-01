@@ -35,13 +35,8 @@ const statusConfig: Record<PaymentStatus, { label: string; icon: typeof Clock; c
   cancelled: { label: "Storniert", icon: XCircle, color: "text-muted-foreground bg-secondary" },
 };
 
-/* FUNC-46: Payment status color mapping */
-const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  confirmed: "text-profit bg-profit/10",
-  pending: "text-gold bg-gold/10",
-  overdue: "text-loss bg-loss/10",
-  cancelled: "text-muted-foreground bg-muted",
-};
+/* FUNC-46: Payment status colors — derived from statusConfig to avoid duplication */
+const getPaymentStatusColor = (status: PaymentStatus): string => statusConfig[status]?.color ?? "";
 
 /* OPT-34: Payment amount formatter */
 const formatPaymentAmount = (amount: number, status: string): string => {

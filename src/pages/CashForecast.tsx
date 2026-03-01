@@ -80,6 +80,11 @@ const CashForecast = () => {
   // Feature: Break-even week
   const breakEvenWeek = forecastData.findIndex((w, i) => i > 0 && forecastData[i - 1].kumulativ < 0 && w.kumulativ >= 0);
 
+  /* FUNC-25/26/27: Wire up helper functions for forecast analysis */
+  const cumulativeCashflows = calcCumulativeCashflow(forecastData.map(w => ({ net: w.netto })));
+  const worstWeek = findWorstMonth(forecastData.map(w => ({ net: w.netto, label: w.week })));
+  const breakEvenMonth = calcBreakEvenMonth(forecastData.map(w => ({ balance: w.kumulativ })));
+
   // Feature: CSV Export
   const exportCashForecastCSV = () => {
     const headers = ["Woche", "Zeitraum", "Einnahmen", "Ausgaben", "Netto", "Kumulativ"];
@@ -199,6 +204,14 @@ const CashForecast = () => {
             </p>
           )}
         </div>
+        {/* FUNC-27: Worst week indicator */}
+        {worstWeek && worstWeek.net < 0 && (
+          <div className="gradient-card rounded-xl border border-border p-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Schlechteste Woche</p>
+            <p className="text-xl font-bold mt-1 text-loss">{formatCurrency(worstWeek.net)}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{worstWeek.label}</p>
+          </div>
+        )}
         {/* Feature: Break-even indicator */}
         {breakEvenWeek > 0 && (
           <div className="gradient-card rounded-xl border border-border p-4">

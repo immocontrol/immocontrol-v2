@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -181,11 +181,25 @@ const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
             Dein intelligenter Immobilien-Assistent – kennt dein gesamtes Portfolio
           </p>
         </div>
-        {messages.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => { setMessages([]); localStorage.removeItem("immoai_chat"); }}>
-            <Trash2 className="h-4 w-4 mr-1" /> Neuer Chat
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* FUNC-19/20/21: Message stats, word count, session duration */}
+          {messages.length > 0 && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span>{messageStats.userMsgs} Fragen</span>
+              <span>·</span>
+              <span>{messageStats.aiMsgs} Antworten</span>
+              <span>·</span>
+              <span>{totalAIWords} Wörter</span>
+              <span>·</span>
+              <span>{Math.round((Date.now() - sessionStart) / 60000)} Min.</span>
+            </div>
+          )}
+          {messages.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => { setMessages([]); localStorage.removeItem("immoai_chat"); }}>
+              <Trash2 className="h-4 w-4 mr-1" /> Neuer Chat
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card className="border-border/50">

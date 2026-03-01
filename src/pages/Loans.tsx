@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDurationMonths, safeDivide, pluralDE, hslVar } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/NumberInput";
@@ -277,7 +277,8 @@ const Loans = () => {
   const totalAnnualInterest = filteredLoans.reduce((s, l) => s + (l.remaining_balance * l.interest_rate / 100), 0);
   // Feature: Total loan amount vs remaining
   const totalLoanAmount = filteredLoans.reduce((s, l) => s + l.loan_amount, 0);
-  const totalTilgungsfortschritt = totalLoanAmount > 0 ? ((totalLoanAmount - totalBalance) / totalLoanAmount * 100) : 0;
+  /* OPT-8: safeDivide for stable calculations */
+  const totalTilgungsfortschritt = safeDivide((totalLoanAmount - totalBalance) * 100, totalLoanAmount, 0);
   // Improvement: Refinancing alert - loans with rates above market average
   const MARKET_RATE_THRESHOLD = 3.5;
   const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
@@ -370,14 +371,16 @@ const Loans = () => {
     value: val,
   }));
 
-  const COLORS = ["hsl(var(--primary))", "hsl(var(--gold))", "hsl(var(--chart-3))"];
+  /* OPT-48: hslVar helper for theme colors */
+  const COLORS = [hslVar("primary"), hslVar("gold"), hslVar("chart-3")];
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 shimmer rounded-lg" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 shimmer rounded-xl" />)}
+        {/* UI-4: skeleton-wave for loading */}
+        <div className="h-8 w-48 skeleton-wave rounded-lg" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 card-stagger-enter">
+          {[1, 2, 3].map(i => <div key={i} className="h-24 skeleton-wave rounded-xl" />)}
         </div>
       </div>
     );
@@ -387,11 +390,13 @@ const Loans = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+          {/* UI-11: heading-gradient */}
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 heading-gradient">
             <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Darlehen
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {loans.length} Darlehen · {formatCurrency(totalBalance)} Restschuld
+            {/* OPT-10: pluralDE for correct pluralization */}
+            {pluralDE(loans.length, "Darlehen", "Darlehen")} · {formatCurrency(totalBalance)} Restschuld
             {highRateLoans.length > 0 && (
               <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gold/10 text-gold">
                 <AlertTriangle className="h-3 w-3" /> {highRateLoans.length} über {MARKET_RATE_THRESHOLD}% Zins
@@ -448,6 +453,28 @@ const Loans = () => {
             }}>
               <Download className="h-3.5 w-3.5" /> CSV
             </Button>
+          )}
+
+          {/* FUNC-11/12/13/14: Loan maturity, interest split, remaining interest, avg term */}
+          {filteredLoans.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {maturingLoans.length > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-loss/10 text-loss">
+                  <AlertTriangle className="h-3 w-3" /> {maturingLoans.length} laufen in &lt;12M aus
+                </span>
+              )}
+              {totalRemainingInterest > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium">
+                  Restzinsen: {formatCurrency(totalRemainingInterest)}
+                </span>
+              )}
+              {weightedAvgTermMonths > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium pill-badge">
+                  {/* OPT-6: formatDurationMonths for human-readable duration */}
+                  Ø Restlaufzeit: {formatDurationMonths(weightedAvgTermMonths)}
+                </span>
+              )}
+            </div>
           )}
 
           <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
@@ -662,31 +689,32 @@ const Loans = () => {
       {/* Fixed interest expiry alerts */}
       <LoanFixedInterestAlerts loans={filteredLoans} />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="gradient-card rounded-xl border border-border p-4">
+      {/* KPI Cards — UI-2: card-stagger-enter */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Restschuld gesamt</p>
-          <p className="text-xl font-bold mt-1">{formatCurrency(totalBalance)}</p>
+          <p className="text-xl font-bold mt-1 currency-display">{formatCurrency(totalBalance)}</p>
           <div className="h-1.5 bg-secondary rounded-full overflow-hidden mt-2">
-            <div className="h-full bg-primary rounded-full progress-animated" style={{ width: `${totalTilgungsfortschritt}%` }} />
+            {/* UI-14: progress-smooth */}
+            <div className="h-full bg-primary rounded-full progress-smooth" style={{ width: `${totalTilgungsfortschritt}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">{totalTilgungsfortschritt.toFixed(0)}% getilgt</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4">
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rate/Monat</p>
-          <p className="text-xl font-bold mt-1">{formatCurrency(totalMonthly)}</p>
+          <p className="text-xl font-bold mt-1 currency-display">{formatCurrency(totalMonthly)}</p>
           <p className="text-[10px] text-muted-foreground">{formatCurrency(totalMonthly * 12)}/Jahr</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4">
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ø Zinssatz</p>
           <p className="text-xl font-bold mt-1">{avgRate.toFixed(2)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4">
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zinslast/Jahr</p>
-          <p className="text-xl font-bold mt-1 text-loss">{formatCurrency(totalAnnualInterest)}</p>
+          <p className="text-xl font-bold mt-1 text-loss currency-display">{formatCurrency(totalAnnualInterest)}</p>
           <p className="text-[10px] text-muted-foreground">{formatCurrency(totalAnnualInterest / 12)}/Monat</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4">
+        <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Zinsänderungsrisiko</p>
           <p className="text-xl font-bold mt-1">
             {zinsBindungData.filter(z => z.risk === "high").length > 0 ? (
@@ -749,7 +777,8 @@ const Loans = () => {
       {/* Loans list */}
       {filteredLoans.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+          {/* UI-10: empty-state-float */}
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 empty-state-float">
             <Landmark className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-lg font-bold mb-2">Noch keine Darlehen</h2>
@@ -763,7 +792,7 @@ const Loans = () => {
               ? Math.max(0, (new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30))
               : null;
             return (
-              <div key={l.id} className="gradient-card rounded-xl border border-border p-4 flex items-center gap-4 group animate-fade-in">
+              <div key={l.id} className="gradient-card rounded-xl border border-border p-4 flex items-center gap-4 group property-card-hover">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Landmark className="h-5 w-5 text-primary" />
                 </div>
@@ -795,8 +824,9 @@ const Loans = () => {
                           <span>Tilgung: {((1 - l.remaining_balance / l.loan_amount) * 100).toFixed(0)}%</span>
                           <span>{formatCurrency(l.loan_amount - l.remaining_balance)} von {formatCurrency(l.loan_amount)}</span>
                         </div>
+                        {/* UI-14: progress-smooth */}
                         <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full progress-bar-animated" style={{ width: `${Math.max(1, (1 - l.remaining_balance / l.loan_amount) * 100)}%` }} />
+                          <div className="h-full bg-primary rounded-full progress-smooth" style={{ width: `${Math.max(1, (1 - l.remaining_balance / l.loan_amount) * 100)}%` }} />
                         </div>
                       </div>
                     )}

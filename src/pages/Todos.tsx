@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { createDebounce, groupBy, sortByKey, truncate } from "@/lib/formatters";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -101,7 +102,14 @@ const Todos = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [view, setView] = useState<ViewType>("inbox");
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+
+  /* OPT-43: createDebounce for search input */
+  const debouncedSetSearch = useMemo(
+    () => createDebounce((value: string) => setSearch(value), 250),
+    [setSearch]
+  );
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [quickInput, setQuickInput] = useState("");
   const [editTodo, setEditTodo] = useState<Todo | null>(null);
@@ -117,7 +125,7 @@ const Todos = () => {
     queryKey: queryKeys.todos.all(user?.id ?? ""),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("todos" as any)
+        .from("todos" as never)
         .select("id, user_id, title, description, due_date, due_time, priority, completed, completed_at, project, labels, sort_order, created_at, updated_at")
         .order("priority", { ascending: true })
         .order("sort_order", { ascending: true })
@@ -131,7 +139,7 @@ const Todos = () => {
   const addMutation = useMutation({
     mutationFn: async (title: string) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("todos" as any).insert({
+      const { error } = await supabase.from("todos" as never).insert({
         user_id: user.id,
         title: title.trim(),
         priority: 4,
@@ -147,7 +155,7 @@ const Todos = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Todo> }) => {
-      const { error } = await supabase.from("todos" as any).update({ ...updates, updated_at: new Date().toISOString() } as any).eq("id", id);
+      const { error } = await supabase.from("todos" as never).update({ ...updates, updated_at: new Date().toISOString() } as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") }),
@@ -156,7 +164,7 @@ const Todos = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("todos" as any).delete().eq("id", id);
+      const { error } = await supabase.from("todos" as never).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -218,13 +226,6 @@ const Todos = () => {
     return Array.from(set).sort();
   }, [todos]);
 
-  const projectCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    todos.forEach(t => {
-      if (!t.completed && t.project) counts[t.project] = (counts[t.project] || 0) + 1;
-    });
-    return counts;
-  }, [todos]);
 
   const filtered = useMemo(() => {
     let result = todos.filter(t => !t.completed);
@@ -295,22 +296,21 @@ const Todos = () => {
 
   /* OPT-13: Memoized project list with counts for sidebar */
   const projectsWithCounts = useMemo(() => {
-    return projects.map(p => ({
+    const rows = projects.map(p => ({
       name: p,
       total: todos.filter(t => t.project === p).length,
       open: todos.filter(t => t.project === p && !t.completed).length,
     }));
+    /* OPT-49: sortByKey for consistent sorting */
+    return sortByKey(rows, "open", true);
   }, [projects, todos]);
 
 
   const groupedByProject = useMemo(() => {
     if (view !== "inbox") return null;
-    const groups: Record<string, Todo[]> = { "": [] };
-    filtered.forEach(t => {
-      const key = t.project || "";
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(t);
-    });
+    /* OPT-50: groupBy utility */
+    const groups = groupBy(filtered, (t) => t.project || "");
+    if (!groups[""]) groups[""] = [];
     return groups;
   }, [filtered, view]);
 
@@ -318,10 +318,10 @@ const Todos = () => {
     return (
       <div className="flex flex-col md:flex-row gap-4 sm:gap-6 h-[calc(100vh-8rem)]">
         <div className="hidden md:block w-56 shrink-0 space-y-2">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-9 shimmer rounded-lg" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-9 skeleton-wave rounded-lg" />)}
         </div>
         <div className="flex-1 space-y-3">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 shimmer rounded-xl" />)}
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 skeleton-wave rounded-xl" />)}
         </div>
       </div>
     );
@@ -368,16 +368,17 @@ const Todos = () => {
         {projects.length > 0 && (
           <div className="pt-4">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-1">Projekte</p>
-            {projects.map(proj => (
+            {projectsWithCounts.map((proj) => (
               <button
-                key={proj}
+                key={proj.name}
                 onClick={() => setView("inbox")}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               >
                 <LayoutList className="h-4 w-4 shrink-0" />
-                <span className="flex-1 text-left truncate">{proj}</span>
+                {/* OPT-47: truncate for long project names */}
+                <span className="flex-1 text-left truncate">{truncate(proj.name, 26)}</span>
                 <span className="text-xs text-muted-foreground">
-                  {projectCounts[proj] || 0}
+                  {proj.open}
                 </span>
               </button>
             ))}
@@ -471,15 +472,42 @@ const Todos = () => {
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Suchen..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="h-8 pl-8 w-32 sm:w-48 text-sm"
+                value={searchInput}
+                onChange={e => {
+                  const v = e.target.value;
+                  setSearchInput(v);
+                  debouncedSetSearch(v);
+                }}
+                className="h-8 pl-8 w-32 sm:w-48 text-sm input-focus-glow focus-ring-animated"
               />
             </div>
           </div>
         </div>
 
         <TodoStats todos={todos} />
+
+        {/* FUNC-8/9/10: Completion rate, avg days, upcoming deadlines */}
+        {todos.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="glass-card rounded-lg border border-border p-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Erledigt</p>
+              <p className={`text-base font-bold ${completionRate >= 70 ? "text-profit" : completionRate >= 40 ? "text-gold" : "text-loss"}`}>{completionRate}%</p>
+              <div className="h-1 bg-secondary rounded-full mt-1 overflow-hidden progress-bar-animated">
+                <div className="h-full bg-primary rounded-full" style={{ width: `${completionRate}%` }} />
+              </div>
+            </div>
+            <div className="glass-card rounded-lg border border-border p-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Ø Dauer</p>
+              <p className="text-base font-bold">{avgCompletionDays}d</p>
+            </div>
+            {upcomingDeadlines.length > 0 && (
+              <div className="glass-card rounded-lg border border-border p-2.5 text-center">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Bald fällig</p>
+                <p className="text-base font-bold text-gold">{upcomingDeadlines.length}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {view !== "completed" && (
           <div className="flex items-center gap-2 gradient-card border border-border rounded-xl px-4 py-2.5">
