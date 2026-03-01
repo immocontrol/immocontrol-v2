@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { formatFileSize } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import FileImportPicker from "@/components/FileImportPicker";
 
 interface Document {
   id: string;
@@ -33,7 +34,6 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState("Sonstiges");
   const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
 
   const { data: documents = [], isLoading: loading } = useQuery({
@@ -94,11 +94,6 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
     setUploading(false);
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await uploadFile(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -161,6 +156,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       </h2>
 
       {/* Upload area with drag & drop */}
+      {/* IMPROVE-18: Use FileImportPicker so mobile users can import from iCloud/Drive/etc. */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -184,23 +180,16 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
             </SelectContent>
           </Select>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
+          <FileImportPicker
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv"
-            onChange={handleUpload}
-          />
-          <Button
+            onFile={uploadFile}
+            label={uploading ? "Lädt..." : "Hochladen"}
             variant="outline"
             size="sm"
             className="h-9 gap-1.5"
+            icon={<Upload className="h-3.5 w-3.5" />}
             disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {uploading ? "Lädt..." : "Hochladen"}
-          </Button>
+          />
         </div>
         <p className="text-[10px] text-muted-foreground mt-2">
           oder Datei hierher ziehen · max. 10 MB

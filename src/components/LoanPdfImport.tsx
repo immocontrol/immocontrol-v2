@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { FileUp, Loader2, Check, AlertTriangle, X, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FileImportPicker } from "@/components/FileImportPicker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -328,6 +329,21 @@ export function LoanPdfImport({ onImport }: LoanPdfImportProps) {
               PDF hierher ziehen oder <span className="text-primary font-medium">klicken</span>
             </p>
             <p className="text-[10px] text-muted-foreground mt-1.5">Max. 30 MB · Kreditvertrag, Angebot, Kontoauszug</p>
+          </div>
+        )}
+
+        {/* BUG-12: Mobile file import picker — shows app selection on mobile */}
+        {!loading && !parsed && !error && (
+          <div className="sm:hidden">
+            <FileImportPicker
+              accept=".pdf"
+              onFile={handleFile}
+              label="PDF vom Handy importieren"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              icon={<FileUp className="h-3.5 w-3.5" />}
+            />
           </div>
         )}
 

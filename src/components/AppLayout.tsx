@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo } from "react";
+import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo, useMemo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown } from "lucide-react";
@@ -103,6 +103,41 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [dotStyle, setDotStyle] = useState<React.CSSProperties>({});
   const [mobileDotStyle, setMobileDotStyle] = useState<React.CSSProperties>({});
 
+  /* BUG-5: Track dropdown open state for click-based dropdowns (fixes hidden dropdowns) */
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
+  const [mobileNavVisible, setMobileNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollTicking = useRef(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (scrollTicking.current) return;
+      scrollTicking.current = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        if (currentY > lastScrollY.current + 10 && currentY > 60) {
+          setMobileNavVisible(false); // scrolling down
+        } else if (currentY < lastScrollY.current - 10 || currentY <= 10) {
+          setMobileNavVisible(true); // scrolling up or at top
+        }
+        lastScrollY.current = currentY;
+        scrollTicking.current = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* BUG-5: Close dropdown when clicking outside */
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handleClick = () => setOpenDropdown(null);
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [openDropdown]);
+
   const handleLogout = async () => {
     await signOut();
     toast.success("Abgemeldet");
@@ -121,7 +156,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const propertyMatch = location.pathname.match(/^\/objekt\/(.+)$/);
   const propertyName = propertyMatch ? getProperty(propertyMatch[1])?.name : null;
 
-  const breadcrumb = (() => {
+  /* IMPROVE-11: Memoize breadcrumb to avoid unnecessary re-renders on each location change */
+  const breadcrumb = useMemo(() => {
     const current = navItems.find(n => n.path === location.pathname);
     if (propertyName) {
       return (
@@ -142,7 +178,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       );
     }
     return null;
-  })();
+  }, [location.pathname, propertyName]);
 
   // Keyboard shortcuts
   const navigateTo = useCallback((path: string) => {
@@ -262,18 +298,22 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 if (isGroup(entry)) {
                   const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
                   return (
-                    <div key={entry.label} className="relative group">
+                    <div key={entry.label} className="relative">
+                      {/* BUG-5: Click-based dropdown instead of hover-only — fixes hidden dropdowns */}
                       <button
                         data-nav-top
+                        onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === entry.label ? null : entry.label); }}
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all touch-target ${
                           groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         }`}
                       >
                         <entry.icon className="h-4 w-4" />
                         {entry.label}
-                        <ChevronDown className="h-3 w-3 opacity-50" />
+                        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
-                      <div className="absolute top-full left-0 mt-1 min-w-[180px] bg-popover border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className={`absolute top-full left-0 mt-1 min-w-[180px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[60] ${
+                        openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+                      }`}>
                         {entry.items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
                           return (
@@ -363,9 +403,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         {children}
       </main>
 
-      <footer className="hidden md:block border-t border-border/50 py-3">
+      {/* IMPROVE-12: Add role="contentinfo" to footer for screen reader landmark */}
+      <footer className="hidden md:block border-t border-border/50 py-3" role="contentinfo">
         <div className="container flex items-center justify-between text-[10px] text-muted-foreground">
-          <span>© {new Date().getFullYear()} ImmoControl</span>
+          {/* IMPROVE-13: Show nav item count for transparency */}
+          <span>© {new Date().getFullYear()} ImmoControl · {NAV_ITEM_COUNT} Bereiche</span>
           <span>
             {new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </span>
@@ -376,8 +418,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <ImmoAIBubble />
 
       {/* Mobile nav with sliding dot */}
+      {/* BUG-7: Fix mobile bottom menu overlap — use safe-area-inset-bottom, z-50, and pb-safe to prevent content clipping */}
       {/* IMP-43: Ensure mobile nav items never overflow the viewport */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe overflow-x-hidden" role="navigation" aria-label="Mobile Navigation">
+      {/* BUG-9: Auto-fade bottom menu on scroll down, reappear on scroll up */}
+      <nav
+        className={`fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe overflow-x-hidden transition-all duration-300 ${
+          mobileNavVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+        }`}
+        role="navigation"
+        aria-label="Mobile Navigation"
+      >
         <div ref={mobileNavRef} className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] relative min-w-0">
           {navItems.map((item) => {
             const isActive = isRouteActive(item.path, location.pathname);

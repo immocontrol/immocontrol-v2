@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Landmark, Upload, Link2, Unlink, CheckCircle, X, FileSpreadsheet, ArrowRight, Plus, Settings2, TrendingUp, Trash2, BarChart3, Percent, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
+import FileImportPicker from "@/components/FileImportPicker";
 
 interface BankTransaction {
   id: string;
@@ -133,7 +134,6 @@ const BankMatching = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
   const queryClient = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -366,9 +366,8 @@ const BankMatching = () => {
   };
 
   // ── CSV Import ──
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  const handleFileUpload = async (file: File) => {
+    if (!user) return;
     setImporting(true);
     try {
       const text = await file.text();
@@ -460,7 +459,6 @@ const BankMatching = () => {
       toast.error("Import fehlgeschlagen: " + (err instanceof Error ? err.message : "Fehler"));
     } finally {
       setImporting(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -521,6 +519,7 @@ const BankMatching = () => {
             <DialogContent className="sm:max-w-md">
               <DialogHeader><DialogTitle>Bank-Import (CSV / MT940 / CAMT)</DialogTitle></DialogHeader>
               <div className="space-y-3">
+                {/* IMPROVE-20: Use FileImportPicker so mobile users can import bank files from apps/cloud */}
                 <p className="text-sm text-muted-foreground">Unterstützt: CSV (Sparkasse, Volksbank, DKB, ING, Commerzbank u.a.), MT940 (.sta) und CAMT.053 (.xml)</p>
                 {accounts.length > 0 && (
                   <div>
@@ -534,8 +533,15 @@ const BankMatching = () => {
                     </Select>
                   </div>
                 )}
-                <input ref={fileRef} type="file" accept=".csv,.CSV,.sta,.STA,.xml,.XML" onChange={handleFileUpload} disabled={importing}
-                  className="w-full text-sm file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary file:text-primary-foreground cursor-pointer" />
+                <FileImportPicker
+                  accept=".csv,.CSV,.sta,.STA,.xml,.XML"
+                  onFile={handleFileUpload}
+                  label={importing ? "Importiere..." : "Datei auswählen"}
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center"
+                  disabled={importing}
+                />
                 <p className="text-[10px] text-muted-foreground">CSV: Semikolon/Komma-getrennt · MT940: SWIFT-Format (.sta) · CAMT: XML-Format (.xml)</p>
                 {importing && <p className="text-xs text-muted-foreground animate-pulse">Importiere...</p>}
               </div>

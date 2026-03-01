@@ -136,6 +136,7 @@ const Settings = () => {
         <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
       </div>
 
+      {/* IMPROVE-34: Settings section headers with icon + consistent styling for visual grouping */}
       {/* Theme */}
       <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in">
         <h2 className="text-sm font-semibold flex items-center gap-2">

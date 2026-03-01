@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useProperties } from "@/context/PropertyContext";
 import { toast } from "sonner";
 import { formatFileSize, formatDate } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import FileImportPicker from "@/components/FileImportPicker";
 
 interface DocEntry {
   id: string;
@@ -80,7 +81,6 @@ const Dokumente = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState("Sonstiges");
   const [propertyId, setPropertyId] = useState<string>("all");
@@ -183,13 +183,11 @@ const Dokumente = () => {
     setUploading(false);
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    for (const file of Array.from(files)) {
+  /* BUG-11: Support mobile app picker for document uploads */
+  const handleUpload = async (files: File[]) => {
+    for (const file of files) {
       await uploadFile(file);
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -266,6 +264,7 @@ const Dokumente = () => {
       </div>
 
       {/* Upload Area */}
+      {/* IMPROVE-19: Use FileImportPicker (multi-file) for mobile-friendly uploads */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -296,18 +295,17 @@ const Dokumente = () => {
               {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
+          <FileImportPicker
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.csv"
             multiple
-            onChange={handleUpload}
+            onFile={(file) => handleUpload([file])}
+            onFiles={handleUpload}
+            label={uploading ? "Lädt..." : "Hochladen"}
+            variant="default"
+            size="sm"
+            icon={<Upload className="h-4 w-4 mr-1.5" />}
+            disabled={uploading}
           />
-          <Button variant="default" size="sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-            <Upload className="h-4 w-4 mr-1.5" />
-            {uploading ? "Lädt..." : "Hochladen"}
-          </Button>
         </div>
         <p className="text-[10px] text-muted-foreground mt-3 flex items-center justify-center gap-1">
           <ScanText className="h-3 w-3" /> PDFs werden automatisch nach Text durchsucht (OCR)

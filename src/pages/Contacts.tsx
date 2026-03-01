@@ -188,14 +188,16 @@ const ContactManagement = () => {
 
   const debouncedSearch = useDebounce(search, 200);
 
-  const filtered = contacts.filter((c) => {
+  /* IMPROVE-25: Debounced search input avoids re-filtering on every keystroke */
+  /* IMPROVE-22: Memoize filtered contact list for performance */
+  const filtered = useMemo(() => contacts.filter((c) => {
     if (catFilter !== "alle" && c.category !== catFilter) return false;
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       return c.name.toLowerCase().includes(q) || (c.company || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").toLowerCase().includes(q);
     }
     return true;
-  });
+  }), [contacts, catFilter, debouncedSearch]);
 
   // Improvement 9: Contact summary stats
   const handworkerCount = contacts.filter(c => c.category === "Handwerker").length;
@@ -332,7 +334,8 @@ const ContactManagement = () => {
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Kontakt suchen..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-8 h-9 text-sm" />
+          {/* IMPROVE-21: Better search placeholder with keyboard hint */}
+          <Input placeholder="Kontakt suchen... (Ctrl+K)" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-8 h-9 text-sm" />
           {search && (
             <button
               onClick={() => setSearch("")}
@@ -343,6 +346,7 @@ const ContactManagement = () => {
             </button>
           )}
         </div>
+        {/* IMPROVE-24: Category filter badges with emoji icons and count for quick visual scanning */}
         <div className="flex gap-1 flex-wrap">
           {[{ value: "alle", label: "Alle", icon: "👥" }, ...CATEGORIES.map(c => ({ value: c.value, label: c.value, icon: c.value === "Handwerker" ? "🔧" : c.value === "Hausverwaltung" ? "🏢" : c.value === "Versicherung" ? "🛡️" : "📋" }))].map((f) => {
             const count = f.value === "alle" ? contacts.length : contacts.filter(c => c.category === f.value).length;
@@ -362,6 +366,11 @@ const ContactManagement = () => {
           })}
         </div>
       </div>
+
+      {/* IMPROVE-23: Show filtered count when searching */}
+      {debouncedSearch && filtered.length > 0 && (
+        <p className="text-xs text-muted-foreground">{filtered.length} von {contacts.length} Kontakten</p>
+      )}
 
       {/* Contact list */}
       {filtered.length === 0 ? (

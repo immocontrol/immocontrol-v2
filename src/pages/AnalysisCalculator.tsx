@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AnalysisInputs from "@/components/analysis/AnalysisInputs";
@@ -12,10 +12,15 @@ import TargetRentCalculator from "@/components/analysis/TargetRentCalculator";
 import ExposeImport from "@/components/analysis/ExposeImport";
 import PdfImport from "@/components/analysis/PdfImport";
 import ExposeHistory from "@/components/analysis/ExposeHistory";
+/* BUG-3: Import PortfolioHealthScore to integrate into Analyse section */
+import PortfolioHealthScore from "@/components/PortfolioHealthScore";
+import { useProperties } from "@/context/PropertyContext";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
 
 const AnalysisCalculator = () => {
   useEffect(() => { document.title = "Objektanalyse – ImmoControl"; }, []);
+  /* BUG-3: Get portfolio stats for Portfolio Gesundheit integration */
+  const { properties, stats } = useProperties();
   const [inputs, setInputs] = useState<AnalysisInputState>(DEFAULT_INPUTS);
   const [savedScenarios, setSavedScenarios] = useState<{ name: string; inputs: AnalysisInputState }[]>(() => {
     try {
@@ -213,6 +218,25 @@ th{background:#f5f5f5;font-weight:600}
             <RatingTrafficLight calc={calc} />
             <AnalysisResults inputs={inputs} calc={calc} />
             <TargetRentCalculator inputs={inputs} />
+            {/* BUG-3: Portfolio Gesundheit integrated into Analyse section */}
+            {properties.length > 0 && (
+              <div className="animate-fade-in" style={{ animationDelay: "500ms" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Portfolio-Kontext</span>
+                </div>
+                <PortfolioHealthScore
+                  totalValue={stats.totalValue}
+                  totalDebt={stats.totalDebt}
+                  totalCashflow={stats.totalCashflow}
+                  totalRent={stats.totalRent}
+                  totalExpenses={properties.reduce((s, p) => s + (p.monthlyExpenses || 0), 0)}
+                  totalCreditRate={properties.reduce((s, p) => s + (p.monthlyCreditRate || 0), 0)}
+                  vacancyRate={0}
+                  propertyCount={stats.propertyCount}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

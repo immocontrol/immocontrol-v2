@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { FileUp, Sparkles, Loader2, Check, AlertTriangle, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FileImportPicker } from "@/components/FileImportPicker";
 import { toast } from "sonner";
 import type { AnalysisInputState } from "@/hooks/useAnalysisCalculations";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
@@ -204,6 +205,21 @@ const PdfImport = ({ onImport }: Props) => {
             PDF hierher ziehen oder <span className="text-primary font-medium">klicken</span>
           </p>
           <p className="text-[10px] text-muted-foreground mt-1">Max. 30 MB · Nur PDF</p>
+        </div>
+      )}
+
+      {/* BUG-12: Mobile file import picker — shows app selection on mobile */}
+      {!loading && !result && (
+        <div className="sm:hidden">
+          <FileImportPicker
+            accept=".pdf"
+            onFile={handleFile}
+            label="PDF vom Handy importieren"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            icon={<FileUp className="h-3.5 w-3.5" />}
+          />
         </div>
       )}
 

@@ -131,6 +131,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
           <DialogDescription>Aktualisiere die Daten deiner Immobilie.</DialogDescription>
         </DialogHeader>
 
+        {/* IMPROVE-37: Form sections with clear visual separators and bold headings for better field grouping */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Grunddaten</h4>

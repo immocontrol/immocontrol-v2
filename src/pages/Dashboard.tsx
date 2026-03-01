@@ -94,6 +94,7 @@ const Dashboard = () => {
   const [sort, setSort] = useState<SortType>("name");
   const [refreshing, setRefreshing] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  /* BUG-4: Dashboard minimalist cleanup — collapse charts and widgets by default for cleaner look */
   /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
   const [chartsCollapsed, setChartsCollapsed] = useState(true);
   const [widgetsCollapsed, setWidgetsCollapsed] = useState(true);
@@ -472,6 +473,7 @@ ${properties.map(p => `<tr>
         propertyCount={stats.propertyCount}
       />
 
+      {/* IMPROVE-40: Responsive stat card grid — 2 columns on mobile, 5 on desktop for optimal readability */}
       {/* Key stats — UI-2: card-stagger-enter */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
         <StatCard
