@@ -123,7 +123,7 @@ const ActivityTimeline = ({ propertyId }: ActivityTimelineProps) => {
         {[
           { key: "all" as const, label: "Alle", count: events.length },
           ...Object.entries(typeConfig).filter(([k]) => typeCounts[k]).map(([k, v]) => ({
-            key: k as any, label: v.label, count: typeCounts[k] || 0,
+            key: k as TimelineEvent["type"], label: v.label, count: typeCounts[k] || 0,
           })),
         ].map(f => (
           <button
