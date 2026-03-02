@@ -302,7 +302,7 @@ const TenantDashboard = ({
             )}
           </h3>
           <div className="grid grid-cols-3 gap-2">
-            <button onClick={() => setActiveTab("tickets")} className="p-3 bg-gold/10 rounded-lg text-center hover:bg-gold/15 transition-colors">
+            /* IMP-21 */ <button aria-label="Offene Tickets anzeigen" onClick={() => setActiveTab("tickets")} className="p-3 bg-gold/10 rounded-lg text-center hover:bg-gold/15 transition-colors">
               <Clock className="h-4 w-4 mx-auto mb-1 text-gold" />
               <div className="text-lg font-bold text-gold">{ticketStats.open}</div>
               <div className="text-[10px] text-muted-foreground">Offen</div>

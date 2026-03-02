@@ -52,7 +52,7 @@ const ContactManagement = () => {
   const qc = useQueryClient();
 
   // Document title
-  useEffect(() => { document.title = "Kontakte – ImmoControl"; }, []);
+  /* IMP-41: Dynamic document title */ useEffect(() => { document.title = `Kontakte (${contacts.length}) \u2013 ImmoControl`; }, [contacts.length]);
 
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("alle");
@@ -363,7 +363,7 @@ const ContactManagement = () => {
             <button
               onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Suche leeren"
+              aria-label="Suche leeren" onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSearch(""); } }}
             >
               <X className="h-3.5 w-3.5" />
             </button>

@@ -81,7 +81,7 @@ const extractPdfText = async (file: File): Promise<string> => {
 
 const Dokumente = () => {
   /* IMP-8: Document title */
-  useEffect(() => { document.title = "Dokumente – ImmoControl"; }, []);
+  /* IMP-42: Dynamic document title */ useEffect(() => { document.title = `Dokumente (${documents.length}) \u2013 ImmoControl`; }, [documents.length]);
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();

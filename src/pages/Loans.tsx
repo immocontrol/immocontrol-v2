@@ -53,7 +53,7 @@ const Loans = () => {
   const { user } = useAuth();
 
   // Document title
-  useEffect(() => { document.title = "Darlehen – ImmoControl"; }, []);
+  /* IMP-40: Dynamic document title */ useEffect(() => { document.title = `Darlehen (${loans.length}) \u2013 ImmoControl`; }, [loans.length]);
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -417,6 +417,7 @@ const Loans = () => {
           {/* Ownership filter */}
           {["alle", "privat", "egbr"].map(f => (
             <button key={f} onClick={() => setFilterOwnership(f)}
+              aria-label={`Filter: ${f}`}
               className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${filterOwnership === f ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"}`}>
               {f === "alle" ? "Alle" : f === "egbr" ? "eGbR" : "Privat"}
             </button>

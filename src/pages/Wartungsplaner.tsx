@@ -102,7 +102,7 @@ const Wartungsplaner = () => {
   const qc = useQueryClient();
 
   /* IMP-28: Set document title for Wartungsplaner */
-  useEffect(() => { document.title = "Wartungsplaner \u2013 ImmoControl"; }, []);
+  /* IMP-43: Dynamic title */ useEffect(() => { document.title = `Wartungsplaner (${allItems.length}) \u2013 ImmoControl`; }, [allItems.length]);
   const [open, setOpen] = useState(false);
   const [filterProperty, setFilterProperty] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -231,7 +231,7 @@ const Wartungsplaner = () => {
     /* IMP-29: Add min-w-0 to prevent maintenance items from overflowing on mobile */
     return (
       <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors group min-w-0 ${item.completed && !item.recurring_interval ? "opacity-40" : ""}`}>
-        <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="shrink-0">
+        /* IMP-20: ARIA label for toggle */ <button onClick={() => toggleMutation.mutate({ id: item.id, completed: !item.completed })} className="shrink-0" aria-label={item.completed ? "Als offen markieren" : "Als erledigt markieren"}>
           {item.completed && !item.recurring_interval ? (
             <Check className="h-4 w-4 text-profit" />
           ) : status === "overdue" ? (
