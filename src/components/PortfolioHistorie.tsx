@@ -122,17 +122,17 @@ function detectChanges(
 
   const currentNetWorth = currentStats.totalValue - currentStats.totalDebt;
   const diff = currentNetWorth - lastSnapshot.netWorth;
-  const threshold = Math.max(1000, lastSnapshot.netWorth * 0.01); // 1% or 1000€ minimum
+  const threshold = Math.max(1000, Math.abs(lastSnapshot.netWorth) * 0.01); // 1% or 1000€ minimum
 
-  if (Math.abs(diff) < threshold) return null;
-
-  // Detect property count change
+  // Detect property count change first (independent of net worth threshold)
   if (currentStats.propertyCount > lastSnapshot.propertyCount) {
     return { type: "property_purchase", description: `Neues Objekt hinzugefügt (${currentStats.propertyCount} gesamt)` };
   }
   if (currentStats.propertyCount < lastSnapshot.propertyCount) {
     return { type: "property_sale", description: `Objekt entfernt (${currentStats.propertyCount} gesamt)` };
   }
+
+  if (Math.abs(diff) < threshold) return null;
 
   // Detect rent change
   const rentDiff = currentStats.totalRent - lastSnapshot.rent;
