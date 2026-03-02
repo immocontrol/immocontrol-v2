@@ -289,6 +289,8 @@ const Settings = () => {
       if (user) {
         localStorage.removeItem(`immocontrol_2fa_backup_codes_${user.id}`);
         localStorage.removeItem(`immocontrol_2fa_enabled_${user.id}`);
+        /* Also clear the "remember device" trust key so 2FA is fully reset */
+        localStorage.removeItem(`immocontrol_2fa_trusted_${user.id}`);
       }
       toast.success("2FA deaktiviert");
     } catch (err: unknown) {
