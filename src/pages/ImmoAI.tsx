@@ -152,15 +152,17 @@ export default function ImmoAI() {
   /* FUNC-21: Session duration tracking */
   const [sessionStart] = useState(() => Date.now());
 
-
-const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const copyMessage = useCallback((content: string, idx: number) => {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopiedIdx(idx);
-      toast.success("Kopiert!");
-      setTimeout(() => setCopiedIdx(null), 2000);
-    });
+    navigator.clipboard.writeText(content).then(
+      () => {
+        setCopiedIdx(idx);
+        toast.success("Kopiert!");
+        setTimeout(() => setCopiedIdx(null), 2000);
+      },
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

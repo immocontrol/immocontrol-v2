@@ -976,8 +976,10 @@ const Settings = () => {
                     onClick={() => {
                       const token = localStorage.getItem("immo-telegram-bot-token");
                       if (token) {
-                        navigator.clipboard.writeText(token);
-                        toast.success("Token kopiert");
+                        navigator.clipboard.writeText(token).then(
+                          () => toast.success("Token kopiert"),
+                          () => toast.error("Kopieren fehlgeschlagen")
+                        );
                       }
                     }}
                   >
