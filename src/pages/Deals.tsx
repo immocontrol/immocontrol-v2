@@ -327,13 +327,17 @@ const Deals = () => {
   /* UPD-30: Export deals as CSV */
   const exportCSV = useCallback(() => {
     const header = "Titel;Adresse;Stage;Preis;Miete/Monat;Rendite;qm;Typ;Kontakt;Quelle;Erstellt\n";
+    const esc = (v: string | number) => {
+      const s = String(v);
+      return s.includes(";") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const rows = deals.map(d =>
       [d.title, d.address || "", stageMap[d.stage]?.label || d.stage,
        d.purchase_price || 0, d.expected_rent || 0,
        d.expected_yield ? `${d.expected_yield.toFixed(1)}%` : "",
        d.sqm || 0, d.property_type || "", d.contact_name || "", d.source || "",
        new Date(d.created_at).toLocaleDateString("de-DE"),
-      ].join(";")
+      ].map(esc).join(";")
     ).join("\n");
     const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);

@@ -216,7 +216,7 @@ export function parseTelegramMessages(text: string): ParsedTelegramDeal[] {
   /* UPD-6: Deduplicate by address+price combination */
   const seen = new Set<string>();
   return deals.filter(d => {
-    const key = `${d.address}|${d.price}`;
+    const key = `${d.title}|${d.address}|${d.price}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
