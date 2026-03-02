@@ -52,6 +52,8 @@ export default function ImmoAIBubble() {
   const bubbleElRef = useRef<HTMLButtonElement>(null);
   const chatElRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const bubblePosRef = useRef(bubblePos);
+  bubblePosRef.current = bubblePos;
 
   const boundListenersRef = useRef<{
     mouseMove: (e: MouseEvent) => void;
@@ -308,8 +310,10 @@ export default function ImmoAIBubble() {
       });
       if (needsMove) {
         // Move bubble above the overlap area with smooth transition
-        const currentY = bubblePos?.y ?? (window.innerHeight - 140);
+        const currentY = bubblePosRef.current?.y ?? (window.innerHeight - 140);
         const newY = Math.max(16, currentY - 80);
+        // Only move if position actually changes (prevent infinite loop)
+        if (Math.abs(newY - currentY) < 1) return;
         el.style.transition = "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
         setBubblePos(prev => ({ x: prev?.x ?? window.innerWidth - 72, y: newY }));
       }
@@ -320,7 +324,7 @@ export default function ImmoAIBubble() {
     });
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-state", "role"] });
     return () => observer.disconnect();
-  }, [open, bubblePos]);
+  }, [open]); // removed bubblePos from deps to prevent infinite re-render loop
 
   /* Auto-minimize after 30s of inactivity */
   const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);

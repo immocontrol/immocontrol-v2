@@ -45,6 +45,8 @@ interface HistoryEvent {
   cashflowAfter: number;   // Monthly cashflow after
   debtBefore: number;      // Total debt before
   debtAfter: number;       // Total debt after
+  rentAfter?: number;      // Gross rent at time of event
+  propertyCount?: number;  // Number of properties at time of event
   isAutomatic: boolean;    // Auto-captured vs manual
 }
 
@@ -208,8 +210,8 @@ export default function PortfolioHistorie() {
       netWorth: last.valueAfter,
       cashflow: last.cashflowAfter,
       debt: last.debtAfter,
-      rent: last.cashflowAfter, // approximate
-      propertyCount: properties.length, // track from current since we don't store it
+      rent: last.rentAfter ?? last.cashflowAfter, // use stored rent, fallback to cashflow for old events
+      propertyCount: last.propertyCount ?? properties.length, // use stored count, fallback for old events
     };
   }, [events, properties.length]);
 
@@ -232,6 +234,8 @@ export default function PortfolioHistorie() {
         cashflowAfter: currentCashflow,
         debtBefore: stats.totalDebt,
         debtAfter: stats.totalDebt,
+        rentAfter: stats.totalRent,
+        propertyCount: properties.length,
         isAutomatic: true,
       };
       setEvents([initial]);
@@ -262,6 +266,8 @@ export default function PortfolioHistorie() {
         cashflowAfter: currentCashflow,
         debtBefore: lastEvent.debtAfter,
         debtAfter: stats.totalDebt,
+        rentAfter: stats.totalRent,
+        propertyCount: properties.length,
         isAutomatic: true,
       };
       setEvents(prev => [...prev, newEvent]);
@@ -300,6 +306,8 @@ export default function PortfolioHistorie() {
       cashflowAfter: newEvent.cashflow,
       debtBefore: lastEvent?.debtAfter ?? 0,
       debtAfter: newEvent.debt,
+      rentAfter: stats.totalRent,
+      propertyCount: properties.length,
       isAutomatic: false,
     };
     setEvents(prev => [...prev, event].sort((a, b) => a.date.localeCompare(b.date)));
