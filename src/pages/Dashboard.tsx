@@ -38,6 +38,8 @@ import PortfolioAllocationWidget from "@/components/PortfolioAllocationWidget";
 import BudgetVsActual from "@/components/BudgetVsActual";
 import LoanAmortizationMini from "@/components/LoanAmortizationMini";
 import PortfolioHistorie from "@/components/PortfolioHistorie";
+import WidgetCustomizer from "@/components/WidgetCustomizer";
+import ReportingDashboard from "@/components/ReportingDashboard";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import StatCard from "@/components/StatCard";
@@ -874,6 +876,7 @@ ${properties.map(p => `<tr>
         >
           {widgetsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           Analyse & Widgets {widgetsCollapsed ? "einblenden" : "ausblenden"}
+          {!widgetsCollapsed && <span className="ml-auto"><WidgetCustomizer /></span>}
         </button>
         <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[10000px] opacity-100"}`}>
           {/* Occupancy, Heatmap, Type, Goals moved here */}
@@ -950,6 +953,8 @@ ${properties.map(p => `<tr>
           <DashboardActionCenter />
           {/* HIST-1: Portfolio Historie — Soll/Ist-Vergleich */}
           <PortfolioHistorie />
+          {/* REPORTING-1: Reporting & Analytics Dashboard */}
+          <ReportingDashboard />
         </div>
       </div>
 
