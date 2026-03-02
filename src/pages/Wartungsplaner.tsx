@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import MaintenanceCalendar from "@/components/MaintenanceCalendar";
 
 interface MaintenanceItem {
   id: string;
@@ -418,6 +419,15 @@ const Wartungsplaner = () => {
           ))}
         </div>
       </div>
+
+      {/* FEATURE-6: Calendar View */}
+      <MaintenanceCalendar
+        items={filteredItems.map(item => ({
+          ...item,
+          planned_date: item.planned_date || "",
+          property_name: propMap.get(item.property_id) || "–",
+        }))}
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">

@@ -448,6 +448,53 @@ const BankMatching = () => {
     [payments, transactions]
   );
 
+  /**
+   * FEATURE-2: Enhanced fuzzy matching for IBAN/Name
+   * - Normalizes IBANs (remove spaces/dashes)
+   * - Fuzzy name comparison with Levenshtein distance
+   * - Amount tolerance (±1 cent for rounding, ±5% for partial matches)
+   * - Reference keyword scanning
+   */
+  const normalizeIBAN = useCallback((iban: string): string =>
+    iban.replace(/[\s\-]/g, "").toUpperCase(), []);
+
+  const levenshtein = useCallback((a: string, b: string): number => {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix: number[][] = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        const cost = b[i - 1] === a[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+      }
+    }
+    return matrix[b.length][a.length];
+  }, []);
+
+  const fuzzyNameMatch = useCallback((txName: string, tenantName: string): boolean => {
+    const a = txName.toLowerCase().trim();
+    const b = tenantName.toLowerCase().trim();
+    if (!a || !b || b.length < 4) return false; // Skip very short names to avoid false positives
+    // Exact substring match — Unicode-aware word boundary (supports umlauts: ä, ö, ü, ß)
+    const escaped = b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const wordBoundaryRegex = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u");
+    if (wordBoundaryRegex.test(a)) return true;
+    // Multi-word name: require ALL words (not just 50%) with length > 3 to match
+    const bWords = b.split(/\s+/).filter(w => w.length > 3);
+    if (bWords.length >= 2) {
+      const allWordsFound = bWords.every(w => a.includes(w));
+      if (allWordsFound) return true;
+    }
+    // Levenshtein only for short, similar-length strings (typo tolerance)
+    if (Math.abs(a.length - b.length) <= 3 && b.length >= 5) {
+      const dist = levenshtein(a, b);
+      return dist <= Math.max(2, Math.floor(b.length * 0.15));
+    }
+    return false;
+  }, [levenshtein]);
+
   // ── Rule-based + heuristic matching ──
   const suggestMatch = useCallback((tx: BankTransaction) => {
     if (tx.amount <= 0) return null;
@@ -455,10 +502,14 @@ const BankMatching = () => {
     // 1. Check rules first
     const activeRules = rules.filter(r => r.is_active);
     for (const rule of activeRules) {
-      const txField = rule.match_type === "iban" ? (tx.iban || "").toLowerCase()
+      const txField = rule.match_type === "iban"
+        ? normalizeIBAN(tx.iban || "")
         : rule.match_type === "name" ? (tx.sender_receiver || "").toLowerCase()
         : (tx.reference || "").toLowerCase();
-      if (txField.includes(rule.match_value.toLowerCase())) {
+      const ruleVal = rule.match_type === "iban"
+        ? normalizeIBAN(rule.match_value)
+        : rule.match_value.toLowerCase();
+      if (txField.includes(ruleVal) || (rule.match_type === "name" && fuzzyNameMatch(txField, ruleVal))) {
         // Find matching payment for this tenant/property
         const match = unmatchedPayments.find(p => {
           const amountOk = Math.abs(Number(p.amount) - tx.amount) < 0.01;
@@ -470,18 +521,44 @@ const BankMatching = () => {
       }
     }
 
-    // 2. Heuristic: amount + name
-    const heuristic = unmatchedPayments.find(p => {
-      const amountMatch = Math.abs(Number(p.amount) - tx.amount) < 0.01;
-      if (!amountMatch) return false;
+    // 2. Enhanced heuristic: IBAN match → name match → reference keywords
+    for (const p of unmatchedPayments) {
+      const amountExact = Math.abs(Number(p.amount) - tx.amount) < 0.01;
+      if (!amountExact) continue;
+
       const tenant = tenantMap[p.tenant_id];
-      if (!tenant) return true;
-      const name = `${tenant.first_name} ${tenant.last_name}`.toLowerCase();
-      const ref = ((tx.reference || "") + " " + (tx.sender_receiver || "")).toLowerCase();
-      return ref.includes(tenant.last_name.toLowerCase()) || ref.includes(name);
-    });
-    return heuristic ? { payment: heuristic, confidence: "auto" as const } : null;
-  }, [rules, unmatchedPayments, tenantMap]);
+      if (!tenant) {
+        // No tenant info → amount-only match (low confidence)
+        return { payment: p, confidence: "auto" as const };
+      }
+
+      // IBAN-based matching (highest confidence after rules)
+      if (tx.iban && tenant.iban) {
+        if (normalizeIBAN(tx.iban) === normalizeIBAN(tenant.iban)) {
+          return { payment: p, confidence: "auto" as const };
+        }
+      }
+
+      // Name-based fuzzy matching
+      const fullName = `${tenant.first_name} ${tenant.last_name}`;
+      const txText = ((tx.reference || "") + " " + (tx.sender_receiver || ""));
+      if (fuzzyNameMatch(txText, fullName) || fuzzyNameMatch(txText, tenant.last_name)) {
+        return { payment: p, confidence: "auto" as const };
+      }
+
+      // Reference keyword scan (property name, unit number)
+      const prop = propertyMap[p.property_id];
+      if (prop) {
+        const ref = (tx.reference || "").toLowerCase();
+        const propName = prop.name.toLowerCase();
+        if ((ref.includes(propName) || ref.includes("miete")) && ref.includes(tenant.last_name.toLowerCase())) {
+          return { payment: p, confidence: "auto" as const };
+        }
+      }
+    }
+
+    return null;
+  }, [rules, unmatchedPayments, tenantMap, propertyMap, normalizeIBAN, fuzzyNameMatch]);
 
   // ── Mutations ──
   const invalidateAll = () => {

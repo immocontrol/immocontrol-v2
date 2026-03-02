@@ -40,6 +40,7 @@ import LoanAmortizationMini from "@/components/LoanAmortizationMini";
 import PortfolioHistorie from "@/components/PortfolioHistorie";
 import WidgetCustomizer from "@/components/WidgetCustomizer";
 import ReportingDashboard from "@/components/ReportingDashboard";
+import KPIAlerts from "@/components/KPIAlerts";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import StatCard from "@/components/StatCard";
@@ -955,6 +956,8 @@ ${properties.map(p => `<tr>
           <PortfolioHistorie />
           {/* REPORTING-1: Reporting & Analytics Dashboard */}
           <ReportingDashboard />
+          {/* FEATURE-8: KPI-Alerts — automatic portfolio metric warnings */}
+          <KPIAlerts />
         </div>
       </div>
 
