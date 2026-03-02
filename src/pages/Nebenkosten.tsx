@@ -111,24 +111,29 @@ const Nebenkosten = () => {
 
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("utility_billing_items").delete().eq("id", id);
+      const { error } = await supabase.from("utility_billing_items").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["utility_billing_items", selectedBilling] });
       updateBillingTotals();
     },
+    onError: () => toast.error("Fehler beim Löschen"),
   });
 
   const deleteBilling = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("utility_billing_items").delete().eq("billing_id", id);
-      await supabase.from("utility_billings").delete().eq("id", id);
+      const { error: itemsErr } = await supabase.from("utility_billing_items").delete().eq("billing_id", id);
+      if (itemsErr) throw itemsErr;
+      const { error: billingErr } = await supabase.from("utility_billings").delete().eq("id", id);
+      if (billingErr) throw billingErr;
     },
     onSuccess: () => {
       toast.success("Abrechnung gelöscht");
       setSelectedBilling(null);
       qc.invalidateQueries({ queryKey: ["utility_billings"] });
     },
+    onError: () => toast.error("Fehler beim Löschen der Abrechnung"),
   });
 
   const updateBillingTotals = async () => {
@@ -148,7 +153,8 @@ const Nebenkosten = () => {
 
   /* IMP-17: Wrap finalizeBilling in useCallback for stable reference */
   const finalizeBilling = useCallback(async (id: string) => {
-    await supabase.from("utility_billings").update({ status: "final" }).eq("id", id);
+    const { error } = await supabase.from("utility_billings").update({ status: "final" }).eq("id", id);
+    if (error) { toast.error("Fehler beim Finalisieren"); return; }
     toast.success("Abrechnung finalisiert");
     qc.invalidateQueries({ queryKey: ["utility_billings"] });
   }, [qc]);

@@ -159,26 +159,33 @@ const ContactManagement = () => {
   // Soft delete: move to trash
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => { toast.success("Kontakt in Papierkorb verschoben"); invalidate(); },
+    onError: () => toast.error("Fehler beim Löschen"),
   });
 
   // Restore from trash
   const restoreMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("contacts").update({ deleted_at: null }).eq("id", id);
+      const { error } = await supabase.from("contacts").update({ deleted_at: null }).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => { toast.success("Kontakt wiederhergestellt"); invalidate(); },
+    onError: () => toast.error("Fehler beim Wiederherstellen"),
   });
 
   // Permanently delete
   const permanentDeleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("contacts").delete().eq("id", id);
+      const { error } = await supabase.from("contacts").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => { toast.success("Kontakt endg\u00fcltig gel\u00f6scht"); invalidate(); },
+    onError: () => toast.error("Fehler beim endg\u00fcltigen L\u00f6schen"),
   });
+
 
   const openEdit = (c: ContactItem) => {
     setEditContact(c);

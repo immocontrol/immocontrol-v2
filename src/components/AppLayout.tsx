@@ -34,6 +34,7 @@ interface NavGroup {
 type NavEntry = NavItem | NavGroup;
 const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 
+/* Item 2: Menüpunkte umsortiert — Rechner, Nebenkosten & Cashflow-Prognose zu Finanzen hinzugefügt */
 const navEntries: NavEntry[] = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
   {
@@ -41,7 +42,10 @@ const navEntries: NavEntry[] = [
     items: [
       { path: "/darlehen", label: "Darlehen", icon: Landmark, shortcut: "2" },
       { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
+      { path: "/nebenkosten", label: "Nebenkosten", icon: Receipt, shortcut: "" },
+      { path: "/forecast", label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
       { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
+      { path: "/analyse", label: "Rechner", icon: Calculator, shortcut: "" },
     ],
   },
   {

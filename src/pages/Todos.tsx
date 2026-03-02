@@ -516,27 +516,34 @@ const Todos = () => {
           </div>
         )}
 
+        {/* Item 4: Improved quick-add — always-visible + Button, focus on click */}
         {view !== "completed" && (
           <div className="flex items-center gap-2 gradient-card border border-border rounded-xl px-4 py-2.5">
-            <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Plus className="h-4 w-4 text-primary shrink-0" />
             <Input
               ref={quickInputRef}
-              placeholder="Aufgabe hinzufügen… (Enter)"
+              placeholder="Neue Aufgabe hinzufügen… (Enter)"
               value={quickInput}
               onChange={e => setQuickInput(e.target.value)}
               onKeyDown={handleQuickAdd}
               className="h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 text-sm px-0 placeholder:text-muted-foreground"
             />
-            {quickInput && (
-              <Button
-                size="sm"
-                className="h-7 px-3 text-xs shrink-0"
-                onClick={() => addMutation.mutate(quickInput)}
-                disabled={addMutation.isPending}
-              >
-                Hinzufügen
-              </Button>
-            )}
+            <Button
+              size="sm"
+              className="h-7 px-3 text-xs shrink-0 gap-1"
+              onClick={() => {
+                if (quickInput.trim()) {
+                  addMutation.mutate(quickInput);
+                } else {
+                  quickInputRef.current?.focus();
+                }
+              }}
+              disabled={addMutation.isPending}
+              variant={quickInput.trim() ? "default" : "outline"}
+            >
+              <Plus className="h-3 w-3" />
+              {quickInput.trim() ? "Hinzufügen" : "Neu"}
+            </Button>
           </div>
         )}
 

@@ -34,10 +34,14 @@ const DocumentTemplateGenerator = () => {
     };
 
     const text = templates[template] || "";
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast.success("Vorlage in die Zwischenablage kopiert!");
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success("Vorlage in die Zwischenablage kopiert!");
+      },
+      () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
+    );
   };
 
   return (

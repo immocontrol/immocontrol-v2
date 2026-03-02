@@ -15,10 +15,10 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip }: S
   const [copied, setCopied] = useState(false);
 
   const copyValue = useCallback(() => {
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+    navigator.clipboard.writeText(value).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 1500); },
+      () => { /* clipboard unavailable — fail silently for stat cards */ }
+    );
   }, [value]);
 
   return (
