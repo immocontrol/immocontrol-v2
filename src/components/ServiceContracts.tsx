@@ -28,6 +28,22 @@ const SERVICE_TYPES = [
   { value: "sonstiges", label: "Sonstiges" },
 ];
 
+interface ServiceContractRow {
+  id: string;
+  property_id: string;
+  service_type: string;
+  provider_name: string;
+  contract_number: string | null;
+  start_date: string;
+  end_date: string | null;
+  is_auto_renew: boolean;
+  notice_period_months: number;
+  annual_cost: number;
+  payment_interval: string;
+  notes: string | null;
+  created_at: string;
+}
+
 interface ServiceContractsProps {
   propertyId?: string;
 }
@@ -100,7 +116,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
     },
   });
 
-  const totalAnnualCost = contracts.reduce((s: number, c: any) => s + Number(c.annual_cost), 0);
+  const totalAnnualCost = contracts.reduce((s: number, c: ServiceContractRow) => s + Number(c.annual_cost), 0);
   const getPropertyName = (pid: string) => properties.find(p => p.id === pid)?.name || "–";
 
   return (
@@ -190,7 +206,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contracts.map((c: any) => {
+              {contracts.map((c: ServiceContractRow) => {
                 const endDate = c.end_date ? new Date(c.end_date) : null;
                 const daysLeft = endDate ? Math.ceil((endDate.getTime() - Date.now()) / 86400000) : null;
                 return (

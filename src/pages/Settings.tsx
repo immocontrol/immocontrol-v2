@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
 import { PasswordStrength } from "@/components/PasswordStrength";
+import { DataExportBackup } from "@/components/DataExportBackup";
 
 /* ── Default keyboard shortcuts (stored in localStorage for customization) ── */
 const DEFAULT_SHORTCUTS: Record<string, string> = {
@@ -848,67 +849,15 @@ const Settings = () => {
         )}
       </div>
 
-      {/* Feature: JSON Data Export */}
+      {/* EXPORT-9: Enhanced Data Export/Backup with JSON + CSV support */}
       <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "120ms" }}>
         <h2 className="text-sm font-semibold flex items-center gap-2">
-          <Database className="h-4 w-4 text-muted-foreground" /> Daten-Backup
+          <Database className="h-4 w-4 text-muted-foreground" /> Daten-Backup & Export
         </h2>
         <p className="text-xs text-muted-foreground">
-          Exportiere alle deine Daten als JSON-Datei. Du kannst diesen Export als Backup verwenden.
+          Exportiere alle deine Daten als JSON-Backup oder CSV-Dateien für Excel.
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          onClick={async () => {
-            try {
-              const tables = ["properties", "contacts", "loans", "todos", "tenants", "tickets", "rent_payments", "portfolio_goals"];
-              /* FIX-39 / IMP-22: Replace `Record<string, any>` with proper type */
-              const backup: Record<string, unknown> = { exportedAt: new Date().toISOString(), version: "1.0" };
-              for (const table of tables) {
-                /* FIX-40 / IMP-23: Replace `as any` with typed table name cast */
-                const { data } = await supabase.from(table as never).select("*");
-                backup[table] = data || [];
-              }
-              const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `immocontrol-backup-${new Date().toISOString().split("T")[0]}.json`;
-              a.click();
-              URL.revokeObjectURL(url);
-              toast.success("Backup exportiert!");
-            } catch {
-              toast.error("Export fehlgeschlagen");
-            }
-          }}
-        >
-          <Download className="h-3.5 w-3.5" /> JSON exportieren
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = ".json";
-            input.onchange = async (e) => {
-              const file = (e.target as HTMLInputElement).files?.[0];
-              if (!file) return;
-              try {
-                const text = await file.text();
-                const data = JSON.parse(text);
-                toast.success(`Backup gelesen: ${Object.keys(data).filter(k => k !== "exportedAt" && k !== "version").length} Tabellen gefunden. Import-Funktion kommt bald!`);
-              } catch {
-                toast.error("Ungültige JSON-Datei");
-              }
-            };
-            input.click();
-          }}
-        >
-          <Upload className="h-3.5 w-3.5" /> JSON prüfen
-        </Button>
+        <DataExportBackup />
       </div>
 
       {/* Customizable Keyboard Shortcuts */}

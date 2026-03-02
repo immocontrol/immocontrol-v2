@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ContractManagement from "@/components/ContractManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
 import ServiceContracts from "@/components/ServiceContracts";
+import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import { FileText, Receipt, Wrench, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,10 +126,13 @@ const Vertraege = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="vertraege" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="mietvertraege" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="mietvertraege" className="flex items-center gap-1.5 text-xs">
+            <FileText className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Miet</span>verträge
+          </TabsTrigger>
           <TabsTrigger value="vertraege" className="flex items-center gap-1.5 text-xs">
-            <FileText className="h-3.5 w-3.5" /> Mietverträge
+            <FileText className="h-3.5 w-3.5" /> Allgemein
           </TabsTrigger>
           <TabsTrigger value="rechnungen" className="flex items-center gap-1.5 text-xs">
             <Receipt className="h-3.5 w-3.5" /> Rechnungen
@@ -137,6 +141,7 @@ const Vertraege = () => {
             <Wrench className="h-3.5 w-3.5" /> Dienstleister
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="mietvertraege"><Mietvertragsverwaltung /></TabsContent>
         <TabsContent value="vertraege"><ContractManagement /></TabsContent>
         <TabsContent value="rechnungen"><InvoiceManagement /></TabsContent>
         <TabsContent value="dienstleister"><ServiceContracts /></TabsContent>

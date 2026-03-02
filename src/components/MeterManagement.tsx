@@ -63,7 +63,7 @@ const MeterManagement = ({ propertyId }: Props) => {
       setForm({ meter_type: "Strom", meter_number: "", unit_label: "", location_note: "" });
       qc.invalidateQueries({ queryKey: ["meters", propertyId] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const addReading = useMutation({
@@ -84,7 +84,7 @@ const MeterManagement = ({ propertyId }: Props) => {
       setReadingForm({ value: "", reading_date: new Date().toISOString().split("T")[0], note: "" });
       qc.invalidateQueries({ queryKey: ["meter_readings", propertyId] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const deleteMeter = useMutation({

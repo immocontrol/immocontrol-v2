@@ -16,6 +16,32 @@ import { Users, Plus, Video, MapPin, Calendar, Vote, Trash2, FileText } from "lu
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
 
+interface MeetingRow {
+  id: string;
+  property_id: string;
+  title: string;
+  meeting_date: string;
+  location: string | null;
+  is_virtual: boolean;
+  meeting_link: string | null;
+  status: string;
+  minutes: string | null;
+  created_at: string;
+}
+
+interface ResolutionRow {
+  id: string;
+  meeting_id: string;
+  resolution_number: number;
+  title: string;
+  description: string | null;
+  votes_for: number;
+  votes_against: number;
+  votes_abstain: number;
+  result: string;
+  created_at: string;
+}
+
 interface OwnerMeetingsProps {
   propertyId?: string;
 }
@@ -81,7 +107,7 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
 
   const addResolution = useMutation({
     mutationFn: async (meetingId: string) => {
-      const existing = resolutions.filter((r: any) => r.meeting_id === meetingId);
+      const existing = resolutions.filter((r: ResolutionRow) => r.meeting_id === meetingId);
       const { error } = await supabase.from("meeting_resolutions").insert({
         user_id: user!.id,
         meeting_id: meetingId,
@@ -116,7 +142,7 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
 
   const updateMeetingStatus = useMutation({
     mutationFn: async ({ id, status, minutes }: { id: string; status: string; minutes?: string }) => {
-      const updates: any = { status };
+      const updates: Record<string, string> = { status };
       if (minutes) updates.minutes = minutes;
       const { error } = await supabase.from("owner_meetings").update(updates).eq("id", id);
       if (error) throw error;
@@ -174,8 +200,8 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
         <p className="text-sm text-muted-foreground">Keine Versammlungen geplant.</p>
       ) : (
         <Accordion type="single" collapsible className="space-y-2">
-          {meetings.map((m: any) => {
-            const meetingResolutions = resolutions.filter((r: any) => r.meeting_id === m.id);
+          {meetings.map((m: MeetingRow) => {
+            const meetingResolutions = resolutions.filter((r: ResolutionRow) => r.meeting_id === m.id);
             const isPast = new Date(m.meeting_date) < new Date();
             return (
               <AccordionItem key={m.id} value={m.id} className="border rounded-lg px-4">
@@ -250,7 +276,7 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
                       </div>
                       {meetingResolutions.length > 0 ? (
                         <div className="space-y-1.5">
-                          {meetingResolutions.map((r: any) => (
+                          {meetingResolutions.map((r: ResolutionRow) => (
                             <div key={r.id} className="flex items-center justify-between rounded-md bg-secondary/50 px-3 py-2">
                               <div>
                                 <span className="text-xs font-medium">TOP {r.resolution_number}: {r.title}</span>
