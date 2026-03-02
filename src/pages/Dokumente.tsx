@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -80,6 +80,8 @@ const extractPdfText = async (file: File): Promise<string> => {
 };
 
 const Dokumente = () => {
+  /* IMP-8: Document title */
+  useEffect(() => { document.title = "Dokumente – ImmoControl"; }, []);
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();

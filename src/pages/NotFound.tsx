@@ -4,6 +4,8 @@ import { Building2, ArrowLeft } from "lucide-react";
 import { logger } from "@/lib/logger";
 
 const NotFound = () => {
+  /* IMP-10: Document title */
+  useEffect(() => { document.title = "Seite nicht gefunden – ImmoControl"; }, []);
   const location = useLocation();
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(10);
