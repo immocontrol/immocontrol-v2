@@ -63,7 +63,7 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
   });
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "550ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:550ms]" role="region" aria-label="Notizen">
       <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
         <StickyNote className="h-4 w-4 text-muted-foreground" /> Notizen
         {notes.length > 0 && (

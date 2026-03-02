@@ -254,7 +254,7 @@ export function ErrorScanner() {
   const warningCount = errors.filter(e => e.severity === "warning").length;
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "125ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:125ms]" role="region" aria-label="Error Scanner">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Bug className="h-4 w-4 text-muted-foreground" /> Error Scanner

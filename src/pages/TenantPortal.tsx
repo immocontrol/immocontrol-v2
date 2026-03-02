@@ -691,7 +691,7 @@ const TenantPortal = () => {
               </div>
             </div>
 
-            <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "100ms" }}>
+            <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:100ms]">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold">Abmelden</h2>

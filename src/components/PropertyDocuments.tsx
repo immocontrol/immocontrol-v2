@@ -147,7 +147,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
   };
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "600ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:600ms]" role="region" aria-label="Dokumente">
       <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
         <FolderOpen className="h-4 w-4 text-muted-foreground" /> Dokumente
         {documents.length > 0 && (

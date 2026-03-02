@@ -95,7 +95,7 @@ const DashboardActionCenter = () => {
   };
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:250ms]" role="region" aria-label="Handlungsbedarf">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           ⚡ Handlungsbedarf

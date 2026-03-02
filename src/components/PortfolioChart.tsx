@@ -20,7 +20,7 @@ const PortfolioChart = () => {
   }));
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:250ms]" role="region" aria-label="Portfolioverteilung">
       <h2 className="text-sm font-semibold mb-4">Portfolioverteilung nach Wert</h2>
       <div className="flex items-center gap-6">
         <div className="w-40 h-40 flex-shrink-0">

@@ -106,7 +106,7 @@ const SensitivityAnalysis = ({ inputs }: Props) => {
             {breakEvenZins && <span className="ml-1">(Puffer: +{(breakEvenZins - inputs.zinssatz).toFixed(1)}%)</span>}
           </div>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "50ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:50ms]">
           <div className="text-xs text-muted-foreground">Max. Kaufpreis (CF ≥ 0)</div>
           <div className="text-xl font-bold text-gold">
             {breakEvenPrice ? formatCurrency(breakEvenPrice) : "> 2x KP"}

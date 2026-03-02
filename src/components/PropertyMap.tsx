@@ -233,7 +233,7 @@ const PropertyMap = () => {
   }
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "400ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:400ms]">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <MapPin className="h-4 w-4 text-muted-foreground" /> Kartenansicht
@@ -253,8 +253,7 @@ const PropertyMap = () => {
 
       <div
         ref={mapRef}
-        className="rounded-lg overflow-hidden border border-border"
-        style={{ height: 400 }}
+        className="rounded-lg overflow-hidden border border-border h-[400px]"
       />
 
       <div className="flex items-center gap-4 mt-3">
