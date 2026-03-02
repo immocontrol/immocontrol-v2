@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { logger } from "@/lib/logger";
 
 const DB_NAME = "immocontrol-offline";
 const DB_VERSION = 1;
@@ -165,7 +166,7 @@ async function syncPendingToServerImpl(): Promise<number> {
         const { error } = await supabase.from(mutation.table).delete().eq("id", mutation.id);
         if (error) throw error;
       } else {
-        console.warn(`[OfflineSync] Skipping unprocessable mutation: type=${mutation.type}, id=${mutation.id}`);
+        logger.warn(`Skipping unprocessable mutation: type=${mutation.type}, id=${mutation.id}`, "OfflineSync");
         synced++;
         continue;
       }
@@ -206,7 +207,7 @@ export function useBackgroundSync() {
     const handler = (event: MessageEvent) => {
       if (event.data?.type === "SYNC_PENDING_MUTATIONS" && isOnline) {
         syncPendingToServer().then((count) => {
-          if (count > 0) console.log(`[OfflineSync] ${count} pending mutations synced`);
+          if (count > 0) logger.info(`${count} pending mutations synced`, "OfflineSync");
         });
       }
     };
@@ -218,7 +219,7 @@ export function useBackgroundSync() {
   useEffect(() => {
     if (isOnline) {
       syncPendingToServer().then((count) => {
-        if (count > 0) console.log(`[OfflineSync] ${count} pending mutations synced on reconnect`);
+        if (count > 0) logger.info(`${count} pending mutations synced on reconnect`, "OfflineSync");
       });
     }
   }, [isOnline]);

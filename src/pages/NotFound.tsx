@@ -1,6 +1,7 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Building2, ArrowLeft } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 const NotFound = () => {
   const location = useLocation();
@@ -8,7 +9,7 @@ const NotFound = () => {
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    logger.warn(`404: User attempted to access non-existent route: ${location.pathname}`, "Router");
   }, [location.pathname]);
 
   useEffect(() => {

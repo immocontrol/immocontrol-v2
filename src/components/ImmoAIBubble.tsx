@@ -6,6 +6,8 @@ import { Bot, Send, Trash2, Sparkles, X, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
+import { rateLimiters } from "@/lib/rateLimiter";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -245,7 +247,8 @@ export default function ImmoAIBubble() {
         }
       }
     } catch (e: unknown) {
-      console.error("ImmoAI error:", e);
+      logger.error("ImmoAI bubble request failed", "ImmoAI", e);
+      rateLimiters.aiChat.recordFailure();
       toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
       setMessages((prev) => [
         ...prev,
