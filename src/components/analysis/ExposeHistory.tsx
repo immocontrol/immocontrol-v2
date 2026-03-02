@@ -8,7 +8,7 @@ import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations
 
 export interface ExposeHistoryEntry {
   id: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   source: "url" | "pdf";
   sourceLabel: string;
   importedAt: string;

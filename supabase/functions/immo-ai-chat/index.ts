@@ -62,6 +62,7 @@ serve(async (req) => {
 ## Heutiges Datum: ${today}
 
 ## Portfolio-Übersicht (${properties.length} Objekte)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ${properties.map((p: any) => `
 ### ${p.name}
 - Adresse: ${p.address}, ${p.location}
@@ -78,6 +79,7 @@ ${properties.map((p: any) => `
 `).join("")}
 
 ## Mieter (${tenants.length})
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ${tenants.map((t: any) => {
   const moveIn = t.move_in_date ? new Date(t.move_in_date) : null;
   const todayDate = new Date();
@@ -94,6 +96,7 @@ ${tenants.map((t: any) => {
 }).join("")}
 
 ## Darlehen (${loans.length})
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ${loans.map((l: any) => `
 - ${l.bank_name} | Objekt: ${(l as any).properties?.name || "k.A."}
   - Darlehenssumme: ${Number(l.loan_amount).toLocaleString("de-DE")} €
@@ -105,9 +108,11 @@ ${loans.map((l: any) => `
 `).join("")}
 
 ## Offene Aufgaben (${todos.length})
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ${todos.map((t: any) => `- [P${t.priority}] ${t.title}${t.due_date ? ` (fällig: ${t.due_date})` : ""}`).join("\n")}
 
 ## Tickets (${tickets.length})
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ${tickets.map((t: any) => `- [${t.status}/${t.priority}] ${t.title} – ${(t as any).properties?.name || ""} (${(t as any).tenants ? `${(t as any).tenants.first_name} ${(t as any).tenants.last_name}` : ""})`).join("\n")}
 `.trim();
 

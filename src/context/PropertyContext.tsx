@@ -43,7 +43,28 @@ const FIELD_MAP: Record<string, string> = {
   yearBuilt: "year_built", ownership: "ownership",
 };
 
-const mapDbToProperty = (row: any): Property => ({
+interface PropertyDbRow {
+  id: string;
+  name: string;
+  location: string;
+  address: string;
+  type: string;
+  units: number;
+  purchase_price: number;
+  purchase_date: string;
+  current_value: number;
+  monthly_rent: number;
+  monthly_expenses: number;
+  monthly_credit_rate: number;
+  monthly_cashflow: number;
+  remaining_debt: number;
+  interest_rate: number;
+  sqm: number;
+  year_built: number;
+  ownership: string;
+}
+
+const mapDbToProperty = (row: PropertyDbRow): Property => ({
   id: row.id,
   name: row.name,
   location: row.location,
@@ -64,8 +85,8 @@ const mapDbToProperty = (row: any): Property => ({
   ownership: row.ownership as "privat" | "egbr",
 });
 
-const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string, any> => {
-  const updates: Record<string, any> = {};
+const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string, unknown> => {
+  const updates: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(property)) {
     if (value !== undefined && FIELD_MAP[key]) updates[FIELD_MAP[key]] = value;
   }

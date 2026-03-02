@@ -16,6 +16,24 @@ import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
 
+interface ContractRow {
+  id: string;
+  property_id: string;
+  contract_type: string;
+  start_date: string;
+  end_date: string | null;
+  is_indefinite: boolean;
+  notice_period_months: number;
+  base_rent: number;
+  cold_rent: number;
+  warm_rent: number;
+  deposit_amount: number;
+  rent_increase_index: string;
+  notes: string | null;
+  status: string;
+  created_at: string;
+}
+
 interface ContractManagementProps {
   propertyId?: string;
 }
@@ -90,7 +108,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
     },
   });
 
-  const getStatusBadge = (contract: any) => {
+  const getStatusBadge = (contract: ContractRow) => {
     if (contract.status === "terminated") return <Badge variant="destructive">Gekündigt</Badge>;
     if (!contract.is_indefinite && contract.end_date) {
       const daysLeft = Math.ceil((new Date(contract.end_date).getTime() - Date.now()) / 86400000);
@@ -182,7 +200,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contracts.map((c: any) => (
+              {contracts.map((c: ContractRow) => (
                 <TableRow key={c.id}>
                   {!propertyId && <TableCell className="text-xs">{getPropertyName(c.property_id)}</TableCell>}
                   <TableCell className="text-xs">{new Date(c.start_date).toLocaleDateString("de-DE")}</TableCell>

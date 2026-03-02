@@ -22,6 +22,18 @@ const getClassColor = (cls: string | null) => {
   return "bg-loss/15 text-loss border-loss/30";
 };
 
+interface EnergyCertificateRow {
+  id: string;
+  property_id: string;
+  certificate_type: string;
+  energy_class: string | null;
+  energy_value: number;
+  issue_date: string;
+  expiry_date: string;
+  issuer: string | null;
+  created_at: string;
+}
+
 interface EnergyCertificateTrackerProps {
   propertyId: string;
 }
@@ -136,7 +148,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
         <p className="text-sm text-muted-foreground">Kein Energieausweis hinterlegt.</p>
       ) : (
         <div className="space-y-3">
-          {certs.map((cert: any) => {
+          {certs.map((cert: EnergyCertificateRow) => {
             const daysLeft = Math.ceil((new Date(cert.expiry_date).getTime() - Date.now()) / 86400000);
             const isExpired = daysLeft < 0;
             const isExpiring = daysLeft >= 0 && daysLeft < 180;

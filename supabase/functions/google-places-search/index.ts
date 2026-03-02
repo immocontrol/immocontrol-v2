@@ -41,7 +41,8 @@ serve(async (req) => {
 
     // Get phone numbers for each place via Place Details
     const places = await Promise.all(
-      (data.results || []).slice(0, 10).map(async (place: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (data.results || []).slice(0, 10).map(async (place: Record<string, any>) => {
         try {
           const detailRes = await fetch(
             `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=formatted_phone_number,international_phone_number,website,opening_hours&key=${GOOGLE_MAPS_API_KEY}&language=de`

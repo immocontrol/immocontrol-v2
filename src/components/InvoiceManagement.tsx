@@ -15,6 +15,22 @@ import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
 
+interface InvoiceRow {
+  id: string;
+  property_id: string | null;
+  vendor_name: string;
+  invoice_number: string | null;
+  invoice_date: string;
+  due_date: string | null;
+  amount: number;
+  tax_amount: number;
+  category: string;
+  status: string;
+  payment_date: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 const CATEGORIES = [
   { value: "wartung", label: "Wartung & Reparatur" },
   { value: "versicherung", label: "Versicherung" },
@@ -81,7 +97,7 @@ const InvoiceManagement = () => {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const updates: any = { status };
+      const updates: Record<string, string> = { status };
       if (status === "bezahlt") updates.payment_date = new Date().toISOString().split("T")[0];
       const { error } = await supabase.from("invoices").update(updates).eq("id", id);
       if (error) throw error;
@@ -110,7 +126,7 @@ const InvoiceManagement = () => {
     return <Badge className="bg-gold/15 text-gold border-gold/30"><Clock className="h-3 w-3 mr-1" />Offen</Badge>;
   };
 
-  const totals = invoices.reduce((acc: any, inv: any) => {
+  const totals = invoices.reduce((acc: { total: number; open: number; paid: number }, inv: InvoiceRow) => {
     acc.total += Number(inv.amount);
     if (inv.status === "offen") acc.open += Number(inv.amount);
     if (inv.status === "bezahlt") acc.paid += Number(inv.amount);
@@ -214,7 +230,7 @@ const InvoiceManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map((inv: any) => (
+              {invoices.map((inv: InvoiceRow) => (
                 <TableRow key={inv.id}>
                   <TableCell className="text-xs">{new Date(inv.invoice_date).toLocaleDateString("de-DE")}</TableCell>
                   <TableCell className="text-xs font-medium">{inv.vendor_name}</TableCell>
