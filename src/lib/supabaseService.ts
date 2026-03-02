@@ -238,6 +238,258 @@ const tenants = {
   delete: (id: string) => remove("tenants", id),
 };
 
+/** Typed helper for rent_payments table */
+const rentPayments = {
+  byTenant: (tenantId: string) =>
+    query<unknown[]>("rent_payments", { eq: [["tenant_id", tenantId]], order: { column: "payment_date", ascending: false } }),
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("rent_payments", { eq: [["property_id", propertyId]], order: { column: "payment_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("rent_payments", record),
+  update: (id: string, updates: Record<string, unknown>) => update("rent_payments", id, updates),
+  delete: (id: string) => remove("rent_payments", id),
+};
+
+/** Typed helper for tickets table */
+const tickets = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("tickets", { eq: [["property_id", propertyId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("tickets", record),
+  update: (id: string, updates: Record<string, unknown>) => update("tickets", id, updates),
+  delete: (id: string) => remove("tickets", id),
+};
+
+/** Typed helper for utility_billings table */
+const utilityBillings = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("utility_billings", { eq: [["property_id", propertyId]], order: { column: "billing_year", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("utility_billings", record),
+  update: (id: string, updates: Record<string, unknown>) => update("utility_billings", id, updates),
+  delete: (id: string) => remove("utility_billings", id),
+};
+
+/** Typed helper for utility_billing_items table */
+const utilityBillingItems = {
+  byBilling: (billingId: string) =>
+    query<unknown[]>("utility_billing_items", { eq: [["billing_id", billingId]] }),
+  create: (record: Record<string, unknown>) => insert("utility_billing_items", record),
+  update: (id: string, updates: Record<string, unknown>) => update("utility_billing_items", id, updates),
+  delete: (id: string) => remove("utility_billing_items", id),
+};
+
+/** Typed helper for user_banks table */
+const userBanks = {
+  byUser: (userId: string) =>
+    query<unknown[]>("user_banks", { eq: [["user_id", userId]], order: { column: "name" } }),
+  create: (record: Record<string, unknown>) => insert("user_banks", record),
+  delete: (id: string) => remove("user_banks", id),
+};
+
+/** Typed helper for service_contracts table */
+const serviceContracts = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("service_contracts", { eq: [["property_id", propertyId]], order: { column: "start_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("service_contracts", record),
+  update: (id: string, updates: Record<string, unknown>) => update("service_contracts", id, updates),
+  delete: (id: string) => remove("service_contracts", id),
+};
+
+/** Typed helper for property_documents table */
+const propertyDocuments = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("property_documents", { eq: [["property_id", propertyId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("property_documents", record),
+  update: (id: string, updates: Record<string, unknown>) => update("property_documents", id, updates),
+  delete: (id: string) => remove("property_documents", id),
+};
+
+/** Typed helper for messages table */
+const messages = {
+  byUser: (userId: string) =>
+    query<unknown[]>("messages", { eq: [["user_id", userId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("messages", record),
+  update: (id: string, updates: Record<string, unknown>) => update("messages", id, updates),
+  delete: (id: string) => remove("messages", id),
+};
+
+/** Typed helper for invoices table */
+const invoices = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("invoices", { eq: [["property_id", propertyId]], order: { column: "invoice_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("invoices", record),
+  update: (id: string, updates: Record<string, unknown>) => update("invoices", id, updates),
+  delete: (id: string) => remove("invoices", id),
+};
+
+/** Typed helper for crm_leads table */
+const crmLeads = {
+  byUser: (userId: string) =>
+    query<unknown[]>("crm_leads", { eq: [["user_id", userId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("crm_leads", record),
+  update: (id: string, updates: Record<string, unknown>) => update("crm_leads", id, updates),
+  delete: (id: string) => remove("crm_leads", id),
+};
+
+/** Typed helper for crm_call_logs table */
+const crmCallLogs = {
+  byLead: (leadId: string) =>
+    query<unknown[]>("crm_call_logs", { eq: [["lead_id", leadId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("crm_call_logs", record),
+  update: (id: string, updates: Record<string, unknown>) => update("crm_call_logs", id, updates),
+};
+
+/** Typed helper for property_insurances table */
+const propertyInsurances = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("property_insurances", { eq: [["property_id", propertyId]] }),
+  create: (record: Record<string, unknown>) => insert("property_insurances", record),
+  update: (id: string, updates: Record<string, unknown>) => update("property_insurances", id, updates),
+  delete: (id: string) => remove("property_insurances", id),
+};
+
+/** Typed helper for owner_meetings table */
+const ownerMeetings = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("owner_meetings", { eq: [["property_id", propertyId]], order: { column: "meeting_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("owner_meetings", record),
+  update: (id: string, updates: Record<string, unknown>) => update("owner_meetings", id, updates),
+  delete: (id: string) => remove("owner_meetings", id),
+};
+
+/** Typed helper for meeting_resolutions table */
+const meetingResolutions = {
+  byMeeting: (meetingId: string) =>
+    query<unknown[]>("meeting_resolutions", { eq: [["meeting_id", meetingId]] }),
+  create: (record: Record<string, unknown>) => insert("meeting_resolutions", record),
+  update: (id: string, updates: Record<string, unknown>) => update("meeting_resolutions", id, updates),
+};
+
+/** Typed helper for maintenance_items table */
+const maintenanceItems = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("maintenance_items", { eq: [["property_id", propertyId]], order: { column: "due_date" } }),
+  create: (record: Record<string, unknown>) => insert("maintenance_items", record),
+  update: (id: string, updates: Record<string, unknown>) => update("maintenance_items", id, updates),
+  delete: (id: string) => remove("maintenance_items", id),
+};
+
+/** Typed helper for contracts table */
+const contracts = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("contracts", { eq: [["property_id", propertyId]], order: { column: "start_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("contracts", record),
+  update: (id: string, updates: Record<string, unknown>) => update("contracts", id, updates),
+  delete: (id: string) => remove("contracts", id),
+};
+
+/** Typed helper for property_notes table */
+const propertyNotes = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("property_notes", { eq: [["property_id", propertyId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("property_notes", record),
+  update: (id: string, updates: Record<string, unknown>) => update("property_notes", id, updates),
+  delete: (id: string) => remove("property_notes", id),
+};
+
+/** Typed helper for meters table */
+const meters = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("meters", { eq: [["property_id", propertyId]] }),
+  create: (record: Record<string, unknown>) => insert("meters", record),
+  update: (id: string, updates: Record<string, unknown>) => update("meters", id, updates),
+  delete: (id: string) => remove("meters", id),
+};
+
+/** Typed helper for meter_readings table */
+const meterReadings = {
+  byMeter: (meterId: string) =>
+    query<unknown[]>("meter_readings", { eq: [["meter_id", meterId]], order: { column: "reading_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("meter_readings", record),
+  update: (id: string, updates: Record<string, unknown>) => update("meter_readings", id, updates),
+};
+
+/** Typed helper for energy_certificates table */
+const energyCertificates = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("energy_certificates", { eq: [["property_id", propertyId]] }),
+  create: (record: Record<string, unknown>) => insert("energy_certificates", record),
+  update: (id: string, updates: Record<string, unknown>) => update("energy_certificates", id, updates),
+  delete: (id: string) => remove("energy_certificates", id),
+};
+
+/** Typed helper for bank_transactions table */
+const bankTransactions = {
+  byAccount: (accountId: string) =>
+    query<unknown[]>("bank_transactions", { eq: [["account_id", accountId]], order: { column: "booking_date", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("bank_transactions", record),
+  update: (id: string, updates: Record<string, unknown>) => update("bank_transactions", id, updates),
+};
+
+/** Typed helper for bank_matching_rules table */
+const bankMatchingRules = {
+  byUser: (userId: string) =>
+    query<unknown[]>("bank_matching_rules", { eq: [["user_id", userId]] }),
+  create: (record: Record<string, unknown>) => insert("bank_matching_rules", record),
+  update: (id: string, updates: Record<string, unknown>) => update("bank_matching_rules", id, updates),
+  delete: (id: string) => remove("bank_matching_rules", id),
+};
+
+/** Typed helper for bank_accounts table */
+const bankAccounts = {
+  byUser: (userId: string) =>
+    query<unknown[]>("bank_accounts", { eq: [["user_id", userId]], order: { column: "bank_name" } }),
+  create: (record: Record<string, unknown>) => insert("bank_accounts", record),
+  update: (id: string, updates: Record<string, unknown>) => update("bank_accounts", id, updates),
+  delete: (id: string) => remove("bank_accounts", id),
+};
+
+/** Typed helper for user_settings table */
+const userSettings = {
+  byUser: (userId: string) =>
+    query<unknown>("user_settings", { eq: [["user_id", userId]], single: true }),
+  upsert: async (record: Record<string, unknown>): Promise<QueryResult<unknown>> => {
+    try {
+      const { data, error } = await supabase.from("user_settings" as never).upsert(record as never).select().single();
+      if (error) return { data: null, error: error.message };
+      return { data, error: null };
+    } catch (err) {
+      return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
+    }
+  },
+};
+
+/** Typed helper for team_members table */
+const teamMembers = {
+  byUser: (userId: string) =>
+    query<unknown[]>("team_members", { eq: [["invited_by", userId]] }),
+  create: (record: Record<string, unknown>) => insert("team_members", record),
+  delete: (id: string) => remove("team_members", id),
+};
+
+/** Typed helper for mietvertraege table */
+const mietvertraege = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("mietvertraege", { eq: [["property_id", propertyId]], order: { column: "mietbeginn", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("mietvertraege", record),
+  update: (id: string, updates: Record<string, unknown>) => update("mietvertraege", id, updates),
+  delete: (id: string) => remove("mietvertraege", id),
+};
+
+/** Typed helper for todos table */
+const todos = {
+  byUser: (userId: string) =>
+    query<unknown[]>("todos", { eq: [["user_id", userId]], order: { column: "created_at", ascending: false } }),
+  create: (record: Record<string, unknown>) => insert("todos", record),
+  update: (id: string, updates: Record<string, unknown>) => update("todos", id, updates),
+  delete: (id: string) => remove("todos", id),
+};
+
+/** Typed helper for profiles table */
+const profiles = {
+  byId: (id: string) =>
+    query<unknown>("profiles", { eq: [["id", id]], single: true }),
+  update: (id: string, updates: Record<string, unknown>) => update("profiles", id, updates),
+};
+
 /* ── IMP-7: RLS Audit documentation ────────────────────── */
 
 /**
@@ -271,12 +523,40 @@ export const db = {
   insert,
   update,
   remove,
-  /* IMP-1: Typed table accessors */
+  /* IMP-1: Typed table accessors — all 33 tables */
   deals,
   properties,
   contacts,
   loans,
   tenants,
+  rentPayments,
+  tickets,
+  utilityBillings,
+  utilityBillingItems,
+  userBanks,
+  serviceContracts,
+  propertyDocuments,
+  messages,
+  invoices,
+  crmLeads,
+  crmCallLogs,
+  propertyInsurances,
+  ownerMeetings,
+  meetingResolutions,
+  maintenanceItems,
+  contracts,
+  propertyNotes,
+  meters,
+  meterReadings,
+  energyCertificates,
+  bankTransactions,
+  bankMatchingRules,
+  bankAccounts,
+  userSettings,
+  teamMembers,
+  mietvertraege,
+  todos,
+  profiles,
   storage: { upload: uploadFile, download: downloadFile, delete: deleteFile },
   auth: { getCurrentUser, onAuthStateChange },
   functions: { invoke: invokeFunction },
