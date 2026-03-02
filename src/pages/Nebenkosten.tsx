@@ -284,6 +284,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
         </Dialog>
       </div>
 
+      {/* UPD-21: Stagger animation for billing summary cards */}
       {selectedBilling && selectedBillingData ? (
         <div className="space-y-4">
           <Button variant="ghost" size="sm" onClick={() => setSelectedBilling(null)} className="text-xs">← Zurück zur Übersicht</Button>
@@ -311,7 +312,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* UPD-22: Add stagger animation to billing summary */}
+            <div className="grid grid-cols-3 gap-3 card-stagger-enter">
               <div className="bg-secondary/30 rounded-lg p-3 text-center">
                 <div className="text-[10px] text-muted-foreground">Gesamtkosten</div>
                 <div className="text-sm font-bold">{formatCurrency(Number(selectedBillingData.total_costs))}</div>
@@ -398,7 +400,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       ) : (
         /* Billing list */
         billings.length === 0 ? (
-          <div className="text-center py-12 animate-fade-in">
+          /* UPD-23: Better empty state animation */
+          <div className="text-center py-12 empty-state-bounce">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <FileText className="h-8 w-8 text-primary" />
             </div>

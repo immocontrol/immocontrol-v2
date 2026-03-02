@@ -78,7 +78,8 @@ const Vertraege = () => {
       )}
 
       {/* Improvement 9: Quick Stats with card-hover-glow */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* UPD-2: Add stagger animation to contract stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 card-stagger-enter">
         <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <FileText className="h-4 w-4 text-primary" />

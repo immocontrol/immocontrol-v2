@@ -130,7 +130,8 @@ function simulate(params: SimParams): DataPoint[] {
     if (y >= years) break;
 
     /* FEAT-13: Additional property purchases at intervals */
-    if (additionalProperties > 0 && y > 0 && y % propertyPurchaseInterval === 0 && nProps <= additionalProperties) {
+    /* FEAT-38: Fix additionalProperties off-by-one (1 initial + N additional) */
+    if (additionalProperties > 0 && propertyPurchaseInterval > 0 && y > 0 && y % propertyPurchaseInterval === 0 && nProps < 1 + additionalProperties) {
       const npv = initialPropertyValue * Math.pow(1 + annualAppreciation / 100, y);
       pv += npv; debt += npv * leverage; invested += npv * (1 - leverage); nProps++;
     }
@@ -208,6 +209,10 @@ export function HockeyStickSimulator() {
   const [showSensitivity, setShowSensitivity] = useState(false);
   const [sensitivityKey, setSensitivityKey] = useState<keyof SimParams>("annualAppreciation");
   const [compareParams, setCompareParams] = useState<SimParams | null>(null);
+  /* FEAT-39: Toggle between nominal and inflation-adjusted (real) net worth */
+  const [showRealValues, setShowRealValues] = useState(false);
+  /* FEAT-40: Net worth goal line (used in chart + milestone) */
+  const [netWorthGoal, setNetWorthGoal] = useState<number>(1_000_000);
   const chartRef = useRef<HTMLDivElement>(null);
   /* Item 3: AI text field for natural language parameter input */
   const [aiPrompt, setAiPrompt] = useState("");
@@ -284,6 +289,11 @@ export function HockeyStickSimulator() {
   const reset = useCallback(() => setParams(DEFAULT_PARAMS), []);
   const last = data[data.length - 1];
   const first = data[0];
+
+  const primaryNetWorth = showRealValues ? last.realNetWorth : last.netWorth;
+  const secondaryNetWorth = showRealValues ? last.netWorth : last.realNetWorth;
+  const primaryNetWorthLabel = showRealValues ? "Real" : "Nominal";
+  const secondaryNetWorthLabel = showRealValues ? "Nominal" : "Real";
   const totalReturn = first.totalInvested > 0
     ? ((last.netWorth - first.totalInvested) / first.totalInvested * 100)
     : 0;
@@ -341,6 +351,16 @@ export function HockeyStickSimulator() {
     }
     return Math.round(maxDd * 10) / 10;
   }, [data]);
+
+  /* FEAT-41: Net worth goal year (real/nominal depending on toggle) */
+  const goalYear = useMemo(() => {
+    if (!netWorthGoal || netWorthGoal <= 0) return null;
+    for (const d of data) {
+      const v = showRealValues ? d.realNetWorth : d.netWorth;
+      if (v >= netWorthGoal && d.year > 0) return d.year;
+    }
+    return null;
+  }, [data, netWorthGoal, showRealValues]);
 
   /* FEAT-23: Sensitivity analysis data */
   const sensitivityData = useMemo(() => {
@@ -419,11 +439,13 @@ export function HockeyStickSimulator() {
     doc.setFontSize(9);
     const summaryLines = [
       `Nettoverm\u00f6gen nach ${params.years} Jahren: ${formatCurrency(last.netWorth)}`,
+      `Real (inflationsbereinigt): ${formatCurrency(last.realNetWorth)}`,
       `Portfoliowert: ${formatCurrency(last.portfolioValue)}`,
       `Gesamtrendite: ${totalReturn.toFixed(1)}% | CAGR: ${cagr.toFixed(1)}%`,
       `Kum. Mieteinnahmen: ${formatCurrency(last.rentalIncome)}`,
       `Restschuld: ${formatCurrency(last.debtRemaining)}`,
       `Immobilien: ${last.numberOfProperties} | LTV: ${last.ltv}%`,
+      netWorthGoal > 0 ? `Ziel: ${formatCurrency(netWorthGoal)}${goalYear !== null ? ` (Jahr ${goalYear})` : ""}` : "",
       inflectionYear !== null ? `Hockey Stick ab Jahr ${inflectionYear}` : "",
       breakEvenYear !== null ? `Break-Even: Jahr ${breakEvenYear}` : "",
       debtFreeYear !== null ? `Schuldenfrei: Jahr ${debtFreeYear}` : "",
@@ -447,23 +469,25 @@ export function HockeyStickSimulator() {
     }
     doc.save(`hockey-stick-bericht-${new Date().toISOString().slice(0, 10)}.pdf`);
     toast.success("PDF exportiert");
-  }, [data, params, last, totalReturn, cagr, inflectionYear, breakEvenYear, debtFreeYear]);
+  }, [data, params, last, totalReturn, cagr, netWorthGoal, goalYear, inflectionYear, breakEvenYear, debtFreeYear]);
 
   /* FEAT-31: Copy summary to clipboard */
   const copySummary = useCallback(() => {
     const lines = [
       `Hockey Stick \u2014 ${params.years} Jahre`,
       `Nettoverm\u00f6gen: ${formatCurrency(last.netWorth)}`,
+      `Real (inflationsbereinigt): ${formatCurrency(last.realNetWorth)}`,
       `Portfoliowert: ${formatCurrency(last.portfolioValue)}`,
       `Rendite: ${totalReturn.toFixed(1)}% | CAGR: ${cagr.toFixed(1)}%`,
       `Mieteinnahmen: ${formatCurrency(last.rentalIncome)}`,
+      netWorthGoal > 0 ? `Ziel: ${formatCurrency(netWorthGoal)}${goalYear !== null ? ` (Jahr ${goalYear})` : ""}` : "",
       inflectionYear !== null ? `Hockey Stick ab Jahr ${inflectionYear}` : "",
     ].filter(Boolean).join("\n");
     navigator.clipboard.writeText(lines).then(
       () => toast.success("Kopiert"),
       () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")
     );
-  }, [params.years, last, totalReturn, cagr, inflectionYear]);
+  }, [params.years, last, totalReturn, cagr, netWorthGoal, goalYear, inflectionYear]);
 
   /* FEAT-32: Share simulation link */
   const shareSimulation = useCallback(() => {
@@ -606,9 +630,9 @@ export function HockeyStickSimulator() {
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="gradient-card rounded-lg border border-border p-3 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nettoverm&#246;gen</p>
-              <p className="text-sm font-bold text-profit mt-1">{formatCurrencyCompact(last.netWorth)}</p>
-              <p className="text-[9px] text-muted-foreground">Real: {formatCurrencyCompact(last.realNetWorth)}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nettoverm&#246;gen ({primaryNetWorthLabel})</p>
+              <p className="text-sm font-bold text-profit mt-1">{formatCurrencyCompact(primaryNetWorth)}</p>
+              <p className="text-[9px] text-muted-foreground">{secondaryNetWorthLabel}: {formatCurrencyCompact(secondaryNetWorth)}</p>
             </div>
             <div className="gradient-card rounded-lg border border-border p-3 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Portfoliowert</p>
@@ -630,6 +654,32 @@ export function HockeyStickSimulator() {
                 {formatCurrency(last.monthlyNetRent)}
               </p>
               <p className="text-[9px] text-muted-foreground">Cash-on-Cash: {last.cashOnCash}%</p>
+            </div>
+          </div>
+
+          {/* FEAT-42: Real/Nominal toggle + goal */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant={showRealValues ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-[10px] gap-1 px-2"
+              onClick={() => setShowRealValues(v => !v)}
+            >
+              <Calculator className="h-3 w-3" /> {showRealValues ? "Realwerte" : "Nominalwerte"}
+            </Button>
+            <div className="flex items-center gap-2 bg-secondary/30 rounded-lg px-2 py-1">
+              <span className="text-[10px] text-muted-foreground">Ziel</span>
+              <Input
+                value={netWorthGoal}
+                onChange={e => setNetWorthGoal(Math.max(0, Number(e.target.value) || 0))}
+                type="number"
+                inputMode="numeric"
+                className="h-7 w-28 text-[10px]"
+                aria-label="Nettovermögen Ziel"
+              />
+              {goalYear !== null && (
+                <Badge variant="outline" className="text-[10px] h-6">Jahr {goalYear}</Badge>
+              )}
             </div>
           </div>
 
@@ -725,8 +775,27 @@ export function HockeyStickSimulator() {
                   )}
                   <Area type="monotone" dataKey="totalInvested" stroke="hsl(var(--muted-foreground))" fill="none" strokeWidth={1} strokeDasharray="4 4" name="totalInvested" />
                   <Area type="monotone" dataKey="portfolioValue" stroke="hsl(var(--primary))" fill="url(#hsPV)" strokeWidth={1.5} name="portfolioValue" />
-                  <Area type="monotone" dataKey="realNetWorth" stroke="hsl(45, 93%, 47%)" fill="none" strokeWidth={1} strokeDasharray="2 2" name="realNetWorth" />
-                  <Area type="monotone" dataKey="netWorth" stroke="hsl(var(--profit))" fill="url(#hsNW)" strokeWidth={2} name="netWorth" />
+
+                  {netWorthGoal > 0 && (
+                    <ReferenceLine
+                      y={netWorthGoal}
+                      stroke="hsl(45, 93%, 47%)"
+                      strokeDasharray="3 3"
+                      label={{ value: "Ziel", fontSize: 10, fill: "hsl(45, 93%, 47%)" }}
+                    />
+                  )}
+
+                  {showRealValues ? (
+                    <>
+                      <Area type="monotone" dataKey="netWorth" stroke="hsl(var(--muted-foreground))" fill="none" strokeWidth={1} strokeDasharray="2 2" opacity={0.35} name="netWorth" />
+                      <Area type="monotone" dataKey="realNetWorth" stroke="hsl(var(--profit))" fill="url(#hsNW)" strokeWidth={2} name="realNetWorth" />
+                    </>
+                  ) : (
+                    <>
+                      <Area type="monotone" dataKey="realNetWorth" stroke="hsl(45, 93%, 47%)" fill="none" strokeWidth={1} strokeDasharray="2 2" name="realNetWorth" />
+                      <Area type="monotone" dataKey="netWorth" stroke="hsl(var(--profit))" fill="url(#hsNW)" strokeWidth={2} name="netWorth" />
+                    </>
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -805,6 +874,7 @@ export function HockeyStickSimulator() {
                       <th className="text-right p-1 font-medium">EK</th>
                       <th className="text-right p-1 font-medium">Investiert</th>
                       <th className="text-right p-1 font-medium">Netto</th>
+                      <th className="text-right p-1 font-medium">Real</th>
                       <th className="text-right p-1 font-medium">Schulden</th>
                       <th className="text-right p-1 font-medium">LTV</th>
                       <th className="text-right p-1 font-medium">CoC</th>
@@ -820,6 +890,7 @@ export function HockeyStickSimulator() {
                         <td className={`p-1 text-right ${d.netWorth >= d.totalInvested ? "text-profit" : "text-loss"}`}>
                           {formatCurrencyCompact(d.netWorth)}
                         </td>
+                        <td className="p-1 text-right text-muted-foreground">{formatCurrencyCompact(d.realNetWorth)}</td>
                         <td className="p-1 text-right">{formatCurrencyCompact(d.debtRemaining)}</td>
                         <td className="p-1 text-right">{d.ltv}%</td>
                         <td className="p-1 text-right">{d.cashOnCash}%</td>

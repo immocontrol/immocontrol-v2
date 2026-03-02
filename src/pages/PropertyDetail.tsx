@@ -243,7 +243,8 @@ const PropertyDetail = () => {
       </div>
 
       {/* Financials — IMP-45: Add min-w-0 to stat cards grid to prevent overflow */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0">
+      {/* UPD-6: Add stagger animation to property detail stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0 card-stagger-enter">
         <StatCard
           label="Kaufpreis"
           value={formatCurrency(property.purchasePrice)}

@@ -258,7 +258,8 @@ const Dokumente = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* UPD-5: Add stagger animation to document stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 card-stagger-enter">
         <div className="gradient-card rounded-xl border border-border p-4">
           <div className="text-[10px] text-muted-foreground uppercase">Gesamt</div>
           <div className="text-xl font-bold">{documents.length}</div>
