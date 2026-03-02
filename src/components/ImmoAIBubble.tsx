@@ -6,6 +6,8 @@ import { Bot, Send, Trash2, Sparkles, X, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
+import { rateLimiters } from "@/lib/rateLimiter";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -180,6 +182,11 @@ export default function ImmoAIBubble() {
 
   const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
+    /* IMP-9: Rate limit AI chat requests */
+    if (!rateLimiters.aiChat.canProceed()) {
+      toast.error("Bitte warte kurz bevor du eine weitere Nachricht sendest.");
+      return;
+    }
     const userMsg: Msg = { role: "user", content: text.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
@@ -244,8 +251,10 @@ export default function ImmoAIBubble() {
           }
         }
       }
+      rateLimiters.aiChat.recordSuccess();
     } catch (e: unknown) {
-      console.error("ImmoAI error:", e);
+      logger.error("ImmoAI bubble request failed", "ImmoAI", e);
+      rateLimiters.aiChat.recordFailure();
       toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
       setMessages((prev) => [
         ...prev,

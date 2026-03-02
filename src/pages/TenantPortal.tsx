@@ -206,7 +206,7 @@ const TenantDashboard = ({
 
       {/* Alerts: Overdue payment or landlord response */}
       {upcomingPayment?.status === "overdue" && (
-        <div className="bg-loss/10 border border-loss/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in" style={{ animationDelay: "25ms" }}>
+        <div className="bg-loss/10 border border-loss/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in [animation-delay:25ms]">
           <AlertTriangle className="h-5 w-5 text-loss shrink-0" />
           <div className="flex-1">
             <div className="text-sm font-semibold text-loss">Überfällige Zahlung</div>
@@ -221,7 +221,7 @@ const TenantDashboard = ({
       )}
 
       {unreadLandlordNotes > 0 && (
-        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in" style={{ animationDelay: "50ms" }}>
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in [animation-delay:50ms]">
           <MessageCircle className="h-5 w-5 text-primary shrink-0" />
           <div className="flex-1">
             <div className="text-sm font-semibold">Antwort vom Vermieter</div>
@@ -234,7 +234,7 @@ const TenantDashboard = ({
       )}
 
       {/* Property card - Improvement 10: Show deposit */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "50ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:50ms]">
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Building2 className="h-6 w-6 text-primary" />
@@ -258,7 +258,7 @@ const TenantDashboard = ({
 
       {/* Key figures */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:100ms]">
           <div className="flex items-center gap-2 mb-1">
             <Euro className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Kaltmiete</span>
@@ -266,7 +266,7 @@ const TenantDashboard = ({
           <div className="text-xl font-bold">{formatCurrency(tenantInfo.monthly_rent || 0)}</div>
           <div className="text-xs text-muted-foreground">pro Monat</div>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "150ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:150ms]">
           <div className="flex items-center gap-2 mb-1">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Einzug</span>
@@ -279,7 +279,7 @@ const TenantDashboard = ({
           )}
         </div>
         {/* Synergy 12: Total paid */}
-        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "175ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:175ms]">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="h-4 w-4 text-profit" />
             <span className="text-xs text-muted-foreground">Bezahlt gesamt</span>
@@ -291,7 +291,7 @@ const TenantDashboard = ({
 
       {/* Synergy: Ticket flow status */}
       {totalTickets > 0 && (
-        <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "200ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:200ms]">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Wrench className="h-4 w-4 text-muted-foreground" /> Meine Anfragen
             {/* Synergy 11: Show assigned handworker count */}
@@ -323,9 +323,9 @@ const TenantDashboard = ({
 
       {/* Upcoming payment reminder */}
       {upcomingPayment && upcomingPayment.status === "pending" && (
-        <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center shrink-0">
+        <div         className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:250ms]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center shrink-0">
               <CreditCard className="h-5 w-5 text-gold" />
             </div>
             <div className="flex-1">
@@ -342,7 +342,7 @@ const TenantDashboard = ({
       )}
 
       {/* Quick actions */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:300ms]">
         <h3 className="text-sm font-semibold mb-3">Schnellzugriff</h3>
         <div className="space-y-1">
           {[
@@ -374,8 +374,7 @@ const TenantDashboard = ({
       {unreadCount > 0 && (
         <button
           onClick={() => setActiveTab("messages")}
-          className="w-full gradient-card rounded-xl border border-primary/20 p-4 flex items-center gap-3 animate-fade-in hover:border-primary/40 transition-colors"
-          style={{ animationDelay: "350ms" }}
+                    className="w-full gradient-card rounded-xl border border-primary/20 p-4 flex items-center gap-3 animate-fade-in [animation-delay:350ms] hover:border-primary/40 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <MessageCircle className="h-5 w-5 text-primary" />

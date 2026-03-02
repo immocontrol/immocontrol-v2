@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
 
 interface Notification {
   type: string;
@@ -38,7 +39,7 @@ export const NotificationBell = () => {
       }
     /* FIX-41: Type catch variable as `unknown` for proper error handling */
     } catch (err: unknown) {
-      console.warn("Notification fetch failed:", err instanceof Error ? err.message : String(err));
+      logger.warn("Notification fetch failed", "Notifications", err instanceof Error ? err.message : String(err));
     }
     setLoading(false);
   };

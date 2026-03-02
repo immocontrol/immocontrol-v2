@@ -183,7 +183,7 @@ th{background:#f5f5f5;font-weight:600}
             <AnalysisInputs inputs={inputs} updateInput={updateInput} />
 
             {/* Feature 5: Save/Load */}
-            <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in" style={{ animationDelay: "350ms" }}>
+            <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in [animation-delay:350ms]">
               <h2 className="text-sm font-semibold flex items-center gap-1.5">
                 <Save className="h-4 w-4 text-muted-foreground" /> Szenarien speichern
               </h2>
@@ -225,7 +225,7 @@ th{background:#f5f5f5;font-weight:600}
             <TargetRentCalculator inputs={inputs} />
             {/* BUG-3: Portfolio Gesundheit integrated into Analyse section */}
             {properties.length > 0 && (
-              <div className="animate-fade-in" style={{ animationDelay: "500ms" }}>
+              <div className="animate-fade-in [animation-delay:500ms]">
                 <div className="flex items-center gap-2 mb-2">
                   <Activity className="h-4 w-4 text-muted-foreground" />
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Portfolio-Kontext</span>

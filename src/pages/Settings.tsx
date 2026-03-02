@@ -531,7 +531,7 @@ const Settings = () => {
       </div>
 
       {/* Profile */}
-      <form onSubmit={handleUpdateProfile} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "50ms" }}>
+      <form onSubmit={handleUpdateProfile} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:50ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" /> Profil
         </h2>
@@ -569,7 +569,7 @@ const Settings = () => {
       </form>
 
       {/* Password — requires old password + eye icons */}
-      <form onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
+      <form onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:100ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Lock className="h-4 w-4 text-muted-foreground" /> Passwort ändern
         </h2>
@@ -656,7 +656,7 @@ const Settings = () => {
       </form>
 
       {/* 2FA / TOTP */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "105ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:105ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Shield className="h-4 w-4 text-muted-foreground" /> Zwei-Faktor-Authentifizierung (2FA)
         </h2>
@@ -808,7 +808,7 @@ const Settings = () => {
       </Dialog>
 
       {/* Passkeys */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "108ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:108ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Fingerprint className="h-4 w-4 text-muted-foreground" /> Passkeys
         </h2>
@@ -850,7 +850,7 @@ const Settings = () => {
       </div>
 
       {/* EXPORT-9: Enhanced Data Export/Backup with JSON + CSV support */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "120ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:120ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Database className="h-4 w-4 text-muted-foreground" /> Daten-Backup & Export
         </h2>
@@ -861,7 +861,7 @@ const Settings = () => {
       </div>
 
       {/* Customizable Keyboard Shortcuts */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "130ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:130ms]">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Keyboard className="h-4 w-4 text-muted-foreground" /> Tastenkombinationen
@@ -948,7 +948,7 @@ const Settings = () => {
       </div>
 
       {/* TELEGRAM-1: Telegram Bot Integration Settings */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "135ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:135ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-[#0088cc]" /> Telegram Integration
         </h2>
@@ -1018,7 +1018,7 @@ const Settings = () => {
       <TeamManagement />
 
       {/* Logout */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "150ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:150ms]">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold">Abmelden</h2>
@@ -1031,7 +1031,7 @@ const Settings = () => {
       </div>
 
       {/* Improvement 9: Danger zone - Delete account */}
-      <div className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in" style={{ animationDelay: "200ms" }}>
+      <div className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms]">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-destructive" />
           <h2 className="text-sm font-semibold text-destructive">Gefahrenzone</h2>
@@ -1079,7 +1079,7 @@ const Settings = () => {
       </div>
 
       {/* FUNC-36/37: Data usage & session info */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in" style={{ animationDelay: "180ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in [animation-delay:180ms]">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Database className="h-4 w-4 text-muted-foreground" /> System-Info
         </h2>
@@ -1104,7 +1104,7 @@ const Settings = () => {
       </div>
 
       {/* App info footer */}
-      <div className="text-center py-4 space-y-1 animate-fade-in" style={{ animationDelay: "250ms" }}>
+      <div className="text-center py-4 space-y-1 animate-fade-in [animation-delay:250ms]">
         <p className="text-[10px] text-muted-foreground">ImmoControl v2.0 · Made with ❤️</p>
         <p className="text-[10px] text-muted-foreground">
           Support: <a href="mailto:support@immocontrol.de" className="text-primary hover:underline">support@immocontrol.de</a>

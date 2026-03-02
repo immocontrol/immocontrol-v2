@@ -20,6 +20,7 @@ import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
 import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { logger } from "@/lib/logger";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -183,7 +184,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     if (!user || migrationDoneRef.current) return;
     migrationDoneRef.current = true;
     migrateLocalStorageToSupabase(user.id).then((count) => {
-      if (count > 0) console.log(`[Migration] ${count} localStorage keys migrated to Supabase`);
+      if (count > 0) logger.info(`${count} localStorage keys migrated to Supabase`, "Migration");
     });
   }, [user]);
 
