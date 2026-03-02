@@ -104,7 +104,7 @@ function projectScenarios(params: ScenarioParams, years: number): ProjectionYear
   let renoVal = currentValue + valueIncreaseAfterReno;
   let renoDebt = remainingDebt + renovationCost;
   let renoRent = monthlyRent + rentIncreaseAfterReno;
-  let renoCumCF = 0; // Will be set to -renovationCost by renoAnnualCF at y=0
+  let renoCumCF = 0;
 
   const mInterest = interestRate / 100 / 12;
 
@@ -112,7 +112,7 @@ function projectScenarios(params: ScenarioParams, years: number): ProjectionYear
     const holdEq = holdVal - holdDebt;
     const renoEq = renoVal - renoDebt;
     const holdAnnualCF = y === 0 ? 0 : (holdRent - monthlyExpenses - monthlyCreditRate) * 12;
-    const renoAnnualCF = y === 0 ? -renovationCost : (renoRent - monthlyExpenses - monthlyCreditRate) * 12;
+    const renoAnnualCF = y === 0 ? 0 : (renoRent - monthlyExpenses - monthlyCreditRate) * 12;
 
     // Accumulate BEFORE pushing so the stored cumCashflow includes this year
     holdCumCF += holdAnnualCF;
@@ -138,7 +138,7 @@ function projectScenarios(params: ScenarioParams, years: number): ProjectionYear
       renoEquity: Math.round(renoEq),
       renoCashflow: Math.round(renoAnnualCF),
       renoCumCashflow: Math.round(renoCumCF),
-      renoROI: Math.round(safeDivide(renoCumCF + renoEq - totalInvested - renovationCost, totalInvested + renovationCost, 0) * 100) / 100,
+      renoROI: Math.round(safeDivide(renoCumCF + renoEq - totalInvested, totalInvested, 0) * 100) / 100,
       saleNetProceeds: Math.round(saleNet),
     });
 
