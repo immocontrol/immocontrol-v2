@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorInterceptor } from "@/components/ErrorScanner";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import { useBackgroundSync } from "@/hooks/useOfflineCache";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -162,6 +164,9 @@ const RoleRouter = () => {
   const [roleLoading, setRoleLoading] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
+  /* OFFLINE-5: Activate background sync for offline mutations */
+  useBackgroundSync();
+
   useEffect(() => {
     const fetchRole = async () => {
       if (!user) {
@@ -273,6 +278,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PropertyProvider>
+            <AccessibilityProvider>
             {/* UI-UPDATE-1: 1s tooltip delay on all action icons */}
             <TooltipProvider delayDuration={1000}>
               <Toaster />
@@ -292,6 +298,7 @@ const App = () => {
                 </ErrorBoundary>
               </BrowserRouter>
             </TooltipProvider>
+            </AccessibilityProvider>
           </PropertyProvider>
         </AuthProvider>
       </QueryClientProvider>

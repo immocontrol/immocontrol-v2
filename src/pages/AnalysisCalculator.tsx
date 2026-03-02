@@ -14,6 +14,7 @@ import PdfImport from "@/components/analysis/PdfImport";
 import ExposeHistory from "@/components/analysis/ExposeHistory";
 /* BUG-3: Import PortfolioHealthScore to integrate into Analyse section */
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
+import RenditeOptimizer from "@/components/RenditeOptimizer";
 import { useProperties } from "@/context/PropertyContext";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
 
@@ -28,7 +29,7 @@ const AnalysisCalculator = () => {
     } catch { return []; }
   });
   const [scenarioName, setScenarioName] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "amortization" | "scenarios" | "sensitivity">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "amortization" | "scenarios" | "sensitivity" | "rendite">("overview");
 
   const calc = useAnalysisCalculations(inputs);
 
@@ -131,6 +132,7 @@ th{background:#f5f5f5;font-weight:600}
     { key: "amortization" as const, label: "Tilgungsplan", icon: BarChart3 },
     { key: "scenarios" as const, label: "Szenarien", icon: TrendingUp },
     { key: "sensitivity" as const, label: "Sensitivität", icon: Target },
+    { key: "rendite" as const, label: "Rendite-Optimierer", icon: Activity },
   ];
 
   return (
@@ -254,6 +256,10 @@ th{background:#f5f5f5;font-weight:600}
 
       {activeTab === "sensitivity" && (
         <SensitivityAnalysis inputs={inputs} />
+      )}
+
+      {activeTab === "rendite" && (
+        <RenditeOptimizer />
       )}
     </div>
   );

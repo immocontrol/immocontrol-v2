@@ -4,7 +4,8 @@ import ContractManagement from "@/components/ContractManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
 import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
-import { FileText, Receipt, Wrench, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import ContractLifecycleManager from "@/components/ContractLifecycleManager";
+import { FileText, Receipt, Wrench, AlertTriangle, CheckCircle, Clock, CalendarClock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -127,7 +128,7 @@ const Vertraege = () => {
       </div>
 
       <Tabs defaultValue="mietvertraege" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="mietvertraege" className="flex items-center gap-1.5 text-xs">
             <FileText className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Miet</span>verträge
           </TabsTrigger>
@@ -140,11 +141,15 @@ const Vertraege = () => {
           <TabsTrigger value="dienstleister" className="flex items-center gap-1.5 text-xs">
             <Wrench className="h-3.5 w-3.5" /> Dienstleister
           </TabsTrigger>
+          <TabsTrigger value="lifecycle" className="flex items-center gap-1.5 text-xs">
+            <CalendarClock className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fristen</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="mietvertraege"><Mietvertragsverwaltung /></TabsContent>
         <TabsContent value="vertraege"><ContractManagement /></TabsContent>
         <TabsContent value="rechnungen"><InvoiceManagement /></TabsContent>
         <TabsContent value="dienstleister"><ServiceContracts /></TabsContent>
+        <TabsContent value="lifecycle"><ContractLifecycleManager /></TabsContent>
       </Tabs>
     </div>
   );
