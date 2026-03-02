@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatFileSize, formatDate } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import FileImportPicker from "@/components/FileImportPicker";
+import DocumentOCR from "@/components/DocumentOCR";
 
 interface DocEntry {
   id: string;
@@ -322,9 +323,12 @@ const Dokumente = () => {
             disabled={uploading}
           />
         </div>
-        <p className="text-[10px] text-muted-foreground mt-3 flex items-center justify-center gap-1">
-          <ScanText className="h-3 w-3" /> PDFs werden automatisch nach Text durchsucht (OCR)
-        </p>
+        <div className="flex items-center justify-center gap-3 mt-3">
+          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <ScanText className="h-3 w-3" /> PDFs werden automatisch nach Text durchsucht (OCR)
+          </p>
+          <DocumentOCR />
+        </div>
       </div>
 
       {/* Search & Filter */}

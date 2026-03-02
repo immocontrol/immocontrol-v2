@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import BankMatching from "@/components/BankMatching";
 import Mahnwesen from "@/components/Mahnwesen";
 import MietTrendChart from "@/components/MietTrendChart";
+import RentIncreaseWizard from "@/components/RentIncreaseWizard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Mietuebersicht = () => {
@@ -158,16 +159,19 @@ const Mietuebersicht = () => {
     <div className="space-y-6" role="main" aria-label="Mietübersicht">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat
-          {stats.totalDue > 0 && (
-            <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-              stats.collectionRate >= 90 ? "bg-profit/10 text-profit" : stats.collectionRate >= 70 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
-            }`}>
-              {stats.collectionRate}% Eingangsquote
-            </span>
-          )}
-        </p>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <p className="text-sm text-muted-foreground">
+            {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat
+            {stats.totalDue > 0 && (
+              <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                stats.collectionRate >= 90 ? "bg-profit/10 text-profit" : stats.collectionRate >= 70 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
+              }`}>
+                {stats.collectionRate}% Eingangsquote
+              </span>
+            )}
+          </p>
+          <RentIncreaseWizard currentRent={totalMonthlyRent} />
+        </div>
       </div>
 
       <Tabs defaultValue="zahlungen" className="w-full">
