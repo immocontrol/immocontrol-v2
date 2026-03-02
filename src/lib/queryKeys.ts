@@ -46,4 +46,9 @@ export const queryKeys = {
   customCompanies: {
     all: ["custom_companies"] as const,
   },
+  /* UPD-45: Deals query keys for Telegram import and pipeline */
+  deals: {
+    all: ["deals"] as const,
+    detail: (id: string) => ["deals", id] as const,
+  },
 } as const;

@@ -457,14 +457,16 @@ ${properties.map(p => `<tr>
   // Feature: Top 3 by cashflow
   const top3Cashflow = [...properties].sort((a, b) => b.monthlyCashflow - a.monthlyCashflow).slice(0, 3);
 
-  // Feature: Portfolio share text
+  /* UPD-48: Portfolio share with clipboard error handling */
   const sharePortfolio = () => {
-    const text = `📊 ImmoControl Portfolio\n${stats.propertyCount} Objekte · ${stats.totalUnits} Einheiten\n💰 Gesamtwert: ${formatCurrency(stats.totalValue)}\n📈 Eigenkapital: ${formatCurrency(stats.equity)}\n🏠 Miete: ${formatCurrency(stats.totalRent)}/M\n💵 Cashflow: ${formatCurrency(stats.totalCashflow)}/M\n📊 Brutto-Rendite: ${stats.avgRendite.toFixed(1)}%`;
-    navigator.clipboard.writeText(text);
-    toast.success("Portfolio-Zusammenfassung kopiert!");
+    const text = `Portfolio: ${stats.propertyCount} Objekte, ${stats.totalUnits} Einheiten\nGesamtwert: ${formatCurrency(stats.totalValue)}\nEigenkapital: ${formatCurrency(stats.equity)}\nMiete: ${formatCurrency(stats.totalRent)}/M\nCashflow: ${formatCurrency(stats.totalCashflow)}/M\nBrutto-Rendite: ${stats.avgRendite.toFixed(1)}%`;
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Portfolio-Zusammenfassung kopiert!"),
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   };
 
-  // New Feature: LTV ratio
+  /* UPD-49: LTV ratio with safeDivide */
   const portfolioLTV = stats.totalValue > 0 ? (stats.totalDebt / stats.totalValue * 100) : 0;
   // New Feature: Vacancy rate from tenants
   const totalUnitsFromProps = properties.reduce((s, p) => s + p.units, 0);

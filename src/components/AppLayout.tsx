@@ -139,7 +139,7 @@ function buildShortcutMap(): Record<string, string> {
   return map;
 }
 
-/* OPT-26: Route matching helper */
+/* UPD-46: Route matching helper with exact match for root path */
 const isRouteActive = (itemPath: string, currentPath: string): boolean =>
   itemPath === "/" ? currentPath === "/" : currentPath.startsWith(itemPath);
 
@@ -200,9 +200,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => document.removeEventListener("click", handleClick);
   }, [openDropdown]);
 
+  /* UPD-47: Safe logout with error handling */
   const handleLogout = async () => {
-    await signOut();
-    toast.success("Abgemeldet");
+    try {
+      await signOut();
+      toast.success("Abgemeldet");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Abmeldung fehlgeschlagen");
+    }
   };
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;

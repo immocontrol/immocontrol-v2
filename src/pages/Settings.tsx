@@ -393,10 +393,15 @@ const Settings = () => {
     toast.success("Tastenkombinationen zurückgesetzt");
   };
 
+  /* UPD-50: Safe logout with error handling and navigation */
   const handleLogout = async () => {
-    await signOut();
-    toast.success("Abgemeldet");
-    navigate("/auth");
+    try {
+      await signOut();
+      toast.success("Abgemeldet");
+      navigate("/auth");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Abmeldung fehlgeschlagen");
+    }
   };
 
   /* FUNC-36: Data usage estimation */
