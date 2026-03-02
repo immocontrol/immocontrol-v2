@@ -129,6 +129,138 @@ export const profileSchema = z.object({
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
+/* ── Ticket form schema ───────────────────────────────────── */
+
+export const ticketSchema = z.object({
+  title: requiredString,
+  description: z.string().default(""),
+  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+  status: z.enum(["open", "in_progress", "waiting", "resolved", "closed"]).default("open"),
+  category: z.enum(["repair", "maintenance", "complaint", "request", "other"]).default("other"),
+  property_id: z.string().nullable().default(null),
+  tenant_id: z.string().nullable().default(null),
+  assigned_to: z.string().default(""),
+  due_date: z.string().default(""),
+});
+
+export type TicketFormData = z.infer<typeof ticketSchema>;
+
+/* ── Invoice form schema ──────────────────────────────────── */
+
+export const invoiceSchema = z.object({
+  invoice_number: requiredString,
+  vendor_name: requiredString,
+  amount: z.number().positive("Betrag muss positiv sein"),
+  tax_amount: positiveNumber.default(0),
+  invoice_date: z.string().default(""),
+  due_date: z.string().default(""),
+  status: z.enum(["draft", "sent", "paid", "overdue", "cancelled"]).default("draft"),
+  category: z.string().default(""),
+  property_id: z.string().nullable().default(null),
+  notes: z.string().default(""),
+});
+
+export type InvoiceFormData = z.infer<typeof invoiceSchema>;
+
+/* ── Service contract form schema ─────────────────────────── */
+
+export const serviceContractSchema = z.object({
+  provider_name: requiredString,
+  service_type: requiredString,
+  monthly_cost: positiveNumber.default(0),
+  annual_cost: positiveNumber.default(0),
+  start_date: z.string().default(""),
+  end_date: z.string().default(""),
+  cancellation_period_months: z.number().int().min(0).default(3),
+  auto_renew: z.boolean().default(true),
+  property_id: z.string().nullable().default(null),
+  notes: z.string().default(""),
+});
+
+export type ServiceContractFormData = z.infer<typeof serviceContractSchema>;
+
+/* ── Meter form schema ────────────────────────────────────── */
+
+export const meterSchema = z.object({
+  meter_number: requiredString,
+  meter_type: z.enum(["electricity", "gas", "water", "heating", "other"]).default("electricity"),
+  location: z.string().default(""),
+  property_id: z.string().nullable().default(null),
+  tenant_id: z.string().nullable().default(null),
+  installation_date: z.string().default(""),
+});
+
+export type MeterFormData = z.infer<typeof meterSchema>;
+
+/* ── Meter reading form schema ────────────────────────────── */
+
+export const meterReadingSchema = z.object({
+  meter_id: requiredString,
+  reading_value: z.number().min(0, "Zählerstand muss >= 0 sein"),
+  reading_date: requiredString,
+  notes: z.string().default(""),
+});
+
+export type MeterReadingFormData = z.infer<typeof meterReadingSchema>;
+
+/* ── Owner meeting form schema ────────────────────────────── */
+
+export const ownerMeetingSchema = z.object({
+  title: requiredString,
+  meeting_date: requiredString,
+  location: z.string().default(""),
+  agenda: z.string().default(""),
+  minutes: z.string().default(""),
+  property_id: z.string().nullable().default(null),
+});
+
+export type OwnerMeetingFormData = z.infer<typeof ownerMeetingSchema>;
+
+/* ── Mietvertrag form schema ──────────────────────────────── */
+
+export const mietvertragSchema = z.object({
+  tenant_name: requiredString,
+  unit_number: z.string().default(""),
+  kaltmiete: positiveNumber.default(0),
+  nebenkosten_vorauszahlung: positiveNumber.default(0),
+  kaution: positiveNumber.default(0),
+  mietbeginn: requiredString,
+  mietende: z.string().default(""),
+  kuendigungsfrist_monate: z.number().int().min(1).default(3),
+  property_id: z.string().nullable().default(null),
+  notes: z.string().default(""),
+});
+
+export type MietvertragFormData = z.infer<typeof mietvertragSchema>;
+
+/* ── Maintenance item form schema ─────────────────────────── */
+
+export const maintenanceItemSchema = z.object({
+  title: requiredString,
+  description: z.string().default(""),
+  category: z.enum(["inspection", "repair", "replacement", "cleaning", "other"]).default("other"),
+  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  due_date: z.string().default(""),
+  estimated_cost: positiveNumber.default(0),
+  property_id: z.string().nullable().default(null),
+  recurring: z.boolean().default(false),
+  interval_months: z.number().int().min(0).default(0),
+});
+
+export type MaintenanceItemFormData = z.infer<typeof maintenanceItemSchema>;
+
+/* ── Bank account form schema ─────────────────────────────── */
+
+export const bankAccountSchema = z.object({
+  bank_name: requiredString,
+  iban: z.string().regex(/^DE\d{20}$/, "IBAN muss deutsches Format haben (DE + 20 Ziffern)").or(z.literal("")),
+  bic: z.string().default(""),
+  account_holder: z.string().default(""),
+  notes: z.string().default(""),
+});
+
+export type BankAccountFormData = z.infer<typeof bankAccountSchema>;
+
 /* ── Utility: validate form data and return errors ──────── */
 
 export function validateForm<T>(
