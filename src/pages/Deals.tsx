@@ -245,6 +245,8 @@ const Deals = () => {
   const [telegramDealChatTitleIncludes] = useSupabaseStorage<string>("immo-telegram-deal-chat-title", "");
   const importedTelegramNotesRef = useRef<Set<string>>(new Set());
   const telegramPollInFlight = useRef(false);
+  const batchImportMutateRef = useRef(batchImport.mutate);
+  batchImportMutateRef.current = batchImport.mutate;
 
   useEffect(() => {
     importedTelegramNotesRef.current = new Set(
@@ -287,7 +289,7 @@ const Deals = () => {
           }
         }
 
-        batchImport.mutate(dealForms);
+        batchImportMutateRef.current(dealForms);
       } finally {
         telegramPollInFlight.current = false;
       }
@@ -299,7 +301,7 @@ const Deals = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [user, telegramAutoImportEnabled, telegram.token, telegram.fetchMessages, telegramDealChatId, telegramDealChatTitleIncludes, batchImport]);
+  }, [user, telegramAutoImportEnabled, telegram.token, telegram.fetchMessages, telegramDealChatId, telegramDealChatTitleIncludes]);
 
   const openEdit = useCallback((deal: DealRecord) => {
     setEditDeal(deal);
