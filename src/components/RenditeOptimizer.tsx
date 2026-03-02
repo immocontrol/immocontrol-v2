@@ -184,7 +184,9 @@ export default function RenditeOptimizer() {
   /** RENDITE-3: Break-even analysis — when does renovation pay off vs hold? */
   const breakEvenYear = useMemo(() => {
     for (let i = 1; i < data.length; i++) {
-      if (data[i].renoCumCashflow > data[i].holdCumCashflow) return data[i].year;
+      const renoTotal = data[i].renoCumCashflow + data[i].renoEquity;
+      const holdTotal = data[i].holdCumCashflow + data[i].holdEquity;
+      if (renoTotal > holdTotal) return data[i].year;
     }
     return null;
   }, [data]);
