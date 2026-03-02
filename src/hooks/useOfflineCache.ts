@@ -166,7 +166,8 @@ async function syncPendingToServerImpl(): Promise<number> {
         if (error) throw error;
       } else {
         console.warn(`[OfflineSync] Skipping unprocessable mutation: type=${mutation.type}, id=${mutation.id}`);
-        break;
+        synced++;
+        continue;
       }
       synced++;
     } catch {
