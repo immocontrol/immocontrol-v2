@@ -7,6 +7,69 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+interface PropertyRow {
+  name?: string;
+  address?: string;
+  location?: string;
+  type?: string;
+  ownership?: string;
+  units?: number | string | null;
+  sqm?: number | string | null;
+  year_built?: number | string | null;
+  purchase_price?: number | string | null;
+  purchase_date?: string | null;
+  current_value?: number | string | null;
+  monthly_rent?: number | string | null;
+  monthly_expenses?: number | string | null;
+  monthly_credit_rate?: number | string | null;
+  monthly_cashflow?: number | string | null;
+  remaining_debt?: number | string | null;
+  interest_rate?: number | string | null;
+}
+
+interface TenantRow {
+  first_name?: string;
+  last_name?: string;
+  unit_label?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  move_in_date?: string | null;
+  move_out_date?: string | null;
+  monthly_rent?: number | string | null;
+  deposit?: number | string | null;
+  is_active?: boolean | null;
+  properties?: { name?: string | null } | null;
+}
+
+interface LoanRow {
+  bank_name?: string;
+  loan_amount?: number | string | null;
+  remaining_balance?: number | string | null;
+  interest_rate?: number | string | null;
+  repayment_rate?: number | string | null;
+  monthly_payment?: number | string | null;
+  fixed_interest_until?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  properties?: { name?: string | null } | null;
+}
+
+interface TodoRow {
+  title?: string;
+  priority?: number | string | null;
+  due_date?: string | null;
+}
+
+interface TicketRow {
+  status?: string;
+  priority?: string;
+  title?: string;
+  properties?: { name?: string | null } | null;
+  tenants?: { first_name?: string | null; last_name?: string | null } | null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -38,7 +101,7 @@ serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
+    const { messages } = (await req.json()) as { messages: ChatMessage[] };
 
     // Fetch user's portfolio data for context
     const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes] = await Promise.all([
@@ -49,11 +112,11 @@ serve(async (req) => {
       supabase.from("tickets").select("*, properties(name), tenants(first_name, last_name)").order("created_at", { ascending: false }).limit(20),
     ]);
 
-    const properties = propertiesRes.data || [];
-    const tenants = tenantsRes.data || [];
-    const loans = loansRes.data || [];
-    const todos = todosRes.data || [];
-    const tickets = ticketsRes.data || [];
+    const properties = (propertiesRes.data || []) as PropertyRow[];
+    const tenants = (tenantsRes.data || []) as TenantRow[];
+    const loans = (loansRes.data || []) as LoanRow[];
+    const todos = (todosRes.data || []) as TodoRow[];
+    const tickets = (ticketsRes.data || []) as TicketRow[];
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -62,30 +125,28 @@ serve(async (req) => {
 ## Heutiges Datum: ${today}
 
 ## Portfolio-Übersicht (${properties.length} Objekte)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-${properties.map((p: any) => `
-### ${p.name}
-- Adresse: ${p.address}, ${p.location}
-- Typ: ${p.type} | Eigentum: ${p.ownership}
-- Einheiten: ${p.units} | Fläche: ${p.sqm} qm | Baujahr: ${p.year_built}
-- Kaufpreis: ${Number(p.purchase_price).toLocaleString("de-DE")} € (Kaufdatum: ${p.purchase_date})
-- Aktueller Wert: ${Number(p.current_value).toLocaleString("de-DE")} €
-- Monatliche Miete: ${Number(p.monthly_rent).toLocaleString("de-DE")} €
-- Monatliche Ausgaben: ${Number(p.monthly_expenses).toLocaleString("de-DE")} €
-- Kreditrate: ${Number(p.monthly_credit_rate).toLocaleString("de-DE")} €
-- Cashflow: ${Number(p.monthly_cashflow).toLocaleString("de-DE")} €
-- Restschuld: ${Number(p.remaining_debt).toLocaleString("de-DE")} €
-- Zinssatz: ${Number(p.interest_rate)}%
+${properties.map((p) => `
+### ${p.name ?? "k.A."}
+- Adresse: ${p.address ?? "k.A."}, ${p.location ?? "k.A."}
+- Typ: ${p.type ?? "k.A."} | Eigentum: ${p.ownership ?? "k.A."}
+- Einheiten: ${p.units ?? "k.A."} | Fläche: ${p.sqm ?? "k.A."} qm | Baujahr: ${p.year_built ?? "k.A."}
+- Kaufpreis: ${Number(p.purchase_price ?? 0).toLocaleString("de-DE")} € (Kaufdatum: ${p.purchase_date ?? "k.A."})
+- Aktueller Wert: ${Number(p.current_value ?? 0).toLocaleString("de-DE")} €
+- Monatliche Miete: ${Number(p.monthly_rent ?? 0).toLocaleString("de-DE")} €
+- Monatliche Ausgaben: ${Number(p.monthly_expenses ?? 0).toLocaleString("de-DE")} €
+- Kreditrate: ${Number(p.monthly_credit_rate ?? 0).toLocaleString("de-DE")} €
+- Cashflow: ${Number(p.monthly_cashflow ?? 0).toLocaleString("de-DE")} €
+- Restschuld: ${Number(p.remaining_debt ?? 0).toLocaleString("de-DE")} €
+- Zinssatz: ${Number(p.interest_rate ?? 0)}%
 `).join("")}
 
 ## Mieter (${tenants.length})
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-${tenants.map((t: any) => {
+${tenants.map((t) => {
   const moveIn = t.move_in_date ? new Date(t.move_in_date) : null;
   const todayDate = new Date();
   const wohnDauer = moveIn ? Math.floor((todayDate.getTime() - moveIn.getTime()) / (1000 * 60 * 60 * 24 * 30.44)) : null;
   return `
-- ${t.first_name} ${t.last_name} | Objekt: ${(t as any).properties?.name || "k.A."}
+- ${(t.first_name || "").trim()} ${(t.last_name || "").trim()} | Objekt: ${t.properties?.name || "k.A."}
   - Wohnung/Einheit: ${t.unit_label || "k.A."}
   - Email: ${t.email || "k.A."} | Tel: ${t.phone || "k.A."}
   - Einzug: ${t.move_in_date || "k.A."}${wohnDauer !== null ? ` (seit ca. ${wohnDauer} Monaten)` : ""}
@@ -96,24 +157,25 @@ ${tenants.map((t: any) => {
 }).join("")}
 
 ## Darlehen (${loans.length})
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-${loans.map((l: any) => `
-- ${l.bank_name} | Objekt: ${(l as any).properties?.name || "k.A."}
-  - Darlehenssumme: ${Number(l.loan_amount).toLocaleString("de-DE")} €
-  - Restschuld: ${Number(l.remaining_balance).toLocaleString("de-DE")} €
-  - Zinssatz: ${Number(l.interest_rate)}% | Tilgung: ${Number(l.repayment_rate)}%
-  - Rate: ${Number(l.monthly_payment).toLocaleString("de-DE")} €/Monat
+${loans.map((l) => `
+- ${l.bank_name ?? "k.A."} | Objekt: ${l.properties?.name || "k.A."}
+  - Darlehenssumme: ${Number(l.loan_amount ?? 0).toLocaleString("de-DE")} €
+  - Restschuld: ${Number(l.remaining_balance ?? 0).toLocaleString("de-DE")} €
+  - Zinssatz: ${Number(l.interest_rate ?? 0)}% | Tilgung: ${Number(l.repayment_rate ?? 0)}%
+  - Rate: ${Number(l.monthly_payment ?? 0).toLocaleString("de-DE")} €/Monat
   - Zinsbindung bis: ${l.fixed_interest_until || "k.A."}
   - Laufzeit: ${l.start_date || "k.A."} – ${l.end_date || "k.A."}
 `).join("")}
 
 ## Offene Aufgaben (${todos.length})
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-${todos.map((t: any) => `- [P${t.priority}] ${t.title}${t.due_date ? ` (fällig: ${t.due_date})` : ""}`).join("\n")}
+${todos.map((t) => `- [P${t.priority ?? "?"}] ${t.title ?? "k.A."}${t.due_date ? ` (fällig: ${t.due_date})` : ""}`).join("\n")}
 
 ## Tickets (${tickets.length})
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-${tickets.map((t: any) => `- [${t.status}/${t.priority}] ${t.title} – ${(t as any).properties?.name || ""} (${(t as any).tenants ? `${(t as any).tenants.first_name} ${(t as any).tenants.last_name}` : ""})`).join("\n")}
+${tickets.map((t) => {
+  const tenantName = t.tenants ? `${t.tenants.first_name ?? ""} ${t.tenants.last_name ?? ""}`.trim() : "";
+  const propName = t.properties?.name || "";
+  return `- [${t.status ?? "?"}/${t.priority ?? "?"}] ${t.title ?? "k.A."} – ${propName}${tenantName ? ` (${tenantName})` : ""}`;
+}).join("\n")}
 `.trim();
 
     const systemPrompt = `Du bist "Immo AI", ein intelligenter Immobilien-Assistent für einen deutschen Immobilieninvestor. Du hast Zugriff auf das komplette Portfolio des Nutzers.

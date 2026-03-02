@@ -41,6 +41,7 @@ const TELEGRAM_API = "https://api.telegram.org/bot";
 export function useTelegramBot() {
   const [token] = useSupabaseStorage<string>("immo-telegram-bot-token", "");
   const [botName] = useSupabaseStorage<string>("immo-telegram-bot-name", "");
+  const [persistedLastUpdateId, setPersistedLastUpdateId] = useSupabaseStorage<number>("immo-telegram-last-update-id", 0);
   const [state, setState] = useState<TelegramBotState>({
     messages: [],
     deals: [],
@@ -49,7 +50,7 @@ export function useTelegramBot() {
     lastFetchedAt: null,
     botInfo: null,
   });
-  const lastUpdateId = useRef<number>(0);
+  const lastUpdateId = useRef<number>(persistedLastUpdateId);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /** TELEGRAM-2: Validate bot token by calling getMe */
@@ -73,8 +74,20 @@ export function useTelegramBot() {
     }
   }, []);
 
-  /** TELEGRAM-3: Fetch new messages via getUpdates (long polling) */
-  const fetchMessages = useCallback(async (): Promise<ParsedTelegramDeal[]> => {
+  /* Keep runtime offset in sync with stored value */
+  useEffect(() => {
+    lastUpdateId.current = persistedLastUpdateId;
+  }, [persistedLastUpdateId]);
+
+  type FetchOptions = {
+    /** If set, only accept updates from this chat (channel/group) */
+    allowedChatId?: number;
+    /** If set, only accept updates whose chat title includes this (case-insensitive) */
+    chatTitleIncludes?: string;
+  };
+
+  /** TELEGRAM-3: Fetch new messages via getUpdates (polling) */
+  const fetchMessages = useCallback(async (opts: FetchOptions = {}): Promise<ParsedTelegramDeal[]> => {
     if (!token) return [];
 
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -98,10 +111,24 @@ export function useTelegramBot() {
 
       if (updates.length > 0) {
         /* Update offset to acknowledge processed messages */
-        lastUpdateId.current = Math.max(...updates.map(u => u.update_id));
+        const nextUpdateId = Math.max(...updates.map(u => u.update_id));
+        lastUpdateId.current = nextUpdateId;
+        setPersistedLastUpdateId(nextUpdateId);
+
+        /* Filter updates by chat if configured */
+        const filteredUpdates = updates.filter((u) => {
+          const chat = u.message?.chat || u.channel_post?.chat;
+          if (!chat) return false;
+          if (typeof opts.allowedChatId === "number") return chat.id === opts.allowedChatId;
+          if (opts.chatTitleIncludes) {
+            const title = (chat.title || "").toLowerCase();
+            return title.includes(opts.chatTitleIncludes.toLowerCase());
+          }
+          return true;
+        });
 
         /* Extract text content from messages and channel posts */
-        const texts = updates
+        const texts = filteredUpdates
           .map(u => u.message?.text || u.channel_post?.text)
           .filter((t): t is string => !!t);
 
@@ -114,8 +141,8 @@ export function useTelegramBot() {
 
         setState(prev => ({
           ...prev,
-          messages: [...prev.messages, ...updates],
-          deals: [...prev.deals, ...allDeals],
+          messages: [...prev.messages, ...updates].slice(-200),
+          deals: [...prev.deals, ...allDeals].slice(-500),
           loading: false,
           lastFetchedAt: new Date().toISOString(),
         }));
@@ -135,7 +162,7 @@ export function useTelegramBot() {
       setState(prev => ({ ...prev, loading: false, error: msg }));
       return [];
     }
-  }, [token]);
+  }, [token, setPersistedLastUpdateId]);
 
   /** TELEGRAM-4: Start polling for new messages every 30 seconds */
   const startPolling = useCallback((intervalMs = 30_000) => {

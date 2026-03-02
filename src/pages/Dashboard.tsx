@@ -73,13 +73,15 @@ type FilterType = "alle" | "egbr" | "privat";
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
 type TypeFilter = "alle" | "MFH" | "ETW" | "EFH" | "Gewerbe";
 
-const Dashboard = () => {
+const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) => {
   const { properties, loading, stats } = useProperties();
   const { user } = useAuth();
   const qc = useQueryClient();
 
   // Document title
-  useEffect(() => { document.title = "Portfolio – ImmoControl"; }, []);
+  useEffect(() => {
+    document.title = mode === "personal" ? "Persönliches Dashboard – ImmoControl" : "Portfolio – ImmoControl";
+  }, [mode]);
 
   const { data: allTenants = [] } = useQuery({
     queryKey: ["all_tenants_dashboard"],
@@ -98,8 +100,16 @@ const Dashboard = () => {
   const searchRef = useRef<HTMLInputElement>(null);
   /* BUG-4: Dashboard minimalist cleanup — collapse charts and widgets by default for cleaner look */
   /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
-  const [chartsCollapsed, setChartsCollapsed] = useState(true);
-  const [widgetsCollapsed, setWidgetsCollapsed] = useState(true);
+  const [chartsCollapsed, setChartsCollapsed] = useState(mode === "portfolio");
+  const [widgetsCollapsed, setWidgetsCollapsed] = useState(mode === "portfolio");
+  const [isChartDragOverview, setIsChartDragOverview] = useState(false);
+
+  useEffect(() => {
+    // Reset default section visibility on mode switch
+    setChartsCollapsed(mode === "portfolio");
+    setWidgetsCollapsed(mode === "portfolio");
+    setIsChartDragOverview(false);
+  }, [mode]);
 
   /* Dashboard charts drag & drop reordering */
   const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
@@ -122,6 +132,7 @@ const Dashboard = () => {
   const handleChartDragStart = useCallback((idx: number, clientY: number) => {
     dragChartRef.current = { idx, startY: clientY };
     setDragChartIdx(idx);
+    setIsChartDragOverview(true);
   }, []);
 
   const handleChartDragOver = useCallback((idx: number) => {
@@ -141,6 +152,7 @@ const Dashboard = () => {
     dragChartRef.current = null;
     setDragChartIdx(null);
     setDragOverIdx(null);
+    setIsChartDragOverview(false);
   }, [dragChartIdx, dragOverIdx]);
 
   const chartComponents: Record<ChartId, { label: string; component: React.ReactNode; span?: number }> = useMemo(() => ({
@@ -479,37 +491,65 @@ ${properties.map(p => `<tr>
   return (
     /* IMP-3: Reduced spacing for less crowded layout */
     <div className="space-y-4" role="main" aria-label="Portfolio Dashboard">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="min-w-0">
-          {/* UI-11: heading-gradient for page title — single line, no truncation */}
-          {/* UPD-36: Smooth page header fade-in on route change */}
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap page-header-enter">{greeting}</h1>
-          <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
-            {/* OPT-10: pluralDE for correct pluralization */}
-            {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")} · {totalSqm.toLocaleString("de-DE")} m²
-          </p>
+      {mode === "personal" ? (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            {/* UI-11: heading-gradient for page title — single line, no truncation */}
+            {/* UPD-36: Smooth page header fade-in on route change */}
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap page-header-enter">{greeting}</h1>
+            <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
+              {/* OPT-10: pluralDE for correct pluralization */}
+              {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")} · {totalSqm.toLocaleString("de-DE")} m²
+            </p>
+          </div>
+          {/* Cleaned up: removed buttons that are already accessible via navigation menus
+               (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <AddPropertyDialog />
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
+              <Share2 className="h-3.5 w-3.5" />
+              Teilen
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCSV}>
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportPDF}>
+              <Printer className="h-3.5 w-3.5" />
+              PDF
+            </Button>
+          </div>
         </div>
-        {/* Cleaned up: removed buttons that are already accessible via navigation menus
-             (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
-          <AddPropertyDialog />
-          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
-            <Share2 className="h-3.5 w-3.5" />
-            Teilen
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCSV}>
-            <Download className="h-3.5 w-3.5" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportPDF}>
-            <Printer className="h-3.5 w-3.5" />
-            PDF
-          </Button>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap page-header-enter">Portfolio</h1>
+            <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
+              {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <AddPropertyDialog />
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
+              <Share2 className="h-3.5 w-3.5" />
+              Teilen
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCSV}>
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportPDF}>
+              <Printer className="h-3.5 w-3.5" />
+              PDF
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Onboarding */}
-      <OnboardingBanner />
+      {mode === "personal" && (
+        <>
+          {/* Onboarding */}
+          <OnboardingBanner />
 
       {/* Portfolio Health Score */}
       <PortfolioHealthScore
@@ -737,10 +777,15 @@ ${properties.map(p => `<tr>
         </div>
       )}
 
+        </>
+      )}
+
       {/* Overdue Payment Banner */}
       <OverduePaymentBanner />
 
-      {/* Search + Sort + Filter - MOVED UP for sticky properties */}
+      {mode === "portfolio" && (
+        <>
+          {/* Search + Sort + Filter - MOVED UP for sticky properties */}
       <div className="flex flex-col gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -868,7 +913,12 @@ ${properties.map(p => `<tr>
         )}
       </div>
 
-      {/* IMP-6: Moved occupancy, heatmap, type chart, goals into collapsible widgets for cleaner layout */}
+        </>
+      )}
+
+      {mode === "personal" && (
+        <>
+          {/* IMP-6: Moved occupancy, heatmap, type chart, goals into collapsible widgets for cleaner layout */}
       {/* Collapsible Widgets Section */}
       <div>
         <button
@@ -972,7 +1022,7 @@ ${properties.map(p => `<tr>
           {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
         </button>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-200 origin-top ${isChartDragOverview ? "scale-[0.92] opacity-90" : ""}`}>
             {chartOrder.map((chartId, idx) => {
               const chart = chartComponents[chartId];
               const isDragging = dragChartIdx === idx;
@@ -1010,6 +1060,8 @@ ${properties.map(p => `<tr>
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

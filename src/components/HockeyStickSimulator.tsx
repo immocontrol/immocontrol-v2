@@ -199,7 +199,7 @@ function saveProfilesStore(p: SavedProfile[]): void {
   try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch { /* noop */ }
 }
 
-export function HockeyStickSimulator() {
+export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [params, setParams] = useState<SimParams>(DEFAULT_PARAMS);
   const [chartView, setChartView] = useState<ChartView>("growth");
@@ -570,24 +570,8 @@ export function HockeyStickSimulator() {
     );
   };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <TrendingUp className="h-3.5 w-3.5" /> Hockey Stick Simulator
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" /> Hockey Stick Simulator
-          </DialogTitle>
-          <p className="text-xs text-muted-foreground">
-            Simuliere den exponentiellen Verm&#246;gensaufbau deines Immobilienportfolios
-          </p>
-        </DialogHeader>
-
-        <div className="space-y-4">
+  const simulatorContent = (
+    <div className="space-y-4">
           {/* Item 3: AI-Textfeld for natural language parameter input */}
           <div className="bg-secondary/30 rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
@@ -1009,6 +993,41 @@ export function HockeyStickSimulator() {
             )}
           </div>
         </div>
+  );
+
+  /* Embedded mode — render inline without Dialog wrapper */
+  if (embedded) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Hockey Stick Simulator</h1>
+            <p className="text-sm text-muted-foreground">Simuliere den exponentiellen Verm\u00f6gensaufbau deines Immobilienportfolios</p>
+          </div>
+        </div>
+        {simulatorContent}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <TrendingUp className="h-3.5 w-3.5" /> Hockey Stick Simulator
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" /> Hockey Stick Simulator
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            Simuliere den exponentiellen Verm\u00f6gensaufbau deines Immobilienportfolios
+          </p>
+        </DialogHeader>
+        {simulatorContent}
       </DialogContent>
     </Dialog>
   );
