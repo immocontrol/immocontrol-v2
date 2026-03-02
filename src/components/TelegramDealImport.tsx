@@ -173,9 +173,9 @@ function parseGermanNumber(str: string): number | null {
   /* If only dots: check if it's a thousand separator or decimal */
   /* "750.000" → 750000 (thousand sep), "785.0" → 785 (decimal) */
   const parts = cleaned.split(".");
-  if (parts.length === 2 && parts[1].length === 3) {
-    /* Thousand separator: "750.000" */
-    return parseFloat(cleaned.replace(".", ""));
+  if (parts.length >= 2 && parts.slice(1).every(p => p.length === 3)) {
+    /* Thousand separator: "750.000" or "2.850.000" */
+    return parseFloat(cleaned.replace(/\./g, ""));
   }
   return parseFloat(cleaned);
 }
