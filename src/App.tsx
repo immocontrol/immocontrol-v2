@@ -20,6 +20,8 @@ import { useBackgroundSync } from "@/hooks/useOfflineCache";
 /* OPT-40: Route path constants */
 const ROUTES = {
   HOME: "/",
+  PERSONAL_DASHBOARD: "/dashboard",
+  HOCKEY_STICK: "/hockey-stick",
   AUTH: "/auth",
   ONBOARDING: "/onboarding",
   SETTINGS: "/einstellungen",
@@ -77,6 +79,7 @@ const crmImport = () => import("@/pages/CRM");
 const dealsImport = () => import("@/pages/Deals");
 const dokumenteImport = () => import("@/pages/Dokumente");
 const wartungsplanerImport = () => import("@/pages/Wartungsplaner");
+const hockeyStickImport = () => import("@/pages/HockeyStickPage");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -101,6 +104,7 @@ const CRM = lazy(crmImport);
 const Deals = lazy(dealsImport);
 const Dokumente = lazy(dokumenteImport);
 const Wartungsplaner = lazy(wartungsplanerImport);
+const HockeyStickPage = lazy(hockeyStickImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -122,6 +126,7 @@ const preloadRoutes = () => {
   dealsImport();
   dokumenteImport();
   wartungsplanerImport();
+  hockeyStickImport();
 };
 
 const PageLoader = () => (
@@ -245,6 +250,7 @@ const RoleRouter = () => {
       <PageTransition>
         <Routes>
           <Route path={ROUTES.HOME} element={<Dashboard />} />
+          <Route path={ROUTES.PERSONAL_DASHBOARD} element={<Dashboard mode="personal" />} />
           <Route path={`${ROUTES.PROPERTY}/:id`} element={<PropertyDetail />} />
           <Route path={ROUTES.LOANS} element={<Loans />} />
           <Route path={ROUTES.FORECAST} element={<CashForecast />} />
@@ -260,6 +266,7 @@ const RoleRouter = () => {
           <Route path={ROUTES.DEALS} element={<Deals />} />
           <Route path={ROUTES.DOKUMENTE} element={<Dokumente />} />
           <Route path={ROUTES.WARTUNG} element={<Wartungsplaner />} />
+          <Route path={ROUTES.HOCKEY_STICK} element={<HockeyStickPage />} />
           <Route path={ROUTES.SETTINGS} element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

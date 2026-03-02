@@ -456,7 +456,7 @@ const BankMatching = () => {
    * - Reference keyword scanning
    */
   const normalizeIBAN = useCallback((iban: string): string =>
-    iban.replace(/[\s\-]/g, "").toUpperCase(), []);
+    iban.replace(/[\s-]/g, "").toUpperCase(), []);
 
   const levenshtein = useCallback((a: string, b: string): number => {
     if (a.length === 0) return b.length;

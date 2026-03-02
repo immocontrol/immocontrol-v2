@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo, useMemo } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -39,6 +39,7 @@ const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 /* Item 2: Menüpunkte umsortiert — Rechner, Nebenkosten & Cashflow-Prognose zu Finanzen hinzugefügt */
 const navEntries: NavEntry[] = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
+  { path: "/dashboard", label: "Persönliches Dashboard", icon: Sparkles, shortcut: "" },
   {
     label: "Finanzen", icon: Landmark,
     items: [
@@ -48,6 +49,7 @@ const navEntries: NavEntry[] = [
       { path: "/forecast", label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
       { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
       { path: "/analyse", label: "Rechner", icon: Calculator, shortcut: "" },
+      { path: "/hockey-stick", label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
     ],
   },
   {
@@ -91,6 +93,7 @@ navItems.forEach(n => { if (n.shortcut) DEFAULT_SHORTCUT_MAP[`Alt+${n.shortcut}`
 /* Map action labels to paths for custom shortcut resolution */
 const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Portfolio": "/",
+  "Navigation: Persönliches Dashboard": "/dashboard",
   "Navigation: Darlehen": "/darlehen",
   "Navigation: Mieten": "/mietuebersicht",
   "Navigation: Verträge": "/vertraege",
@@ -99,6 +102,7 @@ const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Berichte": "/berichte",
   "Navigation: CRM": "/crm",
   "Navigation: Deals": "/deals",
+  "Navigation: Hockey Stick Simulator": "/hockey-stick",
   "Navigation: Einstellungen": "/einstellungen",
 };
 

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, memo } from "react";
+import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,7 +18,9 @@ import { Plus, Building2, MapPin, Trash2, Clock, AlertTriangle, Search, X, Downl
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
-import { TelegramDealImport } from "@/components/TelegramDealImport";
+import { TelegramDealImport, telegramDealToForm } from "@/components/TelegramDealImport";
+import { useTelegramBot } from "@/hooks/useTelegramBot";
+import { useSupabaseStorage } from "@/hooks/useSupabaseStorage";
 import { queryKeys } from "@/lib/queryKeys";
 
 /* UPD-9: Centralised deal record type */
@@ -236,6 +238,71 @@ const Deals = () => {
     onError: (e: Error) => toast.error(`Import fehlgeschlagen: ${e.message}`),
   });
 
+  /* TELEGRAM-AUTO-1: Auto-import deals from Telegram Bot API (no manual paste required) */
+  const telegram = useTelegramBot();
+  const [telegramAutoImportEnabled] = useSupabaseStorage<boolean>("immo-telegram-auto-import-enabled", true);
+  const [telegramDealChatId] = useSupabaseStorage<number | null>("immo-telegram-deal-chat-id", null);
+  const [telegramDealChatTitleIncludes] = useSupabaseStorage<string>("immo-telegram-deal-chat-title", "");
+  const importedTelegramNotesRef = useRef<Set<string>>(new Set());
+  const telegramPollInFlight = useRef(false);
+  const batchImportMutateRef = useRef(batchImport.mutate);
+  batchImportMutateRef.current = batchImport.mutate;
+
+  useEffect(() => {
+    importedTelegramNotesRef.current = new Set(
+      deals
+        .filter((d) => (d.source || "").toLowerCase().includes("telegram") && typeof d.notes === "string" && d.notes.length > 0)
+        .map((d) => d.notes as string),
+    );
+  }, [deals]);
+
+  useEffect(() => {
+    if (!user || !telegramAutoImportEnabled || !telegram.token || isLoading) return;
+
+    let cancelled = false;
+
+    const pollOnce = async () => {
+      if (telegramPollInFlight.current) return;
+      telegramPollInFlight.current = true;
+      try {
+        const parsedDeals = await telegram.fetchMessages({
+          ...(typeof telegramDealChatId === "number" ? { allowedChatId: telegramDealChatId } : {}),
+          ...(typeof telegramDealChatId !== "number" && telegramDealChatTitleIncludes
+            ? { chatTitleIncludes: telegramDealChatTitleIncludes }
+            : {}),
+        });
+
+        if (cancelled || parsedDeals.length === 0) return;
+
+        const dealForms = parsedDeals
+          .map(telegramDealToForm)
+          .filter((f) => {
+            const note = typeof f.notes === "string" ? f.notes : "";
+            return note.length > 0 && !importedTelegramNotesRef.current.has(note);
+          });
+
+        if (dealForms.length === 0) return;
+
+        for (const f of dealForms) {
+          if (typeof f.notes === "string" && f.notes.length > 0) {
+            importedTelegramNotesRef.current.add(f.notes);
+          }
+        }
+
+        batchImportMutateRef.current(dealForms);
+      } finally {
+        telegramPollInFlight.current = false;
+      }
+    };
+
+    pollOnce();
+    const interval = window.setInterval(pollOnce, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [user, telegramAutoImportEnabled, telegram.token, telegram.fetchMessages, telegramDealChatId, telegramDealChatTitleIncludes, isLoading]);
+
   const openEdit = useCallback((deal: DealRecord) => {
     setEditDeal(deal);
     setForm({
@@ -414,6 +481,12 @@ const Deals = () => {
         <div className="flex items-center gap-2 flex-wrap">
           {/* UPD-36: Telegram Import button */}
           <TelegramDealImport onImportDeals={handleTelegramImport} />
+          {telegramAutoImportEnabled && telegram.token && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              {telegram.loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquare className="h-3 w-3 text-[#0088cc]" />}
+              Auto-Import
+            </span>
+          )}
           {/* UPD-37: CSV export button */}
           {deals.length > 0 && (
             <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5" aria-label="Deals als CSV exportieren">
