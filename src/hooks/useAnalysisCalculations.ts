@@ -71,46 +71,50 @@ export interface AnalysisCalcResult {
   mieteProQm: number;
 }
 
+/** Pure calculation function (testable without React) */
+export function calculateAnalysis(inputs: AnalysisInputState): AnalysisCalcResult {
+  const { kaufpreis, bundesland, maklerProvision, notarKosten, monatlicheMiete, bewirtschaftungskosten, eigenkapital, zinssatz, tilgung, afaDauer, persSteuersatz, quadratmeter } = inputs;
+
+  const grunderwerbsteuer = kaufpreis * (BUNDESLAENDER_GRUNDERWERBSTEUER[bundesland] / 100);
+  const makler = kaufpreis * (maklerProvision / 100);
+  const notar = kaufpreis * (notarKosten / 100);
+  const kaufnebenkosten = grunderwerbsteuer + makler + notar;
+  const gesamtkosten = kaufpreis + kaufnebenkosten;
+
+  const darlehen = gesamtkosten - eigenkapital;
+  const monatlicheRate = (darlehen * (zinssatz + tilgung)) / 100 / 12;
+  const monatlicheZinsen = (darlehen * zinssatz) / 100 / 12;
+
+  const jahresmiete = monatlicheMiete * 12;
+  const jahreskosten = bewirtschaftungskosten * 12;
+  const bruttoRendite = kaufpreis > 0 ? (jahresmiete / kaufpreis) * 100 : 0;
+  const nettoRendite = kaufpreis > 0 ? ((jahresmiete - jahreskosten) / kaufpreis) * 100 : 0;
+
+  const monatsCashflow = monatlicheMiete - bewirtschaftungskosten - monatlicheRate;
+  const jahresCashflow = monatsCashflow * 12;
+
+  const cashOnCash = eigenkapital > 0 ? (jahresCashflow / eigenkapital) * 100 : 0;
+  const mietmultiplikator = jahresmiete > 0 ? kaufpreis / jahresmiete : 0;
+
+  const afaJaehrlich = kaufpreis * 0.8 / afaDauer;
+  const abzugsfaehigeZinsen = monatlicheZinsen * 12;
+  const steuerlichesErgebnis = jahresmiete - jahreskosten - abzugsfaehigeZinsen - afaJaehrlich;
+  const steuerEffekt = steuerlichesErgebnis * (persSteuersatz / 100);
+  const cashflowNachSteuer = jahresCashflow - steuerEffekt;
+
+  const preisProQm = quadratmeter > 0 ? kaufpreis / quadratmeter : 0;
+  const mieteProQm = quadratmeter > 0 ? monatlicheMiete / quadratmeter : 0;
+
+  return {
+    grunderwerbsteuer, makler, notar, kaufnebenkosten, gesamtkosten,
+    darlehen, monatlicheRate, bruttoRendite, nettoRendite,
+    monatsCashflow, jahresCashflow, cashOnCash, mietmultiplikator,
+    afaJaehrlich, steuerlichesErgebnis, steuerEffekt, cashflowNachSteuer,
+    preisProQm, mieteProQm,
+  };
+}
+
+/** React hook wrapper — delegates to pure calculateAnalysis */
 export function useAnalysisCalculations(inputs: AnalysisInputState): AnalysisCalcResult {
-  return useMemo(() => {
-    const { kaufpreis, bundesland, maklerProvision, notarKosten, monatlicheMiete, bewirtschaftungskosten, eigenkapital, zinssatz, tilgung, afaDauer, persSteuersatz, quadratmeter } = inputs;
-
-    const grunderwerbsteuer = kaufpreis * (BUNDESLAENDER_GRUNDERWERBSTEUER[bundesland] / 100);
-    const makler = kaufpreis * (maklerProvision / 100);
-    const notar = kaufpreis * (notarKosten / 100);
-    const kaufnebenkosten = grunderwerbsteuer + makler + notar;
-    const gesamtkosten = kaufpreis + kaufnebenkosten;
-
-    const darlehen = gesamtkosten - eigenkapital;
-    const monatlicheRate = (darlehen * (zinssatz + tilgung)) / 100 / 12;
-    const monatlicheZinsen = (darlehen * zinssatz) / 100 / 12;
-
-    const jahresmiete = monatlicheMiete * 12;
-    const jahreskosten = bewirtschaftungskosten * 12;
-    const bruttoRendite = kaufpreis > 0 ? (jahresmiete / kaufpreis) * 100 : 0;
-    const nettoRendite = kaufpreis > 0 ? ((jahresmiete - jahreskosten) / kaufpreis) * 100 : 0;
-
-    const monatsCashflow = monatlicheMiete - bewirtschaftungskosten - monatlicheRate;
-    const jahresCashflow = monatsCashflow * 12;
-
-    const cashOnCash = eigenkapital > 0 ? (jahresCashflow / eigenkapital) * 100 : 0;
-    const mietmultiplikator = jahresmiete > 0 ? kaufpreis / jahresmiete : 0;
-
-    const afaJaehrlich = kaufpreis * 0.8 / afaDauer;
-    const abzugsfaehigeZinsen = monatlicheZinsen * 12;
-    const steuerlichesErgebnis = jahresmiete - jahreskosten - abzugsfaehigeZinsen - afaJaehrlich;
-    const steuerEffekt = steuerlichesErgebnis * (persSteuersatz / 100);
-    const cashflowNachSteuer = jahresCashflow - steuerEffekt;
-
-    const preisProQm = quadratmeter > 0 ? kaufpreis / quadratmeter : 0;
-    const mieteProQm = quadratmeter > 0 ? monatlicheMiete / quadratmeter : 0;
-
-    return {
-      grunderwerbsteuer, makler, notar, kaufnebenkosten, gesamtkosten,
-      darlehen, monatlicheRate, bruttoRendite, nettoRendite,
-      monatsCashflow, jahresCashflow, cashOnCash, mietmultiplikator,
-      afaJaehrlich, steuerlichesErgebnis, steuerEffekt, cashflowNachSteuer,
-      preisProQm, mieteProQm,
-    };
-  }, [inputs]);
+  return useMemo(() => calculateAnalysis(inputs), [inputs]);
 }
