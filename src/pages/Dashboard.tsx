@@ -37,6 +37,7 @@ import MaintenanceCostTrend from "@/components/MaintenanceCostTrend";
 import PortfolioAllocationWidget from "@/components/PortfolioAllocationWidget";
 import BudgetVsActual from "@/components/BudgetVsActual";
 import LoanAmortizationMini from "@/components/LoanAmortizationMini";
+import PortfolioHistorie from "@/components/PortfolioHistorie";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import StatCard from "@/components/StatCard";
@@ -947,6 +948,8 @@ ${properties.map(p => `<tr>
           </div>
           <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />
           <DashboardActionCenter />
+          {/* HIST-1: Portfolio Historie — Soll/Ist-Vergleich */}
+          <PortfolioHistorie />
         </div>
       </div>
 

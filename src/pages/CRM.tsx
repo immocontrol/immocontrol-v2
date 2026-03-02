@@ -1008,7 +1008,8 @@ const CRM = () => {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* ANIM-1: Add card-stagger-enter animation to CRM leads grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 card-stagger-enter">
             {/* Lead list */}
             <div className="lg:col-span-1 space-y-2 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto custom-scrollbar">
               {leadsLoading ? (
