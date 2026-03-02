@@ -9,7 +9,7 @@ const NotFound = () => {
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
-    logger.warn(`404: User attempted to access non-existent route: ${location.pathname}`, "Router");
+    logger.error(`404: User attempted to access non-existent route: ${location.pathname}`, "Router");
   }, [location.pathname]);
 
   useEffect(() => {
