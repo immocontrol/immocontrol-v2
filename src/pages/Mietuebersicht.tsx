@@ -170,7 +170,7 @@ const Mietuebersicht = () => {
               </span>
             )}
           </p>
-          <RentIncreaseWizard currentRent={totalMonthlyRent} />
+          <RentIncreaseWizard />
         </div>
       </div>
 

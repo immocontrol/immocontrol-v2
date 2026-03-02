@@ -99,7 +99,7 @@ const WidgetCustomizer = ({ onConfigChange }: WidgetCustomizerProps) => {
 
           {/* Widget list */}
           <div className="space-y-1">
-            {filteredWidgets.sort((a, b) => a.order - b.order).map((widget: WidgetConfig) => (
+            {[...filteredWidgets].sort((a, b) => a.order - b.order).map((widget: WidgetConfig) => (
               <div
                 key={widget.id}
                 className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
