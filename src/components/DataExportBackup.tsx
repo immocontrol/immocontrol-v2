@@ -143,7 +143,7 @@ export const DataExportBackup = () => {
       const date = new Date().toISOString().split("T")[0];
       downloadFile(json, `immocontrol-backup-${date}.json`, "application/json");
       toast.success("JSON-Backup heruntergeladen");
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
     } finally {
       setExporting(false);
@@ -173,7 +173,7 @@ export const DataExportBackup = () => {
         }
       }
       toast.success("CSV-Dateien heruntergeladen");
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
     } finally {
       setExporting(false);
@@ -193,7 +193,7 @@ export const DataExportBackup = () => {
       const date = new Date().toISOString().split("T")[0];
       downloadFile(csv, `immocontrol-${table.name}-${date}.csv`, "text/csv;charset=utf-8");
       toast.success(`${table.label} exportiert (${data.length} Einträge)`);
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
     }
   }, [user, fetchTableData]);

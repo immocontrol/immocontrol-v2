@@ -167,7 +167,7 @@ export function useTelegramBot() {
       }));
 
       return [];
-    } catch (err) {
+    } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
       setState(prev => ({ ...prev, loading: false, error: msg }));
       return [];
