@@ -54,3 +54,14 @@ export const sanitizeEmail = (email: string): string => {
   const trimmed = email.trim().toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : "";
 };
+
+/** IMP-185: Sanitize all string fields in a form data object */
+export const sanitizeFormData = <T extends Record<string, unknown>>(data: T): T => {
+  const result = { ...data };
+  for (const [key, value] of Object.entries(result)) {
+    if (typeof value === "string") {
+      (result as Record<string, unknown>)[key] = sanitizeInput(value);
+    }
+  }
+  return result;
+};

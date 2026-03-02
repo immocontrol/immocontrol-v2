@@ -2784,3 +2784,9 @@ th { text-align: left; }
     min-width: 44px;
   }
 }
+
+/* IMP-177: Font display swap for better loading performance */
+@font-face { font-display: swap; }
+
+/* IMP-180: Content visibility for off-screen optimization */
+.offscreen-optimize { content-visibility: auto; contain-intrinsic-size: auto 500px; }
