@@ -477,8 +477,9 @@ const BankMatching = () => {
     const a = txName.toLowerCase().trim();
     const b = tenantName.toLowerCase().trim();
     if (!a || !b || b.length < 4) return false; // Skip very short names to avoid false positives
-    // Exact substring match — only match if tenant name appears as a word boundary
-    const wordBoundaryRegex = new RegExp(`\\b${b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+    // Exact substring match — Unicode-aware word boundary (supports umlauts: ä, ö, ü, ß)
+    const escaped = b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const wordBoundaryRegex = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u");
     if (wordBoundaryRegex.test(a)) return true;
     // Multi-word name: require ALL words (not just 50%) with length > 3 to match
     const bWords = b.split(/\s+/).filter(w => w.length > 3);
