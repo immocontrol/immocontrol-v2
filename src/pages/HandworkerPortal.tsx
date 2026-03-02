@@ -143,7 +143,7 @@ const HandworkerPortal = () => {
 
             {/* Urgent tickets alert */}
             {stats.open > 0 && (
-              <div className="bg-gold/10 border border-gold/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in" style={{ animationDelay: "25ms" }}>
+              <div className="bg-gold/10 border border-gold/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in [animation-delay:25ms]">
                 <AlertTriangle className="h-5 w-5 text-gold shrink-0" />
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-gold">{stats.open} neue(r) Auftrag/Aufträge</div>
@@ -157,7 +157,7 @@ const HandworkerPortal = () => {
 
             {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "50ms" }}>
+              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:50ms]">
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="h-4 w-4 text-gold" />
                   <span className="text-xs text-muted-foreground">Offen</span>
@@ -165,15 +165,15 @@ const HandworkerPortal = () => {
                 <div className="text-2xl font-bold text-gold">{stats.open}</div>
                 <div className="text-xs text-muted-foreground">Aufträge</div>
               </div>
-              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Wrench className="h-4 w-4 text-primary" />
+              <div               className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:100ms]">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Wrench className="h-4 w-4 text-primary" />
                   <span className="text-xs text-muted-foreground">In Bearbeitung</span>
                 </div>
                 <div className="text-2xl font-bold text-primary">{stats.inProgress}</div>
                 <div className="text-xs text-muted-foreground">Aufträge</div>
               </div>
-              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "150ms" }}>
+              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:150ms]">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle2 className="h-4 w-4 text-profit" />
                   <span className="text-xs text-muted-foreground">Erledigt</span>
@@ -181,7 +181,7 @@ const HandworkerPortal = () => {
                 <div className="text-2xl font-bold text-profit">{stats.resolved}</div>
                 <div className="text-xs text-muted-foreground">Aufträge</div>
               </div>
-              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in [animation-delay:200ms]">
                 <div className="flex items-center gap-2 mb-1">
                   <Euro className="h-4 w-4 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">Umsatz</span>
@@ -193,8 +193,8 @@ const HandworkerPortal = () => {
 
             {/* Performance */}
             {totalTickets > 0 && (
-              <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
-                <h3 className="text-sm font-semibold mb-3">Performance</h3>
+              <div               className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:250ms]">
+                              <h3 className="text-sm font-semibold mb-3">Performance</h3>
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1">
@@ -226,7 +226,7 @@ const HandworkerPortal = () => {
 
             {/* Synergy 9: Property count */}
             {propertyCount > 0 && (
-              <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-3 animate-fade-in" style={{ animationDelay: "275ms" }}>
+              <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-3 animate-fade-in [animation-delay:275ms]">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Building2 className="h-4 w-4 text-primary" />
                 </div>
@@ -239,8 +239,8 @@ const HandworkerPortal = () => {
 
             {/* Synergy 10: Category breakdown */}
             {Object.keys(categoryBreakdown).length > 0 && (
-              <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
-                <h3 className="text-sm font-semibold mb-3">Offene Aufträge nach Typ</h3>
+              <div               className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:300ms]">
+                              <h3 className="text-sm font-semibold mb-3">Offene Aufträge nach Typ</h3>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(categoryBreakdown).map(([cat, count]) => {
                     const icons: Record<string, string> = { repair: "🔧", damage: "⚠️", maintenance: "🛠️", question: "❓", other: "📋" };
@@ -258,8 +258,7 @@ const HandworkerPortal = () => {
             {/* Quick action */}
             <button
               onClick={() => setActiveTab("tickets")}
-              className="w-full gradient-card rounded-xl border border-border p-4 flex items-center gap-3 hover:border-primary/30 transition-colors animate-fade-in"
-              style={{ animationDelay: "350ms" }}
+                            className="w-full gradient-card rounded-xl border border-border p-4 flex items-center gap-3 hover:border-primary/30 transition-colors animate-fade-in [animation-delay:350ms]"
             >
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <ClipboardList className="h-5 w-5 text-primary" />
@@ -315,10 +314,10 @@ const HandworkerPortal = () => {
               )}
             </div>
 
-            <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "100ms" }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold">Abmelden</h2>
+            <div             className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:100ms]">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h2 className="text-sm font-semibold">Abmelden</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">Vom Handwerkerportal abmelden</p>
                 </div>
                 <Button variant="destructive" size="sm" onClick={() => { signOut(); toast.success("Abgemeldet"); }}>

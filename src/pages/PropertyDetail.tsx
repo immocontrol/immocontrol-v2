@@ -277,7 +277,7 @@ const PropertyDetail = () => {
       </div>
 
       {/* Rendite - Improvement 8: Traffic light colors */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:300ms]">
         <h2 className="text-sm font-semibold mb-4">Renditekennzahlen</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -303,7 +303,7 @@ const PropertyDetail = () => {
       </div>
 
       {/* Finanzierung */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "400ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:400ms]">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <Landmark className="h-4 w-4 text-muted-foreground" /> Finanzierung
         </h2>
@@ -334,7 +334,7 @@ const PropertyDetail = () => {
       </div>
 
       {/* Monthly breakdown */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "500ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:500ms]">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <Wrench className="h-4 w-4 text-muted-foreground" /> Monatliche Übersicht
         </h2>
@@ -367,7 +367,7 @@ const PropertyDetail = () => {
 
       {/* Synergy 14: Property-level action summary */}
       {(synergy.openTickets > 0 || synergy.overduePayments > 0 || synergy.totalRepairCost > 0) && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-in" style={{ animationDelay: "550ms" }}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-in [animation-delay:550ms]">
           <div className={`rounded-lg p-3 text-center ${synergy.openTickets > 0 ? "bg-gold/10 border border-gold/20" : "bg-secondary/50"}`}>
             <Wrench className={`h-4 w-4 mx-auto mb-1 ${synergy.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`} />
             <div className={`text-lg font-bold ${synergy.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`}>{synergy.openTickets}</div>
