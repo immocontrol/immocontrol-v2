@@ -550,7 +550,7 @@ const BankMatching = () => {
       if (prop) {
         const ref = (tx.reference || "").toLowerCase();
         const propName = prop.name.toLowerCase();
-        if (ref.includes(propName) || ref.includes("miete") && ref.includes(tenant.last_name.toLowerCase())) {
+        if ((ref.includes(propName) || ref.includes("miete")) && ref.includes(tenant.last_name.toLowerCase())) {
           return { payment: p, confidence: "auto" as const };
         }
       }
