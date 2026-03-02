@@ -54,6 +54,7 @@ export default function ImmoAIBubble() {
   const rafRef = useRef<number>(0);
   const bubblePosRef = useRef(bubblePos);
   bubblePosRef.current = bubblePos;
+  const homePosRef = useRef<{ x: number; y: number } | null>(null); // Store "home" position before overlap adjustments
 
   const boundListenersRef = useRef<{
     mouseMove: (e: MouseEvent) => void;
@@ -101,7 +102,11 @@ export default function ImmoAIBubble() {
     const el = bubbleElRef.current;
     if (el) {
       const top = parseInt(el.style.top, 10);
-      if (!isNaN(top)) setBubblePos({ x: window.innerWidth - 72, y: top });
+      if (!isNaN(top)) {
+        const newPos = { x: window.innerWidth - 72, y: top };
+        setBubblePos(newPos);
+        homePosRef.current = newPos; // Update home position when user drags
+      }
       el.style.transition = "";
     }
     if (chatElRef.current) chatElRef.current.style.transition = "";
@@ -309,6 +314,10 @@ export default function ImmoAIBubble() {
         if (overlap) needsMove = true;
       });
       if (needsMove) {
+        // Store home position before first overlap adjustment
+        if (!homePosRef.current) {
+          homePosRef.current = bubblePosRef.current ?? { x: window.innerWidth - 72, y: window.innerHeight - 140 };
+        }
         // Move bubble above the overlap area with smooth transition
         const currentY = bubblePosRef.current?.y ?? (window.innerHeight - 140);
         const newY = Math.max(16, currentY - 80);
@@ -316,6 +325,14 @@ export default function ImmoAIBubble() {
         if (Math.abs(newY - currentY) < 1) return;
         el.style.transition = "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
         setBubblePos(prev => ({ x: prev?.x ?? window.innerWidth - 72, y: newY }));
+      } else if (homePosRef.current) {
+        // No overlaps — restore bubble to home position if it was displaced
+        const currentY = bubblePosRef.current?.y ?? (window.innerHeight - 140);
+        if (Math.abs(currentY - homePosRef.current.y) > 1) {
+          el.style.transition = "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+          setBubblePos({ ...homePosRef.current });
+        }
+        homePosRef.current = null; // Reset so we don't keep restoring
       }
     };
     // Use MutationObserver to detect new overlays

@@ -250,10 +250,10 @@ export default function PortfolioHistorie() {
 
     if (change) {
       const lastEvent = events[events.length - 1];
-      // Debounce: don't add if same type within last hour
-      const lastDate = new Date(lastEvent.date).getTime();
+      // Debounce: don't add if same type within last 24h (date stored as YYYY-MM-DD only)
+      const lastDate = new Date(lastEvent.date + 'T00:00:00').getTime();
       const now = Date.now();
-      if (now - lastDate < 3600000 && lastEvent.type === change.type) return;
+      if (now - lastDate < 86400000 && lastEvent.type === change.type) return;
 
       const newEvent: HistoryEvent = {
         id: generateId(),
@@ -313,7 +313,7 @@ export default function PortfolioHistorie() {
     setEvents(prev => [...prev, event].sort((a, b) => a.date.localeCompare(b.date)));
     setAddOpen(false);
     toast.success("Ereignis hinzugefügt");
-  }, [events, newEvent]);
+  }, [events, newEvent, stats.totalRent, properties.length]);
 
   const addPlanPoint = useCallback(() => {
     const point: PlanDataPoint = {
