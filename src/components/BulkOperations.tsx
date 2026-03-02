@@ -251,6 +251,7 @@ export default function BulkOperations({ items, entityName, onBulkDelete, onBulk
               checked={selected.has(item.id)}
               onCheckedChange={() => toggleItem(item.id)}
               aria-label={`${item.name} auswählen`}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             />
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium">{item.name}</span>
