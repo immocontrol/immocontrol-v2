@@ -1,3 +1,4 @@
+/** IMP-147: Hockey Stick Simulator engine — compound growth calculations for real estate portfolios */
 /**
  * Hockey Stick Simulator engine — extracted from HockeyStickSimulator.tsx
  * Contains simulation logic, sensitivity analysis, scenarios, and types.

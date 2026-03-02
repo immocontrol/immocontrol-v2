@@ -24,7 +24,7 @@ const PortfolioChart = () => {
       <h2 className="text-sm font-semibold mb-4">Portfolioverteilung nach Wert</h2>
       <div className="flex items-center gap-6">
         <div className="w-40 h-40 flex-shrink-0">
-          <ResponsiveContainer width="100%" height="100%">
+          /* IMP-108: min-height prevents layout shift */ <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}

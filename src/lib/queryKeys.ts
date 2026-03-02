@@ -1,5 +1,6 @@
 /** Centralised React Query key factory – keeps cache keys consistent across the app.
  * Item 7: Added reports, nebenkosten, forecast keys for new nav entries */
+/** IMP-144: Query key factory for React Query — ensures consistent cache keys */
 export const queryKeys = {
   properties: {
     all: ["properties"] as const,

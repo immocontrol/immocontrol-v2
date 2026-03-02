@@ -363,3 +363,95 @@ describe("CRM Utilities", () => {
     expect(getBuildingSizeColor(noArea)).toContain("muted");
   });
 });
+
+
+/* IMP-141: Tests for new formatter utilities */
+describe("IMP-141: Additional formatter utilities", () => {
+  test("formatArea formats small areas in m²", () => {
+    const { formatArea } = require("@/lib/formatters");
+    expect(formatArea(150)).toContain("m²");
+  });
+
+  test("formatArea formats large areas in hectares", () => {
+    const { formatArea } = require("@/lib/formatters");
+    expect(formatArea(15000)).toContain("ha");
+  });
+
+  test("calcMonthlyPayment returns correct annuity", () => {
+    const { calcMonthlyPayment } = require("@/lib/formatters");
+    const payment = calcMonthlyPayment(100000, 3, 20);
+    expect(payment).toBeGreaterThan(500);
+    expect(payment).toBeLessThan(600);
+  });
+
+  test("calcRemainingMonths returns 0 for no balance", () => {
+    const { calcRemainingMonths } = require("@/lib/formatters");
+    expect(calcRemainingMonths(0, 500, 3)).toBe(0);
+  });
+
+  test("formatInterestRate formats with comma decimal", () => {
+    const { formatInterestRate } = require("@/lib/formatters");
+    expect(formatInterestRate(3.5)).toBe("3,50 %");
+  });
+
+  test("stringToColor returns consistent HSL color", () => {
+    const { stringToColor } = require("@/lib/formatters");
+    const c1 = stringToColor("test");
+    const c2 = stringToColor("test");
+    expect(c1).toBe(c2);
+    expect(c1).toMatch(/^hsl\(/);
+  });
+
+  test("isValidPLZ validates German postal codes", () => {
+    const { isValidPLZ } = require("@/lib/formatters");
+    expect(isValidPLZ("10115")).toBe(true);
+    expect(isValidPLZ("1234")).toBe(false);
+    expect(isValidPLZ("123456")).toBe(false);
+  });
+});
+
+/* IMP-142: Tests for sanitize utilities */
+describe("IMP-142: Sanitize utilities", () => {
+  test("sanitizeEmail validates and normalizes email", () => {
+    const { sanitizeEmail } = require("@/lib/sanitize");
+    expect(sanitizeEmail("  User@Example.COM  ")).toBe("user@example.com");
+    expect(sanitizeEmail("notanemail")).toBe("");
+  });
+
+  test("sanitizeNumber returns fallback for NaN", () => {
+    const { sanitizeNumber } = require("@/lib/sanitize");
+    expect(sanitizeNumber("abc")).toBe(0);
+    expect(sanitizeNumber(42)).toBe(42);
+    expect(sanitizeNumber("3.14")).toBeCloseTo(3.14);
+  });
+
+  test("sanitizeUrl blocks javascript: protocol", () => {
+    const { sanitizeUrl } = require("@/lib/sanitize");
+    expect(sanitizeUrl("javascript:alert(1)")).toBe("");
+    expect(sanitizeUrl("https://example.com")).toBe("https://example.com");
+  });
+});
+
+/* IMP-143: Tests for validation utilities */
+describe("IMP-143: Validation utilities", () => {
+  test("isNonEmpty checks for non-empty strings", () => {
+    const { isNonEmpty } = require("@/lib/validation");
+    expect(isNonEmpty("hello")).toBe(true);
+    expect(isNonEmpty("  ")).toBe(false);
+    expect(isNonEmpty("")).toBe(false);
+    expect(isNonEmpty(null)).toBe(false);
+  });
+
+  test("isPositive checks for positive numbers", () => {
+    const { isPositive } = require("@/lib/validation");
+    expect(isPositive(1)).toBe(true);
+    expect(isPositive(0)).toBe(false);
+    expect(isPositive(-1)).toBe(false);
+  });
+
+  test("isValidDate validates date strings", () => {
+    const { isValidDate } = require("@/lib/validation");
+    expect(isValidDate("2024-01-15")).toBe(true);
+    expect(isValidDate("not-a-date")).toBe(false);
+  });
+});

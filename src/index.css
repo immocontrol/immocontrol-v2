@@ -2769,3 +2769,18 @@ input:focus, textarea:focus, select:focus {
   from { opacity: 0; transform: translateY(8px) scale(0.9); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* IMP-105: Balanced text wrapping for headings */
+h1, h2, h3 { text-wrap: balance; }
+
+/* IMP-106: Better table defaults */
+table { border-collapse: collapse; width: 100%; }
+th { text-align: left; }
+
+/* IMP-119: Larger tap targets on touch devices */
+@media (pointer: coarse) {
+  button, [role="button"], a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
