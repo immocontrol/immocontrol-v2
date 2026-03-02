@@ -52,6 +52,7 @@ export function useNotifications() {
     loading: false,
   });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const requestPermission = useCallback(async () => {
     if (typeof Notification === "undefined") return false;
@@ -180,7 +181,7 @@ export function useNotifications() {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     /* Send browser notification for new high-severity items */
-    const previousIds = new Set(state.notifications.map(n => n.id));
+    const previousIds = prevNotificationIdsRef.current;
     const newHighSeverity = notifications.filter(n => !n.read && n.severity === "high" && !previousIds.has(n.id));
     if (newHighSeverity.length > 0) {
       sendBrowserNotification(
@@ -189,18 +190,22 @@ export function useNotifications() {
       );
     }
 
+    prevNotificationIdsRef.current = new Set(notifications.map(n => n.id));
     setState(prev => ({ ...prev, notifications, unreadCount, loading: false }));
-  }, [user, state.notifications, sendBrowserNotification]);
+  }, [user, sendBrowserNotification]);
 
   const markAsRead = useCallback((id: string) => {
     const readIds = getReadIds();
     readIds.add(id);
     saveReadIds(readIds);
-    setState(prev => ({
-      ...prev,
-      notifications: prev.notifications.map(n => n.id === id ? { ...n, read: true } : n),
-      unreadCount: prev.unreadCount - 1,
-    }));
+    setState(prev => {
+      const wasUnread = prev.notifications.some(n => n.id === id && !n.read);
+      return {
+        ...prev,
+        notifications: prev.notifications.map(n => n.id === id ? { ...n, read: true } : n),
+        unreadCount: wasUnread ? prev.unreadCount - 1 : prev.unreadCount,
+      };
+    });
   }, []);
 
   const markAllAsRead = useCallback(() => {

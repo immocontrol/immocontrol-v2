@@ -82,6 +82,7 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
   const handleFile = useCallback(async (file: File) => {
     setLoading(true);
     setExtractedText("");
+    setPreviewUrl(null);
     setFileName(file.name);
 
     try {
