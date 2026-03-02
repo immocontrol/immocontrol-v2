@@ -14,6 +14,10 @@ import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
+/** Escape special XML characters */
+const escapeXml = (str: string): string =>
+  str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
 /** Feature 4: Vollständiger Steuer-Export Anlage V */
 export const AnlageVExport = () => {
   const { properties, stats } = useProperties();
@@ -264,6 +268,55 @@ export const AnlageVExport = () => {
     }
   }, [year, properties, anlageV]);
 
+  /** FEATURE-5: Generate ELSTER-compatible XML for Anlage V */
+  const generateElsterXML = useCallback(() => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!-- ImmoControl Anlage V Export — ELSTER-kompatibles Format -->
+<!-- Hinweis: Für die offizielle Abgabe bitte in Mein ELSTER oder ELSTER-Software importieren -->
+<AnlageV xmlns="http://www.elster.de/schema/anlage_v" version="1.0">
+  <Steuerjahr>${year}</Steuerjahr>
+  <Erstellt>${new Date().toISOString()}</Erstellt>
+  <Objekte>
+${properties.map((p, i) => `    <Objekt nr="${i + 1}">
+      <Bezeichnung>${escapeXml(p.name)}</Bezeichnung>
+      <Adresse>${escapeXml(p.address || "")}</Adresse>
+      <Baujahr>${p.yearBuilt || ""}</Baujahr>
+      <Wohnflaeche>${p.sqm}</Wohnflaeche>
+      <Einheiten>${p.units}</Einheiten>
+    </Objekt>`).join("\n")}
+  </Objekte>
+  <Einnahmen>
+    <Zeile9_Mieteinnahmen>${anlageV.mieteinnahmen.toFixed(2)}</Zeile9_Mieteinnahmen>
+    <Zeile13_Umlagen>${anlageV.umlagen.toFixed(2)}</Zeile13_Umlagen>
+    <Gesamt>${anlageV.einnahmenGesamt.toFixed(2)}</Gesamt>
+  </Einnahmen>
+  <Werbungskosten>
+    <Zeile33_AfA>${anlageV.afa.toFixed(2)}</Zeile33_AfA>
+    <Zeile37_Schuldzinsen>${anlageV.schuldzinsen.toFixed(2)}</Zeile37_Schuldzinsen>
+    <Zeile46_Grundsteuer>${anlageV.grundsteuer.toFixed(2)}</Zeile46_Grundsteuer>
+    <Zeile47_Versicherungen>${anlageV.versicherungen.toFixed(2)}</Zeile47_Versicherungen>
+    <Zeile48_Bewirtschaftung>${anlageV.bewirtschaftung.toFixed(2)}</Zeile48_Bewirtschaftung>
+    <Zeile49_Instandhaltung>${anlageV.instandhaltung.toFixed(2)}</Zeile49_Instandhaltung>
+    <Zeile50_Fahrtkosten>${anlageV.fahrtkosten.toFixed(2)}</Zeile50_Fahrtkosten>
+    <Zeile51_Hausverwaltung>${anlageV.hausverwaltung.toFixed(2)}</Zeile51_Hausverwaltung>
+    <Zeile52_SonstigeWK>${anlageV.sonstigeWK.toFixed(2)}</Zeile52_SonstigeWK>
+    <Gesamt>${anlageV.werbungskostenGesamt.toFixed(2)}</Gesamt>
+  </Werbungskosten>
+  <Ergebnis>
+    <EinkuenfteVV>${anlageV.einkuenfteVV.toFixed(2)}</EinkuenfteVV>
+  </Ergebnis>
+</AnlageV>`;
+
+    const blob = new Blob([xml], { type: "application/xml;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Anlage_V_${year}_ELSTER.xml`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`ELSTER-XML für ${year} heruntergeladen`);
+  }, [year, properties, anlageV]);
+
   const generateCSV = useCallback(() => {
     const rows = [
       ["Anlage V", year.toString()],
@@ -398,12 +451,15 @@ export const AnlageVExport = () => {
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Button onClick={generatePDF} className="gap-2" disabled={loading || properties.length === 0}>
               <FileText className="h-4 w-4" /> Als PDF
             </Button>
             <Button variant="outline" onClick={generateCSV} className="gap-2" disabled={loading || properties.length === 0}>
               <Download className="h-4 w-4" /> Als CSV
+            </Button>
+            <Button variant="outline" onClick={generateElsterXML} className="gap-2" disabled={loading || properties.length === 0}>
+              <Download className="h-4 w-4" /> ELSTER XML
             </Button>
           </div>
 

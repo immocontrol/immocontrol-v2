@@ -171,6 +171,79 @@ export function useTelegramBot() {
     }
   }, [token, validateToken]);
 
+  /** TELEGRAM-7: Send a message via Telegram Bot API */
+  const sendMessage = useCallback(async (chatId: number | string, text: string, parseMode: "HTML" | "Markdown" = "HTML"): Promise<boolean> => {
+    if (!token) return false;
+    try {
+      const res = await fetch(`${TELEGRAM_API}${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: parseMode }),
+      });
+      const data = await res.json();
+      return data.ok === true;
+    } catch {
+      return false;
+    }
+  }, [token]);
+
+  /** TELEGRAM-8: Send notification alerts (overdue payments, expiring contracts, open tickets) */
+  const sendNotificationAlert = useCallback(async (chatId: number | string, alerts: {
+    overduePayments?: Array<{ tenant: string; amount: number; dueDate: string }>;
+    expiringContracts?: Array<{ tenant: string; endDate: string; daysLeft: number }>;
+    openTickets?: Array<{ title: string; priority: string }>;
+    maintenanceDue?: Array<{ title: string; property: string; dueDate: string }>;
+  }): Promise<boolean> => {
+    const lines: string[] = ["<b>ImmoControl Benachrichtigungen</b>\n"];
+
+    if (alerts.overduePayments?.length) {
+      lines.push("🔴 <b>Überfällige Zahlungen:</b>");
+      for (const p of alerts.overduePayments) {
+        lines.push(`  • ${p.tenant}: ${p.amount.toLocaleString("de-DE")} € (fällig seit ${p.dueDate})`);
+      }
+      lines.push("");
+    }
+
+    if (alerts.expiringContracts?.length) {
+      lines.push("🟡 <b>Auslaufende Verträge:</b>");
+      for (const c of alerts.expiringContracts) {
+        lines.push(`  • ${c.tenant}: endet in ${c.daysLeft} Tagen (${c.endDate})`);
+      }
+      lines.push("");
+    }
+
+    if (alerts.openTickets?.length) {
+      lines.push("🔧 <b>Offene Tickets:</b>");
+      for (const t of alerts.openTickets) {
+        lines.push(`  • ${t.title} (${t.priority})`);
+      }
+      lines.push("");
+    }
+
+    if (alerts.maintenanceDue?.length) {
+      lines.push("🛠 <b>Wartung fällig:</b>");
+      for (const m of alerts.maintenanceDue) {
+        lines.push(`  • ${m.title} — ${m.property} (${m.dueDate})`);
+      }
+      lines.push("");
+    }
+
+    if (lines.length <= 1) return false; // No alerts to send
+    return sendMessage(chatId, lines.join("\n"));
+  }, [sendMessage]);
+
+  /** TELEGRAM-9: Get known chat IDs from received messages */
+  const getKnownChatIds = useCallback((): Array<{ id: number; title: string; type: string }> => {
+    const seen = new Map<number, { id: number; title: string; type: string }>();
+    for (const msg of state.messages) {
+      const chat = msg.message?.chat || msg.channel_post?.chat;
+      if (chat && !seen.has(chat.id)) {
+        seen.set(chat.id, { id: chat.id, title: chat.title || `Chat ${chat.id}`, type: chat.type });
+      }
+    }
+    return Array.from(seen.values());
+  }, [state.messages]);
+
   /* Cleanup polling on unmount */
   useEffect(() => {
     return () => stopPolling();
@@ -185,6 +258,9 @@ export function useTelegramBot() {
     startPolling,
     stopPolling,
     clearMessages,
+    sendMessage,
+    sendNotificationAlert,
+    getKnownChatIds,
     isPolling: pollingRef.current !== null,
   };
 }
