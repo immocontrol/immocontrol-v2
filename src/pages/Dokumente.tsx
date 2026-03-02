@@ -80,8 +80,6 @@ const extractPdfText = async (file: File): Promise<string> => {
 };
 
 const Dokumente = () => {
-  /* IMP-8: Document title */
-  /* IMP-42: Dynamic document title */ useEffect(() => { document.title = `Dokumente (${documents.length}) \u2013 ImmoControl`; }, [documents.length]);
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();
@@ -108,6 +106,10 @@ const Dokumente = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-8: Document title */
+  /* IMP-42: Dynamic document title */
+  useEffect(() => { document.title = `Dokumente (${documents.length}) – ImmoControl`; }, [documents.length]);
 
   const filteredDocs = useMemo(() => {
     let docs = documents;
