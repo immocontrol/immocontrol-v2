@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => ({
     include: ["@radix-ui/react-slider"],
   },
   build: {
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -35,9 +36,18 @@ export default defineConfig(({ mode }) => ({
             "@radix-ui/react-dropdown-menu",
             "@radix-ui/react-alert-dialog",
             "@radix-ui/react-tooltip",
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-switch",
+            "@radix-ui/react-slider",
+            "@radix-ui/react-scroll-area",
           ],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-forms": ["react-hook-form", "@hookform/resolvers", "zod"],
+          "vendor-date": ["date-fns"],
+          "vendor-pdf": ["jspdf", "pdf-lib"],
+          "vendor-markdown": ["react-markdown"],
+          "vendor-misc": ["sonner", "clsx", "tailwind-merge", "class-variance-authority", "cmdk"],
         },
       },
     },
