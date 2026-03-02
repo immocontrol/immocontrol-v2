@@ -200,10 +200,14 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
 
   const copyInviteLink = async () => {
     if (!inviteDialog) return;
-    await navigator.clipboard.writeText(inviteDialog.url);
-    setLinkCopied(true);
-    toast.success("Link kopiert!");
-    setTimeout(() => setLinkCopied(false), 3000);
+    try {
+      await navigator.clipboard.writeText(inviteDialog.url);
+      setLinkCopied(true);
+      toast.success("Link kopiert!");
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff");
+    }
   };
 
   const sendViaMail = () => {
@@ -357,8 +361,10 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigator.clipboard.writeText(t.email!);
-                            toast.success("E-Mail kopiert");
+                            navigator.clipboard.writeText(t.email!).then(
+                              () => toast.success("E-Mail kopiert"),
+                              () => toast.error("Kopieren fehlgeschlagen")
+                            );
                           }}
                           className="flex items-center gap-0.5 hover:text-foreground transition-colors"
                         >

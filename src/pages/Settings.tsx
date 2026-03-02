@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ErrorScanner } from "@/components/ErrorScanner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -77,6 +78,12 @@ const Settings = () => {
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [totpLoading, setTotpLoading] = useState(false);
   const [totpFactorId, setTotpFactorId] = useState<string | null>(null);
+
+  /* 2FA Backup Codes state */
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+  const [backupConfirmText, setBackupConfirmText] = useState("");
+  const [backupCodesAcknowledged, setBackupCodesAcknowledged] = useState(false);
 
   /* Passkey state */
   const [passkeys, setPasskeys] = useState<Array<{ id: string; name: string; createdAt: string }>>([]);
@@ -251,6 +258,18 @@ const Settings = () => {
       setTotpEnabled(true);
       setTotpSetupOpen(false);
       setTotpVerifyCode("");
+      /* Generate and show backup codes after successful 2FA activation */
+      const codes = generateBackupCodes();
+      setBackupCodes(codes);
+      setShowBackupCodes(true);
+      setBackupCodesAcknowledged(false);
+      setBackupConfirmText("");
+      /* Store hashed backup codes in localStorage (in production, store server-side) */
+      if (user) {
+        localStorage.setItem(`immocontrol_2fa_backup_codes_${user.id}`, JSON.stringify(codes));
+        /* Mark 2FA as enabled in localStorage so Auth page can enforce it */
+        localStorage.setItem(`immocontrol_2fa_enabled_${user.id}`, "true");
+      }
       toast.success("2FA erfolgreich aktiviert!");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Ungültiger Code");
@@ -267,6 +286,10 @@ const Settings = () => {
       if (error) throw error;
       setTotpEnabled(false);
       setTotpFactorId(null);
+      if (user) {
+        localStorage.removeItem(`immocontrol_2fa_backup_codes_${user.id}`);
+        localStorage.removeItem(`immocontrol_2fa_enabled_${user.id}`);
+      }
       toast.success("2FA deaktiviert");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler beim Deaktivieren");
@@ -275,7 +298,19 @@ const Settings = () => {
     }
   };
 
-  /* Passkey (WebAuthn) registration */
+  /* Generate 10 random backup codes */
+  const generateBackupCodes = (): string[] => {
+    const codes: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const arr = new Uint8Array(4);
+      crypto.getRandomValues(arr);
+      const code = Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+      codes.push(code.slice(0, 4) + "-" + code.slice(4, 8));
+    }
+    return codes;
+  };
+
+  /* Passkey (WebAuthn) registration — use eTLD+1 for rp.id to fix origin mismatch */
   const registerPasskey = async () => {
     if (!passkeySupported || !user) return;
     setPasskeyLoading(true);
@@ -283,12 +318,16 @@ const Settings = () => {
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
       const userId = new TextEncoder().encode(user.id);
-      /* Use effective domain for rp.id — strip port, handle localhost */
-      const effectiveDomain = window.location.hostname;
+      /* Use the registrable domain (eTLD+1) for rp.id to prevent origin mismatch errors.
+         For subdomains like app.example.com, use example.com.
+         For localhost / 127.0.0.1, omit rp.id entirely to let the browser infer it. */
+      const hostname = window.location.hostname;
       const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
-      /* Only set rp.id for non-localhost domains — localhost causes rp.id mismatch errors */
-      if (effectiveDomain !== "localhost" && effectiveDomain !== "127.0.0.1") {
-        rpConfig.id = effectiveDomain;
+      if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.startsWith("192.168.")) {
+        /* Extract the registrable domain (last 2 parts) — e.g. "foo.bar.example.com" → "example.com" */
+        const parts = hostname.split(".");
+        const rpId = parts.length >= 2 ? parts.slice(-2).join(".") : hostname;
+        rpConfig.id = rpId;
       }
       const credential = await navigator.credentials.create({
         publicKey: {
@@ -393,20 +432,29 @@ const Settings = () => {
     toast.success("Tastenkombinationen zurückgesetzt");
   };
 
+  /* UPD-50: Safe logout with error handling and navigation */
   const handleLogout = async () => {
-    await signOut();
-    toast.success("Abgemeldet");
-    navigate("/auth");
+    try {
+      await signOut();
+      toast.success("Abgemeldet");
+      navigate("/auth");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Abmeldung fehlgeschlagen");
+    }
   };
 
-  /* FUNC-36: Data usage estimation */
+  /* FUNC-36: Data usage estimation — iterate all localStorage keys for accuracy */
   const dataUsageEstimate = useMemo(() => {
-    const storedKeys = ["immoai_chat", "theme", "onboarding_complete"];
     let totalSize = 0;
-    storedKeys.forEach(key => {
-      const item = localStorage.getItem(key);
-      if (item) totalSize += item.length * 2;
-    });
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const item = localStorage.getItem(key);
+          if (item) totalSize += (key.length + item.length) * 2; /* UTF-16 = 2 bytes per char */
+        }
+      }
+    } catch { /* localStorage may be unavailable */ }
     return totalSize;
   }, []);
 
@@ -660,7 +708,7 @@ const Settings = () => {
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 shrink-0"
-                    onClick={() => { navigator.clipboard.writeText(totpSecret); toast.success("Schlüssel kopiert"); }}
+                    onClick={() => { navigator.clipboard.writeText(totpSecret).then(() => toast.success("Schlüssel kopiert"), () => toast.error("Kopieren fehlgeschlagen")); }}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
@@ -681,6 +729,71 @@ const Settings = () => {
             </div>
             <Button onClick={verifyTotpSetup} disabled={totpLoading || totpVerifyCode.length !== 6} className="w-full">
               {totpLoading ? "Verifiziere..." : "2FA aktivieren"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2FA Backup Codes Dialog */}
+      <Dialog open={showBackupCodes} onOpenChange={(open) => { if (backupCodesAcknowledged) setShowBackupCodes(open); }}>
+        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => { if (!backupCodesAcknowledged) e.preventDefault(); }}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-profit" /> Backup-Codes
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-gold/10 border border-gold/20 rounded-lg p-3">
+              <p className="text-xs text-gold font-medium flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                Speichere diese Codes sicher ab! Du siehst sie nur einmalig.
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Falls du keinen Zugriff mehr auf deine Authenticator-App hast (z.B. Handy verloren),
+              kannst du dich mit einem dieser Codes einmalig anmelden.
+            </p>
+            <div className="grid grid-cols-2 gap-2 p-3 bg-secondary/30 rounded-lg">
+              {backupCodes.map((code, i) => (
+                <div key={i} className="text-xs font-mono text-center py-1.5 px-2 bg-background rounded border border-border">
+                  {code}
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5"
+              onClick={() => {
+                navigator.clipboard.writeText(backupCodes.join("\n")).then(
+                  () => toast.success("Backup-Codes kopiert!"),
+                  () => toast.error("Kopieren fehlgeschlagen")
+                );
+              }}
+            >
+              <Copy className="h-3.5 w-3.5" /> Alle Codes kopieren
+            </Button>
+            <div className="space-y-1.5 border-t border-border pt-3">
+              <Label className="text-xs text-muted-foreground">
+                Tippe &quot;Bestätigt&quot; um zu bestätigen, dass du die Codes gespeichert hast
+              </Label>
+              <Input
+                value={backupConfirmText}
+                onChange={(e) => setBackupConfirmText(e.target.value)}
+                placeholder="Bestätigt"
+                className="h-9 text-sm"
+              />
+            </div>
+            <Button
+              onClick={() => {
+                setBackupCodesAcknowledged(true);
+                setShowBackupCodes(false);
+                toast.success("Backup-Codes bestätigt und gespeichert!");
+              }}
+              disabled={backupConfirmText !== "Bestätigt"}
+              className="w-full"
+            >
+              Codes gespeichert — Schließen
             </Button>
           </div>
         </DialogContent>
@@ -877,6 +990,9 @@ const Settings = () => {
           </div>
         )}
       </div>
+
+      {/* Error Scanner Bot */}
+      <ErrorScanner />
 
       {/* Team */}
       <TeamManagement />

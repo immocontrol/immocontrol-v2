@@ -13,6 +13,7 @@ import React, { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ErrorInterceptor } from "@/components/ErrorScanner";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -263,14 +264,9 @@ const RoleRouter = () => {
 };
 
 const App = () => {
-  React.useEffect(() => {
-    const handler = (e: PromiseRejectionEvent) => {
-      console.error("Unhandled rejection:", e.reason);
-      e.preventDefault();
-    };
-    window.addEventListener("unhandledrejection", handler);
-    return () => window.removeEventListener("unhandledrejection", handler);
-  }, []);
+  /* Unhandled rejection logging is handled by ErrorInterceptor (ErrorScanner.tsx)
+   * which registers its own window.unhandledrejection listener. No duplicate
+   * handler needed here — that would cause double-logging in the error store. */
 
   return (
     <ThemeProvider defaultTheme="dark">
@@ -281,6 +277,7 @@ const App = () => {
             <TooltipProvider delayDuration={1000}>
               <Toaster />
               <Sonner />
+              <ErrorInterceptor />
               <BrowserRouter>
                 <ScrollToTop />
                 <CommandPalette />

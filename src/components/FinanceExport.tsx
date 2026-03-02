@@ -11,6 +11,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
 
+/* Item 9: Proper payment type for Supabase join queries */
+interface PaymentRow {
+  property_id: string;
+  amount: number;
+  due_date: string;
+  paid_date: string | null;
+  status: string;
+  note: string | null;
+  tenants: { first_name: string; last_name: string; unit_label: string } | null;
+}
+
 export const FinanceExportDialog = () => {
   const { properties, stats } = useProperties();
   const { user } = useAuth();
@@ -41,7 +52,8 @@ export const FinanceExportDialog = () => {
       // Build property lookup
       const propMap = new Map(properties.map(p => [p.id, p.name]));
 
-      const rows = (payments || []).map((p: any) => [
+      const typedPayments = (payments || []) as unknown as PaymentRow[];
+      const rows = typedPayments.map((p) => [
         propMap.get(p.property_id) || p.property_id,
         p.tenants ? `${p.tenants.first_name} ${p.tenants.last_name}` : "",
         p.tenants?.unit_label || "",
@@ -53,9 +65,9 @@ export const FinanceExportDialog = () => {
       ]);
 
       // Summary rows
-      const confirmed = (payments || []).filter((p: any) => p.status === "confirmed");
-      const totalConfirmed = confirmed.reduce((s: number, p: any) => s + Number(p.amount), 0);
-      const totalAll = (payments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
+      const confirmed = typedPayments.filter((p) => p.status === "confirmed");
+      const totalConfirmed = confirmed.reduce((s, p) => s + Number(p.amount), 0);
+      const totalAll = typedPayments.reduce((s, p) => s + Number(p.amount), 0);
 
       rows.push([]);
       rows.push(["ZUSAMMENFASSUNG"]);
@@ -111,11 +123,12 @@ export const FinanceExportDialog = () => {
         .order("due_date", { ascending: true });
 
       const propMap = new Map(properties.map(p => [p.id, p]));
-      const totalConfirmed = (payments || []).reduce((s: number, p: any) => s + Number(p.amount), 0);
+      const typedConfirmed = (payments || []) as unknown as PaymentRow[];
+      const totalConfirmed = typedConfirmed.reduce((s, p) => s + Number(p.amount), 0);
 
       // Group payments by property
-      const byProperty = new Map<string, any[]>();
-      for (const p of payments || []) {
+      const byProperty = new Map<string, PaymentRow[]>();
+      for (const p of typedConfirmed) {
         const arr = byProperty.get(p.property_id) || [];
         arr.push(p);
         byProperty.set(p.property_id, arr);
@@ -123,7 +136,7 @@ export const FinanceExportDialog = () => {
 
       // Group payments by month
       const byMonth = new Map<string, number>();
-      for (const p of payments || []) {
+      for (const p of typedConfirmed) {
         const m = p.due_date.slice(0, 7);
         byMonth.set(m, (byMonth.get(m) || 0) + Number(p.amount));
       }
@@ -177,7 +190,7 @@ ${months.map((m, i) => {
 <tr><th>Objekt</th><th>Adresse</th><th>Einnahmen ${year}</th><th>Miete/M</th><th>Cashflow/M</th><th>Cashflow/Jahr</th></tr>
 ${properties.map(prop => {
   const propPayments = byProperty.get(prop.id) || [];
-  const propTotal = propPayments.reduce((s: number, p: any) => s + Number(p.amount), 0);
+  const propTotal = propPayments.reduce((s, p) => s + Number(p.amount), 0);
   return `<tr>
     <td><strong>${escapeHtml(prop.name)}</strong></td>
     <td>${escapeHtml(prop.address || "")}</td>
@@ -192,7 +205,7 @@ ${properties.map(prop => {
 <h2>Alle bestätigten Zahlungen</h2>
 <table>
 <tr><th>Datum</th><th>Objekt</th><th>Mieter</th><th>Betrag</th></tr>
-${(payments || []).map((p: any) => {
+${typedConfirmed.map((p) => {
   const prop = propMap.get(p.property_id);
   return `<tr>
     <td>${new Date(p.due_date).toLocaleDateString("de-DE")}</td>

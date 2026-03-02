@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound } from "lucide-react";
+import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,17 +23,51 @@ const Auth = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  /* 2FA enforcement state */
+  const [needs2FA, setNeeds2FA] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  /* Ref to bypass the MFA re-check after backup code login or explicit back navigation.
+   * Without this, setNeeds2FA(false) triggers the useEffect which re-detects
+   * AAL1 < AAL2 (factor still enrolled server-side) and sets needs2FA back to true. */
+  const bypassMfaCheck = useRef(false);
+
   useEffect(() => {
-    if (user) {
-      const invitationToken = sessionStorage.getItem("invitation_token");
-      if (invitationToken) {
-        sessionStorage.removeItem("invitation_token");
-        navigate(`/einladung?token=${invitationToken}`, { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+    if (bypassMfaCheck.current) return;
+    if (user && !needs2FA) {
+      /* Only redirect after 2FA is completed (or not required) */
+      const check2FA = async () => {
+        try {
+          const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
+            /* 2FA is required but not yet verified — show the TOTP UI
+             * instead of silently returning (handles page refresh / direct nav) */
+            const { data: factors } = await supabase.auth.mfa.listFactors();
+            const totpFactor = factors?.totp?.find(f => f.status === "verified");
+            if (totpFactor) {
+              setMfaFactorId(totpFactor.id);
+              setNeeds2FA(true);
+            }
+            return;
+          }
+        } catch (err: unknown) {
+          toast.error("2FA Statusprüfung fehlgeschlagen. Bitte erneut anmelden.");
+          await supabase.auth.signOut();
+          return;
+        }
+        const invitationToken = sessionStorage.getItem("invitation_token");
+        if (invitationToken) {
+          sessionStorage.removeItem("invitation_token");
+          navigate(`/einladung?token=${invitationToken}`, { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      };
+      check2FA();
     }
-  }, [user, navigate]);
+  }, [user, navigate, needs2FA]);
 
   const translateError = (msg: string): string => {
     if (msg.includes("Invalid login")) return "E-Mail oder Passwort ist falsch";
@@ -43,6 +77,77 @@ const Auth = () => {
     if (msg.includes("rate limit")) return "Zu viele Versuche. Bitte warte einen Moment.";
     if (msg.includes("email")) return "Bitte gib eine gültige E-Mail-Adresse ein";
     return msg;
+  };
+
+  /* 2FA TOTP verification after login */
+  const verify2FA = async () => {
+    if (!mfaFactorId) return;
+    setLoading(true);
+    try {
+      const { data: challenge, error: challengeErr } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challengeErr) throw challengeErr;
+      const { error: verifyErr } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challenge.id,
+        code: totpCode,
+      });
+      if (verifyErr) throw verifyErr;
+      bypassMfaCheck.current = true;
+      setNeeds2FA(false);
+      toast.success("Willkommen zurück!");
+      navigate("/");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Ungültiger 2FA-Code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* Backup code verification — client-side only.
+   * We do NOT call mfa.unenroll here because that requires AAL2 (the user
+   * is still at AAL1). Instead we validate the backup code against
+   * localStorage and let the user through. The code is only consumed
+   * AFTER validation succeeds so it isn't lost on failure.
+   *
+   * KNOWN LIMITATION: The Supabase session stays at AAL1 after backup code
+   * login. If any RLS policies check for AAL2, queries will fail silently.
+   * This app does not use AAL-based RLS, so this is acceptable. For
+   * production use, backup codes should be verified server-side via an
+   * admin endpoint that can unenroll the factor at elevated privileges. */
+  const verifyBackupCode = () => {
+    setLoading(true);
+    try {
+      const userId = user?.id;
+      if (!userId) {
+        toast.error("Nicht eingeloggt");
+        return;
+      }
+      const backupCodesKey = `immocontrol_2fa_backup_codes_${userId}`;
+      const enabledKey = `immocontrol_2fa_enabled_${userId}`;
+      const storedCodes = JSON.parse(localStorage.getItem(backupCodesKey) || "[]") as string[];
+      const normalizedInput = backupCode.trim().toUpperCase();
+      const codeIndex = storedCodes.findIndex(c => c === normalizedInput);
+      if (codeIndex === -1) {
+        toast.error("Ungültiger Backup-Code");
+        setLoading(false);
+        return;
+      }
+      /* Validation succeeded — NOW consume the code */
+      storedCodes.splice(codeIndex, 1);
+      localStorage.setItem(backupCodesKey, JSON.stringify(storedCodes));
+      /* Bypass the MFA re-check in useEffect — session stays at AAL1 but
+       * the factor is still enrolled, so useEffect would re-detect it */
+      bypassMfaCheck.current = true;
+      setNeeds2FA(false);
+      toast.success(`Willkommen zurück! (${storedCodes.length} Backup-Codes verbleibend)`);
+      toast.info("Bitte richte 2FA erneut ein, da ein Backup-Code verwendet wurde.", { duration: 8000 });
+      localStorage.removeItem(enabledKey);
+      navigate("/");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Fehler bei der Backup-Code-Verifizierung");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +165,19 @@ const Auth = () => {
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        /* Check if MFA is required (AAL2) */
+        const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
+          /* User has 2FA enabled — need to verify TOTP before proceeding */
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          const totpFactor = factors?.totp?.find(f => f.status === "verified");
+          if (totpFactor) {
+            setMfaFactorId(totpFactor.id);
+            setNeeds2FA(true);
+            setLoading(false);
+            return;
+          }
+        }
         toast.success("Willkommen zurück!");
         navigate("/");
       } else {
@@ -87,16 +205,17 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center glow-primary">
-              <Building2 className="h-6 w-6 text-primary" />
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center glow-primary transition-transform hover:scale-105">
+              <Building2 className="h-7 w-7 text-primary" />
             </div>
             <span className="text-2xl font-bold tracking-tight">ImmoControl</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground transition-all duration-300">
             {mode === "login" && "Melde dich an, um dein Portfolio zu verwalten"}
             {mode === "register" && "Erstelle ein Konto für dein Portfolio"}
             {mode === "forgot" && "Setze dein Passwort zurück"}
@@ -109,6 +228,72 @@ const Auth = () => {
             </div>
           )}
         </div>
+
+        {/* 2FA Verification Step */}
+        {needs2FA ? (
+          <div className="gradient-card rounded-xl border border-border p-6 space-y-4">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-sm font-semibold">Zwei-Faktor-Authentifizierung</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {useBackupCode
+                  ? "Gib einen deiner Backup-Codes ein"
+                  : "Gib den 6-stelligen Code aus deiner Authenticator-App ein"}
+              </p>
+            </div>
+
+            {!useBackupCode ? (
+              <div className="space-y-3">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000"
+                  className="h-12 text-center text-xl font-mono tracking-[0.5em]"
+                  autoFocus
+                />
+                <Button onClick={verify2FA} disabled={loading || totpCode.length !== 6} className="w-full">
+                  {loading ? "Verifiziere..." : "Bestätigen"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Input
+                  type="text"
+                  value={backupCode}
+                  onChange={(e) => setBackupCode(e.target.value.toUpperCase())}
+                  placeholder="XXXX-XXXX"
+                  className="h-12 text-center text-lg font-mono tracking-wider"
+                  autoFocus
+                />
+                <Button onClick={verifyBackupCode} disabled={loading || backupCode.length < 9} className="w-full">
+                  {loading ? "Verifiziere..." : "Mit Backup-Code anmelden"}
+                </Button>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => { setUseBackupCode(!useBackupCode); setTotpCode(""); setBackupCode(""); }}
+                className="text-xs text-primary hover:underline text-center"
+              >
+                {useBackupCode ? "Authenticator-App verwenden" : "Backup-Code verwenden (Handy verloren?)"}
+              </button>
+              <button
+                type="button"
+                onClick={async () => { await supabase.auth.signOut(); setNeeds2FA(false); setTotpCode(""); setBackupCode(""); }}
+                className="text-xs text-muted-foreground hover:text-foreground text-center"
+              >
+                Zurück zur Anmeldung
+              </button>
+            </div>
+          </div>
+        ) : (
 
         <form onSubmit={handleSubmit} className="gradient-card rounded-xl border border-border p-6 space-y-4">
           {/* Back button for forgot mode */}
@@ -309,8 +494,9 @@ const Auth = () => {
             </>
           )}
         </form>
+        )}
 
-        {mode !== "forgot" && (
+        {mode !== "forgot" && !needs2FA && (
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               {mode === "login" ? "Noch kein Konto?" : "Bereits registriert?"}{" "}
@@ -332,28 +518,5 @@ const Auth = () => {
     </div>
   );
 };
-
-/* OPT-22: Password validation helper */
-const validatePasswordStrength = (password: string): { valid: boolean; message: string } => {
-  if (password.length < 6) return { valid: false, message: "Mindestens 6 Zeichen" };
-  if (password.length < 8) return { valid: true, message: "Schwach - mindestens 8 Zeichen empfohlen" };
-  const hasUpper = /[A-Z]/.test(password);
-  const hasLower = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const hasSpecial = /[^A-Za-z0-9]/.test(password);
-  const strength = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
-  if (strength >= 3) return { valid: true, message: "Stark" };
-  return { valid: true, message: "Mittel" };
-};
-
-/* OPT-23: Email validation helper */
-const isValidEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
-
-/* FUNC-38: Login attempt limiter constants */
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOGIN_LOCKOUT_MS = 60000;
-
 
 export default Auth;

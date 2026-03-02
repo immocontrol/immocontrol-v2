@@ -115,8 +115,10 @@ const PropertyDetail = () => {
   const besitzdauer = diffYears > 0 ? `${diffYears}J ${diffMonths}M` : `${diffMonths} Monate`;
 
   const copyAddress = () => {
-    navigator.clipboard.writeText(property.address);
-    toast.success("Adresse kopiert");
+    navigator.clipboard.writeText(property.address).then(
+      () => toast.success("Adresse kopiert"),
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   };
 
   return (
@@ -166,8 +168,10 @@ const PropertyDetail = () => {
                   aria-label="Objektdaten teilen"
                   onClick={() => {
                     const summary = `📊 ${property.name}\n📍 ${property.address}\n💰 Wert: ${formatCurrency(property.currentValue)}\n🏠 Miete: ${formatCurrency(property.monthlyRent)}/M\n📈 Cashflow: ${formatCurrency(property.monthlyCashflow)}/M\n📊 Brutto-Rendite: ${bruttoRendite.toFixed(1)}%\n🏦 Restschuld: ${formatCurrency(property.remainingDebt)}`;
-                    navigator.clipboard.writeText(summary);
-                    toast.success("Objektzusammenfassung kopiert!");
+                    navigator.clipboard.writeText(summary).then(
+                      () => toast.success("Objektzusammenfassung kopiert!"),
+                      () => toast.error("Kopieren fehlgeschlagen")
+                    );
                   }}
                 >
                   <Share2 className="h-4 w-4" />
