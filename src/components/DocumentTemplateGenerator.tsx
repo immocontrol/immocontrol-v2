@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useProperties } from "@/context/PropertyContext";
+import { escapeHtml } from "@/lib/sanitize";
 import { toast } from "sonner";
 
 const TEMPLATES = [
@@ -92,7 +93,7 @@ const DocumentTemplateGenerator = () => {
   @media print { body { padding: 30px; } .no-print { display: none; } }
 </style></head><body>
 <h1>${templateLabel}</h1>
-<pre>${text.replace(/\[([^\]]+)\]/g, '<span class="placeholder">[$1]</span>')}</pre>
+<pre>${escapeHtml(text).replace(/\[([^\]]+)\]/g, '<span class="placeholder">[$1]</span>')}</pre>
 <div class="footer">ImmoControl · ${templateLabel} · ${new Date().toLocaleDateString("de-DE")}</div>
 <div class="no-print" style="margin-top:30px;text-align:center">
   <button onclick="window.print()" style="padding:8px 24px;background:#2a9d6e;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px">Drucken / Als PDF speichern</button>

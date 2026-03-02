@@ -476,15 +476,22 @@ const BankMatching = () => {
   const fuzzyNameMatch = useCallback((txName: string, tenantName: string): boolean => {
     const a = txName.toLowerCase().trim();
     const b = tenantName.toLowerCase().trim();
-    if (!a || !b) return false;
-    if (a.includes(b) || b.includes(a)) return true;
-    // Split into words and check each
-    const bWords = b.split(/\s+/);
-    const matchingWords = bWords.filter(w => w.length > 2 && a.includes(w));
-    if (matchingWords.length >= Math.ceil(bWords.length * 0.5)) return true;
-    // Levenshtein for typo tolerance (threshold: 20% of string length)
-    const dist = levenshtein(a, b);
-    return dist <= Math.max(2, Math.floor(Math.max(a.length, b.length) * 0.2));
+    if (!a || !b || b.length < 4) return false; // Skip very short names to avoid false positives
+    // Exact substring match — only match if tenant name appears as a word boundary
+    const wordBoundaryRegex = new RegExp(`\\b${b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+    if (wordBoundaryRegex.test(a)) return true;
+    // Multi-word name: require ALL words (not just 50%) with length > 3 to match
+    const bWords = b.split(/\s+/).filter(w => w.length > 3);
+    if (bWords.length >= 2) {
+      const allWordsFound = bWords.every(w => a.includes(w));
+      if (allWordsFound) return true;
+    }
+    // Levenshtein only for short, similar-length strings (typo tolerance)
+    if (Math.abs(a.length - b.length) <= 3 && b.length >= 5) {
+      const dist = levenshtein(a, b);
+      return dist <= Math.max(2, Math.floor(b.length * 0.15));
+    }
+    return false;
   }, [levenshtein]);
 
   // ── Rule-based + heuristic matching ──
