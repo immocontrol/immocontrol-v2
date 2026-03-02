@@ -74,9 +74,13 @@ export function useTelegramBot() {
     }
   }, []);
 
-  /* Keep runtime offset in sync with stored value */
+  /* Keep runtime offset in sync with stored value — only move forward.
+   * This avoids resetting the offset backwards if a stale Supabase load resolves
+   * after fetchMessages has already advanced the ref. */
   useEffect(() => {
-    lastUpdateId.current = persistedLastUpdateId;
+    if (persistedLastUpdateId > lastUpdateId.current) {
+      lastUpdateId.current = persistedLastUpdateId;
+    }
   }, [persistedLastUpdateId]);
 
   type FetchOptions = {
