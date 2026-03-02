@@ -174,6 +174,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  /* Mobile grouped nav: which group is expanded (shows sub-items above bottom bar) */
+  const [mobileActiveGroup, setMobileActiveGroup] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
 
@@ -515,10 +517,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <BackToTop />
       <ImmoAIBubble />
 
-      {/* Mobile nav with sliding dot */}
-      {/* BUG-7: Fix mobile bottom menu overlap — use safe-area-inset-bottom, z-50, and pb-safe to prevent content clipping */}
-      {/* IMP-43: Ensure mobile nav items never overflow the viewport */}
-      {/* BUG-9: Auto-fade bottom menu on scroll down, reappear on scroll up */}
+      {/* Mobile nav — 5 grouped tabs with expandable sub-items */}
       <nav
         className={`fixed bottom-0 left-0 right-0 z-[200] border-t border-border bg-background/95 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe transition-all duration-300 ${
           mobileNavVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
@@ -527,14 +526,61 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         aria-label="Mobile Navigation"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
+        {/* Sub-items panel — shows when a group tab is tapped */}
+        {mobileActiveGroup && (() => {
+          const group = navEntries.find(e => isGroup(e) && e.label === mobileActiveGroup) as NavGroup | undefined;
+          if (!group) return null;
+          return (
+            /* UPD-12: Use sub-nav-slide-in animation */
+            <div className="border-b border-border bg-background/95 backdrop-blur-xl px-2 py-1.5 flex items-center gap-1 overflow-x-auto scrollbar-hide scrollbar-thin sub-nav-slide-in relative">
+              {group.items.map((item, idx) => {
+                const isActive = isRouteActive(item.path, location.pathname);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileActiveGroup(null)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                      isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary/50"
+                    }`}
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                  >
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })()}
         <div ref={mobileNavRef} className="flex items-center justify-around py-1.5 relative">
-          {navItems.slice(0, 5).map((item) => {
+          {navEntries.map((entry) => {
+            if (isGroup(entry)) {
+              const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
+              const isExpanded = mobileActiveGroup === entry.label;
+              return (
+                <button
+                  key={entry.label}
+                  onClick={() => setMobileActiveGroup(isExpanded ? null : entry.label)}
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors relative ${
+                    groupActive || isExpanded ? "text-primary" : "text-muted-foreground"
+                  }`}
+                  style={{ minHeight: "auto", minWidth: "auto" }}
+                >
+                  <entry.icon className="h-4 w-4" />
+                  <span className="truncate max-w-[56px]">{entry.label}</span>
+                  {isExpanded && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />}
+                </button>
+              );
+            }
+            const item = entry as NavItem;
             const isActive = isRouteActive(item.path, location.pathname);
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 data-nav-link
+                onClick={() => setMobileActiveGroup(null)}
                 aria-current={isActive ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors relative ${
                   isActive ? "text-primary" : "text-muted-foreground"
@@ -542,50 +588,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 style={{ minHeight: "auto", minWidth: "auto" }}
               >
                 <item.icon className="h-4 w-4" />
-                <span className="truncate max-w-[48px]">{item.label}</span>
+                <span className="truncate max-w-[56px]">{item.label}</span>
               </Link>
             );
           })}
-          {/* More menu for remaining items */}
-          <button
-            onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
-            className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
-              mobileMoreOpen || navItems.slice(5).some(i => isRouteActive(i.path, location.pathname))
-                ? "text-primary" : "text-muted-foreground"
-            }`}
-            style={{ minHeight: "auto", minWidth: "auto" }}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-            <span>Mehr</span>
-          </button>
-          {/* Mobile sliding dot */}
-          <span
-            className="absolute -top-1 w-1 h-1 rounded-full bg-primary pointer-events-none"
-            style={mobileDotStyle}
-          />
         </div>
-        {/* Expanded more menu */}
-        {mobileMoreOpen && (
-          <div className="border-t border-border bg-background/95 backdrop-blur-xl px-4 py-2 grid grid-cols-3 gap-1.5 animate-fade-in">
-            {navItems.slice(5).map((item) => {
-              const isActive = isRouteActive(item.path, location.pathname);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMoreOpen(false)}
-                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-secondary/50"
-                  }`}
-                  style={{ minHeight: "auto", minWidth: "auto" }}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span className="truncate">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
       </nav>
     </div>
   );

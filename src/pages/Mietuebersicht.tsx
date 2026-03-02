@@ -180,7 +180,8 @@ const Mietuebersicht = () => {
 
         <TabsContent value="zahlungen" className="space-y-6 mt-4">
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* UPD-1: Add stagger animation to KPI cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 card-stagger-enter">
             <div className="gradient-card rounded-xl border border-border p-4">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Soll gesamt</div>
               <div className="text-xl font-bold">{formatCurrency(stats.totalDue)}</div>

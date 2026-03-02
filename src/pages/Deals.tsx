@@ -387,7 +387,7 @@ const Deals = () => {
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 bg-secondary animate-pulse rounded" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 card-stagger-enter">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-16 bg-secondary animate-pulse rounded-lg" />
           ))}
@@ -438,7 +438,7 @@ const Deals = () => {
           placeholder="Deals durchsuchen (Titel, Adresse, Kontakt, Quelle)..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="pl-9 pr-9 h-9"
+          className="pl-9 pr-9 h-9 search-focus-ring"
           aria-label="Deals durchsuchen"
         />
         {search && (
@@ -449,7 +449,8 @@ const Deals = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* UPD-8: Add stagger animation to deal stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 card-stagger-enter">
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Aktive Deals</p><p className="text-xl font-bold">{stats.active.length}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Pipeline-Volumen</p><p className="text-xl font-bold">{fmt(stats.totalVol)}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Gewonnen</p><p className="text-xl font-bold text-green-600">{stats.won.length}</p></CardContent></Card>

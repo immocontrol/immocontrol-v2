@@ -245,8 +245,15 @@ const Auth = () => {
             return;
           }
         }
+        /* UPD-9: Check for pending invitation token after normal login */
         toast.success("Willkommen zurück!");
-        navigate("/");
+        const invitationToken = sessionStorage.getItem("invitation_token");
+        if (invitationToken) {
+          sessionStorage.removeItem("invitation_token");
+          navigate(`/einladung?token=${invitationToken}`, { replace: true });
+        } else {
+          navigate("/");
+        }
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -258,8 +265,15 @@ const Auth = () => {
         });
         if (error) throw error;
         if (data.session) {
+          /* UPD-10: Check for pending invitation token after registration */
           toast.success("Willkommen bei ImmoControl!");
-          navigate("/");
+          const invToken = sessionStorage.getItem("invitation_token");
+          if (invToken) {
+            sessionStorage.removeItem("invitation_token");
+            navigate(`/einladung?token=${invToken}`, { replace: true });
+          } else {
+            navigate("/");
+          }
         } else {
           toast.success("Konto erstellt! Bitte bestätige deine E-Mail-Adresse.");
         }

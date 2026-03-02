@@ -478,7 +478,8 @@ ${properties.map(p => `<tr>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="min-w-0">
           {/* UI-11: heading-gradient for page title — single line, no truncation */}
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap">{greeting}</h1>
+          {/* UPD-36: Smooth page header fade-in on route change */}
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap page-header-enter">{greeting}</h1>
           <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
             {/* OPT-10: pluralDE for correct pluralization */}
             {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")} · {totalSqm.toLocaleString("de-DE")} m²

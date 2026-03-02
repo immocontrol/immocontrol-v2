@@ -185,7 +185,8 @@ const CashForecast = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* UPD-4: Add stagger animation to cashflow KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 card-stagger-enter">
         <div className="gradient-card rounded-xl border border-border p-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Einnahmen {forecastWeeks}W</p>
           <p className="text-xl font-bold mt-1 text-profit">{formatCurrency(totalIncome13W)}</p>

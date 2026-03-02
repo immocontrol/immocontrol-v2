@@ -396,8 +396,9 @@ const ContactManagement = () => {
       )}
 
       {/* Contact list */}
+      {/* UPD-24: Better empty state animation for contacts */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 animate-fade-in">
+        <div className="text-center py-12 empty-state-bounce">
           <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
             <Contact className="h-6 w-6 text-muted-foreground" />
           </div>
@@ -422,6 +423,7 @@ const ContactManagement = () => {
           <ContactStats contacts={contacts} />
           {/* Improvement 14: Contact list with stagger animation */}
                     {/* UI-UPDATE-14: Card hover animation for contacts */}
+          {/* UPD-25: Add card-press class for mobile touch feedback */}
           <div className="grid gap-3 md:grid-cols-2 list-stagger">
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;

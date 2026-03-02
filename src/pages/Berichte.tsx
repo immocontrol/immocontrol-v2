@@ -320,7 +320,8 @@ ${properties.map(p => {
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label="Berichte-Center">
       {/* Improvement 10: Mobile responsive heading */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+        {/* UPD-36: Smooth page header fade-in */}
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 page-header-enter">
           <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Berichte-Center
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Miet-, Objekt- und Steuerberichte auf Knopfdruck</p>
@@ -328,7 +329,8 @@ ${properties.map(p => {
 
       {/* Quick Summary */}
       {/* IMP-38: Make KPI cards responsive on mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+      {/* UPD-7: Add stagger animation to report summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0 card-stagger-enter">
         <div className="gradient-card rounded-xl border border-border p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
           <p className="text-lg font-bold text-profit">{formatCurrency(properties.reduce((s, p) => s + p.monthlyRent * 12, 0))}</p>

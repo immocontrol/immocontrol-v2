@@ -494,8 +494,9 @@ const Todos = () => {
         <TodoStats todos={todos} />
 
         {/* FUNC-8/9/10: Completion rate, avg days, upcoming deadlines */}
+        {/* UPD-11: Add stagger animation to todo stats */}
         {todos.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 card-stagger-enter">
             <div className="glass-card rounded-lg border border-border p-2.5 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Erledigt</p>
               <p className={`text-base font-bold ${completionRate >= 70 ? "text-profit" : completionRate >= 40 ? "text-gold" : "text-loss"}`}>{completionRate}%</p>

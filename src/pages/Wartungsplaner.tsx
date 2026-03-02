@@ -368,10 +368,12 @@ const Wartungsplaner = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* UPD-3: Add stagger animation to maintenance stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 card-stagger-enter">
         <div className="gradient-card rounded-xl border border-border p-4">
           <div className="text-[10px] text-muted-foreground uppercase">Überfällig</div>
-          <div className={`text-xl font-bold ${overdueItems.length > 0 ? "text-loss" : ""}`}>{overdueItems.length}</div>
+          {/* UPD-40: Smoother stat card number transition */}
+          <div className={`text-xl font-bold stat-number-transition ${overdueItems.length > 0 ? "text-loss" : ""}`}>{overdueItems.length}</div>
         </div>
         <div className="gradient-card rounded-xl border border-border p-4">
           <div className="text-[10px] text-muted-foreground uppercase">Bald fällig</div>
