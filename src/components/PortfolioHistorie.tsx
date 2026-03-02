@@ -273,7 +273,7 @@ export default function PortfolioHistorie() {
       setEvents(prev => [...prev, newEvent]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stats.totalValue, stats.totalDebt, stats.totalCashflow, properties.length]);
+  }, [stats.totalValue, stats.totalDebt, stats.totalCashflow, stats.totalRent, properties.length]);
 
   /* HIST-6: Dialog state for adding manual events */
   const [addOpen, setAddOpen] = useState(false);
