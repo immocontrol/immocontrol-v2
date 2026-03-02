@@ -257,7 +257,7 @@ const Deals = () => {
   }, [deals]);
 
   useEffect(() => {
-    if (!user || !telegramAutoImportEnabled || !telegram.token) return;
+    if (!user || !telegramAutoImportEnabled || !telegram.token || isLoading) return;
 
     let cancelled = false;
 
@@ -301,7 +301,7 @@ const Deals = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [user, telegramAutoImportEnabled, telegram.token, telegram.fetchMessages, telegramDealChatId, telegramDealChatTitleIncludes]);
+  }, [user, telegramAutoImportEnabled, telegram.token, telegram.fetchMessages, telegramDealChatId, telegramDealChatTitleIncludes, isLoading]);
 
   const openEdit = useCallback((deal: DealRecord) => {
     setEditDeal(deal);

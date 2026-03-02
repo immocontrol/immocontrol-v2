@@ -114,7 +114,13 @@ export function useTelegramBot() {
       const updates: TelegramMessage[] = data.result || [];
 
       if (updates.length > 0) {
-        /* Update offset to acknowledge processed messages */
+        /* Update offset to acknowledge ALL received messages — including those
+         * filtered out by chat filters below.  This is intentional: Telegram's
+         * getUpdates API keeps returning un-acknowledged updates, so if we only
+         * advanced the offset for matching chats the non-matching messages would
+         * be re-fetched on every poll forever.  The trade-off is that messages
+         * from non-matching chats are permanently consumed.  If the user changes
+         * their chat filter later, only NEW messages will be picked up. */
         const nextUpdateId = Math.max(...updates.map(u => u.update_id));
         lastUpdateId.current = nextUpdateId;
         setPersistedLastUpdateId(nextUpdateId);
