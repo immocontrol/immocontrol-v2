@@ -208,6 +208,21 @@ const Auth = () => {
         /* Check if MFA is required (AAL2) */
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
+          /* Check if this device is trusted before showing 2FA prompt */
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          const currentUserId = currentSession?.user?.id;
+          if (currentUserId && isDeviceRemembered(currentUserId)) {
+            bypassMfaCheck.current = true;
+            toast.success("Willkommen zurück!");
+            const invitationToken = sessionStorage.getItem("invitation_token");
+            if (invitationToken) {
+              sessionStorage.removeItem("invitation_token");
+              navigate(`/einladung?token=${invitationToken}`, { replace: true });
+            } else {
+              navigate("/", { replace: true });
+            }
+            return;
+          }
           /* User has 2FA enabled — need to verify TOTP before proceeding */
           const { data: factors } = await supabase.auth.mfa.listFactors();
           const totpFactor = factors?.totp?.find(f => f.status === "verified");
