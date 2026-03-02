@@ -130,7 +130,9 @@ export default function ImmoAI() {
           }
         }
       }
+      rateLimiters.aiChat.recordSuccess();
     } catch (e: unknown) {
+      rateLimiters.aiChat.recordFailure();
       logger.error("ImmoAI request failed", "ImmoAI", e);
       toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
       setMessages((prev) => [
