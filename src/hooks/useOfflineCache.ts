@@ -164,6 +164,9 @@ async function syncPendingToServerImpl(): Promise<number> {
       } else if (mutation.type === "delete" && mutation.id) {
         const { error } = await supabase.from(mutation.table).delete().eq("id", mutation.id);
         if (error) throw error;
+      } else {
+        console.warn(`[OfflineSync] Skipping unprocessable mutation: type=${mutation.type}, id=${mutation.id}`);
+        break;
       }
       synced++;
     } catch {
