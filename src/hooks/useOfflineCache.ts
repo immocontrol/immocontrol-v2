@@ -139,11 +139,14 @@ async function clearFirstNPendingMutations(count: number): Promise<void> {
 
 const MAX_CACHE_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
+/** Concurrency guard — prevents duplicate sync when SW message + online event fire simultaneously */
+let syncInProgress: Promise<number> | null = null;
+
 /**
  * OFFLINE-4: Sync pending mutations when coming back online
  * Replays stored mutations against Supabase and clears them on success.
  */
-async function syncPendingToServer(): Promise<number> {
+async function syncPendingToServerImpl(): Promise<number> {
   const pending = await getPendingMutations();
   if (pending.length === 0) return 0;
 
@@ -175,6 +178,17 @@ async function syncPendingToServer(): Promise<number> {
     await clearFirstNPendingMutations(synced);
   }
   return synced;
+}
+
+/** Public entry point with concurrency guard */
+async function syncPendingToServer(): Promise<number> {
+  if (syncInProgress) return syncInProgress;
+  syncInProgress = syncPendingToServerImpl();
+  try {
+    return await syncInProgress;
+  } finally {
+    syncInProgress = null;
+  }
 }
 
 /**

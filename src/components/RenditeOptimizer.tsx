@@ -307,7 +307,7 @@ export default function RenditeOptimizer() {
               <Label className="text-[10px]">{label} {suffix && `(${suffix})`}</Label>
               <Input
                 type="number"
-                value={params[key] || ""}
+                value={params[key] ?? ""}
                 onChange={e => updateParam(key, Number(e.target.value))}
                 className="h-8 text-xs"
               />
