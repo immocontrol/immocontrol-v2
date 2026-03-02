@@ -114,6 +114,10 @@ function projectScenarios(params: ScenarioParams, years: number): ProjectionYear
     const holdAnnualCF = y === 0 ? 0 : (holdRent - monthlyExpenses - monthlyCreditRate) * 12;
     const renoAnnualCF = y === 0 ? -renovationCost : (renoRent - monthlyExpenses - monthlyCreditRate) * 12;
 
+    // Accumulate BEFORE pushing so the stored cumCashflow includes this year
+    holdCumCF += holdAnnualCF;
+    renoCumCF += renoAnnualCF;
+
     // Sale calculation
     const yearsHeld = holdingPeriod + y;
     const sellPrice = holdVal;
@@ -160,8 +164,6 @@ function projectScenarios(params: ScenarioParams, years: number): ProjectionYear
       }
     }
 
-    holdCumCF += holdAnnualCF;
-    renoCumCF += renoAnnualCF;
   }
 
   return data;

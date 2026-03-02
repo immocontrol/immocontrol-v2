@@ -15,6 +15,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorInterceptor } from "@/components/ErrorScanner";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import { useBackgroundSync } from "@/hooks/useOfflineCache";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -162,6 +163,9 @@ const RoleRouter = () => {
   const [role, setRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+
+  /* OFFLINE-5: Activate background sync for offline mutations */
+  useBackgroundSync();
 
   useEffect(() => {
     const fetchRole = async () => {
