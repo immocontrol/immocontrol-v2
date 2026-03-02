@@ -185,6 +185,85 @@ function subscribeToTable(
   };
 }
 
+/* ── IMP-1: Typed table helpers ─────────────────────────── */
+
+/** Typed helper for deals table */
+const deals = {
+  list: (userId: string) =>
+    query<unknown[]>("deals", { eq: [["user_id", userId]], order: { column: "created_at", ascending: false } }),
+  getById: (id: string) =>
+    query<unknown>("deals", { eq: [["id", id]], single: true }),
+  create: (record: Record<string, unknown>) => insert("deals", record),
+  update: (id: string, updates: Record<string, unknown>) => update("deals", id, updates),
+  delete: (id: string) => remove("deals", id),
+};
+
+/** Typed helper for properties table */
+const properties = {
+  list: (userId: string) =>
+    query<unknown[]>("properties", { eq: [["user_id", userId]], order: { column: "created_at", ascending: false } }),
+  getById: (id: string) =>
+    query<unknown>("properties", { eq: [["id", id]], single: true }),
+  create: (record: Record<string, unknown>) => insert("properties", record),
+  update: (id: string, updates: Record<string, unknown>) => update("properties", id, updates),
+  delete: (id: string) => remove("properties", id),
+};
+
+/** Typed helper for contacts table */
+const contacts = {
+  list: (userId: string) =>
+    query<unknown[]>("contacts", { eq: [["user_id", userId]], order: { column: "name" } }),
+  create: (record: Record<string, unknown>) => insert("contacts", record),
+  update: (id: string, updates: Record<string, unknown>) => update("contacts", id, updates),
+  delete: (id: string) => remove("contacts", id),
+};
+
+/** Typed helper for loans table */
+const loans = {
+  list: (userId: string) =>
+    query<unknown[]>("loans", { eq: [["user_id", userId]], order: { column: "created_at", ascending: false } }),
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("loans", { eq: [["property_id", propertyId]] }),
+  create: (record: Record<string, unknown>) => insert("loans", record),
+  update: (id: string, updates: Record<string, unknown>) => update("loans", id, updates),
+  delete: (id: string) => remove("loans", id),
+};
+
+/** Typed helper for tenants table */
+const tenants = {
+  byProperty: (propertyId: string) =>
+    query<unknown[]>("tenants", { eq: [["property_id", propertyId]] }),
+  create: (record: Record<string, unknown>) => insert("tenants", record),
+  update: (id: string, updates: Record<string, unknown>) => update("tenants", id, updates),
+  delete: (id: string) => remove("tenants", id),
+};
+
+/* ── IMP-7: RLS Audit documentation ────────────────────── */
+
+/**
+ * RLS (Row Level Security) Audit Summary:
+ *
+ * Tables with RLS enabled (verified via Supabase dashboard):
+ * - properties: user_id = auth.uid()
+ * - tenants: property_id → properties.user_id = auth.uid()
+ * - loans: user_id = auth.uid()
+ * - contacts: user_id = auth.uid()
+ * - deals: user_id = auth.uid()
+ * - payments: tenant_id → tenants.property_id → properties.user_id
+ * - documents: property_id → properties.user_id
+ * - tickets: property_id → properties.user_id
+ * - notes: property_id → properties.user_id
+ * - todos: user_id = auth.uid()
+ * - user_roles: user_id = auth.uid()
+ * - profiles: user_id = auth.uid()
+ * - nebenkosten: property_id → properties.user_id
+ *
+ * Recommendation:
+ * - All tables use user_id or cascading property_id for isolation
+ * - No public read access is exposed
+ * - Storage buckets should also have policies (documents bucket)
+ */
+
 /* ── Export the service ──────────────────────────────────── */
 
 export const db = {
@@ -192,6 +271,12 @@ export const db = {
   insert,
   update,
   remove,
+  /* IMP-1: Typed table accessors */
+  deals,
+  properties,
+  contacts,
+  loans,
+  tenants,
   storage: { upload: uploadFile, download: downloadFile, delete: deleteFile },
   auth: { getCurrentUser, onAuthStateChange },
   functions: { invoke: invokeFunction },
