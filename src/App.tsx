@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorInterceptor } from "@/components/ErrorScanner";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -273,6 +274,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PropertyProvider>
+            <AccessibilityProvider>
             {/* UI-UPDATE-1: 1s tooltip delay on all action icons */}
             <TooltipProvider delayDuration={1000}>
               <Toaster />
@@ -292,6 +294,7 @@ const App = () => {
                 </ErrorBoundary>
               </BrowserRouter>
             </TooltipProvider>
+            </AccessibilityProvider>
           </PropertyProvider>
         </AuthProvider>
       </QueryClientProvider>

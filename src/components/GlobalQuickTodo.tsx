@@ -44,7 +44,7 @@ const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
   };
 
   return (
-    <div ref={ref} className="fixed bottom-20 right-4 md:bottom-6 z-40">
+    <div ref={ref} className="fixed bottom-24 right-4 md:bottom-6 z-40">
       {open ? (
         <div className="bg-card border border-border rounded-xl shadow-lg p-3 w-72 animate-fade-in">
           <div className="flex items-center gap-2 mb-2">

@@ -113,11 +113,71 @@ async function clearPendingMutations(): Promise<void> {
 
 const MAX_CACHE_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
+/**
+ * OFFLINE-4: Sync pending mutations when coming back online
+ * Replays stored mutations against Supabase and clears them on success.
+ */
+async function syncPendingToServer(): Promise<number> {
+  const pending = await getPendingMutations();
+  if (pending.length === 0) return 0;
+
+  let synced = 0;
+  for (const mutation of pending) {
+    try {
+      // Dynamic import to avoid circular dependency
+      const { supabase } = await import("@/integrations/supabase/client");
+      if (mutation.type === "insert") {
+        await supabase.from(mutation.table).insert(mutation.data);
+      } else if (mutation.type === "update" && mutation.id) {
+        await supabase.from(mutation.table).update(mutation.data).eq("id", mutation.id);
+      } else if (mutation.type === "delete" && mutation.id) {
+        await supabase.from(mutation.table).delete().eq("id", mutation.id);
+      }
+      synced++;
+    } catch {
+      /* Stop on first failure — remaining mutations stay pending */
+      break;
+    }
+  }
+  if (synced > 0) await clearPendingMutations();
+  return synced;
+}
+
+/**
+ * OFFLINE-5: Hook to listen for service worker sync messages
+ * Automatically triggers sync when SW sends SYNC_PENDING_MUTATIONS
+ */
+export function useBackgroundSync() {
+  const isOnline = useOnlineStatus();
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "SYNC_PENDING_MUTATIONS" && isOnline) {
+        syncPendingToServer().then((count) => {
+          if (count > 0) console.log(`[OfflineSync] ${count} pending mutations synced`);
+        });
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handler);
+    return () => navigator.serviceWorker?.removeEventListener("message", handler);
+  }, [isOnline]);
+
+  /* Auto-sync when coming back online */
+  useEffect(() => {
+    if (isOnline) {
+      syncPendingToServer().then((count) => {
+        if (count > 0) console.log(`[OfflineSync] ${count} pending mutations synced on reconnect`);
+      });
+    }
+  }, [isOnline]);
+}
+
 export function useOfflineCache<T>(key: string, fetchFn: () => Promise<T>) {
   const isOnline = useOnlineStatus();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [fromCache, setFromCache] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const mountedRef = useRef(true);
 
   const refresh = useCallback(async () => {
@@ -149,6 +209,9 @@ export function useOfflineCache<T>(key: string, fetchFn: () => Promise<T>) {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
+    /* Update pending count */
+    const pending = await getPendingMutations();
+    if (mountedRef.current) setPendingCount(pending.length);
   }, [key, fetchFn, isOnline]);
 
   useEffect(() => {
@@ -157,7 +220,7 @@ export function useOfflineCache<T>(key: string, fetchFn: () => Promise<T>) {
     return () => { mountedRef.current = false; };
   }, [refresh]);
 
-  return { data, loading, fromCache, isOnline, refresh };
+  return { data, loading, fromCache, isOnline, refresh, pendingCount };
 }
 
 export { addPendingMutation, getPendingMutations, clearPendingMutations };
