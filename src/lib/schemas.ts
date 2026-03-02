@@ -253,7 +253,7 @@ export type MaintenanceItemFormData = z.infer<typeof maintenanceItemSchema>;
 
 export const bankAccountSchema = z.object({
   bank_name: requiredString,
-  iban: z.string().regex(/^DE\d{20}$/, "IBAN muss deutsches Format haben (DE + 20 Ziffern)").or(z.literal("")),
+  iban: z.string().regex(/^DE\d{20}$/, "IBAN muss deutsches Format haben (DE + 20 Ziffern)").or(z.literal("")).default(""),
   bic: z.string().default(""),
   account_holder: z.string().default(""),
   notes: z.string().default(""),
