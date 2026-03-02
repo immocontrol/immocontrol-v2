@@ -102,8 +102,6 @@ const Wartungsplaner = () => {
   const { properties } = useProperties();
   const qc = useQueryClient();
 
-  /* IMP-28: Set document title for Wartungsplaner */
-  /* IMP-43: Dynamic title */ useEffect(() => { document.title = `Wartungsplaner (${allItems.length}) \u2013 ImmoControl`; }, [allItems.length]);
   const [open, setOpen] = useState(false);
   const [filterProperty, setFilterProperty] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -128,6 +126,9 @@ const Wartungsplaner = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-43: Dynamic document title */
+  useEffect(() => { document.title = `Wartungsplaner (${allItems.length}) – ImmoControl`; }, [allItems.length]);
 
   const propMap = useMemo(() => new Map(properties.map(p => [p.id, p.name])), [properties]);
 

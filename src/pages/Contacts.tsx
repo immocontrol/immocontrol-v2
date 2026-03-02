@@ -51,9 +51,6 @@ const ContactManagement = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  // Document title
-  /* IMP-41: Dynamic document title */ useEffect(() => { document.title = `Kontakte (${contacts.length}) \u2013 ImmoControl`; }, [contacts.length]);
-
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("alle");
   const [open, setOpen] = useState(false);
@@ -82,6 +79,9 @@ const ContactManagement = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-41: Dynamic document title */
+  useEffect(() => { document.title = `Kontakte (${contacts.length}) – ImmoControl`; }, [contacts.length]);
 
   // Synergy 7: Fetch ticket count per handworker contact
   const { data: contactTicketCounts = {} } = useQuery({

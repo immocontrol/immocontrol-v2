@@ -506,7 +506,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">Einstellungen</TooltipContent>
               </Tooltip>
-              <Link to="/einstellungen" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={avatarUrl} alt={displayName} />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
@@ -516,7 +516,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <span className="text-sm font-medium hidden lg:block max-w-[120px] truncate">
                   {displayName}
                 </span>
-              </Link>
+              </div>
               <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-foreground h-8 w-8">
                 <LogOut className="h-4 w-4" />
               </Button>

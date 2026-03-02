@@ -52,8 +52,6 @@ const loanTypeLabels: Record<string, string> = {
 const Loans = () => {
   const { user } = useAuth();
 
-  // Document title
-  /* IMP-40: Dynamic document title */ useEffect(() => { document.title = `Darlehen (${loans.length}) \u2013 ImmoControl`; }, [loans.length]);
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -122,6 +120,9 @@ const Loans = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-40: Dynamic document title */
+  useEffect(() => { document.title = `Darlehen (${loans.length}) – ImmoControl`; }, [loans.length]);
 
   // User's custom banks
   const { data: userBanks = [] } = useQuery({

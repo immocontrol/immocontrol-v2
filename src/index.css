@@ -2779,7 +2779,7 @@ th { text-align: left; }
 
 /* IMP-119: Larger tap targets on touch devices */
 @media (pointer: coarse) {
-  button, [role="button"], a, input, select, textarea {
+  .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
