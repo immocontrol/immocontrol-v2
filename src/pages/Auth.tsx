@@ -135,7 +135,13 @@ const Auth = () => {
       bypassMfaCheck.current = true;
       setNeeds2FA(false);
       toast.success("Willkommen zurück!");
-      navigate("/");
+      const invitationToken = sessionStorage.getItem("invitation_token");
+      if (invitationToken) {
+        sessionStorage.removeItem("invitation_token");
+        navigate(`/einladung?token=${invitationToken}`, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Ungültiger 2FA-Code");
     } finally {
@@ -182,7 +188,13 @@ const Auth = () => {
       toast.success(`Willkommen zurück! (${storedCodes.length} Backup-Codes verbleibend)`);
       toast.info("Bitte richte 2FA erneut ein, da ein Backup-Code verwendet wurde.", { duration: 8000 });
       localStorage.removeItem(enabledKey);
-      navigate("/");
+      const invitationToken = sessionStorage.getItem("invitation_token");
+      if (invitationToken) {
+        sessionStorage.removeItem("invitation_token");
+        navigate(`/einladung?token=${invitationToken}`, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler bei der Backup-Code-Verifizierung");
     } finally {
