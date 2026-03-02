@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
 import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -168,6 +169,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* Auto-save global state every 10 seconds to protect against crashes */
   useGlobalAutoSave();
+
+  /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
+  useRealtimeSync();
 
   /* MIGRATE-3: One-time localStorage → Supabase migration on login */
   const migrationDoneRef = useRef(false);
