@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
+import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -167,6 +168,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* Auto-save global state every 10 seconds to protect against crashes */
   useGlobalAutoSave();
+
+  /* MIGRATE-3: One-time localStorage → Supabase migration on login */
+  const migrationDoneRef = useRef(false);
+  useEffect(() => {
+    if (!user || migrationDoneRef.current) return;
+    migrationDoneRef.current = true;
+    migrateLocalStorageToSupabase(user.id).then((count) => {
+      if (count > 0) console.log(`[Migration] ${count} localStorage keys migrated to Supabase`);
+    });
+  }, [user]);
 
   /* BUG-5: Track dropdown open state for click-based dropdowns (fixes hidden dropdowns) */
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
