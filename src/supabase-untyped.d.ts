@@ -1,6 +1,19 @@
-// Temporary type relaxation for Supabase client while generated Database types are empty.
-// This prevents TS errors like: Argument of type '"table"' is not assignable to parameter of type 'never'.
-// Once Lovable Cloud types are populated, this file can be removed.
+/**
+ * IMP-5: Type augmentation for Supabase client.
+ *
+ * The generated Database types from Lovable Cloud are empty, so we need to
+ * relax the SupabaseClient generic parameters. The `any` here is intentional
+ * and unavoidable — replacing them with `unknown` would break every
+ * `.from("table")` call because the PostgrestQueryBuilder would lose its
+ * fluent chain types (.select, .eq, .single, etc.).
+ *
+ * Once Lovable Cloud populates the Database types, this file can be removed
+ * and all tables will automatically get proper types.
+ *
+ * The return types of from() / rpc() / storage are typed at the call-site
+ * via our service layer (src/lib/supabaseService.ts) which wraps all
+ * database operations behind typed helpers.
+ */
 
 import "@supabase/supabase-js";
 

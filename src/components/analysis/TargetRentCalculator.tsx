@@ -32,7 +32,7 @@ const TargetRentCalculator = ({ inputs }: Props) => {
   }, [inputs, targetRendite]);
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "500ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:500ms]" role="region" aria-label="Zielmiete berechnen">
       <h2 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
         <Target className="h-4 w-4 text-muted-foreground" /> Zielmiete berechnen
       </h2>

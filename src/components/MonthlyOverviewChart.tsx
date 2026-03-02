@@ -25,7 +25,7 @@ const MonthlyOverviewChart = () => {
   if (properties.length === 0) return null;
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "350ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:350ms]" role="region" aria-label="Einnahmen vs. Ausgaben">
       <h2 className="text-sm font-semibold mb-4">Einnahmen vs. Ausgaben (12 Monate)</h2>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">

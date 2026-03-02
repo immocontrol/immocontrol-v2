@@ -56,15 +56,15 @@ const AmortizationChart = ({ inputs, calc }: Props) => {
           <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Restschuld nach {duration}J</div>
           <div className="text-lg font-bold text-loss">{formatCurrency(finalRestschuld)}</div>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 animate-fade-in" style={{ animationDelay: "50ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 animate-fade-in [animation-delay:50ms]">
           <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Zinsen gesamt</div>
           <div className="text-lg font-bold text-gold">{formatCurrency(totalZinsenPaid)}</div>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 animate-fade-in" style={{ animationDelay: "100ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 animate-fade-in [animation-delay:100ms]">
           <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Gezahlt gesamt</div>
           <div className="text-lg font-bold">{formatCurrency(totalPaid)}</div>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 animate-fade-in" style={{ animationDelay: "150ms" }}>
+        <div className="gradient-card rounded-xl border border-border p-3 animate-fade-in [animation-delay:150ms]">
           <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Voll getilgt</div>
           <div className="text-lg font-bold text-profit">
             {payoffYear > 0 ? `Jahr ${payoffYear}` : `> ${duration}J`}

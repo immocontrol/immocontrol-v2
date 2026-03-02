@@ -26,7 +26,7 @@ const AnalysisResults = ({ inputs, calc }: Props) => {
   return (
     <>
       {/* Kaufnebenkosten */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "100ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:100ms]" role="region" aria-label="Kaufnebenkosten">
         <h2 className="text-sm font-semibold mb-3 flex items-center justify-between">
           Kaufnebenkosten
           {/* Improvement 9 */}
@@ -57,7 +57,7 @@ const AnalysisResults = ({ inputs, calc }: Props) => {
       </div>
 
       {/* Rendite */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "200ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:200ms]" role="region" aria-label="Renditekennzahlen">
         <h2 className="text-sm font-semibold mb-3">Renditekennzahlen</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -109,7 +109,7 @@ const AnalysisResults = ({ inputs, calc }: Props) => {
       </div>
 
       {/* Cashflow - Improvement 11: Visual waterfall */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:300ms]" role="region" aria-label="Monatlicher Cashflow">
         <h2 className="text-sm font-semibold mb-3">Monatlicher Cashflow</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between items-center">
@@ -163,7 +163,7 @@ const AnalysisResults = ({ inputs, calc }: Props) => {
       </div>
 
       {/* Steuer */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "400ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:400ms]" role="region" aria-label="Steuerliche Betrachtung">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
           Steuerliche Betrachtung
           <Info className="h-3.5 w-3.5 text-muted-foreground" />
@@ -207,7 +207,7 @@ const AnalysisResults = ({ inputs, calc }: Props) => {
       </div>
 
       {/* Finanzierung */}
-      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "450ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:450ms]" role="region" aria-label="Finanzierung">
         <h2 className="text-sm font-semibold mb-3">Finanzierung</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

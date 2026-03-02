@@ -58,20 +58,20 @@ const AnalysisInputs = ({ inputs, updateInput }: Props) => {
         <InputField label="Wohnfläche" value={inputs.quadratmeter} onChange={(v) => updateInput("quadratmeter", v)} suffix="m²" min={10} max={1000} step={5} />
       </div>
 
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:100ms]">
         <h2 className="text-sm font-semibold">Mieteinnahmen & Kosten</h2>
         <InputField label="Monatliche Miete (Kalt)" value={inputs.monatlicheMiete} onChange={(v) => updateInput("monatlicheMiete", v)} suffix="€" max={20000} step={50} />
         <InputField label="Bewirtschaftungskosten / M" value={inputs.bewirtschaftungskosten} onChange={(v) => updateInput("bewirtschaftungskosten", v)} suffix="€" max={5000} step={25} />
       </div>
 
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "200ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:200ms]">
         <h2 className="text-sm font-semibold">Finanzierung</h2>
         <InputField label="Eigenkapital" value={inputs.eigenkapital} onChange={(v) => updateInput("eigenkapital", v)} suffix="€" max={inputs.kaufpreis} step={5000} />
         <InputField label="Zinssatz" value={inputs.zinssatz} onChange={(v) => updateInput("zinssatz", v)} suffix="%" min={0.5} max={8} step={0.1} />
         <InputField label="Tilgung" value={inputs.tilgung} onChange={(v) => updateInput("tilgung", v)} suffix="%" min={0.5} max={5} step={0.1} />
       </div>
 
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in" style={{ animationDelay: "300ms" }}>
+      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:300ms]">
         <h2 className="text-sm font-semibold">Steuerliche Parameter</h2>
         <InputField label="AfA-Dauer (Jahre)" value={inputs.afaDauer} onChange={(v) => updateInput("afaDauer", v)} suffix="J." min={33} max={50} step={1} />
         <InputField label="Persönlicher Steuersatz" value={inputs.persSteuersatz} onChange={(v) => updateInput("persSteuersatz", v)} suffix="%" min={0} max={45} step={1} />

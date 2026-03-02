@@ -12,7 +12,7 @@ const CashflowChart = () => {
   }));
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in" style={{ animationDelay: "300ms" }}>
+    <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:300ms]" role="region" aria-label="Cashflow je Objekt">
       <h2 className="text-sm font-semibold mb-4">Cashflow je Objekt (monatlich)</h2>
       <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
