@@ -136,7 +136,7 @@ th{background:#f5f5f5;font-weight:600}
   ];
 
   return (
-    {/* IMP-18: ARIA landmark for AnalysisCalculator page */}
+    /* IMP-18: ARIA landmark for AnalysisCalculator page */
     <div role="main" aria-label="Objektanalyse" className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

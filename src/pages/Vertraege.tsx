@@ -56,7 +56,7 @@ const Vertraege = () => {
   }, [stats.totalServiceCost, stats.openInvoiceAmount]);
 
   return (
-    {/* IMP-16: ARIA landmark for Verträge page */}
+    /* IMP-16: ARIA landmark for Verträge page */
     <div className="space-y-6 max-w-5xl mx-auto" role="main" aria-label="Verträge und Verwaltung">
       {/* Improvement 8: Mobile responsive heading */}
       <div>

@@ -17,3 +17,18 @@ export const isNumber = (val: unknown): val is number => typeof val === "number"
 
 /** IMP-168: Type guard for non-null values */
 export const isNotNull = <T>(val: T | null | undefined): val is T => val != null;
+
+/** IMP-143: Check if a string is non-empty after trimming */
+export const isNonEmpty = (val: unknown): boolean =>
+  typeof val === "string" && val.trim().length > 0;
+
+/** IMP-143: Check if a number is positive */
+export const isPositive = (val: unknown): boolean =>
+  typeof val === "number" && val > 0;
+
+/** IMP-143: Check if a string is a valid date */
+export const isValidDate = (val: unknown): boolean => {
+  if (typeof val !== "string") return false;
+  const d = new Date(val);
+  return !isNaN(d.getTime()) && val.length >= 8;
+};
