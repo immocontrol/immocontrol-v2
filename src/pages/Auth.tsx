@@ -29,10 +29,33 @@ const Auth = () => {
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState("");
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [rememberDevice, setRememberDevice] = useState(false);
   /* Ref to bypass the MFA re-check after backup code login or explicit back navigation.
    * Without this, setNeeds2FA(false) triggers the useEffect which re-detects
    * AAL1 < AAL2 (factor still enrolled server-side) and sets needs2FA back to true. */
   const bypassMfaCheck = useRef(false);
+
+  /** Check if the current device is remembered for 2FA (30-day trust) */
+  const isDeviceRemembered = (userId: string): boolean => {
+    try {
+      const key = `immocontrol_2fa_trusted_${userId}`;
+      const stored = localStorage.getItem(key);
+      if (!stored) return false;
+      const expiry = parseInt(stored, 10);
+      if (isNaN(expiry)) return false;
+      if (Date.now() > expiry) {
+        localStorage.removeItem(key);
+        return false;
+      }
+      return true;
+    } catch { return false; }
+  };
+
+  /** Mark this device as trusted for 30 days */
+  const trustDevice = (userId: string) => {
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(`immocontrol_2fa_trusted_${userId}`, String(Date.now() + thirtyDays));
+  };
 
   useEffect(() => {
     if (bypassMfaCheck.current) return;
@@ -42,6 +65,19 @@ const Auth = () => {
         try {
           const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
           if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
+            /* Check if this device is trusted ("remember for 30 days") */
+            if (user.id && isDeviceRemembered(user.id)) {
+              /* Device is trusted — skip 2FA prompt, bypass MFA check */
+              bypassMfaCheck.current = true;
+              const invitationToken = sessionStorage.getItem("invitation_token");
+              if (invitationToken) {
+                sessionStorage.removeItem("invitation_token");
+                navigate(`/einladung?token=${invitationToken}`, { replace: true });
+              } else {
+                navigate("/", { replace: true });
+              }
+              return;
+            }
             /* 2FA is required but not yet verified — show the TOTP UI
              * instead of silently returning (handles page refresh / direct nav) */
             const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -92,6 +128,10 @@ const Auth = () => {
         code: totpCode,
       });
       if (verifyErr) throw verifyErr;
+      /* Remember device for 30 days if checkbox was checked */
+      if (rememberDevice && user?.id) {
+        trustDevice(user.id);
+      }
       bypassMfaCheck.current = true;
       setNeeds2FA(false);
       toast.success("Willkommen zurück!");
@@ -256,6 +296,15 @@ const Auth = () => {
                   className="h-12 text-center text-xl font-mono tracking-[0.5em]"
                   autoFocus
                 />
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-xs text-muted-foreground">Gerät für 30 Tage erinnern</span>
+                </label>
                 <Button onClick={verify2FA} disabled={loading || totpCode.length !== 6} className="w-full">
                   {loading ? "Verifiziere..." : "Bestätigen"}
                 </Button>

@@ -1249,7 +1249,15 @@ const CRM = () => {
 };
 
 /* FUNC-39: Lead scoring helper */
-const calculateLeadScore = (lead: any): number => {
+interface LeadScoreInput {
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  notes?: string | null;
+  call_logs?: unknown[];
+  status?: string;
+}
+const calculateLeadScore = (lead: LeadScoreInput): number => {
   let score = 0;
   if (lead.phone) score += 20;
   if (lead.email) score += 15;
@@ -1271,7 +1279,7 @@ const LEAD_STATUS_OPTIONS = [
 ] as const;
 
 /* FUNC-41: CRM statistics helper */
-const calcCRMStats = (leads: any[]) => ({
+const calcCRMStats = (leads: { status?: string }[]) => ({
   total: leads.length,
   contacted: leads.filter(l => l.status === "contacted").length,
   interested: leads.filter(l => l.status === "interested").length,

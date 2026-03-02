@@ -41,16 +41,12 @@ import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
-import { QuickCalculator } from "@/components/QuickCalculator";
-import { PropertyComparison } from "@/components/PropertyComparison";
-import { HandoverProtocol } from "@/components/HandoverProtocol";
-import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
-import { HockeyStickSimulator } from "@/components/HockeyStickSimulator";
+/* Removed: QuickCalculator, PropertyComparison, HandoverProtocol, RentIncreaseLetter,
+   HockeyStickSimulator — these are accessible via navigation menus and were duplicated on Dashboard */
 import PropertyCard from "@/components/PropertyCard";
 import { lazy, Suspense } from "react";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
-import { FinanceExportDialog } from "@/components/FinanceExport";
-import { SelbstauskunftGenerator } from "@/components/SelbstauskunftGenerator";
+/* Removed: FinanceExportDialog, SelbstauskunftGenerator — accessible via navigation menus */
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -480,15 +476,17 @@ ${properties.map(p => `<tr>
     /* IMP-3: Reduced spacing for less crowded layout */
     <div className="space-y-4" role="main" aria-label="Portfolio Dashboard">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          {/* UI-11: heading-gradient for page title */}
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient">{greeting}</h1>
+        <div className="min-w-0">
+          {/* UI-11: heading-gradient for page title — single line, no truncation */}
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap">{greeting}</h1>
           <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
             {/* OPT-10: pluralDE for correct pluralization */}
             {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")} · {totalSqm.toLocaleString("de-DE")} m²
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Cleaned up: removed buttons that are already accessible via navigation menus
+             (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           <AddPropertyDialog />
           <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
             <Share2 className="h-3.5 w-3.5" />
@@ -502,13 +500,6 @@ ${properties.map(p => `<tr>
             <Printer className="h-3.5 w-3.5" />
             PDF
           </Button>
-          <QuickCalculator />
-          <PropertyComparison />
-          <HandoverProtocol />
-          <RentIncreaseLetter />
-          <SelbstauskunftGenerator />
-          <FinanceExportDialog />
-          <HockeyStickSimulator />
         </div>
       </div>
 

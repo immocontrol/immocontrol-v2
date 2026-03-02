@@ -37,12 +37,12 @@ const VacancyCostCalc = () => {
         vacancyCostMonthly,
         vacancyCostAnnual: vacancyCostMonthly * 12,
       };
-    }).filter(Boolean) as NonNullable<ReturnType<typeof Array.prototype.map>[number]>[];
+    }).filter(Boolean) as { name: string; vacantUnits: number; totalUnits: number; lostRentMonthly: number; vacancyCostMonthly: number; vacancyCostAnnual: number }[];
   }, [properties, tenants]);
 
   if (vacancyCosts.length === 0) return null;
 
-  const totalAnnualCost = vacancyCosts.reduce((s, v: any) => s + v.vacancyCostAnnual, 0);
+  const totalAnnualCost = vacancyCosts.reduce((s, v) => s + v.vacancyCostAnnual, 0);
 
   return (
     <div className="gradient-card rounded-xl border border-loss/20 p-5">
@@ -50,7 +50,7 @@ const VacancyCostCalc = () => {
         <Home className="h-4 w-4 text-loss" /> Leerstandskosten
       </h3>
       <div className="space-y-2">
-        {vacancyCosts.map((v: any, i) => (
+        {vacancyCosts.map((v, i) => (
           <div key={i} className="flex items-center justify-between text-xs p-2 rounded-lg bg-loss/5">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-3 w-3 text-loss" />
