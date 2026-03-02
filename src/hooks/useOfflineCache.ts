@@ -111,6 +111,32 @@ async function clearPendingMutations(): Promise<void> {
   }
 }
 
+/**
+ * Delete the first N entries from the pending_mutations store (autoIncrement keys).
+ * Used after partial sync to remove only successfully synced mutations.
+ */
+async function clearFirstNPendingMutations(count: number): Promise<void> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(PENDING_STORE, "readwrite");
+    const store = tx.objectStore(PENDING_STORE);
+    const req = store.openCursor();
+    let deleted = 0;
+    await new Promise<void>((resolve) => {
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor || deleted >= count) { resolve(); return; }
+        cursor.delete();
+        deleted++;
+        cursor.continue();
+      };
+      req.onerror = () => resolve();
+    });
+  } catch {
+    /* Silently fail */
+  }
+}
+
 const MAX_CACHE_AGE = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
@@ -127,11 +153,14 @@ async function syncPendingToServer(): Promise<number> {
       // Dynamic import to avoid circular dependency
       const { supabase } = await import("@/integrations/supabase/client");
       if (mutation.type === "insert") {
-        await supabase.from(mutation.table).insert(mutation.data);
+        const { error } = await supabase.from(mutation.table).insert(mutation.data);
+        if (error) throw error;
       } else if (mutation.type === "update" && mutation.id) {
-        await supabase.from(mutation.table).update(mutation.data).eq("id", mutation.id);
+        const { error } = await supabase.from(mutation.table).update(mutation.data).eq("id", mutation.id);
+        if (error) throw error;
       } else if (mutation.type === "delete" && mutation.id) {
-        await supabase.from(mutation.table).delete().eq("id", mutation.id);
+        const { error } = await supabase.from(mutation.table).delete().eq("id", mutation.id);
+        if (error) throw error;
       }
       synced++;
     } catch {
@@ -139,7 +168,12 @@ async function syncPendingToServer(): Promise<number> {
       break;
     }
   }
-  if (synced > 0) await clearPendingMutations();
+  /* Only clear the mutations that were actually synced, not all of them */
+  if (synced === pending.length) {
+    await clearPendingMutations();
+  } else if (synced > 0) {
+    await clearFirstNPendingMutations(synced);
+  }
   return synced;
 }
 
