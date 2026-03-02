@@ -132,15 +132,15 @@ function detectChanges(
     return { type: "property_sale", description: `Objekt entfernt (${currentStats.propertyCount} gesamt)` };
   }
 
-  if (Math.abs(diff) < threshold) return null;
-
-  // Detect rent change
+  // Detect rent change (independent of net worth threshold — rent doesn't affect net worth)
   const rentDiff = currentStats.totalRent - lastSnapshot.rent;
   if (Math.abs(rentDiff) > 50) {
     return rentDiff > 0
       ? { type: "rent_increase", description: `Mieteinnahmen +${formatCurrency(rentDiff)}/M` }
       : { type: "rent_decrease", description: `Mieteinnahmen ${formatCurrency(rentDiff)}/M` };
   }
+
+  if (Math.abs(diff) < threshold) return null;
 
   // Detect debt change (repayment)
   const debtDiff = currentStats.totalDebt - lastSnapshot.debt;
@@ -374,11 +374,15 @@ export default function PortfolioHistorie() {
   /* HIST-9: CSV Export */
   const exportCSV = useCallback(() => {
     const headers = ["Datum", "Typ", "Beschreibung", "Nettovermögen vorher", "Nettovermögen nachher", "Cashflow vorher", "Cashflow nachher", "Schulden vorher", "Schulden nachher", "Automatisch"];
+    const escapeCSV = (val: string | number | boolean): string => {
+      const s = String(val);
+      return s.includes(';') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const rows = events.map(e => [
       e.date, EVENT_LABELS[e.type], e.description, e.valueBefore, e.valueAfter,
       e.cashflowBefore, e.cashflowAfter, e.debtBefore, e.debtAfter, e.isAutomatic ? "Ja" : "Nein",
     ]);
-    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const csv = [headers.join(";"), ...rows.map(r => r.map(escapeCSV).join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
