@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
-import { escapeHtml } from "@/lib/sanitize";
 
 export interface BulkItem {
   id: string;
@@ -82,10 +81,11 @@ export default function BulkOperations({ items, entityName, onBulkDelete, onBulk
     if (selectedItems.length === 0) return;
 
     const headers = ["Name", "Kategorie", "Status", "Wert"];
+    const csvEscape = (v: string) => `"${v.replace(/"/g, '""')}"`;  
     const rows = selectedItems.map(i => [
-      escapeHtml(i.name),
-      escapeHtml(i.category || ""),
-      escapeHtml(i.status || ""),
+      csvEscape(i.name),
+      csvEscape(i.category || ""),
+      csvEscape(i.status || ""),
       i.value?.toString() || "",
     ]);
     const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");

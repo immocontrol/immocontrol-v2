@@ -104,7 +104,7 @@ function projectScenarios(params: ScenarioParams, years: number): ProjectionYear
   let renoVal = currentValue + valueIncreaseAfterReno;
   let renoDebt = remainingDebt + renovationCost;
   let renoRent = monthlyRent + rentIncreaseAfterReno;
-  let renoCumCF = -renovationCost; // Initial investment
+  let renoCumCF = 0; // Will be set to -renovationCost by renoAnnualCF at y=0
 
   const mInterest = interestRate / 100 / 12;
 
