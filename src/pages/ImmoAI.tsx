@@ -60,6 +60,11 @@ export default function ImmoAI() {
 
   const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
+    /* IMP-9: Rate limit AI chat requests */
+    if (!rateLimiters.aiChat.canProceed()) {
+      toast.error("Bitte warte kurz bevor du eine weitere Nachricht sendest.");
+      return;
+    }
     const userMsg: Msg = { role: "user", content: text.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");

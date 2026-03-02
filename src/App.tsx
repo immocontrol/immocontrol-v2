@@ -135,6 +135,7 @@ const PageLoader = () => (
   </div>
 );
 
+/* IMP-5: React Query configuration with entity-specific staleTime via queryKey defaults */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -149,6 +150,13 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/* IMP-5: Configure staleTime per entity type — slow-changing data stays fresh longer */
+queryClient.setQueryDefaults(queryKeys.properties.all, { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.loans.all, { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.contacts.all, { staleTime: 3 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.deals.all, { staleTime: 2 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.forecast.all, { staleTime: 5 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
