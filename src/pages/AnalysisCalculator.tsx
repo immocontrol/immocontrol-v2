@@ -171,8 +171,9 @@ th{background:#f5f5f5;font-weight:600}
         ))}
       </div>
 
+      {/* ANIM-3: Add card-stagger-enter animation to Analysis overview grid */}
       {activeTab === "overview" && (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 card-stagger-enter">
           <div className="space-y-5">
             <ExposeImport onImport={importFromExpose} />
             <PdfImport onImport={importFromExpose} />

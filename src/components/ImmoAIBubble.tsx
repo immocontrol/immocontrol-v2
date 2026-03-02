@@ -280,6 +280,48 @@ export default function ImmoAIBubble() {
     };
   }, [open]);
 
+  /* BUBBLE-FIX-1: Auto-reposition bubble when popups/menus/dialogs overlap.
+     Observes DOM for new [role=dialog], [data-radix-popper-content-wrapper], .dropdown-menu, etc.
+     and smoothly shifts the bubble out of the way. */
+  useEffect(() => {
+    if (open) return; // Only reposition the closed bubble, not the open chat window
+    const checkOverlap = () => {
+      const el = bubbleElRef.current;
+      if (!el) return;
+      const bubbleRect = el.getBoundingClientRect();
+      // Find all visible popover/dialog/dropdown overlays
+      const overlays = document.querySelectorAll(
+        '[role="dialog"], [data-radix-popper-content-wrapper], [data-state="open"][role="menu"], .popover-content, [data-side]'
+      );
+      let needsMove = false;
+      overlays.forEach(overlay => {
+        const oRect = overlay.getBoundingClientRect();
+        if (oRect.width === 0 || oRect.height === 0) return;
+        // Check if rects overlap
+        const overlap = !(
+          bubbleRect.right < oRect.left ||
+          bubbleRect.left > oRect.right ||
+          bubbleRect.bottom < oRect.top ||
+          bubbleRect.top > oRect.bottom
+        );
+        if (overlap) needsMove = true;
+      });
+      if (needsMove) {
+        // Move bubble above the overlap area with smooth transition
+        const currentY = bubblePos?.y ?? (window.innerHeight - 140);
+        const newY = Math.max(16, currentY - 80);
+        el.style.transition = "top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        setBubblePos(prev => ({ x: prev?.x ?? window.innerWidth - 72, y: newY }));
+      }
+    };
+    // Use MutationObserver to detect new overlays
+    const observer = new MutationObserver(() => {
+      requestAnimationFrame(checkOverlap);
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-state", "role"] });
+    return () => observer.disconnect();
+  }, [open, bubblePos]);
+
   /* Auto-minimize after 30s of inactivity */
   const inactivityRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {

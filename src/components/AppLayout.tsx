@@ -526,34 +526,37 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         aria-label="Mobile Navigation"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        {/* Sub-items panel — shows when a group tab is tapped */}
-        {mobileActiveGroup && (() => {
-          const group = navEntries.find(e => isGroup(e) && e.label === mobileActiveGroup) as NavGroup | undefined;
-          if (!group) return null;
-          return (
-            /* UPD-12: Use sub-nav-slide-in animation */
-            <div className="border-b border-border bg-background/95 backdrop-blur-xl px-2 py-1.5 flex items-center gap-1 overflow-x-auto scrollbar-hide scrollbar-thin sub-nav-slide-in relative">
-              {group.items.map((item, idx) => {
-                const isActive = isRouteActive(item.path, location.pathname);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileActiveGroup(null)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                      isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary/50"
-                    }`}
-                    style={{ animationDelay: `${idx * 40}ms` }}
-                  >
-                    <item.icon className="h-3.5 w-3.5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        })()}
-        <div ref={mobileNavRef} className="flex items-center justify-around py-1.5 relative">
+          {/* MOBILE-FIX-1: Sub-items panel — compact grid layout to prevent overlap */}
+          {mobileActiveGroup && (() => {
+            const group = navEntries.find(e => isGroup(e) && e.label === mobileActiveGroup) as NavGroup | undefined;
+            if (!group) return null;
+            return (
+              /* UPD-12: Use sub-nav-slide-in animation */
+              <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in">
+                <div className="grid grid-cols-3 gap-1.5">
+                  {group.items.map((item, idx) => {
+                    const isActive = isRouteActive(item.path, location.pathname);
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setMobileActiveGroup(null)}
+                        className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${
+                          isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary/50"
+                        }`}
+                        style={{ animationDelay: `${idx * 40}ms` }}
+                      >
+                        <item.icon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        {/* MOBILE-FIX-2: Bottom tab bar — evenly spaced with proper sizing */}
+        <div ref={mobileNavRef} className="flex items-center justify-around py-1 relative">
           {navEntries.map((entry) => {
             if (isGroup(entry)) {
               const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
@@ -562,14 +565,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <button
                   key={entry.label}
                   onClick={() => setMobileActiveGroup(isExpanded ? null : entry.label)}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors relative ${
+                  className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all relative ${
                     groupActive || isExpanded ? "text-primary" : "text-muted-foreground"
-                  }`}
-                  style={{ minHeight: "auto", minWidth: "auto" }}
+                  } ${isExpanded ? "scale-105" : ""}`}
                 >
                   <entry.icon className="h-4 w-4" />
-                  <span className="truncate max-w-[56px]">{entry.label}</span>
-                  {isExpanded && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />}
+                  <span className="truncate max-w-[52px] leading-tight">{entry.label}</span>
+                  {isExpanded && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary animate-pulse" />}
                 </button>
               );
             }
@@ -582,13 +584,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 data-nav-link
                 onClick={() => setMobileActiveGroup(null)}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors relative ${
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all relative ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
-                style={{ minHeight: "auto", minWidth: "auto" }}
               >
                 <item.icon className="h-4 w-4" />
-                <span className="truncate max-w-[56px]">{item.label}</span>
+                <span className="truncate max-w-[52px] leading-tight">{item.label}</span>
               </Link>
             );
           })}
