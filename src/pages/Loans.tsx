@@ -385,7 +385,7 @@ const Loans = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
         {/* UI-4: skeleton-wave for loading */}
         <div className="h-8 w-48 skeleton-wave rounded-lg" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 card-stagger-enter">
@@ -396,7 +396,7 @@ const Loans = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           {/* UI-11: heading-gradient */}

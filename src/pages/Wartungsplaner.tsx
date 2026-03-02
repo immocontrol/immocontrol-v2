@@ -289,7 +289,8 @@ const Wartungsplaner = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    {/* IMP-15: ARIA landmark for Wartungsplaner page */}
+    <div className="space-y-6 animate-fade-in" role="main" aria-label="Wartungsplaner">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
