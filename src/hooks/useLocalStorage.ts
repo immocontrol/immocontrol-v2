@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 
 /** Feature 5: Persist state to localStorage */
+/** IMP-86: Type-safe localStorage hook with JSON serialization */
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {

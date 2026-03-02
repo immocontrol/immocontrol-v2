@@ -41,3 +41,16 @@ export const sanitizeRecord = <T extends Record<string, unknown>>(obj: T): T => 
   }
   return result;
 };
+
+/** IMP-48: Sanitize a numeric input — returns fallback for NaN/Infinity */
+export const sanitizeNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === "number" && isFinite(value)) return value;
+  const parsed = typeof value === "string" ? parseFloat(value) : NaN;
+  return isFinite(parsed) ? parsed : fallback;
+};
+
+/** IMP-49: Sanitize and validate an email address */
+export const sanitizeEmail = (email: string): string => {
+  const trimmed = email.trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : "";
+};

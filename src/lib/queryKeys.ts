@@ -64,4 +64,19 @@ export const queryKeys = {
   forecast: {
     all: ["forecast"] as const,
   },
+
+  /* IMP-81: Query keys for maintenance items */
+  maintenance: {
+    all: ["maintenance"] as const,
+    byProperty: (propertyId: string) => ["maintenance", propertyId] as const,
+  },
+  /* IMP-82: Query keys for service contracts */
+  serviceContracts: {
+    all: ["service_contracts"] as const,
+  },
+  /* IMP-83: Query keys for invoices */
+  invoices: {
+    all: ["invoices"] as const,
+    open: ["invoices", "open"] as const,
+  },
 } as const;

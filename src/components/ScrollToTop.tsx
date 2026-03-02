@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -9,4 +10,5 @@ const ScrollToTop = () => {
   return null;
 };
 
-export default ScrollToTop;
+/* IMP-53: Memoize ScrollToTop */
+export default React.memo(ScrollToTop);

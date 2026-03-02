@@ -31,6 +31,7 @@ interface MaintenanceItem {
   last_completed_date?: string | null;
 }
 
+/* IMP-60: Mark as readonly tuple */
 const CATEGORIES = ["Heizung", "Dach", "Elektrik", "Sanitär", "Fassade", "Fenster", "Keller", "Aufzug", "Brandschutz", "Wasser", "Garten", "Sonstiges"];
 
 const PRIORITIES = [

@@ -1,3 +1,4 @@
+import React from "react";
 import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -43,4 +44,5 @@ const PageTransition = ({ children }: PageTransitionProps) => {
   );
 };
 
-export default PageTransition;
+/* IMP-55: Memoize PageTransition */
+export default React.memo(PageTransition);

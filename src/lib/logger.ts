@@ -49,9 +49,13 @@ function log(level: LogLevel, message: string, context?: string, data?: unknown)
   }
 }
 
+/** IMP-50: Track error count for diagnostics */
+let errorCount = 0;
+export const getErrorCount = (): number => errorCount;
+
 export const logger = {
   debug: (message: string, context?: string, data?: unknown) => log("debug", message, context, data),
   info: (message: string, context?: string, data?: unknown) => log("info", message, context, data),
   warn: (message: string, context?: string, data?: unknown) => log("warn", message, context, data),
-  error: (message: string, context?: string, data?: unknown) => log("error", message, context, data),
+  error: (message: string, context?: string, data?: unknown) => { errorCount++; log("error", message, context, data); },
 };
