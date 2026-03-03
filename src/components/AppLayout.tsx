@@ -17,9 +17,11 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
+import { useQueryClient } from "@tanstack/react-query";
 import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -173,6 +175,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* Auto-save global state every 10 seconds to protect against crashes */
   useGlobalAutoSave();
+
+  /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
+  const qc = useQueryClient();
+  const { indicatorRef: pullIndicatorRef } = usePullToRefresh({
+    onRefresh: async () => {
+      await qc.invalidateQueries();
+      toast.success("Daten aktualisiert");
+    },
+  });
 
   /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
   useRealtimeSync();
@@ -408,6 +419,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">
         Zum Inhalt springen
       </a>
+      {/* #11: Pull-to-refresh indicator */}
+      <div
+        ref={pullIndicatorRef}
+        className="fixed top-0 left-1/2 -translate-x-1/2 z-[300] bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center shadow-lg pointer-events-none"
+        style={{ opacity: 0, transform: "translateY(-40px)" }}
+        aria-hidden
+      >
+        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+      </div>
       <ScrollProgress />
       <KeyboardShortcuts />
       {/* UI-6/UI-27: glass-header + page-header */}

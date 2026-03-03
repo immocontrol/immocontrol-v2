@@ -25,6 +25,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
+import { ContactDuplicateDetector } from "@/components/ContactDuplicateDetector";
+import { ListSkeleton } from "@/components/ListSkeleton";
 
 interface ContactItem {
   id: string;
@@ -266,6 +268,11 @@ const ContactManagement = () => {
 
   return (
     <div className="space-y-6" role="main" aria-label="Kontaktverwaltung">
+      {/* #17: Duplicate Detection with Fuzzy Matching */}
+      <ContactDuplicateDetector
+        contacts={contacts.map(c => ({ id: c.id, name: c.name, email: c.email, phone: c.phone, company: c.company }))}
+      />
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kontakte</h1>

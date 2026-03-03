@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { propertyRowSchema, safeParseRows } from "@/lib/supabaseSchemas";
+import { rateLimiters, withRateLimit } from "@/lib/rateLimiter";
 
 interface PortfolioStats {
   totalValue: number;
@@ -103,13 +105,17 @@ const EMPTY_STATS: PortfolioStats = {
   equity: 0, propertyCount: 0, appreciation: 0, avgRendite: 0,
 };
 
+/* #18: Rate-limited fetch + #19: Zod-validated response */
 const fetchPropertiesFromDb = async () => {
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapDbToProperty);
+  return withRateLimit(rateLimiters.supabase, async () => {
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    const validated = safeParseRows(propertyRowSchema, data || [], "properties");
+    return validated.map(mapDbToProperty);
+  }, "properties");
 };
 
 export const PropertyProvider = ({ children }: { children: ReactNode }) => {
@@ -151,6 +157,7 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
 
   const invalidate = useCallback(() => qc.invalidateQueries({ queryKey: queryKeys.properties.all }), [qc]);
 
+  /* #6: Optimistic update for addProperty — shows new property instantly */
   const addMutation = useMutation({
     mutationFn: async (property: Omit<Property, "id">) => {
       if (!user) throw new Error("Not authenticated");
@@ -177,10 +184,21 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       });
       if (error) throw error;
     },
-    onSuccess: invalidate,
-    onError: () => toast.error("Fehler beim Anlegen"),
+    onMutate: async (property) => {
+      await qc.cancelQueries({ queryKey: queryKeys.properties.all });
+      const previous = qc.getQueryData<Property[]>(queryKeys.properties.all);
+      const optimistic: Property = { ...property, id: `temp-${Date.now()}` };
+      qc.setQueryData<Property[]>(queryKeys.properties.all, (old) => [optimistic, ...(old ?? [])]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
+      toast.error("Fehler beim Anlegen");
+    },
+    onSettled: invalidate,
   });
 
+  /* #6: Optimistic update for updateProperty — reflects changes instantly */
   const updateMutation = useMutation({
     mutationFn: async ({ id, property }: { id: string; property: Partial<Omit<Property, "id">> }) => {
       const updates = mapPropertyToDb(property);
@@ -188,8 +206,19 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.from("properties").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: invalidate,
-    onError: () => toast.error("Fehler beim Speichern"),
+    onMutate: async ({ id, property: partial }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.properties.all });
+      const previous = qc.getQueryData<Property[]>(queryKeys.properties.all);
+      qc.setQueryData<Property[]>(queryKeys.properties.all, (old) =>
+        (old ?? []).map(p => p.id === id ? { ...p, ...partial } : p)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
+      toast.error("Fehler beim Speichern");
+    },
+    onSettled: invalidate,
   });
 
   const deleteMutation = useMutation({

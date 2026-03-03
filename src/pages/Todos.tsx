@@ -17,6 +17,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { createDebounce, groupBy, sortByKey, truncate, pluralDE } from "@/lib/formatters";
 import { toast } from "sonner";
+import { ListSkeleton } from "@/components/ListSkeleton";
+import { useSwipeAction } from "@/hooks/useSwipeAction";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -321,14 +323,15 @@ const Todos = () => {
     return groups;
   }, [filtered, view]);
 
+  /* #10: Skeleton loading state */
   if (isLoading) {
     return (
       <div className="flex flex-col md:flex-row gap-4 sm:gap-6 h-[calc(100vh-8rem)]">
         <div className="hidden md:block w-56 shrink-0 space-y-2">
           {[1, 2, 3, 4].map(i => <div key={i} className="h-9 skeleton-wave rounded-lg" />)}
         </div>
-        <div className="flex-1 space-y-3">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-14 skeleton-wave rounded-xl" />)}
+        <div className="flex-1">
+          <ListSkeleton count={6} />
         </div>
       </div>
     );
