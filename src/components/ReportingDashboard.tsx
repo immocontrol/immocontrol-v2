@@ -14,7 +14,7 @@ import { BarChart3, TrendingUp, TrendingDown, Download, Calendar, ArrowUpRight, 
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProperties } from "@/context/PropertyContext";
-import { formatCurrency, formatPercent } from "@/lib/formatters";
+import { formatCurrency, formatPercent, downloadBlob } from "@/lib/formatters";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, Area, AreaChart } from "recharts";
 import { toast } from "sonner";
 
@@ -101,7 +101,10 @@ const ReportingDashboard = () => {
     const totalRevenue = reportData.reduce((s, r) => s + r.revenue, 0);
     const totalExpenses = reportData.reduce((s, r) => s + r.expenses, 0);
     const totalCashflow = totalRevenue - totalExpenses;
-    const avgROI = reportData.reduce((s, r) => s + r.roi, 0) / reportData.length;
+    /* IMP-34-4: Safe division — early return above guarantees length > 0, but guard defensively */
+    const avgROI = reportData.length > 0
+      ? reportData.reduce((s, r) => s + r.roi, 0) / reportData.length
+      : 0;
 
     /* Year-over-year comparison */
     const prevYearRevenue = totalRevenue * 0.95; // Simulated previous year
@@ -161,18 +164,13 @@ const ReportingDashboard = () => {
     };
   }, [properties, stats]);
 
-  /* CSV export */
+  /* IMP-34-10: Use downloadBlob utility for consistent URL cleanup */
   const exportCSV = () => {
     const header = "Zeitraum;Einnahmen;Ausgaben;Cashflow;ROI %\n";
     const rows = reportData.map(r => `${r.label};${r.revenue};${r.expenses};${r.cashflow};${r.roi.toFixed(1)}`).join("\n");
     const csv = header + rows;
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `report_${period}_${selectedYear}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `report_${period}_${selectedYear}.csv`);
     toast.success("Report exportiert");
   };
 
