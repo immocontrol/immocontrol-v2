@@ -9,7 +9,15 @@ export function useMediaQuery(query: string): boolean {
 
   useEffect(() => {
     const mql = window.matchMedia(query);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    const handler = (e: MediaQueryListEvent) => {
+      /* FIX: Skip media query updates when input is focused to prevent
+         mobile keyboard open/close from triggering re-renders that steal focus */
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT")) {
+        return;
+      }
+      setMatches(e.matches);
+    };
     mql.addEventListener("change", handler);
     setMatches(mql.matches);
     return () => mql.removeEventListener("change", handler);

@@ -8,6 +8,13 @@ export function useIsMobile() {
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
     const onChange = () => {
+      /* FIX: Mobile keyboard open triggers resize → innerWidth can change on some browsers.
+         Skip state updates when an input/textarea is focused to prevent re-renders that
+         steal focus from the active input field. */
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT")) {
+        return;
+      }
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
     mql.addEventListener("change", onChange);

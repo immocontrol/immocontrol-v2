@@ -20,6 +20,8 @@ import { queryKeys } from "@/lib/queryKeys";
 import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
+import { initErrorTracking } from "@/lib/errorTracking";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -290,6 +292,9 @@ const RoleRouter = () => {
   );
 };
 
+/* #16: Initialize error tracking globally */
+initErrorTracking();
+
 const App = () => {
   /* Unhandled rejection logging is handled by ErrorInterceptor (ErrorScanner.tsx)
    * which registers its own window.unhandledrejection listener. No duplicate
@@ -310,8 +315,9 @@ const App = () => {
               <BrowserRouter>
                 <ScrollToTop />
                 <CommandPalette />
-                <KeyboardShortcutOverlay />
-                <ErrorBoundary>
+                  <KeyboardShortcutOverlay />
+                  <OnboardingTour />
+                  <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path={ROUTES.AUTH} element={<Auth />} />
