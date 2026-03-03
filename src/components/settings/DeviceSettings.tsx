@@ -63,28 +63,38 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
 
   const removeDevice = async (deviceId: string) => {
     try {
+      /* FIX-9: Immediately update UI before async operations for instant feedback */
+      setDevices(prev => prev.filter(d => d.id !== deviceId));
       const { data: userData } = await supabase.auth.getUser();
       const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
       const updated = storedDevices.filter(d => d.id !== deviceId);
       await supabase.auth.updateUser({ data: { devices: updated } });
-      setDevices(prev => prev.filter(d => d.id !== deviceId));
+      /* Note: We only remove the device from the metadata list here.
+         Supabase doesn't support revoking a specific session by device ID,
+         so the device entry is removed but the session may persist until it expires.
+         For full session revocation, use "Alle anderen Ger\u00e4te abmelden". */
       toast.success("Ger\u00e4t aus Liste entfernt");
     } catch (err: unknown) {
+      /* Revert optimistic update on error */
+      fetchDevices();
       toast.error(err instanceof Error ? err.message : "Fehler beim Entfernen des Ger\u00e4ts");
     }
   };
 
   const logoutAllOtherDevices = async () => {
     try {
+      /* FIX-9: Immediately update UI for instant feedback */
+      setDevices(prev => prev.filter(d => d.isCurrent));
       const currentId = localStorage.getItem("immocontrol_device_id");
+      /* Revoke all other sessions first for immediate effect */
+      await supabase.auth.signOut({ scope: "others" });
       const { data: userData } = await supabase.auth.getUser();
       const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
       const updated = storedDevices.filter(d => d.id === currentId);
       await supabase.auth.updateUser({ data: { devices: updated } });
-      setDevices(prev => prev.filter(d => d.isCurrent));
-      await supabase.auth.signOut({ scope: "others" });
       toast.success("Alle anderen Ger\u00e4te abgemeldet");
     } catch (err: unknown) {
+      fetchDevices();
       toast.error(err instanceof Error ? err.message : "Fehler beim Abmelden");
     }
   };

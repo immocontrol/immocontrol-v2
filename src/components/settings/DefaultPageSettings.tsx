@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Home } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { focusNextField } from "@/hooks/useEnterToNext";
 
 const DEFAULT_PAGE_OPTIONS = [
   { value: "/", label: "Portfolio" },
@@ -35,8 +34,8 @@ export function DefaultPageSettings({ sectionRef }: DefaultPageSettingsProps) {
     setDefaultPage(value);
     localStorage.setItem("immocontrol_default_page", value);
     toast.success(`Standardseite auf "${DEFAULT_PAGE_OPTIONS.find(p => p.value === value)?.label || value}" gesetzt`);
-    const trigger = document.querySelector<HTMLElement>('[id="standardseite"] [role="combobox"]');
-    if (trigger) focusNextField(trigger);
+    /* FIX-11: Removed focusNextField call that caused unwanted scroll to telegram/bot-token section.
+       Selecting a default page is a standalone action — no "next field" navigation needed. */
   };
 
   return (

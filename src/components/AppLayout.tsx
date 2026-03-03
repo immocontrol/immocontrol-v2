@@ -391,20 +391,44 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   // Sliding indicator for mobile nav
   const updateMobileDotPosition = useCallback(() => {
     if (!mobileNavRef.current) return;
-    /* OPT-26: use route matching helper */
-    const activeIdx = navItems.findIndex((item) => isRouteActive(item.path, location.pathname));
-    if (activeIdx === -1) {
+    /* FIX-1/FIX-2: Use navEntries (top-level) instead of navItems (flat) for mobile dot.
+       The mobile nav renders navEntries directly — groups as buttons, items as links.
+       Only direct NavItem links get data-nav-link, so we find the matching entry index
+       among non-group entries and query the corresponding DOM element. */
+    let activeEntryIdx = -1;
+    let isInGroup = false;
+    for (let i = 0; i < navEntries.length; i++) {
+      const entry = navEntries[i];
+      if (isGroup(entry)) {
+        if (entry.items.some(item => isRouteActive(item.path, location.pathname))) {
+          isInGroup = true;
+          break;
+        }
+      } else {
+        if (isRouteActive(entry.path, location.pathname)) {
+          activeEntryIdx = i;
+          break;
+        }
+      }
+    }
+    /* If the active route is inside a group, hide the mobile dot (group button has no dot) */
+    if (isInGroup || activeEntryIdx === -1) {
       setMobileDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
       return;
     }
 
     const links = mobileNavRef.current.querySelectorAll<HTMLAnchorElement>("a[data-nav-link]");
-    /* If active route is in the "Mehr" overflow menu (index >= 5), hide the dot */
-    if (activeIdx >= links.length) {
+    /* Find which data-nav-link index corresponds to this navEntries index.
+       Direct NavItems are rendered before/between groups, count only non-group entries up to activeEntryIdx. */
+    let linkIdx = 0;
+    for (let i = 0; i < activeEntryIdx; i++) {
+      if (!isGroup(navEntries[i])) linkIdx++;
+    }
+    if (linkIdx >= links.length) {
       setMobileDotStyle((prev) => (isEqual(prev, { opacity: 0 }) ? prev : { opacity: 0 }));
       return;
     }
-    const activeLink = links[activeIdx];
+    const activeLink = links[linkIdx];
     if (!activeLink) return;
     const navRect = mobileNavRef.current.getBoundingClientRect();
     const linkRect = activeLink.getBoundingClientRect();

@@ -111,25 +111,39 @@ export const TeamManagement = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.from("team_members").insert({
+    /* FIX-12: Try insert with shared_resources first. If the column doesn't exist
+       in the DB schema, retry without it to prevent the
+       "Could not find the 'shared_resources' column" error. */
+    let insertError: { code?: string; message?: string } | null = null;
+    const basePayload = {
       owner_id: user.id,
       member_email: email.trim().toLowerCase(),
       role,
+    };
+    const { error: firstErr } = await supabase.from("team_members").insert({
+      ...basePayload,
       shared_resources: selectedResources,
     } as never);
-    if (error) {
-      if (error.code === "23505") {
+    if (firstErr && (firstErr.message?.includes("shared_resources") || firstErr.message?.includes("column"))) {
+      /* Column doesn't exist — retry without shared_resources */
+      const { error: retryErr } = await supabase.from("team_members").insert(basePayload as never);
+      insertError = retryErr;
+    } else {
+      insertError = firstErr;
+    }
+    if (insertError) {
+      if (insertError.code === "23505") {
         toast.error("Dieses Teammitglied wurde bereits eingeladen");
-      } else if (error.code === "23503") {
+      } else if (insertError.code === "23503") {
         toast.error("Ungültige Referenz — bitte Seite neu laden");
-      } else if (error.code === "23514") {
+      } else if (insertError.code === "23514") {
         toast.error("Ungültige Daten — bitte Eingaben prüfen");
-      } else if (error.code === "42501") {
+      } else if (insertError.code === "42501") {
         toast.error("Keine Berechtigung — bitte als Eigentümer anmelden");
-      } else if (error.message?.includes("network") || error.message?.includes("fetch")) {
+      } else if (insertError.message?.includes("network") || insertError.message?.includes("fetch")) {
         toast.error("Netzwerkfehler — bitte Internetverbindung prüfen");
       } else {
-        toast.error(`Fehler beim Einladen: ${error.message || "Unbekannter Fehler"}`);
+        toast.error(`Fehler beim Einladen: ${insertError.message || "Unbekannter Fehler"}`);
       }
     } else {
       /* Send invitation email: try Edge Function first, then fall back to

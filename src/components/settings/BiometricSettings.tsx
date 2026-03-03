@@ -42,10 +42,19 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
         }
         const challenge = new Uint8Array(32);
         crypto.getRandomValues(challenge);
+        /* FIX-8: Build rp config with proper id for non-localhost origins.
+           Without rp.id, browsers on deployed domains may reject the credential
+           creation with "Biometrische Authentifizierung fehlgeschlagen" because
+           the default rp.id derivation doesn't match the origin. */
+        const hostname = window.location.hostname;
+        const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
+        if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.startsWith("192.168.")) {
+          rpConfig.id = hostname;
+        }
         const credential = await navigator.credentials.create({
           publicKey: {
             challenge,
-            rp: { name: "ImmoControl" },
+            rp: rpConfig,
             user: {
               id: new TextEncoder().encode(user?.id || "anon"),
               name: user?.email || "user",

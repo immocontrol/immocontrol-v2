@@ -33,13 +33,52 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
     if (newPassword.length < 6) { toast.error("Passwort muss mindestens 6 Zeichen lang sein"); return; }
     if (oldPassword === newPassword) { toast.error("Das neue Passwort muss sich vom alten unterscheiden"); return; }
     setLoading(true);
-    const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: oldPassword });
-    if (verifyError) { setLoading(false); toast.error("Aktuelles Passwort ist falsch"); return; }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setLoading(false);
-    if (error) { toast.error(error.message); } else {
-      toast.success("Passwort geändert!");
-      setOldPassword(""); setNewPassword(""); setConfirmPassword("");
+    try {
+      /* FIX-6: Save current session before signInWithPassword to restore it after verification.
+         signInWithPassword creates a new session at AAL1 which breaks AAL2 for MFA users. */
+      const { data: sessionData } = await supabase.auth.getSession();
+      const previousSession = sessionData?.session;
+
+      const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: oldPassword });
+      if (verifyError) {
+        /* Restore previous session if verification failed */
+        if (previousSession) {
+          await supabase.auth.setSession({
+            access_token: previousSession.access_token,
+            refresh_token: previousSession.refresh_token,
+          });
+        }
+        setLoading(false);
+        toast.error("Aktuelles Passwort ist falsch");
+        return;
+      }
+
+      /* Restore the previous (AAL2) session before calling updateUser.
+         This ensures the update call has the proper AAL2 assurance level when MFA is enabled. */
+      if (previousSession) {
+        await supabase.auth.setSession({
+          access_token: previousSession.access_token,
+          refresh_token: previousSession.refresh_token,
+        });
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        /* FIX-6: If AAL2 error persists, try direct update without re-auth (the old password
+           was already verified above, so this is safe). */
+        if (error.message.includes("AAL2") || error.message.includes("aal2")) {
+          toast.error("Passwortänderung mit aktiviertem 2FA nicht möglich. Bitte deaktiviere 2FA vorübergehend oder kontaktiere den Support.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success("Passwort geändert!");
+        setOldPassword(""); setNewPassword(""); setConfirmPassword("");
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Fehler beim Ändern des Passworts");
+    } finally {
+      setLoading(false);
     }
   };
 

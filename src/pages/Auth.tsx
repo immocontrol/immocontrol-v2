@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,20 @@ const isLoginLocked = (): boolean => {
 const Auth = () => {
   /* IMP-6: Document title for Auth page */
   useEffect(() => { document.title = "Anmelden – ImmoControl"; }, []);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  /* FIX-5: Show confirmation toast when redirected after email change confirmation */
+  useEffect(() => {
+    if (searchParams.get("email_changed") === "true") {
+      toast.success("E-Mail-Adresse erfolgreich geändert! Bitte melde dich mit deiner neuen E-Mail an.", { duration: 8000 });
+      setSearchParams({}, { replace: true });
+    }
+    if (searchParams.get("password_reset") === "true") {
+      toast.success("Passwort erfolgreich zurückgesetzt! Bitte melde dich mit deinem neuen Passwort an.", { duration: 8000 });
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -244,8 +258,12 @@ const Auth = () => {
 
     try {
       if (mode === "forgot") {
+        /* FIX-10: Redirect to /auth?password_reset=true instead of /einstellungen.
+           This ensures the user lands on the login page with a success toast,
+           and the redirect always goes to the current deployed app origin
+           (not an old Lovable build URL). */
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/einstellungen`,
+          redirectTo: `${window.location.origin}/auth?password_reset=true`,
         });
         if (error) throw error;
         setResetSent(true);

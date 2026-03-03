@@ -295,18 +295,11 @@ const Settings = () => {
           <TeamManagement />
         </div>
 
-        {/* Logout */}
-        <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:150ms]">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold">Abmelden</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Von allen Ger\u00e4ten abmelden</p>
-            </div>
-            <Button variant="destructive" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-1.5" /> Abmelden
-            </Button>
-          </div>
-        </div>
+        {/* FIX-13: Removed standalone "Von allen Geräten abmelden" section.
+            The logout functionality is already in the Gefahrenzone section below,
+            and DeviceSettings provides the "Alle anderen Geräte abmelden" feature.
+            Having it here was duplicate and the subtitle was misleading (it only
+            logged out the current session, not all devices). */}
 
         {/* Danger zone */}
         <div id="gefahrenzone" ref={refFor("gefahrenzone")} role="alert" className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms] scroll-mt-20">
@@ -315,8 +308,18 @@ const Settings = () => {
             <h2 className="text-sm font-semibold text-destructive">Gefahrenzone</h2>
           </div>
           <p className="text-xs text-muted-foreground">
-            Wenn du dein Konto l\u00f6schst, werden alle deine Daten unwiderruflich gel\u00f6scht.
+            Wenn du dein Konto l\u00f6schst, werden alle deine Daten dauerhaft entfernt.
+            Nach der L\u00f6schung hast du 30 Tage Zeit, dein Konto wiederherzustellen.
+            Schreibe dazu an{" "}
+            <a href="mailto:support@immocontrol.app" className="text-primary underline underline-offset-2 hover:text-primary/80">
+              support@immocontrol.app
+            </a>.
           </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-1.5" /> Abmelden
+            </Button>
+          </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
@@ -327,7 +330,9 @@ const Settings = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-destructive">Konto unwiderruflich l\u00f6schen?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Alle Daten werden dauerhaft gel\u00f6scht. Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.
+                  Alle deine Daten werden dauerhaft gel\u00f6scht. Du hast 30 Tage Zeit, dein Konto per E-Mail an{" "}
+                  <a href="mailto:support@immocontrol.app" className="text-primary underline underline-offset-2">support@immocontrol.app</a>{" "}
+                  wiederherzustellen. Danach ist die L\u00f6schung endg\u00fcltig.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-1.5 my-2">

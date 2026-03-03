@@ -73,9 +73,25 @@ export function EmailChangeSettings({ sectionRef }: EmailChangeSettingsProps) {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      /* FIX-4: Pass emailRedirectTo so Supabase sends the confirmation link
+         back to the deployed app (not the default Supabase redirect).
+         Supabase sends confirmation to BOTH old and new email by default.
+         The user must click the link in the NEW email to complete the change. */
+      const { error } = await supabase.auth.updateUser(
+        { email: newEmail },
+        { emailRedirectTo: `${window.location.origin}/auth?email_changed=true` }
+      );
       if (error) {
-        toast.error(error.message);
+        /* FIX-4: Translate common Supabase errors to German */
+        if (error.message.includes("email_exists") || error.message.includes("already registered")) {
+          toast.error("Diese E-Mail-Adresse ist bereits registriert");
+        } else if (error.message.includes("rate limit")) {
+          toast.error("Zu viele Versuche. Bitte warte einen Moment.");
+        } else if (error.message.includes("same_email") || error.message.includes("same as")) {
+          toast.error("Die neue E-Mail ist identisch mit der aktuellen");
+        } else {
+          toast.error(error.message);
+        }
       } else {
         setStep("new-code");
         toast.success(`Bestätigungslink an ${newEmail} gesendet`);
