@@ -39,12 +39,16 @@ export function PasskeySettings({ sectionRef, displayName }: PasskeySettingsProp
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
       const userId = new TextEncoder().encode(user.id);
+      /* FIX-7: Use full hostname as rp.id instead of extracting top-level domain.
+         WebAuthn requires rp.id to be an exact match or a registrable suffix of the
+         current origin's effective domain. Using the full hostname is the safest option
+         because it always matches the current origin. Extracting just the last 2 parts
+         (e.g. "devinapps.com" from "app-xyz.devinapps.com") can fail if the browser
+         doesn't consider it a valid registrable domain for the current origin. */
       const hostname = window.location.hostname;
       const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
       if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.startsWith("192.168.")) {
-        const parts = hostname.split(".");
-        const rpId = parts.length >= 2 ? parts.slice(-2).join(".") : hostname;
-        rpConfig.id = rpId;
+        rpConfig.id = hostname;
       }
       const excludeCredentials = passkeys.map(pk => ({
         id: Uint8Array.from(atob(pk.id.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)),
