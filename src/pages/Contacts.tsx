@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
@@ -25,6 +25,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
+import { ContactDuplicateDetector } from "@/components/ContactDuplicateDetector";
+import { ListSkeleton } from "@/components/ListSkeleton";
 
 interface ContactItem {
   id: string;
@@ -50,9 +52,6 @@ const TRASH_RETENTION_DAYS = 30;
 const ContactManagement = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
-
-  // Document title
-  useEffect(() => { document.title = "Kontakte – ImmoControl"; }, []);
 
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("alle");
@@ -82,6 +81,32 @@ const ContactManagement = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-41: Dynamic document title */
+  useEffect(() => { document.title = `Kontakte (${contacts.length}) – ImmoControl`; }, [contacts.length]);
+
+  /* IMP20-14: Auto-purge expired trash entries on mount — silently delete contacts older than TRASH_RETENTION_DAYS */
+  useEffect(() => {
+    if (!user || !showTrash) return;
+    const purgeExpired = async () => {
+      const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 86400000).toISOString();
+      await supabase.from("contacts").delete().not("deleted_at", "is", null).lt("deleted_at", cutoff);
+    };
+    purgeExpired();
+  }, [user, showTrash]);
+
+  /* STR-13: Keyboard shortcut Ctrl+N to open new contact dialog */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "n" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        resetForm();
+        setOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   // Synergy 7: Fetch ticket count per handworker contact
   const { data: contactTicketCounts = {} } = useQuery({
@@ -129,7 +154,7 @@ const ContactManagement = () => {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.name.trim()) throw new Error("Name ist erforderlich");
-      if (form.email && !isValidEmail(form.email)) throw new Error("Bitte eine gueltige E-Mail-Adresse eingeben");
+      if (form.email && !isValidEmail(form.email)) throw new Error("Bitte eine gültige E-Mail-Adresse eingeben");
       const payload = {
         name: form.name.trim(),
         company: form.company || null,
@@ -227,7 +252,8 @@ const ContactManagement = () => {
     return contacts.length;
   }, [contacts, showTrash]);
 
-  // New: Duplicate detection
+  /* IMP20-20: Memoize duplicateGroups with stable dependency — avoids re-computation when contacts ref is same */
+  const contactIds = useMemo(() => contacts.map(c => c.id).join(","), [contacts]);
   const duplicateGroups = useMemo(() => {
     const seen = new Map<string, string[]>();
     contacts.forEach(c => {
@@ -236,11 +262,17 @@ const ContactManagement = () => {
       seen.get(key)!.push(c.id);
     });
     return Array.from(seen.values()).filter(ids => ids.length > 1);
-  }, [contacts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactIds]);
   const possibleDuplicates = duplicateGroups.flat();
 
   return (
     <div className="space-y-6" role="main" aria-label="Kontaktverwaltung">
+      {/* #17: Duplicate Detection with Fuzzy Matching */}
+      <ContactDuplicateDetector
+        contacts={contacts.map(c => ({ id: c.id, name: c.name, email: c.email, phone: c.phone, company: c.company }))}
+      />
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kontakte</h1>
@@ -363,7 +395,7 @@ const ContactManagement = () => {
             <button
               onClick={() => setSearch("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Suche leeren"
+              aria-label="Suche leeren" onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSearch(""); } }}
             >
               <X className="h-3.5 w-3.5" />
             </button>

@@ -43,7 +43,8 @@ const getRating = (calc: AnalysisCalcResult): { overall: Rating; score: number; 
   const goods = items.filter(i => i.rating === "good").length;
   const oks = items.filter(i => i.rating === "ok").length;
   const bads = items.filter(i => i.rating === "bad").length;
-  const score = Math.round((goods * 100 + oks * 50) / items.length);
+  /* IMP-34-3: Guard against division by zero when items is empty */
+  const score = items.length > 0 ? Math.round((goods * 100 + oks * 50) / items.length) : 0;
   const overall: Rating = goods >= 4 ? "good" : bads >= 4 ? "bad" : "ok";
 
   return { overall, score, items };
@@ -77,8 +78,8 @@ const RatingTrafficLight = ({ calc }: Props) => {
         </div>
       </div>
 
-      {/* Improvement 4: Score progress bar */}
-      <div className="h-2 bg-secondary rounded-full overflow-hidden mb-4">
+      {/* IMP-34-18: ARIA progressbar for screen readers on score bar */}
+      <div className="h-2 bg-secondary rounded-full overflow-hidden mb-4" role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100} aria-label={`Bewertungs-Score: ${score} von 100`}>
         <div
           className={`h-full rounded-full transition-all duration-500 ${config.barColor}`}
           style={{ width: `${score}%` }}

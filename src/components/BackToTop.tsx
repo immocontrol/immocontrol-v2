@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect, forwardRef } from "react";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,4 +33,5 @@ const BackToTop = forwardRef<HTMLButtonElement>((_, ref) => {
 
 BackToTop.displayName = "BackToTop";
 
-export default BackToTop;
+/* IMP-54: Memoize BackToTop */
+export default React.memo(BackToTop);

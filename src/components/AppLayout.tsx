@@ -9,7 +9,6 @@ import { NotificationBell } from "@/components/NotificationBell";
 import BackToTop from "@/components/BackToTop";
 import ScrollProgress from "@/components/ScrollProgress";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
-import { KeyboardShortcutHelp } from "@/components/KeyboardShortcutHelp";
 import ImmoAIBubble from "@/components/ImmoAIBubble";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -18,9 +17,11 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
+import { useQueryClient } from "@tanstack/react-query";
 import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -40,7 +41,7 @@ const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 /* Item 2: Menüpunkte umsortiert — Rechner, Nebenkosten & Cashflow-Prognose zu Finanzen hinzugefügt */
 const navEntries: NavEntry[] = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
-  { path: "/dashboard", label: "Persönliches Dashboard", icon: Sparkles, shortcut: "" },
+  { path: "/dashboard", label: "Dashboard", icon: Sparkles, shortcut: "" },
   {
     label: "Finanzen", icon: Landmark,
     items: [
@@ -70,7 +71,7 @@ const navEntries: NavEntry[] = [
       { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
     ],
   },
-  { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
+  /* Settings moved to header icon bar — no longer a nav entry */
 ];
 
 /* Flat list for keyboard shortcuts, mobile nav and dot indicator */
@@ -94,7 +95,7 @@ navItems.forEach(n => { if (n.shortcut) DEFAULT_SHORTCUT_MAP[`Alt+${n.shortcut}`
 /* Map action labels to paths for custom shortcut resolution */
 const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Portfolio": "/",
-  "Navigation: Persönliches Dashboard": "/dashboard",
+  "Navigation: Dashboard": "/dashboard",
   "Navigation: Darlehen": "/darlehen",
   "Navigation: Mieten": "/mietuebersicht",
   "Navigation: Verträge": "/vertraege",
@@ -174,6 +175,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* Auto-save global state every 10 seconds to protect against crashes */
   useGlobalAutoSave();
+
+  /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
+  const qc = useQueryClient();
+  const { indicatorRef: pullIndicatorRef } = usePullToRefresh({
+    onRefresh: async () => {
+      await qc.invalidateQueries();
+      toast.success("Daten aktualisiert");
+    },
+  });
 
   /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
   useRealtimeSync();
@@ -394,12 +404,30 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div data-session-id={sessionIdRef.current} className="min-h-screen bg-background flex flex-col theme-transition-smooth dark-mode-contrast">
+      {/* STR-11: Improved offline banner with auto-dismiss and reconnect detection */}
       {!isOnline && (
-        <div className="offline-banner" role="alert">⚠️ Keine Internetverbindung – Änderungen werden nicht gespeichert</div>
+        <div className="offline-banner animate-fade-in" role="alert" aria-live="assertive">
+          <span className="inline-flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-loss/75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-loss"></span>
+            </span>
+            Keine Internetverbindung &ndash; Lokale Änderungen werden beim Reconnect synchronisiert
+          </span>
+        </div>
       )}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">
         Zum Inhalt springen
       </a>
+      {/* #11: Pull-to-refresh indicator */}
+      <div
+        ref={pullIndicatorRef}
+        className="fixed top-0 left-1/2 z-[300] bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center shadow-lg pointer-events-none"
+        style={{ opacity: 0, transform: "translateX(-50%) translateY(-40px)" }}
+        aria-hidden
+      >
+        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+      </div>
       <ScrollProgress />
       <KeyboardShortcuts />
       {/* UI-6/UI-27: glass-header + page-header */}
@@ -498,9 +526,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-              <KeyboardShortcutHelp />
               <NotificationBell />
-              <Link to="/einstellungen" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/einstellungen" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Einstellungen">
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Einstellungen</TooltipContent>
+              </Tooltip>
+              <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={avatarUrl} alt={displayName} />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
@@ -510,7 +545,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <span className="text-sm font-medium hidden lg:block max-w-[120px] truncate">
                   {displayName}
                 </span>
-              </Link>
+              </div>
               <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-foreground h-8 w-8">
                 <LogOut className="h-4 w-4" />
               </Button>

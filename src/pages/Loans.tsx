@@ -52,8 +52,6 @@ const loanTypeLabels: Record<string, string> = {
 const Loans = () => {
   const { user } = useAuth();
 
-  // Document title
-  useEffect(() => { document.title = "Darlehen – ImmoControl"; }, []);
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -122,6 +120,9 @@ const Loans = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-40: Dynamic document title */
+  useEffect(() => { document.title = `Darlehen (${loans.length}) – ImmoControl`; }, [loans.length]);
 
   // User's custom banks
   const { data: userBanks = [] } = useQuery({
@@ -272,20 +273,32 @@ const Loans = () => {
     .filter(l => filterOwnership === "alle" || getPropertyOwnership(l.property_id) === filterOwnership)
     .filter(l => filterBank === "alle" || l.bank_name === filterBank), [loans, filterOwnership, filterBank, getPropertyOwnership]);
 
-  const totalBalance = filteredLoans.reduce((s, l) => s + l.remaining_balance, 0);
-  const totalMonthly = filteredLoans.reduce((s, l) => s + l.monthly_payment, 0);
-  const avgRate = filteredLoans.length > 0
-    ? filteredLoans.reduce((s, l) => s + l.interest_rate * l.remaining_balance, 0) / Math.max(totalBalance, 1)
-    : 0;
-  // Feature: Total interest paid estimate (annual)
-  const totalAnnualInterest = filteredLoans.reduce((s, l) => s + (l.remaining_balance * l.interest_rate / 100), 0);
-  // Feature: Total loan amount vs remaining
-  const totalLoanAmount = filteredLoans.reduce((s, l) => s + l.loan_amount, 0);
-  /* OPT-8: safeDivide for stable calculations */
-  const totalTilgungsfortschritt = safeDivide((totalLoanAmount - totalBalance) * 100, totalLoanAmount, 0);
+  /* IMP20-4: Consolidate 6 non-memoized derived values into single useMemo — prevents 6 reduce() calls on every render */
+  const { totalBalance, totalMonthly, avgRate, totalAnnualInterest, totalLoanAmount, totalTilgungsfortschritt } = useMemo(() => {
+    const balance = filteredLoans.reduce((s, l) => s + l.remaining_balance, 0);
+    const monthly = filteredLoans.reduce((s, l) => s + l.monthly_payment, 0);
+    const rate = filteredLoans.length > 0
+      ? filteredLoans.reduce((s, l) => s + l.interest_rate * l.remaining_balance, 0) / Math.max(balance, 1)
+      : 0;
+    const annualInterest = filteredLoans.reduce((s, l) => s + (l.remaining_balance * l.interest_rate / 100), 0);
+    const loanAmount = filteredLoans.reduce((s, l) => s + l.loan_amount, 0);
+    const tilgungsfortschritt = safeDivide((loanAmount - balance) * 100, loanAmount, 0);
+    return { totalBalance: balance, totalMonthly: monthly, avgRate: rate, totalAnnualInterest: annualInterest, totalLoanAmount: loanAmount, totalTilgungsfortschritt: tilgungsfortschritt };
+  }, [filteredLoans]);
   // Improvement: Refinancing alert - loans with rates above market average
   const MARKET_RATE_THRESHOLD = 3.5;
   const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
+
+  /* STR-12: Refinancing savings estimate — shows potential monthly savings if high-rate loans were refinanced at market rate */
+  const refinancingSavings = useMemo(() => {
+    if (highRateLoans.length === 0) return { monthlySavings: 0, annualSavings: 0, loanCount: 0 };
+    const monthlySavings = highRateLoans.reduce((s, l) => {
+      const currentMonthlyInterest = l.remaining_balance * l.interest_rate / 100 / 12;
+      const newMonthlyInterest = l.remaining_balance * MARKET_RATE_THRESHOLD / 100 / 12;
+      return s + (currentMonthlyInterest - newMonthlyInterest);
+    }, 0);
+    return { monthlySavings, annualSavings: monthlySavings * 12, loanCount: highRateLoans.length };
+  }, [highRateLoans]);
 
   /* FUNC-11: Loan maturity warnings - loans ending within 12 months */
   const maturingLoans = useMemo(() => {
@@ -385,7 +398,7 @@ const Loans = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
         {/* UI-4: skeleton-wave for loading */}
         <div className="h-8 w-48 skeleton-wave rounded-lg" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 card-stagger-enter">
@@ -396,7 +409,7 @@ const Loans = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           {/* UI-11: heading-gradient */}
@@ -417,6 +430,7 @@ const Loans = () => {
           {/* Ownership filter */}
           {["alle", "privat", "egbr"].map(f => (
             <button key={f} onClick={() => setFilterOwnership(f)}
+              aria-label={`Filter: ${f}`}
               className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${filterOwnership === f ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"}`}>
               {f === "alle" ? "Alle" : f === "egbr" ? "eGbR" : "Privat"}
             </button>
@@ -443,15 +457,21 @@ const Loans = () => {
             </Button>
           )}
 
-          {/* CSV Export */}
+          {/* IMP20-17: Enhanced Loans CSV export — includes Tilgungsfortschritt, Zinsanteil, Restlaufzeit */}
           {filteredLoans.length > 0 && (
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => {
-              const headers = ["Bank", "Objekt", "Betrag", "Restschuld", "Zinssatz", "Tilgung", "Rate/M", "Zinsbindung bis", "Start", "Ende", "Typ"];
-              const rows = filteredLoans.map(l => [
-                l.bank_name, getPropertyName(l.property_id), l.loan_amount, l.remaining_balance,
-                l.interest_rate, l.repayment_rate, l.monthly_payment,
-                l.fixed_interest_until || "", l.start_date || "", l.end_date || "", loanTypeLabels[l.loan_type] || l.loan_type,
-              ]);
+              const headers = ["Bank", "Objekt", "Betrag", "Restschuld", "Tilgungsfortschritt %", "Zinssatz", "Tilgung", "Rate/M", "Zinsanteil/M", "Tilgungsanteil/M", "Zinsbindung bis", "Start", "Ende", "Typ"];
+              const rows = filteredLoans.map(l => {
+                const monthlyInterest = (l.remaining_balance * l.interest_rate / 100 / 12);
+                const monthlyPrincipal = l.monthly_payment - monthlyInterest;
+                const progress = l.loan_amount > 0 ? ((l.loan_amount - l.remaining_balance) / l.loan_amount * 100).toFixed(1) : "0";
+                return [
+                  l.bank_name, getPropertyName(l.property_id), l.loan_amount, l.remaining_balance,
+                  progress, l.interest_rate, l.repayment_rate, l.monthly_payment,
+                  monthlyInterest.toFixed(2), monthlyPrincipal.toFixed(2),
+                  l.fixed_interest_until || "", l.start_date || "", l.end_date || "", loanTypeLabels[l.loan_type] || l.loan_type,
+                ];
+              });
               const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
               const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
               const url = URL.createObjectURL(blob);

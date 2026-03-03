@@ -102,4 +102,33 @@ export const rateLimiters = {
   aiChat: new RateLimiter({ maxRequests: 10, windowMs: 60_000, maxBackoffMs: 30_000 }),
   /** Generic API: max 30 requests per minute */
   api: new RateLimiter({ maxRequests: 30, windowMs: 60_000 }),
+  /** #18: Supabase queries — max 60 requests per minute */
+  supabase: new RateLimiter({ maxRequests: 60, windowMs: 60_000, maxBackoffMs: 10_000 }),
+  /** #18: Supabase mutations — max 30 per minute */
+  supabaseMutation: new RateLimiter({ maxRequests: 30, windowMs: 60_000, maxBackoffMs: 15_000 }),
+  /** #18: File uploads — max 10 per minute */
+  fileUpload: new RateLimiter({ maxRequests: 10, windowMs: 60_000, maxBackoffMs: 30_000 }),
 };
+
+/**
+ * #18: Rate-limited wrapper for any async function.
+ * Returns the result if allowed, throws if rate-limited.
+ */
+export async function withRateLimit<T>(
+  limiter: RateLimiter,
+  fn: () => Promise<T>,
+  label = "API"
+): Promise<T> {
+  if (!limiter.canProceed()) {
+    const waitMs = limiter.getWaitTime();
+    throw new Error(`Rate limit erreicht für ${label}. Bitte ${Math.ceil(waitMs / 1000)}s warten.`);
+  }
+  try {
+    const result = await fn();
+    limiter.recordSuccess();
+    return result;
+  } catch (err) {
+    limiter.recordFailure();
+    throw err;
+  }
+}

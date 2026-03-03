@@ -5,7 +5,7 @@ import InvoiceManagement from "@/components/InvoiceManagement";
 import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
-import { FileText, Receipt, Wrench, AlertTriangle, CheckCircle, Clock, CalendarClock } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -56,7 +56,8 @@ const Vertraege = () => {
   }, [stats.totalServiceCost, stats.openInvoiceAmount]);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto" role="main">
+    /* IMP-16: ARIA landmark for Verträge page */
+    <div className="space-y-6 max-w-5xl mx-auto" role="main" aria-label="Verträge und Verwaltung">
       {/* Improvement 8: Mobile responsive heading */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>
@@ -153,37 +154,6 @@ const Vertraege = () => {
       </Tabs>
     </div>
   );
-};
-
-/* FUNC-31: Contract status helper */
-const getContractStatus = (endDate: string | null): "active" | "expiring" | "expired" => {
-  if (!endDate) return "active";
-  const end = new Date(endDate);
-  const now = new Date();
-  const threeMonths = new Date();
-  threeMonths.setMonth(threeMonths.getMonth() + 3);
-  if (end < now) return "expired";
-  if (end < threeMonths) return "expiring";
-  return "active";
-};
-
-/* FUNC-32: Contract renewal reminder days calculation */
-const daysUntilExpiry = (endDate: string): number => {
-  const end = new Date(endDate);
-  const now = new Date();
-  return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-};
-
-/* FUNC-33: Contract type label mapping */
-const contractTypeLabels: Record<string, string> = {
-  mietvertrag: "Mietvertrag",
-  gewerbemietvertrag: "Gewerbemietvertrag",
-  pachtvertrag: "Pachtvertrag",
-  dienstleistungsvertrag: "Dienstleistungsvertrag",
-  versicherungsvertrag: "Versicherungsvertrag",
-  darlehensvertrag: "Darlehensvertrag",
-  kaufvertrag: "Kaufvertrag",
-  sonstig: "Sonstiger Vertrag",
 };
 
 

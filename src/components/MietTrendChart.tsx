@@ -39,7 +39,10 @@ const MietTrendChart = () => {
 
   if (trendData.length < 2) return null;
 
-  const avgQuote = trendData.reduce((s, d) => s + d.quote, 0) / trendData.length;
+  /* IMP-34-6: Guard against division by zero — early return above ensures length >= 2, but guard defensively */
+  const avgQuote = trendData.length > 0
+    ? trendData.reduce((s, d) => s + d.quote, 0) / trendData.length
+    : 0;
 
   return (
     <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in">
@@ -51,7 +54,8 @@ const MietTrendChart = () => {
           Ø {avgQuote.toFixed(0)}% Eingangsquote
         </span>
       </div>
-      <div className="h-44">
+      {/* IMP-34-15: ARIA label for screen readers on trend chart */}
+      <div className="h-44" role="img" aria-label={`Mieteinnahmen-Trend: ${trendData.length} Monate, Ø ${avgQuote.toFixed(0)}% Eingangsquote`}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={trendData}>
             <defs>

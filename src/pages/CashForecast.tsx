@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency, getISOWeek } from "@/lib/formatters";
+import { formatCurrency, getISOWeek, downloadBlob } from "@/lib/formatters";
 import { Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid, Line, ComposedChart, ReferenceLine } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -40,9 +40,12 @@ const CashForecast = () => {
     const today = new Date();
     const scenarioMultiplier = scenario === "optimistic" ? 1.05 : scenario === "pessimistic" ? 0.90 : 1.0;
     const expenseMultiplier = scenario === "optimistic" ? 0.95 : scenario === "pessimistic" ? 1.10 : 1.0;
-    const totalMonthlyExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0) * expenseMultiplier;
+    /* IMP20-16: Guard NaN — ensure multipliers produce valid numbers even with empty data */
+    const rawExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0) * expenseMultiplier;
+    const totalMonthlyExpenses = Number.isFinite(rawExpenses) ? rawExpenses : 0;
     const weeklyExpenses = totalMonthlyExpenses / 4.33;
-    const totalMonthlyLoanPayments = loans.reduce((s, l) => s + l.monthly_payment, 0);
+    const rawLoanPayments = loans.reduce((s, l) => s + l.monthly_payment, 0);
+    const totalMonthlyLoanPayments = Number.isFinite(rawLoanPayments) ? rawLoanPayments : 0;
     const weeklyLoanPayments = totalMonthlyLoanPayments / 4.33;
 
     let cumulativeCashflow = 0;
@@ -97,13 +100,9 @@ const CashForecast = () => {
     const headers = ["Woche", "Zeitraum", "Einnahmen", "Ausgaben", "Netto", "Kumulativ"];
     const rows = forecastData.map(w => [w.week, w.label, w.einnahmen, Math.abs(w.ausgaben), w.netto, w.kumulativ]);
     const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    /* IMP-34-11: Use downloadBlob utility for consistent URL cleanup */
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `cashforecast_${forecastWeeks}w_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `cashforecast_${forecastWeeks}w_${new Date().toISOString().split("T")[0]}.csv`);
     toast.success("CSV exportiert!");
   };
 
@@ -134,7 +133,8 @@ const CashForecast = () => {
   }
 
   return (
-    <div className="space-y-6">
+    /* IMP-13: ARIA landmark for CashForecast page */
+    <div className="space-y-6" role="main" aria-label="Cashforecast">
       {/* Improvement 4: Mobile responsive header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>

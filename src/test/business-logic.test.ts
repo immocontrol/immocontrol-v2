@@ -28,7 +28,9 @@ import {
   getBuildingSizeLabel,
   getBuildingSizeColor,
 } from "@/lib/crmUtils";
-import { calcMonthlyPayment, calcRemainingMonths } from "@/lib/formatters";
+import { calcMonthlyPayment, calcRemainingMonths, formatArea, formatInterestRate, stringToColor, isValidPLZ } from "@/lib/formatters";
+import { sanitizeEmail, sanitizeNumber, sanitizeUrl } from "@/lib/sanitize";
+import { isNonEmpty, isPositive, isValidDate } from "@/lib/validation";
 
 // ===== KAUFNEBENKOSTEN (Acquisition Costs) =====
 describe("Kaufnebenkosten", () => {
@@ -361,5 +363,84 @@ describe("CRM Utilities", () => {
     
     const noArea = { ...large, estimatedGrossArea: null };
     expect(getBuildingSizeColor(noArea)).toContain("muted");
+  });
+});
+
+
+/* IMP-141: Tests for new formatter utilities */
+describe("IMP-141: Additional formatter utilities", () => {
+  test("formatArea formats small areas in m²", () => {
+    expect(formatArea(150)).toContain("m²");
+  });
+
+  test("formatArea formats large areas in hectares", () => {
+    expect(formatArea(15000)).toContain("ha");
+  });
+
+  test("calcMonthlyPayment returns correct annuity", () => {
+    const payment = calcMonthlyPayment(100000, 3, 20);
+    expect(payment).toBeGreaterThan(500);
+    expect(payment).toBeLessThan(600);
+  });
+
+  test("calcRemainingMonths returns 0 for no balance", () => {
+    expect(calcRemainingMonths(0, 500, 3)).toBe(0);
+  });
+
+  test("formatInterestRate formats with comma decimal", () => {
+    expect(formatInterestRate(3.5)).toBe("3,50 %");
+  });
+
+  test("stringToColor returns consistent HSL color", () => {
+    const c1 = stringToColor("test");
+    const c2 = stringToColor("test");
+    expect(c1).toBe(c2);
+    expect(c1).toMatch(/^hsl\(/);
+  });
+
+  test("isValidPLZ validates German postal codes", () => {
+    expect(isValidPLZ("10115")).toBe(true);
+    expect(isValidPLZ("1234")).toBe(false);
+    expect(isValidPLZ("123456")).toBe(false);
+  });
+});
+
+/* IMP-142: Tests for sanitize utilities */
+describe("IMP-142: Sanitize utilities", () => {
+  test("sanitizeEmail validates and normalizes email", () => {
+    expect(sanitizeEmail("  User@Example.COM  ")).toBe("user@example.com");
+    expect(sanitizeEmail("notanemail")).toBe("");
+  });
+
+  test("sanitizeNumber returns fallback for NaN", () => {
+    expect(sanitizeNumber("abc")).toBe(0);
+    expect(sanitizeNumber(42)).toBe(42);
+    expect(sanitizeNumber("3.14")).toBeCloseTo(3.14);
+  });
+
+  test("sanitizeUrl blocks javascript: protocol", () => {
+    expect(sanitizeUrl("javascript:alert(1)")).toBe("");
+    expect(sanitizeUrl("https://example.com")).toBe("https://example.com");
+  });
+});
+
+/* IMP-143: Tests for validation utilities */
+describe("IMP-143: Validation utilities", () => {
+  test("isNonEmpty checks for non-empty strings", () => {
+    expect(isNonEmpty("hello")).toBe(true);
+    expect(isNonEmpty("  ")).toBe(false);
+    expect(isNonEmpty("")).toBe(false);
+    expect(isNonEmpty(null)).toBe(false);
+  });
+
+  test("isPositive checks for positive numbers", () => {
+    expect(isPositive(1)).toBe(true);
+    expect(isPositive(0)).toBe(false);
+    expect(isPositive(-1)).toBe(false);
+  });
+
+  test("isValidDate validates date strings", () => {
+    expect(isValidDate("2024-01-15")).toBe(true);
+    expect(isValidDate("not-a-date")).toBe(false);
   });
 });

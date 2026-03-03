@@ -13,6 +13,8 @@ import { toast } from "sonner";
 type AuthMode = "login" | "register" | "forgot";
 
 const Auth = () => {
+  /* IMP-6: Document title for Auth page */
+  useEffect(() => { document.title = "Anmelden – ImmoControl"; }, []);
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

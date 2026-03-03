@@ -23,7 +23,10 @@ const RenditeRanking = () => {
 
   if (properties.length < 2) return null;
 
-  const avgBrutto = ranking.reduce((s, r) => s + r.brutto, 0) / ranking.length;
+  /* IMP-34-1: Guard against division by zero when ranking is empty */
+  const avgBrutto = ranking.length > 0
+    ? ranking.reduce((s, r) => s + r.brutto, 0) / ranking.length
+    : 0;
 
   return (
     <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in">
@@ -34,14 +37,16 @@ const RenditeRanking = () => {
         <span className="text-xs text-muted-foreground">Ø {formatPercent(avgBrutto)} Brutto</span>
       </div>
 
-      <div className="h-40">
+      {/* IMP-34-14: ARIA label for screen readers on chart */}
+      <div className="h-40" role="img" aria-label={`Rendite-Ranking Balkendiagramm: ${ranking.length} Objekte, Durchschnitt ${avgBrutto.toFixed(1)}%`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={ranking} layout="vertical">
             <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `${v.toFixed(1)}%`} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))" }}
-              formatter={(v: number) => [`${v.toFixed(2)}%`, "Brutto-Rendite"]}
+              /* IMP-34-13: Guard against NaN in tooltip formatter */
+              formatter={(v: number) => [`${Number.isFinite(v) ? v.toFixed(2) : "0.00"}%`, "Brutto-Rendite"]}
               labelFormatter={(label) => ranking.find(r => r.name === label)?.fullName || label}
             />
             <Bar dataKey="brutto" radius={[0, 4, 4, 0]}>

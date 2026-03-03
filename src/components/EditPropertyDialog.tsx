@@ -36,7 +36,7 @@ const schema = z.object({
   interestRate: z.coerce.number().min(0).max(20),
   sqm: z.coerce.number().min(1),
   yearBuilt: z.coerce.number().min(1800).max(2030),
-  ownership: z.string().min(1, "Besitzverhaeltnis waehlen"),
+  ownership: z.string().min(1, "Besitzverhältnis wählen"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -161,7 +161,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Besitzverhaeltnis</Label>
+                <Label className="text-xs text-muted-foreground">Besitzverhältnis</Label>
                 <GesellschaftSelector
                   value={watch("ownership") || ""}
                   onChange={(v) => setValue("ownership", v, { shouldValidate: true })}
@@ -193,12 +193,12 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Objektdetails</h4>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Wohnflaeche (m2)" name="sqm" type="number" />
+              <Field label="Wohnfläche (m²)" name="sqm" type="number" />
               <Field label="Baujahr" name="yearBuilt" type="number" />
             </div>
           </div>
 
-          <Button type="submit" className="w-full">Aenderungen speichern</Button>
+          <Button type="submit" className="w-full">Änderungen speichern</Button>
         </form>
       </DialogContent>
     </Dialog>

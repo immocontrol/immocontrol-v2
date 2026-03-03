@@ -92,18 +92,24 @@ const Mietuebersicht = () => {
     return { thisYear: thisYearTotal, lastYear: lastYearTotal, change };
   }, [payments]);
 
-  // Stats
-  const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
-  const confirmed = filteredPayments.filter(p => p.status === "confirmed");
-  const totalConfirmed = confirmed.reduce((s, p) => s + Number(p.amount), 0);
-  const overdue = filteredPayments.filter(p => p.status === "overdue");
-  const totalOverdue = overdue.reduce((s, p) => s + Number(p.amount), 0);
-  const pending = filteredPayments.filter(p => p.status === "pending");
-  const collectionRate = totalDue > 0 ? Math.round((totalConfirmed / totalDue) * 100) : 0;
+  /* IMP20-10: Memoize inline stats — 7 reduce/filter calls were running on every render */
+  const { totalDue, confirmed, totalConfirmed, overdue, totalOverdue, pending, collectionRate } = useMemo(() => {
+    const due = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
+    const conf = filteredPayments.filter(p => p.status === "confirmed");
+    const confTotal = conf.reduce((s, p) => s + Number(p.amount), 0);
+    const od = filteredPayments.filter(p => p.status === "overdue");
+    const odTotal = od.reduce((s, p) => s + Number(p.amount), 0);
+    const pend = filteredPayments.filter(p => p.status === "pending");
+    const rate = due > 0 ? Math.round((confTotal / due) * 100) : 0;
+    return { totalDue: due, confirmed: conf, totalConfirmed: confTotal, overdue: od, totalOverdue: odTotal, pending: pend, collectionRate: rate };
+  }, [filteredPayments]);
 
   // Active tenants with rent
-  const activeTenants = tenants.filter(t => t.is_active);
-  const totalMonthlyRent = activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0);
+  const activeTenants = useMemo(() => tenants.filter(t => t.is_active), [tenants]);
+  const totalMonthlyRent = useMemo(() => activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0), [activeTenants]);
+
+  /* BUG-FIX: Memoize totalUnits — was calculated 3 times inline in JSX causing redundant reduce() calls */
+  const totalUnits = useMemo(() => properties.reduce((s, p) => s + p.units, 0), [properties]);
 
   /* FUNC-23: Top paying tenants */
   const topTenants = useMemo(() => {
@@ -117,7 +123,7 @@ const Mietuebersicht = () => {
   const paymentMethodDist = useMemo(() => {
     const methods: Record<string, number> = {};
     payments.forEach(p => {
-      const method = (p as Record<string, unknown>).payment_method as string || "Überweisung";
+      const method = typeof (p as { payment_method?: string }).payment_method === "string" ? (p as { payment_method?: string }).payment_method! : "Überweisung";
       methods[method] = (methods[method] || 0) + 1;
     });
     return methods;
@@ -249,8 +255,8 @@ const Mietuebersicht = () => {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vermietungsquote</span>
                 <span className="text-sm font-bold">
-                  {properties.reduce((s, p) => s + p.units, 0) > 0
-                    ? `${((activeTenants.length / properties.reduce((s, p) => s + p.units, 0)) * 100).toFixed(0)}%`
+                  {totalUnits > 0
+                    ? `${((activeTenants.length / totalUnits) * 100).toFixed(0)}%`
                     : "–"
                   }
                 </span>
@@ -258,12 +264,12 @@ const Mietuebersicht = () => {
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <div
                   className="h-full bg-profit rounded-full transition-all"
-                  style={{ width: `${(() => { const total = properties.reduce((s, p) => s + p.units, 0); return total > 0 ? (activeTenants.length / total) * 100 : 0; })()}%` }}
+                  style={{ width: `${totalUnits > 0 ? (activeTenants.length / totalUnits) * 100 : 0}%` }}
                 />
               </div>
               <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
                 <span>{activeTenants.length} vermietet</span>
-                <span>{properties.reduce((s, p) => s + p.units, 0) - activeTenants.length} leer</span>
+                <span>{totalUnits - activeTenants.length} leer</span>
               </div>
             </div>
           )}

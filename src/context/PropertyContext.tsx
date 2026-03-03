@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { propertyRowSchema, safeParseRows } from "@/lib/supabaseSchemas";
 
 interface PortfolioStats {
   totalValue: number;
@@ -13,6 +14,10 @@ interface PortfolioStats {
   totalCashflow: number;
   totalDebt: number;
   totalUnits: number;
+  /** IMP20-1: Pre-computed totals — avoids redundant reduce() in Dashboard */
+  totalSqm: number;
+  totalExpenses: number;
+  totalCreditRate: number;
   equity: number;
   propertyCount: number;
   appreciation: number;
@@ -95,17 +100,20 @@ const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string
 
 const EMPTY_STATS: PortfolioStats = {
   totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0,
-  totalDebt: 0, totalUnits: 0, equity: 0, propertyCount: 0,
-  appreciation: 0, avgRendite: 0,
+  totalDebt: 0, totalUnits: 0, totalSqm: 0, totalExpenses: 0, totalCreditRate: 0,
+  equity: 0, propertyCount: 0, appreciation: 0, avgRendite: 0,
 };
 
+/* #19: Zod-validated response (rate limiting removed — React Query staleTime + refetch control
+   already prevents excessive API calls; client-side rate limiter caused spurious errors on tab switch) */
 const fetchPropertiesFromDb = async () => {
   const { data, error } = await supabase
     .from("properties")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data || []).map(mapDbToProperty);
+  const validated = safeParseRows(propertyRowSchema, data || [], "properties");
+  return validated.map(mapDbToProperty);
 };
 
 export const PropertyProvider = ({ children }: { children: ReactNode }) => {
@@ -118,6 +126,8 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
     enabled: !!user,
   });
 
+  /* IMP20-1: Single-pass aggregation — includes totalSqm, totalExpenses, totalCreditRate
+     so Dashboard/Loans don't need to re-iterate properties */
   const stats = useMemo<PortfolioStats>(() => {
     if (properties.length === 0) return EMPTY_STATS;
     const acc = properties.reduce(
@@ -128,8 +138,11 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         totalCashflow: s.totalCashflow + p.monthlyCashflow,
         totalDebt: s.totalDebt + p.remainingDebt,
         totalUnits: s.totalUnits + p.units,
+        totalSqm: s.totalSqm + (p.sqm || 0),
+        totalExpenses: s.totalExpenses + (p.monthlyExpenses || 0),
+        totalCreditRate: s.totalCreditRate + (p.monthlyCreditRate || 0),
       }),
-      { totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0, totalDebt: 0, totalUnits: 0 }
+      { totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0, totalDebt: 0, totalUnits: 0, totalSqm: 0, totalExpenses: 0, totalCreditRate: 0 }
     );
     const equity = acc.totalValue - acc.totalDebt;
     return {
@@ -142,6 +155,7 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
 
   const invalidate = useCallback(() => qc.invalidateQueries({ queryKey: queryKeys.properties.all }), [qc]);
 
+  /* #6: Optimistic update for addProperty — shows new property instantly */
   const addMutation = useMutation({
     mutationFn: async (property: Omit<Property, "id">) => {
       if (!user) throw new Error("Not authenticated");
@@ -168,10 +182,21 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       });
       if (error) throw error;
     },
-    onSuccess: invalidate,
-    onError: () => toast.error("Fehler beim Anlegen"),
+    onMutate: async (property) => {
+      await qc.cancelQueries({ queryKey: queryKeys.properties.all });
+      const previous = qc.getQueryData<Property[]>(queryKeys.properties.all);
+      const optimistic: Property = { ...property, id: `temp-${Date.now()}` };
+      qc.setQueryData<Property[]>(queryKeys.properties.all, (old) => [optimistic, ...(old ?? [])]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
+      toast.error("Fehler beim Anlegen");
+    },
+    onSettled: invalidate,
   });
 
+  /* #6: Optimistic update for updateProperty — reflects changes instantly */
   const updateMutation = useMutation({
     mutationFn: async ({ id, property }: { id: string; property: Partial<Omit<Property, "id">> }) => {
       const updates = mapPropertyToDb(property);
@@ -179,8 +204,19 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.from("properties").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: invalidate,
-    onError: () => toast.error("Fehler beim Speichern"),
+    onMutate: async ({ id, property: partial }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.properties.all });
+      const previous = qc.getQueryData<Property[]>(queryKeys.properties.all);
+      qc.setQueryData<Property[]>(queryKeys.properties.all, (old) =>
+        (old ?? []).map(p => p.id === id ? { ...p, ...partial } : p)
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
+      toast.error("Fehler beim Speichern");
+    },
+    onSettled: invalidate,
   });
 
   const deleteMutation = useMutation({

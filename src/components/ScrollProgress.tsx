@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { createThrottle, safeDivide } from "@/lib/formatters";
 
@@ -31,4 +32,5 @@ const ScrollProgress = () => {
   );
 };
 
-export default ScrollProgress;
+/* IMP-56: Memoize ScrollProgress */
+export default React.memo(ScrollProgress);

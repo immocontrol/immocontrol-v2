@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -106,6 +106,10 @@ const Dokumente = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-8: Document title */
+  /* IMP-42: Dynamic document title */
+  useEffect(() => { document.title = `Dokumente (${documents.length}) – ImmoControl`; }, [documents.length]);
 
   const filteredDocs = useMemo(() => {
     let docs = documents;
@@ -247,7 +251,8 @@ const Dokumente = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    /* IMP-14: ARIA landmark for Dokumente page */
+    <div className="space-y-6 animate-fade-in" role="main" aria-label="Dokumenten-Management">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Dokumenten-Management</h1>

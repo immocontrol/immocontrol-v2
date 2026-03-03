@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import PortfolioForecast from "@/components/PortfolioForecast";
@@ -43,6 +44,11 @@ import ReportingDashboard from "@/components/ReportingDashboard";
 import KPIAlerts from "@/components/KPIAlerts";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
+import { AnomalyDetection } from "@/components/AnomalyDetection";
+import { RentIncreaseTimeline } from "@/components/RentIncreaseTimeline";
+import { LoanFixedInterestCountdown } from "@/components/LoanFixedInterestCountdown";
+import { ListSkeleton } from "@/components/ListSkeleton";
 import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 /* Removed: QuickCalculator, PropertyComparison, HandoverProtocol, RentIncreaseLetter,
@@ -80,7 +86,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   // Document title
   useEffect(() => {
-    document.title = mode === "personal" ? "Persönliches Dashboard – ImmoControl" : "Portfolio – ImmoControl";
+    document.title = mode === "personal" ? "Dashboard – ImmoControl" : "Portfolio – ImmoControl";
   }, [mode]);
 
   const { data: allTenants = [] } = useQuery({
@@ -97,12 +103,15 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const debouncedSearch = useDebounce(search, 200);
   const [sort, setSort] = useState<SortType>("name");
   const [refreshing, setRefreshing] = useState(false);
+  /* STR-9: Track last refresh timestamp for user transparency */
+  const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   /* BUG-4: Dashboard minimalist cleanup — collapse charts and widgets by default for cleaner look */
   /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
   const [chartsCollapsed, setChartsCollapsed] = useState(mode === "portfolio");
   const [widgetsCollapsed, setWidgetsCollapsed] = useState(mode === "portfolio");
   const [isChartDragOverview, setIsChartDragOverview] = useState(false);
+  const [isWidgetDragOverview, setIsWidgetDragOverview] = useState(false);
 
   useEffect(() => {
     // Reset default section visibility on mode switch
@@ -111,10 +120,54 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     setIsChartDragOverview(false);
   }, [mode]);
 
+  /* Dashboard widgets drag & drop reordering */
+  const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
+  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts";
+  /* Widget order grouped by content:
+     1. Overview: health, actions, kpiAlerts
+     2. Portfolio: stats, occupancy, heatmap, typeChart, allocation
+     3. Performance: goals, rendite, diversifikation, wasserfall, yoy, forecast
+     4. Financial: debtEquity, netWorth, tilgung, amortization, cashReserve, budget
+     5. Loans: stress, refinancing
+     6. Revenue: rentCollection, expense, annual, hausgeld, vacancy, renovation
+     7. Compliance: steuer, tax, geg, grundsteuer, mietpreisbremse, leaseAlerts, contractExpiry, maintenance, milestones
+     8. Reports: historie, reporting */
+  const defaultWidgetOrder: WidgetId[] = [
+    "health", "actions", "kpiAlerts",
+    "stats", "occupancy", "heatmap", "typeChart", "allocation",
+    "goals", "rendite", "diversifikation", "wasserfall", "yoy", "forecast",
+    "debtEquity", "netWorth", "tilgung", "amortization", "cashReserve", "budget",
+    "stress", "refinancing",
+    "rentCollection", "expense", "annual", "hausgeld", "vacancy", "renovation",
+    "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
+    "historie", "reporting",
+  ];
+  const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
+    try {
+      const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as WidgetId[];
+        if (Array.isArray(parsed) && parsed.length === defaultWidgetOrder.length) return parsed;
+      }
+    } catch { /* ignore */ }
+    return defaultWidgetOrder;
+  });
+
+  const widgetDrag = useDragReorder(
+    widgetOrder,
+    (next) => { setWidgetOrder(next); setIsWidgetDragOverview(false); },
+    WIDGET_STORAGE_KEY,
+  );
+
+  useEffect(() => {
+    setIsWidgetDragOverview(widgetDrag.isDragging);
+  }, [widgetDrag.isDragging]);
+
   /* Dashboard charts drag & drop reordering */
   const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
   type ChartId = "portfolio" | "cashflow" | "monthly" | "map";
-  const defaultChartOrder: ChartId[] = ["portfolio", "cashflow", "monthly", "map"];
+  /* Chart order: Cashflow first (most actionable), then monthly trends, portfolio distribution, map */
+  const defaultChartOrder: ChartId[] = ["cashflow", "monthly", "portfolio", "map"];
   const [chartOrder, setChartOrder] = useState<ChartId[]>(() => {
     try {
       const stored = localStorage.getItem(CHART_STORAGE_KEY);
@@ -125,35 +178,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     } catch { /* ignore */ }
     return defaultChartOrder;
   });
-  const dragChartRef = useRef<{ idx: number; startY: number } | null>(null);
-  const [dragChartIdx, setDragChartIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  const handleChartDragStart = useCallback((idx: number, clientY: number) => {
-    dragChartRef.current = { idx, startY: clientY };
-    setDragChartIdx(idx);
-    setIsChartDragOverview(true);
-  }, []);
+  const chartDrag = useDragReorder(
+    chartOrder,
+    (next) => { setChartOrder(next); setIsChartDragOverview(false); },
+    CHART_STORAGE_KEY,
+  );
 
-  const handleChartDragOver = useCallback((idx: number) => {
-    setDragOverIdx(idx);
-  }, []);
-
-  const handleChartDragEnd = useCallback(() => {
-    if (dragChartIdx !== null && dragOverIdx !== null && dragChartIdx !== dragOverIdx) {
-      setChartOrder(prev => {
-        const next = [...prev];
-        const [removed] = next.splice(dragChartIdx, 1);
-        next.splice(dragOverIdx, 0, removed);
-        try { localStorage.setItem(CHART_STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }
-        return next;
-      });
-    }
-    dragChartRef.current = null;
-    setDragChartIdx(null);
-    setDragOverIdx(null);
-    setIsChartDragOverview(false);
-  }, [dragChartIdx, dragOverIdx]);
+  useEffect(() => {
+    setIsChartDragOverview(chartDrag.isDragging);
+  }, [chartDrag.isDragging]);
 
   const chartComponents: Record<ChartId, { label: string; component: React.ReactNode; span?: number }> = useMemo(() => ({
     portfolio: { label: "Portfolio-Verteilung", component: <PortfolioChart /> },
@@ -182,12 +216,18 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   // Feature 4: CSV Export
   const exportCSV = useCallback(() => {
     if (properties.length === 0) return;
-    const headers = ["Name", "Adresse", "Typ", "Einheiten", "Kaufpreis", "Aktueller Wert", "Miete/M", "Kosten/M", "Kreditrate/M", "Cashflow/M", "Restschuld", "Zinssatz", "m²", "Baujahr", "Besitz"];
-    const rows = properties.map((p) => [
-      escapeHtml(p.name), escapeHtml(p.address || ""), p.type, p.units, p.purchasePrice, p.currentValue,
-      p.monthlyRent, p.monthlyExpenses, p.monthlyCreditRate, p.monthlyCashflow,
-      p.remainingDebt, p.interestRate, p.sqm, p.yearBuilt, escapeHtml(p.ownership),
-    ]);
+    /* IMP20-13: Extended CSV export — includes Rendite, annual Cashflow, and Netto-Rendite columns */
+    const headers = ["Name", "Adresse", "Typ", "Einheiten", "Kaufpreis", "Aktueller Wert", "Miete/M", "Kosten/M", "Kreditrate/M", "Cashflow/M", "Cashflow/J", "Brutto-Rendite %", "Netto-Rendite %", "Restschuld", "Zinssatz", "m²", "Baujahr", "Besitz"];
+    const rows = properties.map((p) => {
+      const bruttoRendite = p.purchasePrice > 0 ? ((p.monthlyRent * 12) / p.purchasePrice * 100).toFixed(2) : "0";
+      const nettoRendite = p.purchasePrice > 0 ? (((p.monthlyRent - p.monthlyExpenses) * 12) / p.purchasePrice * 100).toFixed(2) : "0";
+      return [
+        escapeHtml(p.name), escapeHtml(p.address || ""), p.type, p.units, p.purchasePrice, p.currentValue,
+        p.monthlyRent, p.monthlyExpenses, p.monthlyCreditRate, p.monthlyCashflow,
+        p.monthlyCashflow * 12, bruttoRendite, nettoRendite,
+        p.remainingDebt, p.interestRate, p.sqm, p.yearBuilt, escapeHtml(p.ownership),
+      ];
+    });
     const csv = [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -298,10 +338,14 @@ ${properties.map(p => `<tr>
     privat: properties.filter(p => p.ownership === "privat").length,
   }), [properties]);
 
+  /* STR-9: Show last refreshed timestamp after data refresh */
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await qc.invalidateQueries({ queryKey: queryKeys.properties.all });
-    setTimeout(() => setRefreshing(false), 600);
+    setTimeout(() => {
+      setRefreshing(false);
+      setLastRefreshed(new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+    }, 600);
   }, [qc]);
 
   /* FUNC-1: Portfolio summary metrics */
@@ -335,17 +379,17 @@ ${properties.map(p => `<tr>
     return allTenants.filter(t => t.is_active).reduce((s, t) => s + (t.monthly_rent || 0), 0);
   }, [allTenants]);
 
-  /* FUNC-4: Average holding period calculation */
+  /* IMP20-3: Fix unsafe Record<string, unknown> cast — use typed Property.purchaseDate directly */
   const avgHoldingPeriodMonths = useMemo(() => {
     if (properties.length === 0) return 0;
     const totalMonths = properties.reduce((s, p) => {
-      const purchase = (p as Record<string, unknown>).purchase_date as string | undefined
-        || (p as Record<string, unknown>).purchaseDate as string | undefined;
-      if (!purchase) return s;
-      const months = Math.floor((Date.now() - new Date(purchase).getTime()) / (1000 * 60 * 60 * 24 * 30));
+      if (!p.purchaseDate) return s;
+      const months = Math.floor((Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
       return s + months;
     }, 0);
-    return Math.round(totalMonths / properties.length);
+    /* IMP-34-20: NaN guard — ensure finite result even with invalid dates */
+    const raw = totalMonths / properties.length;
+    return Number.isFinite(raw) ? Math.round(raw) : 0;
   }, [properties]);
 
   /* FUNC-5: Highest and lowest yield properties */
@@ -359,6 +403,17 @@ ${properties.map(p => `<tr>
     return { highest: sorted[0], lowest: sorted[sorted.length - 1] };
   }, [properties]);
 
+
+  /* BUG-FIX: Move greeting useMemo BEFORE early returns to satisfy React Rules of Hooks.
+     Hooks must always be called in the same order — conditional returns must come after all hooks. */
+  const greeting = useMemo(() => {
+    const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+    const h = new Date().getHours();
+    const name = userName ? `, ${userName}` : "";
+    if (h < 12) return `Guten Morgen${name}`;
+    if (h < 18) return `Guten Tag${name}`;
+    return `Guten Abend${name}`;
+  }, [user]);
 
   const filters: { key: FilterType; label: string }[] = [
     { key: "alle", label: "Alle" },
@@ -440,31 +495,16 @@ ${properties.map(p => `<tr>
     );
   }
 
-  // Improvement 10: Greeting with user name
-  const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-  const greeting = (() => {
-    const h = new Date().getHours();
-    const name = userName ? `, ${userName}` : "";
-    if (h < 12) return `Guten Morgen${name}`;
-    if (h < 18) return `Guten Tag${name}`;
-    return `Guten Abend${name}`;
-  })();
-
-  const totalSqm = properties.reduce((s, p) => s + (p.sqm || 0), 0);
+  /* IMP20-2: Use pre-computed stats from PropertyContext — eliminates 3 redundant reduce() calls */
+  const totalSqm = stats.totalSqm;
   const avgPricePerSqm = totalSqm > 0 ? stats.totalValue / totalSqm : 0;
-  const totalMonthlyExpenses = properties.reduce((s, p) => s + (p.monthlyExpenses || 0), 0);
-  const totalMonthlyCreditRate = properties.reduce((s, p) => s + (p.monthlyCreditRate || 0), 0);
+  const totalMonthlyExpenses = stats.totalExpenses;
+  const totalMonthlyCreditRate = stats.totalCreditRate;
   const totalCosts = totalMonthlyExpenses + totalMonthlyCreditRate;
 
-  // Feature: Average holding period
-  const avgHoldingMonths = properties.length > 0
-    ? properties.reduce((s, p) => {
-        const months = (Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30.44);
-        return s + months;
-      }, 0) / properties.length
-    : 0;
-  const avgHoldingYears = Math.floor(avgHoldingMonths / 12);
-  const avgHoldingRemMonths = Math.floor(avgHoldingMonths % 12);
+  /* STR-2: Reuse memoized avgHoldingPeriodMonths instead of recalculating */
+  const avgHoldingYears = Math.floor(avgHoldingPeriodMonths / 12);
+  const avgHoldingRemMonths = Math.floor(avgHoldingPeriodMonths % 12);
 
   // Feature: Top 3 by cashflow
   const top3Cashflow = [...properties].sort((a, b) => b.monthlyCashflow - a.monthlyCashflow).slice(0, 3);
@@ -780,8 +820,23 @@ ${properties.map(p => `<tr>
         </>
       )}
 
+      {/* #14: Anomaly Detection — automatic portfolio warnings */}
+      {mode === "personal" && <AnomalyDetection />}
+
       {/* Overdue Payment Banner */}
       <OverduePaymentBanner />
+
+      {/* #15 + #16: Rent Increase Timeline + Loan Fixed Interest Countdown */}
+      {mode === "personal" && (
+        <div className="grid md:grid-cols-2 gap-3">
+          <WidgetErrorBoundary name="Mieterhöhungs-Timeline">
+            <RentIncreaseTimeline />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary name="Zinsbindungs-Countdown">
+            <LoanFixedInterestCountdown />
+          </WidgetErrorBoundary>
+        </div>
+      )}
 
       {mode === "portfolio" && (
         <>
@@ -862,7 +917,9 @@ ${properties.map(p => `<tr>
                 <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Daten aktualisieren</TooltipContent>
+            <TooltipContent>
+              {lastRefreshed ? `Zuletzt aktualisiert: ${lastRefreshed}` : "Daten aktualisieren"}
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -892,9 +949,17 @@ ${properties.map(p => `<tr>
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="text-sm font-medium mb-1">Keine Ergebnisse</p>
-            <p className="text-xs text-muted-foreground">Keine Objekte gefunden für „{search}“</p>
-            <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => setSearch("")}>
-              Suche zurücksetzen
+            <p className="text-xs text-muted-foreground">
+              {search ? `Keine Objekte gefunden für „${search}"` : "Keine Objekte in dieser Kategorie"}
+            </p>
+            {/* STR-10: Better empty search state with search tips */}
+            {search && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tipp: Suche nach Name, Adresse oder Objekttyp
+              </p>
+            )}
+            <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
+              {search ? "Suche zurücksetzen" : "Filter zurücksetzen"}
             </Button>
           </div>
         ) : (
@@ -918,8 +983,7 @@ ${properties.map(p => `<tr>
 
       {mode === "personal" && (
         <>
-          {/* IMP-6: Moved occupancy, heatmap, type chart, goals into collapsible widgets for cleaner layout */}
-      {/* Collapsible Widgets Section */}
+          {/* Collapsible Widgets Section — all widgets drag & drop reorderable */}
       <div>
         <button
           onClick={() => setWidgetsCollapsed(!widgetsCollapsed)}
@@ -927,87 +991,91 @@ ${properties.map(p => `<tr>
         >
           {widgetsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           Analyse & Widgets {widgetsCollapsed ? "einblenden" : "ausblenden"}
+          {!widgetsCollapsed && <span className="text-[10px] font-normal ml-2">Ziehen zum Umsortieren</span>}
           {!widgetsCollapsed && <span className="ml-auto"><WidgetCustomizer /></span>}
         </button>
-        <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[10000px] opacity-100"}`}>
-          {/* Occupancy, Heatmap, Type, Goals moved here */}
-          {allTenants.length > 0 && (
-            <OccupancyTracker
-              properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))}
-              tenants={allTenants}
-            />
-          )}
-          <YieldHeatmap properties={properties} />
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioTypeChart properties={properties} />
-            <CashflowPerSqmWidget properties={properties} />
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[20000px] opacity-100"}`}>
+          <div
+            ref={widgetDrag.containerRef}
+            className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isWidgetDragOverview ? "scale-[0.92] opacity-90" : ""}`}
+          >
+            {widgetOrder.map((wId, idx) => {
+              const isDragging = widgetDrag.dragIdx === idx;
+              const isOver = widgetDrag.overIdx === idx;
+              const widgetContent = (() => {
+                switch (wId) {
+                  case "health": return <PortfolioHealthScore totalValue={stats.totalValue} totalDebt={stats.totalDebt} totalCashflow={stats.totalCashflow} totalRent={stats.totalRent} totalExpenses={totalMonthlyExpenses} totalCreditRate={totalMonthlyCreditRate} vacancyRate={vacancyRate} propertyCount={stats.propertyCount} />;
+                  case "occupancy": return allTenants.length > 0 ? <OccupancyTracker properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))} tenants={allTenants} /> : null;
+                  case "heatmap": return <YieldHeatmap properties={properties} />;
+                  case "typeChart": return <PortfolioTypeChart properties={properties} />;
+                  case "goals": return <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />;
+                  case "forecast": return <PortfolioForecast />;
+                  case "rendite": return <RenditeRanking />;
+                  case "wasserfall": return <WasserfallChart />;
+                  case "diversifikation": return <DiversifikationsScore />;
+                  case "tilgung": return <TilgungsProgress />;
+                  case "steuer": return <SteuerHelfer />;
+                  case "annual": return <AnnualSummaryCard />;
+                  case "cashReserve": return <CashReserveWidget />;
+                  case "stress": return <MortgageStressTest />;
+                  case "milestones": return <PortfolioMilestones />;
+                  case "tax": return <TaxDeadlineReminder />;
+                  case "geg": return <GEGComplianceChecker />;
+                  case "mietpreisbremse": return <MietpreisbremseChecker />;
+                  case "refinancing": return <LoanRefinancingCalc />;
+                  case "grundsteuer": return <GrundsteuerCalculator />;
+                  case "hausgeld": return <HausgeldTracker />;
+                  case "vacancy": return <VacancyCostCalc />;
+                  case "renovation": return <RenovationROICalc />;
+                  case "budget": return <BudgetVsActual />;
+                  case "rentCollection": return <RentCollectionChart />;
+                  case "yoy": return <YearOverYear />;
+                  case "contractExpiry": return <ContractExpiryCountdown />;
+                  case "expense": return <ExpenseCategoryBreakdown />;
+                  case "maintenance": return <MaintenanceCostTrend />;
+                  case "allocation": return <PortfolioAllocationWidget />;
+                  case "amortization": return <LoanAmortizationMini />;
+                  case "debtEquity": return <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />;
+                  case "netWorth": return <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />;
+                  case "leaseAlerts": return <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />;
+                  case "actions": return <DashboardActionCenter />;
+                  case "historie": return <PortfolioHistorie />;
+                  case "reporting": return <ReportingDashboard />;
+                  case "kpiAlerts": return <KPIAlerts />;
+                  case "stats": return <CashflowPerSqmWidget properties={properties} />;
+                  default: return <QuickNoteWidget />;
+                }
+              })();
+              if (widgetContent === null) return null;
+              /* Full-width widgets span 2 columns */
+              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts";
+              return (
+                <div
+                  key={wId}
+                  {...widgetDrag.getItemProps(idx)}
+                  className={`relative group transition-all duration-200 rounded-xl ${
+                    fullWidth ? "md:col-span-2" : ""
+                  } ${
+                    isDragging ? "opacity-50 scale-[0.96]" : ""
+                  } ${
+                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
+                  }`}
+                >
+                  {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
+                  <div
+                    {...widgetDrag.getHandleProps(idx)}
+                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
+                    aria-label="Ziehen zum Umsortieren"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <WidgetErrorBoundary name={wId}>
+                    {widgetContent}
+                  </WidgetErrorBoundary>
+                </div>
+              );
+            })}
           </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />
-            <QuickNoteWidget />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioForecast />
-            <RenditeRanking />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <WasserfallChart />
-            <DiversifikationsScore />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <TilgungsProgress />
-            <SteuerHelfer />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <AnnualSummaryCard />
-            <CashReserveWidget />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <MortgageStressTest />
-            <PortfolioMilestones />
-          </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            <TaxDeadlineReminder />
-            <GEGComplianceChecker />
-            <MietpreisbremseChecker />
-          </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            <LoanRefinancingCalc />
-            <GrundsteuerCalculator />
-            <HausgeldTracker />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <VacancyCostCalc />
-            <RenovationROICalc />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <BudgetVsActual />
-            <RentCollectionChart />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <YearOverYear />
-            <ContractExpiryCountdown />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <ExpenseCategoryBreakdown />
-            <MaintenanceCostTrend />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioAllocationWidget />
-            <LoanAmortizationMini />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />
-            <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />
-          </div>
-          <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />
-          <DashboardActionCenter />
-          {/* HIST-1: Portfolio Historie — Soll/Ist-Vergleich */}
-          <PortfolioHistorie />
-          {/* REPORTING-1: Reporting & Analytics Dashboard */}
-          <ReportingDashboard />
-          {/* FEATURE-8: KPI-Alerts — automatic portfolio metric warnings */}
-          <KPIAlerts />
         </div>
       </div>
 
@@ -1022,23 +1090,18 @@ ${properties.map(p => `<tr>
           {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
         </button>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-200 origin-top ${isChartDragOverview ? "scale-[0.92] opacity-90" : ""}`}>
+          <div
+            ref={chartDrag.containerRef}
+            className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isChartDragOverview ? "scale-[0.92] opacity-90" : ""}`}
+          >
             {chartOrder.map((chartId, idx) => {
               const chart = chartComponents[chartId];
-              const isDragging = dragChartIdx === idx;
-              const isOver = dragOverIdx === idx;
+              const isDragging = chartDrag.dragIdx === idx;
+              const isOver = chartDrag.overIdx === idx;
               return (
                 <div
                   key={chartId}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    handleChartDragStart(idx, e.clientY);
-                  }}
-                  onDragOver={(e) => { e.preventDefault(); handleChartDragOver(idx); }}
-                  onDragEnd={handleChartDragEnd}
-                  onTouchStart={() => handleChartDragStart(idx, 0)}
-                  onTouchEnd={handleChartDragEnd}
+                  {...chartDrag.getItemProps(idx)}
                   className={`relative group transition-all duration-200 rounded-xl ${
                     chart.span === 2 ? "md:col-span-2" : ""
                   } ${
@@ -1047,11 +1110,15 @@ ${properties.map(p => `<tr>
                     isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
                   }`}
                 >
-                  {/* Drag handle */}
-                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1 border border-border/50">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
+                  <div
+                    {...chartDrag.getHandleProps(idx)}
+                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
+                    aria-label="Ziehen zum Umsortieren"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <Suspense fallback={<div className={`${chart.span === 2 ? "h-64" : "h-64"} bg-secondary/50 rounded-xl animate-pulse`} />}>
+                  <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
                     {chart.component}
                   </Suspense>
                 </div>

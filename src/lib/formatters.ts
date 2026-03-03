@@ -13,10 +13,12 @@ const currencyFormatterDecimals = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 2,
 });
 
+/** IMP-44: Format currency in EUR (no decimals) */
 export const formatCurrency = (value: number) => currencyFormatter.format(value);
 
 export const formatCurrencyDecimals = (value: number) => currencyFormatterDecimals.format(value);
 
+/** IMP-45: Format percentage with configurable decimals */
 export const formatPercent = (value: number, decimals = 1) =>
   `${value.toFixed(decimals)}%`;
 
@@ -42,6 +44,7 @@ export const formatTime = (dateStr: string) =>
     minute: "2-digit",
   });
 
+/** IMP-46: Format relative time in German (e.g. "vor 5 Min.") */
 export const relativeTime = (dateStr: string): string => {
   const now = Date.now();
   const diff = now - new Date(dateStr).getTime();
@@ -55,6 +58,7 @@ export const relativeTime = (dateStr: string): string => {
   return formatDate(dateStr);
 };
 
+/** IMP-47: Format file size with appropriate unit (B, KB, MB) */
 export const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -334,4 +338,36 @@ export const stringToColor = (str: string): string => {
 export const formatSignedCompact = (value: number): string => {
   const sign = value >= 0 ? "+" : "";
   return `${sign}${formatCompactDE(value)}`;
+};
+
+/* IMP20-11: Format months to human-readable German "X Jahre Y Monate" — used in Dashboard avgHoldingPeriod */
+export const formatMonthsToYearsDE = (totalMonths: number): string => {
+  if (totalMonths <= 0) return "–";
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years === 0) return `${months} Monat${months !== 1 ? "e" : ""}`;
+  if (months === 0) return `${years} Jahr${years !== 1 ? "e" : ""}`;
+  return `${years}J ${months}M`;
+};
+
+/* IMP-34-9: Centralized blob download with automatic URL cleanup — prevents memory leaks from orphaned ObjectURLs */
+export const downloadBlob = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  // Revoke after a short delay to ensure the download starts
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+};
+
+/* STR-3: Format IBAN for display with spacing (DE89 3704 0044 0532 0130 00) */
+export const formatIBAN = (iban: string): string => {
+  const cleaned = iban.replace(/\s/g, "").toUpperCase();
+  return cleaned.replace(/(.{4})/g, "$1 ").trim();
+};
+
+/* STR-4: Format relative timestamp for "last refreshed" display */
+export const formatLastRefreshed = (): string => {
+  return new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 };

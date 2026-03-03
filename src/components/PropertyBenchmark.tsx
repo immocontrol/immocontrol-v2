@@ -7,8 +7,10 @@ interface PropertyBenchmarkProps {
   propertyId: string;
 }
 
+/* IMP-34-17: NaN guard in Meter — ensure pct is always finite for CSS width */
 const Meter = ({ value, avg, label, format }: { value: number; avg: number; label: string; format: (v: number) => string }) => {
-  const pct = avg > 0 ? (value / avg) * 100 : 100;
+  const rawPct = avg > 0 ? (value / avg) * 100 : 100;
+  const pct = Number.isFinite(rawPct) ? rawPct : 100;
   const isGood = value >= avg;
   return (
     <div className="space-y-1">
@@ -36,7 +38,8 @@ const PropertyBenchmark = ({ propertyId }: PropertyBenchmarkProps) => {
     if (!p || properties.length < 2) return { property: p, avgBrutto: 0, avgCashflow: 0, avgLtv: 0, avgSqmRent: 0 };
 
     const others = properties.filter(x => x.id !== propertyId);
-    const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
+    /* IMP-34-2: Guard against division by zero when others array is empty */
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 
     return {
       property: p,
