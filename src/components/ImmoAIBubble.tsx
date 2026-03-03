@@ -36,6 +36,23 @@ const BUBBLE_MAX_MESSAGES = 50;
 export default function ImmoAIBubble() {
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
+  const [disabled, setDisabled] = useState(() => {
+    try { return localStorage.getItem("immocontrol_ai_chat_disabled") === "true"; } catch { return false; }
+  });
+
+  /* Listen for ai-chat-toggle events from Settings */
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && typeof detail.enabled === "boolean") {
+        setDisabled(!detail.enabled);
+        if (!detail.enabled) setOpen(false);
+      }
+    };
+    window.addEventListener("ai-chat-toggle", handler);
+    return () => window.removeEventListener("ai-chat-toggle", handler);
+  }, []);
+
   const [messages, setMessages] = useState<Msg[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -381,6 +398,9 @@ export default function ImmoAIBubble() {
   }, [open, isLoading]);
 
   const unreadCount = messages.length;
+
+  /* If AI chat is disabled, don't render anything */
+  if (disabled) return null;
 
   return (
     <>

@@ -142,6 +142,8 @@ export const DataExportBackup = () => {
       const json = JSON.stringify(backup, null, 2);
       const date = new Date().toISOString().split("T")[0];
       downloadFile(json, `immocontrol-backup-${date}.json`, "application/json");
+      /* Track last export date */
+      localStorage.setItem("immocontrol_last_export_date", new Date().toISOString());
       toast.success("JSON-Backup heruntergeladen");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
@@ -172,6 +174,8 @@ export const DataExportBackup = () => {
           /* Skip tables that fail */
         }
       }
+      /* Track last export date */
+      localStorage.setItem("immocontrol_last_export_date", new Date().toISOString());
       toast.success("CSV-Dateien heruntergeladen");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");

@@ -262,6 +262,16 @@ const RoleRouter = () => {
     return <HandworkerPortal />;
   }
 
+  /* Default page redirect: if user has configured a default page and is on "/",
+     redirect to that page instead. Placed AFTER tenant/handworker checks so
+     those users always see their portals regardless of localStorage state. */
+  const defaultPage = (() => {
+    try { return localStorage.getItem("immocontrol_default_page"); } catch { return null; }
+  })();
+  if (defaultPage && defaultPage !== "/" && window.location.pathname === "/") {
+    return <Navigate to={defaultPage} replace />;
+  }
+
   return (
     <AppLayout>
       <PageTransition>
