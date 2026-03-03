@@ -17,6 +17,8 @@ import { ErrorInterceptor } from "@/components/ErrorScanner";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import { useBackgroundSync } from "@/hooks/useOfflineCache";
 import { queryKeys } from "@/lib/queryKeys";
+import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
+import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -136,15 +138,17 @@ const PageLoader = () => (
   </div>
 );
 
-/* IMP-5: React Query configuration with entity-specific staleTime via queryKey defaults */
+/* #7: React Query with exponential backoff retry logic
+   #20: refetchOnWindowFocus enabled for stale-data awareness */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60_000,
       gcTime: 10 * 60_000,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      retry: 1,
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30_000),
     },
     mutations: {
       retry: 0,
@@ -180,6 +184,9 @@ const RoleRouter = () => {
 
   /* OFFLINE-5: Activate background sync for offline mutations */
   useBackgroundSync();
+
+  /* #20: Show stale-data warning when tab regains focus after inactivity */
+  useStaleDataWarning();
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -303,6 +310,7 @@ const App = () => {
               <BrowserRouter>
                 <ScrollToTop />
                 <CommandPalette />
+                <KeyboardShortcutOverlay />
                 <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>

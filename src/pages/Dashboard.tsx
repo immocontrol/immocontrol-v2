@@ -44,6 +44,11 @@ import ReportingDashboard from "@/components/ReportingDashboard";
 import KPIAlerts from "@/components/KPIAlerts";
 import { escapeHtml } from "@/lib/sanitize";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
+import { AnomalyDetection } from "@/components/AnomalyDetection";
+import { RentIncreaseTimeline } from "@/components/RentIncreaseTimeline";
+import { LoanFixedInterestCountdown } from "@/components/LoanFixedInterestCountdown";
+import { ListSkeleton } from "@/components/ListSkeleton";
 import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 /* Removed: QuickCalculator, PropertyComparison, HandoverProtocol, RentIncreaseLetter,
@@ -815,8 +820,23 @@ ${properties.map(p => `<tr>
         </>
       )}
 
+      {/* #14: Anomaly Detection — automatic portfolio warnings */}
+      {mode === "personal" && <AnomalyDetection />}
+
       {/* Overdue Payment Banner */}
       <OverduePaymentBanner />
+
+      {/* #15 + #16: Rent Increase Timeline + Loan Fixed Interest Countdown */}
+      {mode === "personal" && (
+        <div className="grid md:grid-cols-2 gap-3">
+          <WidgetErrorBoundary name="Mieterhöhungs-Timeline">
+            <RentIncreaseTimeline />
+          </WidgetErrorBoundary>
+          <WidgetErrorBoundary name="Zinsbindungs-Countdown">
+            <LoanFixedInterestCountdown />
+          </WidgetErrorBoundary>
+        </div>
+      )}
 
       {mode === "portfolio" && (
         <>
@@ -1049,7 +1069,9 @@ ${properties.map(p => `<tr>
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  {widgetContent}
+                  <WidgetErrorBoundary name={wId}>
+                    {widgetContent}
+                  </WidgetErrorBoundary>
                 </div>
               );
             })}

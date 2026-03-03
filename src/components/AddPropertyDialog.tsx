@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, ChevronRight, ChevronLeft } from "lucide-react";
+import { useFormDraft } from "@/hooks/useFormDraft";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -81,10 +82,31 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
   </div>
 );
 
+const FORM_DEFAULTS: FormData = {
+  name: "",
+  address: "",
+  type: "ETW",
+  ownership: "Privat",
+  units: 1,
+  purchasePrice: 300000,
+  purchaseDate: new Date().toISOString().split("T")[0],
+  currentValue: 300000,
+  monthlyRent: 1000,
+  monthlyExpenses: 200,
+  monthlyCreditRate: 800,
+  remainingDebt: 250000,
+  interestRate: 3.5,
+  sqm: 80,
+  yearBuilt: 1970,
+};
+
 const AddPropertyDialog = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const { addProperty } = useProperties();
+
+  /* #9: Form draft auto-recovery via sessionStorage */
+  const { values: draftValues, setValues: setDraftValues, clearDraft, hasDraft } = useFormDraft<FormData>("add-property", FORM_DEFAULTS);
 
   const {
     register,
@@ -96,29 +118,23 @@ const AddPropertyDialog = () => {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(fullSchema),
-    defaultValues: {
-      type: "ETW",
-      ownership: "Privat",
-      units: 1,
-      purchasePrice: 300000,
-      purchaseDate: new Date().toISOString().split("T")[0],
-      currentValue: 300000,
-      monthlyRent: 1000,
-      monthlyExpenses: 200,
-      monthlyCreditRate: 800,
-      remainingDebt: 250000,
-      interestRate: 3.5,
-      sqm: 80,
-      yearBuilt: 1970,
-    },
+    defaultValues: hasDraft ? draftValues : FORM_DEFAULTS,
   });
+
+  /* Sync form changes to draft storage — use watch subscription to avoid infinite loop */
+  useEffect(() => {
+    const subscription = watch((values) => {
+      setDraftValues(values as FormData);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setDraftValues]);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
       setOpen(isOpen);
-      if (!isOpen) { setStep(0); reset(); }
+      if (!isOpen) { setStep(0); reset(FORM_DEFAULTS); clearDraft(); }
     },
-    [reset]
+    [reset, clearDraft]
   );
 
   const goNext = useCallback(async () => {
@@ -132,7 +148,8 @@ const AddPropertyDialog = () => {
     const monthlyCashflow = data.monthlyRent - data.monthlyExpenses - data.monthlyCreditRate;
     await addProperty({ ...data, monthlyCashflow, location: "" } as Omit<import("@/data/mockData").Property, "id">);
     toast.success(`${data.name} wurde angelegt!`);
-    reset();
+    reset(FORM_DEFAULTS);
+    clearDraft();
     setStep(0);
     setOpen(false);
   };
