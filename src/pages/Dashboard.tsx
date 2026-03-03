@@ -214,8 +214,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   }, [chartDrag.isDragging]);
 
   const chartComponents: Record<ChartId, { label: string; component: React.ReactNode; span?: number }> = useMemo(() => ({
-    portfolio: { label: "Portfolio-Verteilung", component: <PortfolioChart /> },
-    cashflow: { label: "Cashflow-Übersicht", component: <CashflowChart /> },
+    portfolio: { label: "Portfolio-Verteilung", component: <PortfolioChart />, span: 1 },
+    cashflow: { label: "Cashflow-Übersicht", component: <CashflowChart />, span: 1 },
     monthly: { label: "Monatsübersicht", component: <MonthlyOverviewChart />, span: 2 },
     map: { label: "Standortkarte", component: <PropertyMap />, span: 2 },
   }), []);
@@ -653,6 +653,7 @@ ${properties.map(p => `<tr>
           value={formatCurrency(stats.totalValue)}
           subValue={`${stats.appreciation >= 0 ? "+" : ""}${stats.appreciation.toFixed(1)}% Wertzuwachs`}
           trend={stats.appreciation >= 0 ? "up" : "down"}
+          tooltip={`Kaufpreis gesamt: ${formatCurrency(stats.totalPurchase)} → Aktueller Wert: ${formatCurrency(stats.totalValue)}`}
           icon={<Building2 className="h-4 w-4" />}
           delay={0}
         />
@@ -882,6 +883,64 @@ ${properties.map(p => `<tr>
 
       {mode === "portfolio" && (
         <>
+          {/* Collapsible Charts Section for portfolio mode — drag & drop reorderable */}
+      <div>
+        <button
+          onClick={() => setChartsCollapsed(!chartsCollapsed)}
+          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3 w-full"
+        >
+          {chartsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          Grafiken & Charts {chartsCollapsed ? "einblenden" : "ausblenden"}
+          {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
+        </button>
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
+          <div
+            ref={chartDrag.containerRef}
+            className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
+              isChartDragOverview
+                ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
+                : ""
+            }`}
+          >
+            {chartOrder.map((chartId, idx) => {
+              const chart = chartComponents[chartId];
+              const isDragging = chartDrag.dragIdx === idx;
+              const isOver = chartDrag.overIdx === idx;
+              return (
+                <div
+                  key={chartId}
+                  {...chartDrag.getItemProps(idx)}
+                  className={`relative group transition-all duration-200 rounded-xl ${
+                    (chart.span ?? 1) >= 2 ? "md:col-span-2" : ""
+                  } ${
+                    isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
+                  } ${
+                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
+                  }`}
+                >
+                  <div
+                    {...chartDrag.getHandleProps(idx)}
+                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
+                    aria-label="Ziehen zum Umsortieren"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  {/* Show label overlay during drag for quick identification */}
+                  {isChartDragOverview && (
+                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
+                      <span className="text-[10px] font-semibold text-foreground">{chart.label}</span>
+                    </div>
+                  )}
+                  <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
+                    {chart.component}
+                  </Suspense>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
           {/* Search + Sort + Filter - MOVED UP for sticky properties */}
       <div className="flex flex-col gap-3">
         <div className="relative flex-1">
@@ -1039,7 +1098,11 @@ ${properties.map(p => `<tr>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[20000px] opacity-100"}`}>
           <div
             ref={widgetDrag.containerRef}
-            className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isWidgetDragOverview ? "scale-[0.92] opacity-90" : ""}`}
+            className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
+              isWidgetDragOverview
+                ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
+                : ""
+            }`}
           >
             {widgetOrder.map((wId, idx) => {
               const isDragging = widgetDrag.dragIdx === idx;
@@ -1110,9 +1173,9 @@ ${properties.map(p => `<tr>
                   className={`relative group transition-all duration-200 rounded-xl ${
                     fullWidth ? "md:col-span-2" : ""
                   } ${
-                    isDragging ? "opacity-50 scale-[0.96]" : ""
+                    isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
                   } ${
-                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
+                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
                   }`}
                 >
                   {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
@@ -1123,6 +1186,12 @@ ${properties.map(p => `<tr>
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
+                  {/* Widget label overlay during drag for quick identification */}
+                  {isWidgetDragOverview && (
+                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
+                      <span className="text-[10px] font-semibold text-foreground">{wId}</span>
+                    </div>
+                  )}
                   <WidgetErrorBoundary name={wId}>
                     {widgetContent}
                   </WidgetErrorBoundary>
@@ -1146,7 +1215,11 @@ ${properties.map(p => `<tr>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
           <div
             ref={chartDrag.containerRef}
-            className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isChartDragOverview ? "scale-[0.92] opacity-90" : ""}`}
+            className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
+              isChartDragOverview
+                ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
+                : ""
+            }`}
           >
             {chartOrder.map((chartId, idx) => {
               const chart = chartComponents[chartId];
@@ -1157,11 +1230,11 @@ ${properties.map(p => `<tr>
                   key={chartId}
                   {...chartDrag.getItemProps(idx)}
                   className={`relative group transition-all duration-200 rounded-xl ${
-                    chart.span === 2 ? "md:col-span-2" : ""
+                    (chart.span ?? 1) >= 2 ? "md:col-span-2" : ""
                   } ${
-                    isDragging ? "opacity-50 scale-[0.98]" : ""
+                    isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
                   } ${
-                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
+                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
                   }`}
                 >
                   {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
@@ -1172,6 +1245,12 @@ ${properties.map(p => `<tr>
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
+                  {/* Show label overlay during drag for quick identification */}
+                  {isChartDragOverview && (
+                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
+                      <span className="text-[10px] font-semibold text-foreground">{chart.label}</span>
+                    </div>
+                  )}
                   <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
                     {chart.component}
                   </Suspense>

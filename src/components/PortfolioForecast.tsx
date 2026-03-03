@@ -85,7 +85,8 @@ const PortfolioForecast = () => {
         </div>
         <div className="bg-secondary/50 rounded-lg p-2.5">
           <div className="text-[10px] text-muted-foreground uppercase">EK-Wachstum</div>
-          <div className={`text-sm font-bold ${equityGrowth >= 0 ? "text-profit" : "text-loss"}`}>+{equityGrowth.toFixed(0)}%</div>
+          {/* IMP38-1: Fix sign display — show minus for negative growth */}
+          <div className={`text-sm font-bold ${equityGrowth >= 0 ? "text-profit" : "text-loss"}`}>{equityGrowth >= 0 ? "+" : ""}{equityGrowth.toFixed(0)}%</div>
         </div>
       </div>
 
