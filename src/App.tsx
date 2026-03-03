@@ -47,18 +47,6 @@ const ROUTES = {
   WARTUNG: "/wartungsplaner",
 } as const;
 
-/* OPT-41: App version constant */
-const APP_VERSION = "2.0.0";
-
-/* OPT-42: Feature flags for gradual rollout */
-const FEATURES = {
-  AI_CHAT: true,
-  CRM_SEARCH: true,
-  BUILDING_ESTIMATION: true,
-  SOFT_DELETE: true,
-  DARK_MODE: true,
-} as const;
-
 // Lazy imports with preloading
 const dashboardImport = () => import("@/pages/Dashboard");
 const propertyDetailImport = () => import("@/pages/PropertyDetail");

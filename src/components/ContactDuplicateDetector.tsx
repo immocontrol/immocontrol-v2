@@ -44,7 +44,7 @@ function stringSimilarity(a: string, b: string): number {
 }
 
 function normalizePhone(phone: string): string {
-  return phone.replace(/[\s\-()\/+]/g, "").replace(/^0049/, "0").replace(/^49/, "0");
+  return phone.replace(/[\s\-()/+]/g, "").replace(/^0049/, "0").replace(/^49/, "0");
 }
 
 function findDuplicates(contacts: Contact[]): DuplicateGroup[] {
