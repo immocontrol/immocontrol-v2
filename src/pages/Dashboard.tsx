@@ -603,7 +603,11 @@ ${properties.map(p => `<tr>
         chartsCollapsed={false}
         widgetsCollapsed={false}
         onApply={({ widgetOrder: wo }) => {
-          setWidgetOrder(wo as typeof widgetOrder);
+          const typed = wo as typeof widgetOrder;
+          // Reconcile: remove stale IDs and add any missing widgets (e.g. chart_* from old presets)
+          const valid = typed.filter(w => defaultWidgetOrder.includes(w));
+          const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
+          setWidgetOrder(valid.length > 0 ? [...valid, ...missing] : defaultWidgetOrder);
         }}
       />
 
