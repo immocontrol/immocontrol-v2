@@ -139,12 +139,13 @@ const Todos = () => {
   });
 
   const addMutation = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (input: { title: string; due_date?: string }) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("todos" as never).insert({
         user_id: user.id,
-        title: title.trim(),
+        title: input.title.trim(),
         priority: 4,
+        ...(input.due_date ? { due_date: input.due_date } : {}),
       });
       if (error) throw error;
     },
@@ -219,7 +220,7 @@ const Todos = () => {
 
   const handleQuickAdd = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && quickInput.trim()) {
-      addMutation.mutate(quickInput);
+      addMutation.mutate({ title: quickInput });
     }
   }, [quickInput, addMutation]);
 
@@ -543,7 +544,7 @@ const Todos = () => {
               className="h-7 px-3 text-xs shrink-0 gap-1"
               onClick={() => {
                 if (quickInput.trim()) {
-                  addMutation.mutate(quickInput);
+                  addMutation.mutate({ title: quickInput });
                 } else {
                   quickInputRef.current?.focus();
                 }
@@ -698,7 +699,7 @@ const Todos = () => {
       {/* Wiederkehrende Aufgaben — moved from Dashboard */}
       <RecurringTodos onCreateTodo={(title, dueDate) => {
         if (user) {
-          addMutation.mutate(title);
+          addMutation.mutate({ title, due_date: dueDate });
         }
       }} />
     </div>

@@ -41,11 +41,19 @@ function HistoryChartInner({ euribor, mortgage, hover, setHover, svgRef }: {
   const yMax = maxRate + padded;
   const yRange = yMax - yMin;
 
-  const toPath = (points: { rate: number }[]) => {
+  /* Time-based x-axis: convert dates to timestamps for proper temporal alignment */
+  const toTimestamp = (dateStr: string) => new Date(dateStr).getTime();
+  const allDates = [...euribor.map(p => toTimestamp(p.date)), ...mortgage.map(p => toTimestamp(p.date))];
+  const minTime = Math.min(...allDates);
+  const maxTime = Math.max(...allDates);
+  const timeRange = maxTime - minTime || 1;
+
+  const dateToX = (dateStr: string) => padL + ((toTimestamp(dateStr) - minTime) / timeRange) * chartW;
+
+  const toPath = (points: { date: string; rate: number }[]) => {
     if (points.length < 2) return "";
-    const step = chartW / (points.length - 1);
     return points.map((p, i) => {
-      const x = padL + i * step;
+      const x = dateToX(p.date);
       const y = padT + chartH - ((p.rate - yMin) / yRange) * chartH;
       return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(" ");
@@ -57,31 +65,40 @@ function HistoryChartInner({ euribor, mortgage, hover, setHover, svgRef }: {
     yTicks.push(v);
   }
 
-  const longerSeries = euribor.length >= mortgage.length ? euribor : mortgage;
-  const yearInterval = longerSeries.length > 180 ? 5 : longerSeries.length > 60 ? 2 : 1;
+  /* X-axis year labels based on unified time domain */
+  const totalMonths = (maxTime - minTime) / (1000 * 60 * 60 * 24 * 30.44);
+  const yearInterval = totalMonths > 180 ? 5 : totalMonths > 60 ? 2 : 1;
   const xLabels: { x: number; label: string }[] = [];
-  const xStep = chartW / Math.max(longerSeries.length - 1, 1);
-  let lastYear = "";
-  longerSeries.forEach((p, i) => {
-    const year = p.date.slice(0, 4);
-    if (year !== lastYear && parseInt(year) % yearInterval === 0) {
-      xLabels.push({ x: padL + i * xStep, label: year });
-      lastYear = year;
+  const startYear = new Date(minTime).getFullYear();
+  const endYear = new Date(maxTime).getFullYear();
+  for (let y = Math.ceil(startYear / yearInterval) * yearInterval; y <= endYear; y += yearInterval) {
+    const ts = new Date(y, 0, 1).getTime();
+    if (ts >= minTime && ts <= maxTime) {
+      xLabels.push({ x: padL + ((ts - minTime) / timeRange) * chartW, label: String(y) });
     }
-  });
+  }
+
+  /* Merge both series for hover: find nearest point across both series */
+  const allPoints = [
+    ...euribor.map(p => ({ ...p, series: "euribor" as const })),
+    ...mortgage.map(p => ({ ...p, series: "mortgage" as const })),
+  ].sort((a, b) => toTimestamp(a.date) - toTimestamp(b.date));
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!svgRef.current || longerSeries.length < 2) return;
+    if (!svgRef.current || allPoints.length < 2) return;
     const rect = svgRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
-    const svgX = (mouseX / rect.width) * w - padL;
-    const step = chartW / (longerSeries.length - 1);
-    const idx = Math.round(svgX / step);
-    const clampedIdx = Math.max(0, Math.min(idx, longerSeries.length - 1));
-    const point = longerSeries[clampedIdx];
-    const px = padL + clampedIdx * step;
-    const py = padT + chartH - ((point.rate - yMin) / yRange) * chartH;
-    setHover({ x: px, y: py, date: point.date, rate: point.rate });
+    const svgX = (mouseX / rect.width) * w;
+    /* Find nearest point by x-coordinate across both series */
+    let nearest = allPoints[0];
+    let nearestDist = Math.abs(dateToX(nearest.date) - svgX);
+    for (const p of allPoints) {
+      const dist = Math.abs(dateToX(p.date) - svgX);
+      if (dist < nearestDist) { nearest = p; nearestDist = dist; }
+    }
+    const px = dateToX(nearest.date);
+    const py = padT + chartH - ((nearest.rate - yMin) / yRange) * chartH;
+    setHover({ x: px, y: py, date: nearest.date, rate: nearest.rate });
   };
 
   return (

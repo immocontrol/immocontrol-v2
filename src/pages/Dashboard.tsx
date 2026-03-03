@@ -180,10 +180,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         const parsed = JSON.parse(stored) as WidgetId[];
         // Accept stored order if it has all widgets, or if close enough (allow adding new ones)
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // Remove stale widget IDs no longer in defaultWidgetOrder
+          const valid = parsed.filter(w => defaultWidgetOrder.includes(w));
           // Add any new widgets not in stored order
-          const missing = defaultWidgetOrder.filter(w => !parsed.includes(w));
-          if (missing.length > 0) return [...parsed, ...missing];
-          return parsed;
+          const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
+          if (missing.length > 0) return [...valid, ...missing];
+          return valid.length > 0 ? valid : defaultWidgetOrder;
         }
       }
     } catch { /* ignore */ }
