@@ -404,11 +404,27 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, [location.pathname, updateDotPosition, updateMobileDotPosition]);
 
   useEffect(() => {
-    window.addEventListener("resize", updateDotPosition);
-    window.addEventListener("resize", updateMobileDotPosition);
+    /* FIX: Mobile keyboard open triggers resize → state updates → re-render → focus loss.
+       Skip dot position updates when an input/textarea/select is focused (keyboard is open). */
+    const safeUpdateDot = () => {
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT" || (active as HTMLElement).isContentEditable)) {
+        return;
+      }
+      updateDotPosition();
+    };
+    const safeUpdateMobileDot = () => {
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT" || (active as HTMLElement).isContentEditable)) {
+        return;
+      }
+      updateMobileDotPosition();
+    };
+    window.addEventListener("resize", safeUpdateDot);
+    window.addEventListener("resize", safeUpdateMobileDot);
     return () => {
-      window.removeEventListener("resize", updateDotPosition);
-      window.removeEventListener("resize", updateMobileDotPosition);
+      window.removeEventListener("resize", safeUpdateDot);
+      window.removeEventListener("resize", safeUpdateMobileDot);
     };
   }, [updateDotPosition, updateMobileDotPosition]);
 
