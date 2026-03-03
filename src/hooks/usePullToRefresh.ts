@@ -19,6 +19,10 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }
     if (disabled) return;
     // Only activate when scrolled to top
     if (window.scrollY > 0) return;
+    /* FIX: Don't trigger pull-to-refresh when an input is focused — prevents
+       accidental refresh that steals focus on mobile */
+    const active = document.activeElement;
+    if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT")) return;
     startY.current = e.touches[0].clientY;
     pulling.current = true;
   }, [disabled]);

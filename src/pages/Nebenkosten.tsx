@@ -34,8 +34,6 @@ const Nebenkosten = () => {
   });
   const [itemForm, setItemForm] = useState({ category: "Grundsteuer", description: "", total_amount: "", distribution_key: "Fläche", tenant_amount: "" });
 
-  useEffect(() => { document.title = "Nebenkostenabrechnung – ImmoControl"; }, []);
-
   const { data: billings = [] } = useQuery({
     queryKey: ["utility_billings"],
     queryFn: async () => {
@@ -44,6 +42,9 @@ const Nebenkosten = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-41-12: Dynamic document title with billing count */
+  useEffect(() => { document.title = `Nebenkosten (${billings.length}) – ImmoControl`; }, [billings.length]);
 
   const { data: tenants = [] } = useQuery({
     queryKey: ["all_tenants_nk"],
@@ -221,6 +222,12 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
   const selectedBillingData = billings.find(b => b.id === selectedBilling);
   const filteredTenants = form.property_id ? tenants.filter(t => t.property_id === form.property_id) : [];
 
+  /* IMP-41-13: NK per sqm display in subtitle for quick reference */
+  const nkPerSqmFormatted = useMemo(() => {
+    if (nkPerSqm <= 0) return null;
+    return `${nkPerSqm.toFixed(2)} €/m²`;
+  }, [nkPerSqm]);
+
   const statusIcon = (status: string) => {
     if (status === "final") return <CheckCircle className="h-3.5 w-3.5 text-profit" />;
     return <Clock className="h-3.5 w-3.5 text-gold" />;
@@ -237,7 +244,9 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             {billings.length > 0 && (
               <span className="ml-1">
                 · {formatCurrency(billings.reduce((s, b) => s + Number(b.total_costs), 0))} Gesamtkosten
-                · {billings.filter(b => b.status === "draft").length} Entwurf, {billings.filter(b => b.status === "final").length} final
+                · {billingStatusSummary.draft} Entwurf, {billingStatusSummary.final} final
+                {/* IMP-41-13: Show NK per sqm in subtitle */}
+                {nkPerSqmFormatted && <span> · {nkPerSqmFormatted}</span>}
               </span>
             )}
           </p>

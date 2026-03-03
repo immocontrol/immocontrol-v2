@@ -29,7 +29,23 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   /* STR-1: Retry with exponential backoff — prevents rapid retry loops */
+  /* IMP-41-15: Auto-retry after delay — automatically retries once after 5 seconds */
+  private autoRetryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  componentDidUpdate(_prevProps: Props, prevState: State) {
+    if (this.state.hasError && !prevState.hasError && this.state.retryCount === 0) {
+      this.autoRetryTimer = setTimeout(() => {
+        this.handleRetry();
+      }, 5000);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.autoRetryTimer) clearTimeout(this.autoRetryTimer);
+  }
+
   handleRetry = () => {
+    if (this.autoRetryTimer) { clearTimeout(this.autoRetryTimer); this.autoRetryTimer = null; }
     const nextCount = this.state.retryCount + 1;
     if (nextCount > 3) {
       // After 3 retries, hard reload the page

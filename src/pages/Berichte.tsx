@@ -86,10 +86,14 @@ const Berichte = () => {
   const years = useMemo(() => Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString()), []);
 
   /* IMP-35: Wrap openPrint in useCallback for stable reference */
+  /* IMP-41-14: Track report generation timestamp for audit trail */
+  const [lastReportGenerated, setLastReportGenerated] = useState<string | null>(null);
   const openPrint = useCallback((html: string) => {
     const w = window.open("", "_blank");
     if (w) { w.document.write(html); w.document.close(); w.print(); }
-  }, []);
+    trackReport();
+    setLastReportGenerated(new Date().toLocaleString("de-DE"));
+  }, [trackReport]);
 
   const baseStyle = `body{font-family:system-ui,sans-serif;padding:40px;color:#222;max-width:800px;margin:0 auto}
 h1{font-size:22px;border-bottom:2px solid #2a9d6e;padding-bottom:8px}h2{font-size:16px;margin-top:24px;color:#555}
@@ -323,7 +327,12 @@ ${properties.map(p => {
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 page-header-enter">
           <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Berichte-Center
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Miet-, Objekt- und Steuerberichte auf Knopfdruck</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Miet-, Objekt- und Steuerberichte auf Knopfdruck
+          {/* IMP-41-14: Show last report generation timestamp */}
+          {lastReportGenerated && <span className="ml-2 text-[10px]">· Letzter Bericht: {lastReportGenerated}</span>}
+          {reportCount > 0 && <span className="ml-1 text-[10px]">({reportCount} erstellt)</span>}
+        </p>
       </div>
 
       {/* Quick Summary */}

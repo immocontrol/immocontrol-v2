@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Receipt, Search, X, CheckCircle, Clock, AlertCircle, Filter } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Receipt, Search, X, CheckCircle, Clock, AlertCircle, Filter, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -14,6 +14,7 @@ import Mahnwesen from "@/components/Mahnwesen";
 import MietTrendChart from "@/components/MietTrendChart";
 import RentIncreaseWizard from "@/components/RentIncreaseWizard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -23,8 +24,6 @@ const Mietuebersicht = () => {
   const [statusFilter, setStatusFilter] = useState("alle");
   const [propertyFilter, setPropertyFilter] = useState("alle");
   const [monthFilter, setMonthFilter] = useState("alle");
-
-  useEffect(() => { document.title = "Mietübersicht – ImmoControl"; }, []);
 
   const { data: tenants = [] } = useQuery({
     queryKey: ["mietuebersicht_tenants"],
@@ -43,6 +42,9 @@ const Mietuebersicht = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-41-4: Dynamic document title with tenant count for browser tab clarity */
+  useEffect(() => { document.title = `Mietübersicht (${tenants.filter(t => t.is_active).length}) – ImmoControl`; }, [tenants]);
 
   const tenantMap = useMemo(() => Object.fromEntries(tenants.map(t => [t.id, t])), [tenants]);
   const propertyMap = useMemo(() => Object.fromEntries(properties.map(p => [p.id, p])), [properties]);
@@ -142,6 +144,31 @@ const Mietuebersicht = () => {
       pendingAmount,
     };
   }, [totalDue, totalConfirmed, totalOverdue, collectionRate, pending]);
+
+  /* IMP-41-9: CSV export for filtered rent payments — allows exporting the current view */
+  const exportPaymentsCSV = useCallback(() => {
+    if (filteredPayments.length === 0) return;
+    const headers = ["Mieter", "Objekt", "Betrag", "Fällig", "Bezahlt", "Status"];
+    const rows = filteredPayments.map(p => {
+      const tenant = tenantMap[p.tenant_id];
+      const property = propertyMap[p.property_id];
+      return [
+        tenant ? `${tenant.first_name} ${tenant.last_name}` : "–",
+        property?.name || "–",
+        Number(p.amount).toFixed(2),
+        new Date(p.due_date).toLocaleDateString("de-DE"),
+        p.paid_date ? new Date(p.paid_date).toLocaleDateString("de-DE") : "",
+        p.status === "confirmed" ? "Bestätigt" : p.status === "overdue" ? "Überfällig" : "Offen",
+      ];
+    });
+    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `mietzahlungen_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Zahlungen als CSV exportiert!");
+  }, [filteredPayments, tenantMap, propertyMap]);
 
   const statusIcon = (status: string) => {
     switch (status) {
@@ -275,6 +302,16 @@ const Mietuebersicht = () => {
           )}
 
           {/* Filters */}
+          {/* IMP-41-9: CSV export button for filtered payments */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{filteredPayments.length} Zahlungen</span>
+            {filteredPayments.length > 0 && (
+              <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs" onClick={exportPaymentsCSV}>
+                <Download className="h-3 w-3" /> CSV
+              </Button>
+            )}
+          </div>
+
           <div className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

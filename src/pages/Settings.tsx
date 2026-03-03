@@ -30,6 +30,7 @@ const SETTINGS_SECTIONS = [
   { id: "passwort", label: "Passwort", icon: Lock },
   { id: "2fa", label: "2FA", icon: Shield },
   { id: "passkeys", label: "Passkeys", icon: Fingerprint },
+  { id: "biometric", label: "Biometrie", icon: Fingerprint },
   { id: "geraete", label: "Ger\u00e4te", icon: MonitorSmartphone },
   { id: "standardseite", label: "Standardseite", icon: Home },
   { id: "ai-chat", label: "AI Chat", icon: Bot },
@@ -127,6 +128,10 @@ const Settings = () => {
   const [passkeys, setPasskeys] = useState<Array<{ id: string; name: string; createdAt: string }>>([]);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
+
+  /* Biometric auth (Face ID / Touch ID / fingerprint) state */
+  const [biometricEnabled, setBiometricEnabled] = useState(() => { try { return localStorage.getItem("immocontrol_biometric_enabled") === "true"; } catch { return false; } });
+  const [biometricSupported, setBiometricSupported] = useState(false);
 
   /* Telegram bot state */
   const [telegramToken, setTelegramToken] = useState(() => { try { return localStorage.getItem("immo-telegram-bot-token") || ""; } catch { return ""; } });
@@ -244,11 +249,16 @@ const Settings = () => {
 
   /* Check if WebAuthn/Passkey is supported */
   useEffect(() => {
-    setPasskeySupported(
-      typeof window !== "undefined" &&
+    const supported = typeof window !== "undefined" &&
       !!window.PublicKeyCredential &&
-      typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function"
-    );
+      typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function";
+    setPasskeySupported(supported);
+    /* Check if biometric (platform authenticator) is available — Face ID / Touch ID / fingerprint */
+    if (supported && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+        .then(available => setBiometricSupported(available))
+        .catch(() => setBiometricSupported(false));
+    }
   }, []);
 
   /* Check existing TOTP factors */
@@ -610,6 +620,53 @@ const Settings = () => {
   };
 
   /** Handle AI chat toggle */
+  /* Biometric auth toggle — registers/removes a platform authenticator passkey for Face ID / Touch ID */
+  const handleBiometricToggle = async (enabled: boolean) => {
+    if (enabled) {
+      /* Verify biometric capability by triggering a platform authenticator prompt */
+      try {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge,
+            rp: { name: "ImmoControl" },
+            user: {
+              id: new TextEncoder().encode(user?.id || "anon"),
+              name: user?.email || "user",
+              displayName: displayName || user?.email || "User",
+            },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+            authenticatorSelection: {
+              authenticatorAttachment: "platform",
+              userVerification: "required",
+              residentKey: "preferred",
+            },
+            timeout: 60000,
+            attestation: "none",
+          },
+        }) as PublicKeyCredential | null;
+        if (credential) {
+          setBiometricEnabled(true);
+          localStorage.setItem("immocontrol_biometric_enabled", "true");
+          localStorage.setItem("immocontrol_biometric_credential_id", credential.id);
+          toast.success("Biometrische Authentifizierung aktiviert!");
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "NotAllowedError") {
+          toast.error("Biometrische Authentifizierung abgebrochen");
+        } else {
+          toast.error("Biometrische Authentifizierung fehlgeschlagen");
+        }
+      }
+    } else {
+      setBiometricEnabled(false);
+      localStorage.removeItem("immocontrol_biometric_enabled");
+      localStorage.removeItem("immocontrol_biometric_credential_id");
+      toast.success("Biometrische Authentifizierung deaktiviert");
+    }
+  };
+
   const handleAiChatToggle = (enabled: boolean) => {
     setAiChatEnabled(enabled);
     localStorage.setItem("immocontrol_ai_chat_disabled", enabled ? "false" : "true");
@@ -1076,6 +1133,36 @@ const Settings = () => {
               {passkeyLoading ? "Registriere..." : "Passkey hinzufügen"}
             </Button>
           </>
+        )}
+      </div>
+
+      {/* Biometric Authentication — Face ID / Touch ID / Fingerprint */}
+      <div id="biometric" ref={el => { sectionRefs.current["biometric"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:109ms] scroll-mt-20">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Fingerprint className="h-4 w-4 text-muted-foreground" /> Biometrische Authentifizierung
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Nutze Face ID, Touch ID oder deinen Fingerabdruck für schnelleren Login.
+        </p>
+        {!biometricSupported ? (
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <AlertCircle className="h-3.5 w-3.5" /> Dein Gerät unterstützt keine biometrische Authentifizierung
+          </p>
+        ) : (
+          <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${biometricEnabled ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>
+                <Fingerprint className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-medium">{biometricEnabled ? "Aktiviert" : "Deaktiviert"}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
+                </p>
+              </div>
+            </div>
+            <Switch checked={biometricEnabled} onCheckedChange={handleBiometricToggle} />
+          </div>
         )}
       </div>
 

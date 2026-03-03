@@ -101,10 +101,13 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  // Document title
+  /* IMP-41-20: Dynamic document title with property count for browser tab clarity */
   useEffect(() => {
-    document.title = mode === "personal" ? "Dashboard – ImmoControl" : "Portfolio – ImmoControl";
-  }, [mode]);
+    const count = properties.length;
+    document.title = mode === "personal"
+      ? `Dashboard (${count}) – ImmoControl`
+      : `Portfolio (${count}) – ImmoControl`;
+  }, [mode, properties.length]);
 
   const { data: allTenants = [] } = useQuery({
     queryKey: ["all_tenants_dashboard"],

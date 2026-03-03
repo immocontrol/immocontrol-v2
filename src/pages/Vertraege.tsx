@@ -15,8 +15,6 @@ import { formatCurrency } from "@/lib/formatters";
 const Vertraege = () => {
   const { user } = useAuth();
 
-  useEffect(() => { document.title = "Verträge – ImmoControl"; }, []);
-
   // Summary stats across all contract types
   const { data: contractStats } = useQuery({
     queryKey: ["vertraege_stats"],
@@ -32,7 +30,9 @@ const Vertraege = () => {
         const daysLeft = Math.ceil((new Date(c.end_date).getTime() - Date.now()) / 86400000);
         return daysLeft > 0 && daysLeft < 90;
       }).length;
-      const overdueInvoices = (invoices.data || []).filter(i => i.due_date && new Date(i.due_date) < new Date()).length;
+      const overdueInvoicesList = (invoices.data || []).filter(i => i.due_date && new Date(i.due_date) < new Date());
+      const overdueInvoices = overdueInvoicesList.length;
+      const overdueInvoiceAmount = overdueInvoicesList.reduce((s, i) => s + Number(i.amount), 0);
       const openInvoiceAmount = (invoices.data || []).reduce((s, i) => s + Number(i.amount), 0);
       const totalServiceCost = (services.data || []).reduce((s, c) => s + Number(c.annual_cost), 0);
       return {
@@ -40,6 +40,7 @@ const Vertraege = () => {
         expiringContracts,
         openInvoices: (invoices.data || []).length,
         overdueInvoices,
+        overdueInvoiceAmount,
         openInvoiceAmount,
         activeServices: (services.data || []).length,
         totalServiceCost,
@@ -48,8 +49,11 @@ const Vertraege = () => {
     enabled: !!user,
   });
 
+  /* IMP-41-10: Dynamic document title with contract count */
+  useEffect(() => { document.title = `Verträge (${contractStats?.activeContracts ?? 0}) – ImmoControl`; }, [contractStats?.activeContracts]);
+
   /* IMPROVE-12: Memoize default stats to avoid object recreation on every render */
-  const stats = useMemo(() => contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 }, [contractStats]);
+  const stats = useMemo(() => contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, overdueInvoiceAmount: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 }, [contractStats]);
 
   /* IMPROVE-13: Total contract value summary for quick reference */
   const totalMonthlyBurn = useMemo(() => {
@@ -67,6 +71,19 @@ const Vertraege = () => {
           {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
         </p>
       </div>
+
+      {/* IMP-41-11: Overdue invoice warning banner — alerts when invoices are past due */}
+      {stats.overdueInvoices > 0 && (
+        <div className="rounded-xl border-2 border-loss/30 bg-loss/5 p-4 flex items-center gap-3 animate-fade-in">
+          <div className="w-9 h-9 rounded-lg bg-loss/10 flex items-center justify-center shrink-0">
+            <AlertTriangle className="h-4 w-4 text-loss" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{stats.overdueInvoices} Rechnung{stats.overdueInvoices > 1 ? "en" : ""} überfällig ({formatCurrency(stats.overdueInvoiceAmount)})</p>
+            <p className="text-xs text-muted-foreground">Bitte prüfe offene Rechnungen und mahne rechtzeitig.</p>
+          </div>
+        </div>
+      )}
 
       {/* Renewal Warning Banner */}
       {stats.expiringContracts > 0 && (
