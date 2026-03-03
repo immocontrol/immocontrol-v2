@@ -13,10 +13,12 @@ const currencyFormatterDecimals = new Intl.NumberFormat("de-DE", {
   maximumFractionDigits: 2,
 });
 
+/** IMP-44: Format currency in EUR (no decimals) */
 export const formatCurrency = (value: number) => currencyFormatter.format(value);
 
 export const formatCurrencyDecimals = (value: number) => currencyFormatterDecimals.format(value);
 
+/** IMP-45: Format percentage with configurable decimals */
 export const formatPercent = (value: number, decimals = 1) =>
   `${value.toFixed(decimals)}%`;
 
@@ -42,6 +44,7 @@ export const formatTime = (dateStr: string) =>
     minute: "2-digit",
   });
 
+/** IMP-46: Format relative time in German (e.g. "vor 5 Min.") */
 export const relativeTime = (dateStr: string): string => {
   const now = Date.now();
   const diff = now - new Date(dateStr).getTime();
@@ -55,6 +58,7 @@ export const relativeTime = (dateStr: string): string => {
   return formatDate(dateStr);
 };
 
+/** IMP-47: Format file size with appropriate unit (B, KB, MB) */
 export const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

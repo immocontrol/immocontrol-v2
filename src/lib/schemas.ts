@@ -1,3 +1,4 @@
+/** IMP-145: Zod validation schemas for form inputs and API payloads */
 /**
  * IMP-3: Zod validation schemas for all major forms.
  * Centralizes form validation logic with German error messages.

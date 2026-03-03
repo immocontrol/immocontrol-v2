@@ -52,8 +52,6 @@ const loanTypeLabels: Record<string, string> = {
 const Loans = () => {
   const { user } = useAuth();
 
-  // Document title
-  useEffect(() => { document.title = "Darlehen – ImmoControl"; }, []);
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -122,6 +120,9 @@ const Loans = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-40: Dynamic document title */
+  useEffect(() => { document.title = `Darlehen (${loans.length}) – ImmoControl`; }, [loans.length]);
 
   // User's custom banks
   const { data: userBanks = [] } = useQuery({
@@ -385,7 +386,7 @@ const Loans = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
         {/* UI-4: skeleton-wave for loading */}
         <div className="h-8 w-48 skeleton-wave rounded-lg" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 card-stagger-enter">
@@ -396,7 +397,7 @@ const Loans = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           {/* UI-11: heading-gradient */}
@@ -417,6 +418,7 @@ const Loans = () => {
           {/* Ownership filter */}
           {["alle", "privat", "egbr"].map(f => (
             <button key={f} onClick={() => setFilterOwnership(f)}
+              aria-label={`Filter: ${f}`}
               className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${filterOwnership === f ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"}`}>
               {f === "alle" ? "Alle" : f === "egbr" ? "eGbR" : "Privat"}
             </button>

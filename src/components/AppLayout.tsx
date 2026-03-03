@@ -9,7 +9,6 @@ import { NotificationBell } from "@/components/NotificationBell";
 import BackToTop from "@/components/BackToTop";
 import ScrollProgress from "@/components/ScrollProgress";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
-import { KeyboardShortcutHelp } from "@/components/KeyboardShortcutHelp";
 import ImmoAIBubble from "@/components/ImmoAIBubble";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -40,7 +39,7 @@ const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 /* Item 2: Menüpunkte umsortiert — Rechner, Nebenkosten & Cashflow-Prognose zu Finanzen hinzugefügt */
 const navEntries: NavEntry[] = [
   { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
-  { path: "/dashboard", label: "Persönliches Dashboard", icon: Sparkles, shortcut: "" },
+  { path: "/dashboard", label: "Dashboard", icon: Sparkles, shortcut: "" },
   {
     label: "Finanzen", icon: Landmark,
     items: [
@@ -70,7 +69,7 @@ const navEntries: NavEntry[] = [
       { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
     ],
   },
-  { path: "/einstellungen", label: "Settings", icon: Settings, shortcut: "9" },
+  /* Settings moved to header icon bar — no longer a nav entry */
 ];
 
 /* Flat list for keyboard shortcuts, mobile nav and dot indicator */
@@ -94,7 +93,7 @@ navItems.forEach(n => { if (n.shortcut) DEFAULT_SHORTCUT_MAP[`Alt+${n.shortcut}`
 /* Map action labels to paths for custom shortcut resolution */
 const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Portfolio": "/",
-  "Navigation: Persönliches Dashboard": "/dashboard",
+  "Navigation: Dashboard": "/dashboard",
   "Navigation: Darlehen": "/darlehen",
   "Navigation: Mieten": "/mietuebersicht",
   "Navigation: Verträge": "/vertraege",
@@ -498,9 +497,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-              <KeyboardShortcutHelp />
               <NotificationBell />
-              <Link to="/einstellungen" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/einstellungen" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Einstellungen">
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Einstellungen</TooltipContent>
+              </Tooltip>
+              <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={avatarUrl} alt={displayName} />
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
@@ -510,7 +516,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <span className="text-sm font-medium hidden lg:block max-w-[120px] truncate">
                   {displayName}
                 </span>
-              </Link>
+              </div>
               <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-foreground h-8 w-8">
                 <LogOut className="h-4 w-4" />
               </Button>

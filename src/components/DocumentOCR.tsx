@@ -108,7 +108,7 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
         setExtractedText(text);
         toast.success(`Datei gelesen (${text.length} Zeichen)`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
       toast.error(`Fehler: ${msg}`);
       setExtractedText(`Fehler beim Lesen: ${msg}`);

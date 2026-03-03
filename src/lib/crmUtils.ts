@@ -1,3 +1,4 @@
+/** IMP-148: CRM utility functions for lead scoring, matching, and deal analysis */
 /**
  * CRM utility functions extracted from CRM.tsx for better modularity.
  * Contains geo/building estimation, Nominatim search, and CRM helpers.

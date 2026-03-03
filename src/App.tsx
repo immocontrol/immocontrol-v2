@@ -16,6 +16,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorInterceptor } from "@/components/ErrorScanner";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import { useBackgroundSync } from "@/hooks/useOfflineCache";
+import { queryKeys } from "@/lib/queryKeys";
 
 /* OPT-40: Route path constants */
 const ROUTES = {

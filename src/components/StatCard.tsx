@@ -1,3 +1,4 @@
+import React from "react";
 import { ReactNode, useState, useCallback } from "react";
 import { TrendingUp, TrendingDown, Check } from "lucide-react";
 
@@ -69,4 +70,5 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip }: S
   );
 };
 
-export default StatCard;
+/* IMP-51: Memoize StatCard to prevent unnecessary re-renders */
+export default React.memo(StatCard);

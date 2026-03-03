@@ -80,7 +80,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   // Document title
   useEffect(() => {
-    document.title = mode === "personal" ? "Persönliches Dashboard – ImmoControl" : "Portfolio – ImmoControl";
+    document.title = mode === "personal" ? "Dashboard – ImmoControl" : "Portfolio – ImmoControl";
   }, [mode]);
 
   const { data: allTenants = [] } = useQuery({
@@ -103,6 +103,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const [chartsCollapsed, setChartsCollapsed] = useState(mode === "portfolio");
   const [widgetsCollapsed, setWidgetsCollapsed] = useState(mode === "portfolio");
   const [isChartDragOverview, setIsChartDragOverview] = useState(false);
+  const [isWidgetDragOverview, setIsWidgetDragOverview] = useState(false);
 
   useEffect(() => {
     // Reset default section visibility on mode switch
@@ -110,6 +111,47 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     setWidgetsCollapsed(mode === "portfolio");
     setIsChartDragOverview(false);
   }, [mode]);
+
+  /* Dashboard widgets drag & drop reordering */
+  const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
+  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts";
+  const defaultWidgetOrder: WidgetId[] = ["health", "stats", "occupancy", "heatmap", "typeChart", "goals", "forecast", "rendite", "wasserfall", "diversifikation", "tilgung", "steuer", "annual", "cashReserve", "stress", "milestones", "tax", "geg", "mietpreisbremse", "refinancing", "grundsteuer", "hausgeld", "vacancy", "renovation", "budget", "rentCollection", "yoy", "contractExpiry", "expense", "maintenance", "allocation", "amortization", "debtEquity", "netWorth", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts"];
+  const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
+    try {
+      const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as WidgetId[];
+        if (Array.isArray(parsed) && parsed.length === defaultWidgetOrder.length) return parsed;
+      }
+    } catch { /* ignore */ }
+    return defaultWidgetOrder;
+  });
+  const [dragWidgetIdx, setDragWidgetIdx] = useState<number | null>(null);
+  const [dragWidgetOverIdx, setDragWidgetOverIdx] = useState<number | null>(null);
+
+  const handleWidgetDragStart = useCallback((idx: number) => {
+    setDragWidgetIdx(idx);
+    setIsWidgetDragOverview(true);
+  }, []);
+
+  const handleWidgetDragOver = useCallback((idx: number) => {
+    setDragWidgetOverIdx(idx);
+  }, []);
+
+  const handleWidgetDragEnd = useCallback(() => {
+    if (dragWidgetIdx !== null && dragWidgetOverIdx !== null && dragWidgetIdx !== dragWidgetOverIdx) {
+      setWidgetOrder(prev => {
+        const next = [...prev];
+        const [removed] = next.splice(dragWidgetIdx, 1);
+        next.splice(dragWidgetOverIdx, 0, removed);
+        try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }
+        return next;
+      });
+    }
+    setDragWidgetIdx(null);
+    setDragWidgetOverIdx(null);
+    setIsWidgetDragOverview(false);
+  }, [dragWidgetIdx, dragWidgetOverIdx]);
 
   /* Dashboard charts drag & drop reordering */
   const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
@@ -918,8 +960,7 @@ ${properties.map(p => `<tr>
 
       {mode === "personal" && (
         <>
-          {/* IMP-6: Moved occupancy, heatmap, type chart, goals into collapsible widgets for cleaner layout */}
-      {/* Collapsible Widgets Section */}
+          {/* Collapsible Widgets Section — all widgets drag & drop reorderable */}
       <div>
         <button
           onClick={() => setWidgetsCollapsed(!widgetsCollapsed)}
@@ -927,87 +968,84 @@ ${properties.map(p => `<tr>
         >
           {widgetsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           Analyse & Widgets {widgetsCollapsed ? "einblenden" : "ausblenden"}
+          {!widgetsCollapsed && <span className="text-[10px] font-normal ml-2">Ziehen zum Umsortieren</span>}
           {!widgetsCollapsed && <span className="ml-auto"><WidgetCustomizer /></span>}
         </button>
-        <div className={`space-y-3 transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[10000px] opacity-100"}`}>
-          {/* Occupancy, Heatmap, Type, Goals moved here */}
-          {allTenants.length > 0 && (
-            <OccupancyTracker
-              properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))}
-              tenants={allTenants}
-            />
-          )}
-          <YieldHeatmap properties={properties} />
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioTypeChart properties={properties} />
-            <CashflowPerSqmWidget properties={properties} />
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[20000px] opacity-100"}`}>
+          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isWidgetDragOverview ? "scale-[0.85] opacity-80" : ""}`}>
+            {widgetOrder.map((wId, idx) => {
+              const isDragging = dragWidgetIdx === idx;
+              const isOver = dragWidgetOverIdx === idx;
+              const widgetContent = (() => {
+                switch (wId) {
+                  case "health": return <PortfolioHealthScore totalValue={stats.totalValue} totalDebt={stats.totalDebt} totalCashflow={stats.totalCashflow} totalRent={stats.totalRent} totalExpenses={totalMonthlyExpenses} totalCreditRate={totalMonthlyCreditRate} vacancyRate={vacancyRate} propertyCount={stats.propertyCount} />;
+                  case "occupancy": return allTenants.length > 0 ? <OccupancyTracker properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))} tenants={allTenants} /> : null;
+                  case "heatmap": return <YieldHeatmap properties={properties} />;
+                  case "typeChart": return <PortfolioTypeChart properties={properties} />;
+                  case "goals": return <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />;
+                  case "forecast": return <PortfolioForecast />;
+                  case "rendite": return <RenditeRanking />;
+                  case "wasserfall": return <WasserfallChart />;
+                  case "diversifikation": return <DiversifikationsScore />;
+                  case "tilgung": return <TilgungsProgress />;
+                  case "steuer": return <SteuerHelfer />;
+                  case "annual": return <AnnualSummaryCard />;
+                  case "cashReserve": return <CashReserveWidget />;
+                  case "stress": return <MortgageStressTest />;
+                  case "milestones": return <PortfolioMilestones />;
+                  case "tax": return <TaxDeadlineReminder />;
+                  case "geg": return <GEGComplianceChecker />;
+                  case "mietpreisbremse": return <MietpreisbremseChecker />;
+                  case "refinancing": return <LoanRefinancingCalc />;
+                  case "grundsteuer": return <GrundsteuerCalculator />;
+                  case "hausgeld": return <HausgeldTracker />;
+                  case "vacancy": return <VacancyCostCalc />;
+                  case "renovation": return <RenovationROICalc />;
+                  case "budget": return <BudgetVsActual />;
+                  case "rentCollection": return <RentCollectionChart />;
+                  case "yoy": return <YearOverYear />;
+                  case "contractExpiry": return <ContractExpiryCountdown />;
+                  case "expense": return <ExpenseCategoryBreakdown />;
+                  case "maintenance": return <MaintenanceCostTrend />;
+                  case "allocation": return <PortfolioAllocationWidget />;
+                  case "amortization": return <LoanAmortizationMini />;
+                  case "debtEquity": return <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />;
+                  case "netWorth": return <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />;
+                  case "leaseAlerts": return <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />;
+                  case "actions": return <DashboardActionCenter />;
+                  case "historie": return <PortfolioHistorie />;
+                  case "reporting": return <ReportingDashboard />;
+                  case "kpiAlerts": return <KPIAlerts />;
+                  case "stats": return <CashflowPerSqmWidget properties={properties} />;
+                  default: return <QuickNoteWidget />;
+                }
+              })();
+              if (widgetContent === null) return null;
+              /* Full-width widgets span 2 columns */
+              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts";
+              return (
+                <div
+                  key={wId}
+                  draggable
+                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; handleWidgetDragStart(idx); }}
+                  onDragOver={(e) => { e.preventDefault(); handleWidgetDragOver(idx); }}
+                  onDragEnd={handleWidgetDragEnd}
+                  className={`relative group transition-all duration-200 rounded-xl ${
+                    fullWidth ? "md:col-span-2" : ""
+                  } ${
+                    isDragging ? "opacity-50 scale-[0.96]" : ""
+                  } ${
+                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
+                  }`}
+                >
+                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1 border border-border/50">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  {widgetContent}
+                </div>
+              );
+            })}
           </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />
-            <QuickNoteWidget />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioForecast />
-            <RenditeRanking />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <WasserfallChart />
-            <DiversifikationsScore />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <TilgungsProgress />
-            <SteuerHelfer />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <AnnualSummaryCard />
-            <CashReserveWidget />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <MortgageStressTest />
-            <PortfolioMilestones />
-          </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            <TaxDeadlineReminder />
-            <GEGComplianceChecker />
-            <MietpreisbremseChecker />
-          </div>
-          <div className="grid md:grid-cols-3 gap-3">
-            <LoanRefinancingCalc />
-            <GrundsteuerCalculator />
-            <HausgeldTracker />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <VacancyCostCalc />
-            <RenovationROICalc />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <BudgetVsActual />
-            <RentCollectionChart />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <YearOverYear />
-            <ContractExpiryCountdown />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <ExpenseCategoryBreakdown />
-            <MaintenanceCostTrend />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <PortfolioAllocationWidget />
-            <LoanAmortizationMini />
-          </div>
-          <div className="grid md:grid-cols-2 gap-3">
-            <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />
-            <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />
-          </div>
-          <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />
-          <DashboardActionCenter />
-          {/* HIST-1: Portfolio Historie — Soll/Ist-Vergleich */}
-          <PortfolioHistorie />
-          {/* REPORTING-1: Reporting & Analytics Dashboard */}
-          <ReportingDashboard />
-          {/* FEATURE-8: KPI-Alerts — automatic portfolio metric warnings */}
-          <KPIAlerts />
         </div>
       </div>
 
@@ -1022,7 +1060,7 @@ ${properties.map(p => `<tr>
           {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
         </button>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-200 origin-top ${isChartDragOverview ? "scale-[0.92] opacity-90" : ""}`}>
+          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isChartDragOverview ? "scale-[0.85] opacity-80" : ""}`}>
             {chartOrder.map((chartId, idx) => {
               const chart = chartComponents[chartId];
               const isDragging = dragChartIdx === idx;

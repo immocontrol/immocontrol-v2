@@ -5,7 +5,7 @@ import InvoiceManagement from "@/components/InvoiceManagement";
 import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
-import { FileText, Receipt, Wrench, AlertTriangle, CheckCircle, Clock, CalendarClock } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -56,7 +56,8 @@ const Vertraege = () => {
   }, [stats.totalServiceCost, stats.openInvoiceAmount]);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto" role="main">
+    /* IMP-16: ARIA landmark for Verträge page */
+    <div className="space-y-6 max-w-5xl mx-auto" role="main" aria-label="Verträge und Verwaltung">
       {/* Improvement 8: Mobile responsive heading */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>

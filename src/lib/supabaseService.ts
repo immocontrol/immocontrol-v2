@@ -55,7 +55,7 @@ async function query<T>(
     const { data, error } = await q;
     if (error) return { data: null, error: error.message };
     return { data: data as T, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -68,7 +68,7 @@ async function insert(
     const { data, error } = await supabase.from(table as never).insert(record as never).select().single();
     if (error) return { data: null, error: error.message };
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -82,7 +82,7 @@ async function update(
     const { data, error } = await supabase.from(table as never).update(updates as never).eq("id", id).select().single();
     if (error) return { data: null, error: error.message };
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -92,7 +92,7 @@ async function remove(table: string, id: string): Promise<QueryResult<null>> {
     const { error } = await supabase.from(table as never).delete().eq("id", id);
     if (error) return { data: null, error: error.message };
     return { data: null, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -108,7 +108,7 @@ async function uploadFile(
     const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
     if (error) return { data: null, error: error.message };
     return { data: path, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -121,7 +121,7 @@ async function downloadFile(
     const { data, error } = await supabase.storage.from(bucket).download(path);
     if (error || !data) return { data: null, error: error?.message || "Download failed" };
     return { data, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -131,7 +131,7 @@ async function deleteFile(bucket: string, paths: string[]): Promise<QueryResult<
     const { error } = await supabase.storage.from(bucket).remove(paths);
     if (error) return { data: null, error: error.message };
     return { data: null, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -156,7 +156,7 @@ async function invokeFunction<T>(
     const { data, error } = await supabase.functions.invoke(name, { body });
     if (error) return { data: null, error: error.message };
     return { data: data as T, error: null };
-  } catch (err) {
+  } catch (err: unknown) {
     return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
@@ -451,7 +451,7 @@ const userSettings = {
       const { data, error } = await supabase.from("user_settings" as never).upsert(record as never).select().single();
       if (error) return { data: null, error: error.message };
       return { data, error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       return { data: null, error: err instanceof Error ? err.message : "Unknown error" };
     }
   },

@@ -134,7 +134,8 @@ const CashForecast = () => {
   }
 
   return (
-    <div className="space-y-6">
+    /* IMP-13: ARIA landmark for CashForecast page */
+    <div className="space-y-6" role="main" aria-label="Cashforecast">
       {/* Improvement 4: Mobile responsive header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
