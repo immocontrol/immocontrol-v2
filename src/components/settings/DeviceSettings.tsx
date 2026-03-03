@@ -69,9 +69,11 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
       const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
       const updated = storedDevices.filter(d => d.id !== deviceId);
       await supabase.auth.updateUser({ data: { devices: updated } });
-      /* FIX-9: Also revoke other sessions so the removed device is actually logged out */
-      await supabase.auth.signOut({ scope: "others" });
-      toast.success("Ger\u00e4t abgemeldet und aus Liste entfernt");
+      /* Note: We only remove the device from the metadata list here.
+         Supabase doesn't support revoking a specific session by device ID,
+         so the device entry is removed but the session may persist until it expires.
+         For full session revocation, use "Alle anderen Ger\u00e4te abmelden". */
+      toast.success("Ger\u00e4t aus Liste entfernt");
     } catch (err: unknown) {
       /* Revert optimistic update on error */
       fetchDevices();

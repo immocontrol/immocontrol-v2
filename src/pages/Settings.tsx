@@ -308,7 +308,7 @@ const Settings = () => {
             <h2 className="text-sm font-semibold text-destructive">Gefahrenzone</h2>
           </div>
           <p className="text-xs text-muted-foreground">
-            Wenn du dein Konto l\u00f6scht, werden alle deine Daten dauerhaft entfernt.
+            Wenn du dein Konto l\u00f6schst, werden alle deine Daten dauerhaft entfernt.
             Nach der L\u00f6schung hast du 30 Tage Zeit, dein Konto wiederherzustellen.
             Schreibe dazu an{" "}
             <a href="mailto:support@immocontrol.app" className="text-primary underline underline-offset-2 hover:text-primary/80">
