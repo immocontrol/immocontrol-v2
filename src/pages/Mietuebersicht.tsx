@@ -218,7 +218,8 @@ const Mietuebersicht = () => {
         <TabsContent value="zahlungen" className="space-y-6 mt-4">
           {/* KPI Cards */}
           {/* UPD-1: Add stagger animation to KPI cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 card-stagger-enter">
+          {/* IMP-44-8: Add aria-live region for payment stats so screen readers announce updates */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 card-stagger-enter" aria-live="polite" aria-label="Zahlungsstatistiken">
             <div className="gradient-card rounded-xl border border-border p-4">
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Soll gesamt</div>
               <div className="text-xl font-bold">{formatCurrency(stats.totalDue)}</div>
@@ -229,7 +230,8 @@ const Mietuebersicht = () => {
               <div className="text-xl font-bold text-profit">{formatCurrency(stats.totalConfirmed)}</div>
               <div className="text-[10px] text-muted-foreground">{confirmed.length} bestätigt</div>
             </div>
-            <div className="gradient-card rounded-xl border border-border p-4">
+            {/* IMP-44-9: Add ARIA alert role on overdue amount card for screen reader urgency */}
+            <div className="gradient-card rounded-xl border border-border p-4" role={overdue.length > 0 ? "alert" : undefined}>
               <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Überfällig</div>
               <div className="text-xl font-bold text-loss">{formatCurrency(stats.totalOverdue)}</div>
               <div className="text-[10px] text-muted-foreground">{overdue.length} Zahlungen</div>

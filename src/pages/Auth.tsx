@@ -327,7 +327,8 @@ const Auth = () => {
 
   return (
     /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    /* IMP-44-6: ARIA landmark for auth page */
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4" role="main" aria-label="Authentifizierung">
       <div className="w-full max-w-sm space-y-6 animate-fade-in [animation-delay:100ms]">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">
@@ -555,6 +556,19 @@ const Auth = () => {
                   )}
                 </div>
               )}
+
+              {/* IMP-44-5: Show remaining login attempts when rate limit is approaching */}
+              {mode === "login" && (() => {
+                const { count, resetAt } = getLoginAttempts();
+                if (count >= 3 && Date.now() <= resetAt) {
+                  return (
+                    <p className="text-[10px] text-gold text-center" role="alert">
+                      {MAX_ATTEMPTS - count} Versuch{MAX_ATTEMPTS - count !== 1 ? "e" : ""} verbleibend
+                    </p>
+                  );
+                }
+                return null;
+              })()}
 
               <Button
                 type="submit"

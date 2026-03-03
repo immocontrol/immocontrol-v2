@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { focusNextField } from "@/hooks/useEnterToNext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const addInputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { user } = useAuth();
   const qc = useQueryClient();
 
@@ -119,6 +121,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            ref={triggerRef}
             variant="outline"
             role="combobox"
             type="button"
@@ -151,7 +154,11 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
                   "hover:bg-accent hover:text-accent-foreground",
                   value === option.name && "bg-accent"
                 )}
-                onClick={() => { onChange(option.name); setOpen(false); setSearch(""); }}
+                onClick={() => {
+                  onChange(option.name); setOpen(false); setSearch("");
+                  /* FIX: After dropdown selection, focus next field */
+                  focusNextField(triggerRef.current);
+                }}
               >
                 <Check className={cn("mr-2 h-3.5 w-3.5 shrink-0", value === option.name ? "opacity-100" : "opacity-0")} />
                 <span className="flex-1 text-left truncate">{option.name}</span>

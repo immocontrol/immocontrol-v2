@@ -73,8 +73,9 @@ const Vertraege = () => {
       </div>
 
       {/* IMP-41-11: Overdue invoice warning banner — alerts when invoices are past due */}
+      {/* IMP-44-1: ARIA alert role on warning banners for screen reader accessibility */}
       {stats.overdueInvoices > 0 && (
-        <div className="rounded-xl border-2 border-loss/30 bg-loss/5 p-4 flex items-center gap-3 animate-fade-in">
+        <div role="alert" className="rounded-xl border-2 border-loss/30 bg-loss/5 p-4 flex items-center gap-3 animate-fade-in">
           <div className="w-9 h-9 rounded-lg bg-loss/10 flex items-center justify-center shrink-0">
             <AlertTriangle className="h-4 w-4 text-loss" />
           </div>
@@ -86,8 +87,9 @@ const Vertraege = () => {
       )}
 
       {/* Renewal Warning Banner */}
+      {/* IMP-44-2: ARIA alert role on expiring contract banner */}
       {stats.expiringContracts > 0 && (
-        <div className="rounded-xl border-2 border-gold/30 bg-gold/5 p-4 flex items-center gap-3 animate-fade-in">
+        <div role="alert" className="rounded-xl border-2 border-gold/30 bg-gold/5 p-4 flex items-center gap-3 animate-fade-in">
           <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center shrink-0">
             <AlertTriangle className="h-4 w-4 text-gold" />
           </div>
@@ -141,7 +143,8 @@ const Vertraege = () => {
           </div>
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Monatl. Fixkosten</p>
-            <p className="text-sm font-bold">{formatCurrency(stats.totalServiceCost / 12 + stats.openInvoiceAmount / 12)}</p>
+            {/* IMP-44-3: Use memoized totalMonthlyBurn instead of inline recalculation */}
+            <p className="text-sm font-bold">{formatCurrency(totalMonthlyBurn)}</p>
           </div>
         </div>
       </div>

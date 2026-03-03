@@ -544,7 +544,15 @@ export default function ImmoAIBubble() {
                 className="min-h-[36px] max-h-[80px] resize-none text-xs"
                 rows={1}
                 disabled={isLoading}
+                maxLength={500}
+                aria-label="AI Chat Nachricht"
               />
+              {/* IMP-44-14: Show character count indicator near max length */}
+              {input.length > 400 && (
+                <span className="absolute bottom-1 right-12 text-[9px] text-muted-foreground">
+                  {input.length}/500
+                </span>
+              )}
               {/* UI-UPDATE-25: Tooltip on "send" action */}
               <Tooltip>
                 <TooltipTrigger asChild>
