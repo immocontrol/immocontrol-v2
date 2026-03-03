@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard, Eye, EyeOff, Shield, Fingerprint, Smartphone, Copy, Check, X, AlertCircle, MessageSquare } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard, Eye, EyeOff, Shield, Fingerprint, Smartphone, Copy, Check, X, AlertCircle, MessageSquare, MonitorSmartphone, Bot, LayoutDashboard, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +22,40 @@ import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
 import { PasswordStrength } from "@/components/PasswordStrength";
 import { DataExportBackup } from "@/components/DataExportBackup";
+
+/* ── Settings sidebar sections for navigation ── */
+const SETTINGS_SECTIONS = [
+  { id: "erscheinungsbild", label: "Erscheinungsbild", icon: Sun },
+  { id: "profil", label: "Profil", icon: User },
+  { id: "passwort", label: "Passwort", icon: Lock },
+  { id: "2fa", label: "2FA", icon: Shield },
+  { id: "passkeys", label: "Passkeys", icon: Fingerprint },
+  { id: "geraete", label: "Ger\u00e4te", icon: MonitorSmartphone },
+  { id: "standardseite", label: "Standardseite", icon: Home },
+  { id: "ai-chat", label: "AI Chat", icon: Bot },
+  { id: "backup", label: "Daten-Backup", icon: Database },
+  { id: "tastenkombinationen", label: "Tasten", icon: Keyboard },
+  { id: "telegram", label: "Telegram", icon: MessageSquare },
+  { id: "team", label: "Team", icon: Users },
+  { id: "system-info", label: "System-Info", icon: Database },
+  { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
+] as const;
+
+/** Available pages for "default page after login" selection */
+const DEFAULT_PAGE_OPTIONS = [
+  { value: "/", label: "Portfolio" },
+  { value: "/dashboard", label: "Dashboard" },
+  { value: "/darlehen", label: "Darlehen" },
+  { value: "/mietuebersicht", label: "Mieten" },
+  { value: "/vertraege", label: "Vertr\u00e4ge" },
+  { value: "/kontakte", label: "Kontakte" },
+  { value: "/aufgaben", label: "Aufgaben" },
+  { value: "/berichte", label: "Berichte" },
+  { value: "/deals", label: "Deals" },
+  { value: "/crm", label: "CRM" },
+  { value: "/dokumente", label: "Dokumente" },
+  { value: "/wartungsplaner", label: "Wartung" },
+] as const;
 
 /* ── Default keyboard shortcuts (stored in localStorage for customization) ── */
 const DEFAULT_SHORTCUTS: Record<string, string> = {
@@ -96,6 +132,23 @@ const Settings = () => {
   const [telegramToken, setTelegramToken] = useState(() => { try { return localStorage.getItem("immo-telegram-bot-token") || ""; } catch { return ""; } });
   const [telegramBotName, setTelegramBotName] = useState(() => { try { return localStorage.getItem("immo-telegram-bot-name") || ""; } catch { return ""; } });
 
+  /* Default page after login */
+  const [defaultPage, setDefaultPage] = useState(() => { try { return localStorage.getItem("immocontrol_default_page") || "/"; } catch { return "/"; } });
+
+  /* AI Chat toggle */
+  const [aiChatEnabled, setAiChatEnabled] = useState(() => { try { return localStorage.getItem("immocontrol_ai_chat_disabled") !== "true"; } catch { return true; } });
+
+  /* Device / session management */
+  const [devices, setDevices] = useState<Array<{ id: string; userAgent: string; lastActive: string; isCurrent: boolean }>>([]);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+
+  /* Sidebar active section tracking */
+  const [activeSection, setActiveSection] = useState("erscheinungsbild");
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  /* Last export date tracking */
+  const [lastExportDate, setLastExportDate] = useState<string | null>(() => { try { return localStorage.getItem("immocontrol_last_export_date"); } catch { return null; } });
+
   /* Keyboard shortcuts state */
   const [shortcuts, setShortcuts] = useState<Record<string, string>>(loadCustomShortcuts());
   const [editingShortcut, setEditingShortcut] = useState<string | null>(null);
@@ -103,7 +156,74 @@ const Settings = () => {
   const [shortcutWarning, setShortcutWarning] = useState("");
 
   // Document title
-  useEffect(() => { document.title = "Einstellungen – ImmoControl"; }, []);
+  useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
+
+  /* Sidebar scroll spy using IntersectionObserver */
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+          setActiveSection(entry.target.id);
+        }
+      }
+    };
+    SETTINGS_SECTIONS.forEach(section => {
+      const el = sectionRefs.current[section.id];
+      if (el) {
+        const observer = new IntersectionObserver(handleIntersection, {
+          rootMargin: "-10% 0px -60% 0px",
+          threshold: [0.3],
+        });
+        observer.observe(el);
+        observers.push(observer);
+      }
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [profileLoading]); // re-run when profile loads to ensure refs are populated
+
+  /* Load devices / sessions */
+  const fetchDevices = useCallback(async () => {
+    setDevicesLoading(true);
+    try {
+      /* Supabase doesn't expose session list via client API,
+         so we track devices via localStorage per-device fingerprint */
+      const currentId = localStorage.getItem("immocontrol_device_id") || crypto.randomUUID();
+      localStorage.setItem("immocontrol_device_id", currentId);
+      const ua = navigator.userAgent;
+      const currentDevice = {
+        id: currentId,
+        userAgent: ua,
+        lastActive: new Date().toISOString(),
+        isCurrent: true,
+      };
+      /* Retrieve stored devices from Supabase user metadata */
+      const { data: userData } = await supabase.auth.getUser();
+      const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
+      /* Merge current device */
+      const existingIdx = storedDevices.findIndex(d => d.id === currentId);
+      if (existingIdx >= 0) {
+        storedDevices[existingIdx] = { id: currentId, userAgent: ua, lastActive: new Date().toISOString() };
+      } else {
+        storedDevices.push({ id: currentId, userAgent: ua, lastActive: new Date().toISOString() });
+      }
+      /* Save back to user metadata */
+      await supabase.auth.updateUser({ data: { devices: storedDevices } });
+      setDevices(storedDevices.map(d => ({ ...d, isCurrent: d.id === currentId })));
+    } catch {
+      /* Fallback: show only current device */
+      setDevices([{
+        id: "current",
+        userAgent: navigator.userAgent,
+        lastActive: new Date().toISOString(),
+        isCurrent: true,
+      }]);
+    } finally {
+      setDevicesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchDevices(); }, [fetchDevices]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -451,6 +571,62 @@ const Settings = () => {
     }
   };
 
+  /** Remove a device from the tracked devices list */
+  const removeDevice = async (deviceId: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
+      const updated = storedDevices.filter(d => d.id !== deviceId);
+      await supabase.auth.updateUser({ data: { devices: updated } });
+      setDevices(prev => prev.filter(d => d.id !== deviceId));
+      toast.success("Ger\u00e4t abgemeldet");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Fehler beim Abmelden des Ger\u00e4ts");
+    }
+  };
+
+  /** Logout all other devices */
+  const logoutAllOtherDevices = async () => {
+    try {
+      const currentId = localStorage.getItem("immocontrol_device_id");
+      const { data: userData } = await supabase.auth.getUser();
+      const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
+      const updated = storedDevices.filter(d => d.id === currentId);
+      await supabase.auth.updateUser({ data: { devices: updated } });
+      setDevices(prev => prev.filter(d => d.isCurrent));
+      /* Also sign out other sessions via Supabase */
+      await supabase.auth.signOut({ scope: "others" });
+      toast.success("Alle anderen Ger\u00e4te abgemeldet");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Fehler beim Abmelden");
+    }
+  };
+
+  /** Handle default page change */
+  const handleDefaultPageChange = (value: string) => {
+    setDefaultPage(value);
+    localStorage.setItem("immocontrol_default_page", value);
+    toast.success(`Standardseite auf "${DEFAULT_PAGE_OPTIONS.find(p => p.value === value)?.label || value}" gesetzt`);
+  };
+
+  /** Handle AI chat toggle */
+  const handleAiChatToggle = (enabled: boolean) => {
+    setAiChatEnabled(enabled);
+    localStorage.setItem("immocontrol_ai_chat_disabled", enabled ? "false" : "true");
+    /* Dispatch custom event so ImmoAIBubble can react immediately */
+    window.dispatchEvent(new CustomEvent("ai-chat-toggle", { detail: { enabled } }));
+    toast.success(enabled ? "AI Chat aktiviert" : "AI Chat deaktiviert");
+  };
+
+  /** Smooth scroll to section with easing */
+  const scrollToSection = (sectionId: string) => {
+    const el = sectionRefs.current[sectionId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveSection(sectionId);
+    }
+  };
+
   /* FUNC-36: Data usage estimation — iterate all localStorage keys for accuracy */
   const dataUsageEstimate = useMemo(() => {
     let totalSize = 0;
@@ -494,16 +670,69 @@ const Settings = () => {
     return `Seit ${years} Jahr${years > 1 ? "en" : ""}`;
   }, [user?.created_at]);
 
+  /** Parse user agent string into readable device name */
+  const parseDeviceName = (ua: string): string => {
+    if (/iPhone/i.test(ua)) return "iPhone";
+    if (/iPad/i.test(ua)) return "iPad";
+    if (/Android/i.test(ua)) return "Android";
+    if (/Mac/i.test(ua)) return "Mac";
+    if (/Windows/i.test(ua)) return "Windows PC";
+    if (/Linux/i.test(ua)) return "Linux";
+    return "Unbekanntes Ger\u00e4t";
+  };
+
+  /** Parse browser from user agent */
+  const parseBrowser = (ua: string): string => {
+    if (/Firefox/i.test(ua)) return "Firefox";
+    if (/Edg/i.test(ua)) return "Edge";
+    if (/Chrome/i.test(ua)) return "Chrome";
+    if (/Safari/i.test(ua)) return "Safari";
+    return "Browser";
+  };
+
+  /** Calculate days since last export */
+  const daysSinceLastExport = useMemo(() => {
+    if (!lastExportDate) return null;
+    const last = new Date(lastExportDate);
+    const now = new Date();
+    return Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+  }, [lastExportDate]);
+
   return (
-    <div className="space-y-6 max-w-lg mx-auto" role="main" aria-label="Einstellungen">
+    <div className="flex gap-6" role="main" aria-label="Einstellungen">
+      {/* Settings sidebar navigation — hidden on mobile */}
+      <aside className="hidden lg:block w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
+        <nav className="space-y-0.5">
+          {SETTINGS_SECTIONS.map(section => {
+            const SectionIcon = section.icon;
+            const isActive = activeSection === section.id;
+            return (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                }`}
+              >
+                <SectionIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{section.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main settings content */}
+      <div className="space-y-6 max-w-lg mx-auto flex-1 min-w-0">
       <div className="flex items-center gap-2">
         <SettingsIcon className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
       </div>
 
-      {/* IMPROVE-34: Settings section headers with icon + consistent styling for visual grouping */}
       {/* Theme */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in">
+      <div id="erscheinungsbild" ref={el => { sectionRefs.current["erscheinungsbild"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Sun className="h-4 w-4 text-muted-foreground" /> Erscheinungsbild
         </h2>
@@ -532,7 +761,7 @@ const Settings = () => {
       </div>
 
       {/* Profile */}
-      <form onSubmit={handleUpdateProfile} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:50ms]">
+      <form id="profil" ref={el => { sectionRefs.current["profil"] = el; }} onSubmit={handleUpdateProfile} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:50ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" /> Profil
         </h2>
@@ -569,8 +798,8 @@ const Settings = () => {
         </Button>
       </form>
 
-      {/* Password — requires old password + eye icons */}
-      <form onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:100ms]">
+      {/* Password */}
+      <form id="passwort" ref={el => { sectionRefs.current["passwort"] = el; }} onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:100ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Lock className="h-4 w-4 text-muted-foreground" /> Passwort ändern
         </h2>
@@ -657,7 +886,7 @@ const Settings = () => {
       </form>
 
       {/* 2FA / TOTP */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:105ms]">
+      <div id="2fa" ref={el => { sectionRefs.current["2fa"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:105ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Shield className="h-4 w-4 text-muted-foreground" /> Zwei-Faktor-Authentifizierung (2FA)
         </h2>
@@ -809,7 +1038,7 @@ const Settings = () => {
       </Dialog>
 
       {/* Passkeys */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:108ms]">
+      <div id="passkeys" ref={el => { sectionRefs.current["passkeys"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:108ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Fingerprint className="h-4 w-4 text-muted-foreground" /> Passkeys
         </h2>
@@ -850,19 +1079,142 @@ const Settings = () => {
         )}
       </div>
 
-      {/* EXPORT-9: Enhanced Data Export/Backup with JSON + CSV support */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:120ms]">
+      {/* Device Management — show logged-in devices */}
+      <div id="geraete" ref={el => { sectionRefs.current["geraete"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:110ms] scroll-mt-20">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <MonitorSmartphone className="h-4 w-4 text-muted-foreground" /> Angemeldete Ger\u00e4te
+          </h2>
+          {devices.length > 1 && (
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] text-muted-foreground" onClick={logoutAllOtherDevices}>
+              Alle anderen abmelden
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          \u00dcberblick \u00fcber alle Ger\u00e4te, die aktuell bei deinem Konto angemeldet sind.
+        </p>
+        {devicesLoading ? (
+          <div className="text-xs text-muted-foreground animate-pulse">Lade Ger\u00e4te...</div>
+        ) : (
+          <div className="space-y-1.5">
+            {devices.map(device => (
+              <div key={device.id} className={`flex items-center justify-between p-3 rounded-lg border ${
+                device.isCurrent ? "border-primary/30 bg-primary/5" : "border-border bg-secondary/30"
+              }`}>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    device.isCurrent ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
+                  }`}>
+                    <MonitorSmartphone className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium flex items-center gap-1.5">
+                      {parseDeviceName(device.userAgent)} \u00b7 {parseBrowser(device.userAgent)}
+                      {device.isCurrent && (
+                        <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">Dieses Ger\u00e4t</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Zuletzt aktiv: {new Date(device.lastActive).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                </div>
+                {!device.isCurrent && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] text-muted-foreground hover:text-destructive"
+                    onClick={() => removeDevice(device.id)}
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Default page after login */}
+      <div id="standardseite" ref={el => { sectionRefs.current["standardseite"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:112ms] scroll-mt-20">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Home className="h-4 w-4 text-muted-foreground" /> Standardseite nach Login
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          W\u00e4hle welche Seite nach dem Login als Erstes angezeigt werden soll.
+        </p>
+        <Select value={defaultPage} onValueChange={handleDefaultPageChange}>
+          <SelectTrigger className="h-9 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DEFAULT_PAGE_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* AI Chat toggle */}
+      <div id="ai-chat" ref={el => { sectionRefs.current["ai-chat"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:115ms] scroll-mt-20">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Bot className="h-4 w-4 text-muted-foreground" /> AI Chat
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Aktiviere oder deaktiviere den AI Chat-Assistenten (Bubble unten rechts).
+        </p>
+        <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Bot className={`h-4 w-4 ${aiChatEnabled ? "text-primary" : "text-muted-foreground"}`} />
+            <span className="text-sm font-medium">{aiChatEnabled ? "AI Chat ist aktiv" : "AI Chat ist deaktiviert"}</span>
+          </div>
+          <Switch
+            checked={aiChatEnabled}
+            onCheckedChange={handleAiChatToggle}
+          />
+        </div>
+      </div>
+
+      {/* Data Export/Backup with export date tracking */}
+      <div id="backup" ref={el => { sectionRefs.current["backup"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:120ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Database className="h-4 w-4 text-muted-foreground" /> Daten-Backup & Export
         </h2>
         <p className="text-xs text-muted-foreground">
-          Exportiere alle deine Daten als JSON-Backup oder CSV-Dateien für Excel.
+          Exportiere alle deine Daten als JSON-Backup oder CSV-Dateien f\u00fcr Excel.
         </p>
+        {/* Last export date and 90-day warning */}
+        {lastExportDate ? (
+          <div className={`flex items-center gap-2 p-2.5 rounded-lg border ${
+            daysSinceLastExport !== null && daysSinceLastExport > 90
+              ? "border-destructive/30 bg-destructive/5"
+              : "border-profit/30 bg-profit/5"
+          }`}>
+            <Database className={`h-3.5 w-3.5 shrink-0 ${
+              daysSinceLastExport !== null && daysSinceLastExport > 90 ? "text-destructive" : "text-profit"
+            }`} />
+            <div className="text-xs">
+              <span className="font-medium">Letzter Export:</span>{" "}
+              {new Date(lastExportDate).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
+              {daysSinceLastExport !== null && daysSinceLastExport > 90 && (
+                <span className="text-destructive font-medium ml-1">
+                  \u2014 \u26a0 {daysSinceLastExport} Tage her! Bitte erstelle ein neues Backup.
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 p-2.5 rounded-lg border border-gold/30 bg-gold/5">
+            <AlertTriangle className="h-3.5 w-3.5 text-gold shrink-0" />
+            <span className="text-xs text-gold font-medium">Noch kein Export durchgef\u00fchrt \u2014 erstelle jetzt ein Backup!</span>
+          </div>
+        )}
         <DataExportBackup />
       </div>
 
       {/* Customizable Keyboard Shortcuts */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:130ms]">
+      <div id="tastenkombinationen" ref={el => { sectionRefs.current["tastenkombinationen"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:130ms] scroll-mt-20">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Keyboard className="h-4 w-4 text-muted-foreground" /> Tastenkombinationen
@@ -949,7 +1301,7 @@ const Settings = () => {
       </div>
 
       {/* TELEGRAM-1: Telegram Bot Integration Settings */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:135ms]">
+      <div id="telegram" ref={el => { sectionRefs.current["telegram"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:135ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-[#0088cc]" /> Telegram Integration
         </h2>
@@ -1016,7 +1368,9 @@ const Settings = () => {
       <ErrorScanner />
 
       {/* Team */}
-      <TeamManagement />
+      <div id="team" ref={el => { sectionRefs.current["team"] = el; }} className="scroll-mt-20">
+        <TeamManagement />
+      </div>
 
       {/* Logout */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:150ms]">
@@ -1031,8 +1385,8 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Improvement 9: Danger zone - Delete account */}
-      <div className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms]">
+      {/* Danger zone - Delete account */}
+      <div id="gefahrenzone" ref={el => { sectionRefs.current["gefahrenzone"] = el; }} className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms] scroll-mt-20">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-destructive" />
           <h2 className="text-sm font-semibold text-destructive">Gefahrenzone</h2>
@@ -1079,8 +1433,8 @@ const Settings = () => {
         </AlertDialog>
       </div>
 
-      {/* FUNC-36/37: Data usage & session info */}
-      <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in [animation-delay:180ms]">
+      {/* System Info */}
+      <div id="system-info" ref={el => { sectionRefs.current["system-info"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in [animation-delay:180ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Database className="h-4 w-4 text-muted-foreground" /> System-Info
         </h2>
@@ -1114,6 +1468,7 @@ const Settings = () => {
           Support: <a href="mailto:support@immocontrol.de" className="text-primary hover:underline">support@immocontrol.de</a>
         </p>
       </div>
+    </div>
     </div>
   );
 };

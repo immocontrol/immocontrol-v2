@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Users, Plus, Mail, Shield, CheckCircle2, XCircle, Clock, Trash2, Building2, UserCheck, Share2, Copy } from "lucide-react";
+import { Users, Plus, Mail, Shield, CheckCircle2, XCircle, Clock, Trash2, Building2, UserCheck, Share2, Copy, Pencil } from "lucide-react";
 import { isValidEmail } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,8 @@ export const TeamManagement = () => {
   const [role, setRole] = useState("viewer");
   const [selectedResources, setSelectedResources] = useState<string[]>(["properties", "contacts"]);
   const [loading, setLoading] = useState(false);
+  const [editMemberId, setEditMemberId] = useState<string | null>(null);
+  const [editResources, setEditResources] = useState<string[]>([]);
 
   const activeMembers = useMemo(() => members.filter(m => m.status === "accepted"), [members]);
   const pendingMembers = useMemo(() => members.filter(m => m.status === "pending"), [members]);
@@ -118,8 +120,16 @@ export const TeamManagement = () => {
     if (error) {
       if (error.code === "23505") {
         toast.error("Dieses Teammitglied wurde bereits eingeladen");
+      } else if (error.code === "23503") {
+        toast.error("Ungültige Referenz — bitte Seite neu laden");
+      } else if (error.code === "23514") {
+        toast.error("Ungültige Daten — bitte Eingaben prüfen");
+      } else if (error.code === "42501") {
+        toast.error("Keine Berechtigung — bitte als Eigentümer anmelden");
+      } else if (error.message?.includes("network") || error.message?.includes("fetch")) {
+        toast.error("Netzwerkfehler — bitte Internetverbindung prüfen");
       } else {
-        toast.error("Fehler beim Einladen");
+        toast.error(`Fehler beim Einladen: ${error.message || "Unbekannter Fehler"}`);
       }
     } else {
       /* Send invitation email: try Edge Function first, then fall back to
@@ -170,6 +180,33 @@ export const TeamManagement = () => {
     if (error) { toast.error("Fehler"); return; }
     toast.success("Teammitglied entfernt");
     fetchMembers();
+  };
+
+  /** Update shared resources for an existing team member */
+  const updateSharedResources = async (memberId: string, resources: string[]) => {
+    const { error } = await supabase
+      .from("team_members")
+      .update({ shared_resources: resources })
+      .eq("id", memberId);
+    if (error) {
+      toast.error(`Fehler beim Aktualisieren: ${error.message || "Unbekannter Fehler"}`);
+      return;
+    }
+    toast.success("Geteilte Bereiche aktualisiert");
+    setEditMemberId(null);
+    setEditResources([]);
+    fetchMembers();
+  };
+
+  const startEditResources = (member: TeamMember) => {
+    setEditMemberId(member.id);
+    setEditResources(member.shared_resources || []);
+  };
+
+  const toggleEditResource = (key: string) => {
+    setEditResources(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
   };
 
   const respondToInvitation = async (id: string, accept: boolean) => {
@@ -265,6 +302,26 @@ export const TeamManagement = () => {
                 {/* Shared resource selection */}
                 <div className="space-y-1.5">
                   <Label className="text-xs">Geteilte Bereiche</Label>
+                  <div className="flex gap-1.5 mb-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => setSelectedResources(SHARED_RESOURCES.map(r => r.key))}
+                    >
+                      Alle
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => setSelectedResources([])}
+                    >
+                      Keine
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {SHARED_RESOURCES.map(res => {
                       const isSelected = selectedResources.includes(res.key);
@@ -356,20 +413,92 @@ export const TeamManagement = () => {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeMember(member.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                      onClick={() => startEditResources(member)}
+                      title="Geteilte Bereiche bearbeiten"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeMember(member.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Edit shared resources dialog */}
+      <Dialog open={!!editMemberId} onOpenChange={(open) => { if (!open) { setEditMemberId(null); setEditResources([]); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Geteilte Bereiche bearbeiten</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Wähle welche Bereiche mit diesem Teammitglied geteilt werden sollen.
+            </p>
+            <div className="flex gap-1.5 mb-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px] px-2"
+                onClick={() => setEditResources(SHARED_RESOURCES.map(r => r.key))}
+              >
+                Alle
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px] px-2"
+                onClick={() => setEditResources([])}
+              >
+                Keine
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {SHARED_RESOURCES.map(res => {
+                const isSelected = editResources.includes(res.key);
+                const ResIcon = res.icon;
+                return (
+                  <button
+                    key={res.key}
+                    type="button"
+                    onClick={() => toggleEditResource(res.key)}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all text-xs ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-secondary/50"
+                    }`}
+                  >
+                    <ResIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">{res.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              onClick={() => editMemberId && updateSharedResources(editMemberId, editResources)}
+              className="w-full"
+            >
+              Speichern
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -252,6 +252,15 @@ const RoleRouter = () => {
     return <Onboarding />;
   }
 
+  /* Default page redirect: if user has configured a default page and is on "/",
+     redirect to that page instead */
+  const defaultPage = (() => {
+    try { return localStorage.getItem("immocontrol_default_page"); } catch { return null; }
+  })();
+  if (defaultPage && defaultPage !== "/" && window.location.pathname === "/") {
+    return <Navigate to={defaultPage} replace />;
+  }
+
   // Tenant portal
   if (role === "tenant") {
     return <TenantPortal />;
