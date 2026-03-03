@@ -435,7 +435,8 @@ const Deals = () => {
         const active = document.activeElement;
         if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT")) return;
         e.preventDefault();
-        setForm({ ...emptyForm });
+        /* Fix: Only reset form if no draft exists — preserve draft for recovery */
+        if (!hasDealDraft) setForm({ ...emptyForm });
         setEditDeal(null);
         setAddOpen(true);
       }
@@ -510,7 +511,7 @@ const Deals = () => {
             <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("kanban")}>Kanban</Button>
             <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("list")}>Liste</Button>
           </div>
-          <Button size="sm" onClick={() => { setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen">
+          <Button size="sm" onClick={() => { if (!hasDealDraft) setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen">
             <Plus className="h-4 w-4 mr-1" /> Deal anlegen
           </Button>
         </div>
@@ -712,7 +713,8 @@ const Deals = () => {
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); setForm({ ...emptyForm }); } }}>
+      {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
+      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</DialogTitle>

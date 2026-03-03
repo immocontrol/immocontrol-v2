@@ -199,7 +199,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       const data: Record<string, unknown> = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith("immo")) {
+        if (key && key.startsWith("immo") && !key.startsWith("immocontrol_backup")) {
           try { data[key] = JSON.parse(localStorage.getItem(key) || ""); } catch { data[key] = localStorage.getItem(key); }
         }
       }
