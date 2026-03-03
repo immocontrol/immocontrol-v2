@@ -596,17 +596,20 @@ ${properties.map(p => `<tr>
       {/* Favorites bar — quick access to favorite pages */}
       <FavoritesBar />
 
-      {/* Dashboard Presets — save/load widget layouts */}
+      {/* Dashboard Presets — save/load widget layouts (unified grid, no separate chart order) */}
       <DashboardPresets
         currentWidgetOrder={widgetOrder}
-        currentChartOrder={chartOrder}
-        chartsCollapsed={chartsCollapsed}
-        widgetsCollapsed={widgetsCollapsed}
-        onApply={({ widgetOrder: wo, chartOrder: co, chartsCollapsed: cc, widgetsCollapsed: wc }) => {
-          setWidgetOrder(wo as typeof widgetOrder);
-          setChartOrder(co as typeof chartOrder);
-          setChartsCollapsed(cc);
-          setWidgetsCollapsed(wc);
+        currentChartOrder={[]}
+        chartsCollapsed={false}
+        widgetsCollapsed={false}
+        onApply={({ widgetOrder: wo }) => {
+          const typed = wo as typeof widgetOrder;
+          // Reconcile: remove stale IDs and add any missing widgets (e.g. chart_* from old presets)
+          const valid = typed.filter(w => defaultWidgetOrder.includes(w));
+          const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
+          const finalOrder = valid.length > 0 ? [...valid, ...missing] : defaultWidgetOrder;
+          setWidgetOrder(finalOrder);
+          try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(finalOrder)); } catch { /* */ }
         }}
       />
 
