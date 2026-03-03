@@ -14,6 +14,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DataBackup } from "@/components/DataBackup";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
@@ -1102,6 +1103,9 @@ const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* Datenbackup — moved from Dashboard */}
+      <DataBackup />
 
       {/* App info footer */}
       <div className="text-center py-4 space-y-1 animate-fade-in [animation-delay:250ms]">

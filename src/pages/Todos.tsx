@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import TodoStats from "@/components/TodoStats";
 import TodoCalendarSync from "@/components/TodoCalendarSync";
+import { RecurringTodos } from "@/components/RecurringTodos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -693,6 +694,13 @@ const Todos = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Wiederkehrende Aufgaben — moved from Dashboard */}
+      <RecurringTodos onCreateTodo={(title, dueDate) => {
+        if (user) {
+          addMutation.mutate(title);
+        }
+      }} />
     </div>
   );
 };

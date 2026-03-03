@@ -142,6 +142,10 @@ export default function SpotlightSearch() {
       { id: "widget-scenarios", title: "Cashflow-Szenarien", subtitle: "Best/Worst/Base Case Simulation", icon: <Lightbulb className="h-4 w-4" />, keywords: "szenario simulation best worst case" },
       { id: "widget-rent-timeline", title: "Mieterhöhungs-Timeline", subtitle: "Nächste Mieterhöhungen", icon: <Calendar className="h-4 w-4" />, keywords: "mieterhöhung timeline miete erhöhung" },
       { id: "widget-loan-countdown", title: "Zinsbindungs-Countdown", subtitle: "Ablauf der Zinsbindung", icon: <Banknote className="h-4 w-4" />, keywords: "zinsbindung countdown kredit ablauf" },
+      { id: "widget-bulk-rent", title: "Mietanpassung (Bulk)", subtitle: "Sammel-Mieterhöhung für mehrere Objekte", icon: <TrendingUp className="h-4 w-4" />, keywords: "mietanpassung bulk sammel mieterhöhung" },
+      { id: "widget-privacy", title: "Datenschutzmodus", subtitle: "Sensible Daten ausblenden", icon: <Shield className="h-4 w-4" />, keywords: "datenschutz privacy modus ausblenden" },
+      { id: "widget-favorites", title: "Favoriten-Leiste", subtitle: "Schnellzugriff auf häufig genutzte Funktionen", icon: <Activity className="h-4 w-4" />, keywords: "favoriten schnellzugriff leiste" },
+      { id: "widget-presets", title: "Dashboard-Presets", subtitle: "Vorgefertigte Dashboard-Layouts", icon: <PieChart className="h-4 w-4" />, keywords: "presets layouts vorlagen dashboard" },
     ];
     return widgets.map(w => ({
       ...w, category: "Dashboard-Widgets",
@@ -329,7 +333,7 @@ export default function SpotlightSearch() {
               </div>
               <p className="text-xs text-muted-foreground mb-2">Versuche stattdessen:</p>
               <div className="flex flex-wrap justify-center gap-1.5">
-                {["Euribor", "Cashflow", "Portfolio", "Zinsen", "Miete", "Wartung"].map(suggestion => (
+                {["Euribor", "Cashflow", "Portfolio", "Zinsen", "Miete", "Wartung", "DSCR", "Break-Even", "Vermögen", "Prognose"].map(suggestion => (
                   <button
                     key={suggestion}
                     onClick={() => setQuery(suggestion)}

@@ -5,6 +5,7 @@ import InvoiceManagement from "@/components/InvoiceManagement";
 import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
+import { ContractTemplates } from "@/components/ContractTemplates";
 import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -152,6 +153,9 @@ const Vertraege = () => {
         <TabsContent value="dienstleister"><ServiceContracts /></TabsContent>
         <TabsContent value="lifecycle"><ContractLifecycleManager /></TabsContent>
       </Tabs>
+
+      {/* Vertragsvorlagen — moved from Dashboard */}
+      <ContractTemplates />
     </div>
   );
 };
