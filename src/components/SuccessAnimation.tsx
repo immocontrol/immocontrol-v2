@@ -28,6 +28,8 @@ export function SuccessAnimation({ visible }: SuccessAnimationProps) {
       setShow(true);
       const timer = setTimeout(() => setShow(false), 1200);
       return () => clearTimeout(timer);
+    } else {
+      setShow(false);
     }
   }, [visible]);
 
