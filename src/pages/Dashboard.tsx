@@ -98,6 +98,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const debouncedSearch = useDebounce(search, 200);
   const [sort, setSort] = useState<SortType>("name");
   const [refreshing, setRefreshing] = useState(false);
+  /* STR-9: Track last refresh timestamp for user transparency */
+  const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   /* BUG-4: Dashboard minimalist cleanup — collapse charts and widgets by default for cleaner look */
   /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
@@ -325,10 +327,14 @@ ${properties.map(p => `<tr>
     privat: properties.filter(p => p.ownership === "privat").length,
   }), [properties]);
 
+  /* STR-9: Show last refreshed timestamp after data refresh */
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await qc.invalidateQueries({ queryKey: queryKeys.properties.all });
-    setTimeout(() => setRefreshing(false), 600);
+    setTimeout(() => {
+      setRefreshing(false);
+      setLastRefreshed(new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+    }, 600);
   }, [qc]);
 
   /* FUNC-1: Portfolio summary metrics */
@@ -483,15 +489,9 @@ ${properties.map(p => `<tr>
   const totalMonthlyCreditRate = properties.reduce((s, p) => s + (p.monthlyCreditRate || 0), 0);
   const totalCosts = totalMonthlyExpenses + totalMonthlyCreditRate;
 
-  // Feature: Average holding period
-  const avgHoldingMonths = properties.length > 0
-    ? properties.reduce((s, p) => {
-        const months = (Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30.44);
-        return s + months;
-      }, 0) / properties.length
-    : 0;
-  const avgHoldingYears = Math.floor(avgHoldingMonths / 12);
-  const avgHoldingRemMonths = Math.floor(avgHoldingMonths % 12);
+  /* STR-2: Reuse memoized avgHoldingPeriodMonths instead of recalculating */
+  const avgHoldingYears = Math.floor(avgHoldingPeriodMonths / 12);
+  const avgHoldingRemMonths = Math.floor(avgHoldingPeriodMonths % 12);
 
   // Feature: Top 3 by cashflow
   const top3Cashflow = [...properties].sort((a, b) => b.monthlyCashflow - a.monthlyCashflow).slice(0, 3);
@@ -889,7 +889,9 @@ ${properties.map(p => `<tr>
                 <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Daten aktualisieren</TooltipContent>
+            <TooltipContent>
+              {lastRefreshed ? `Zuletzt aktualisiert: ${lastRefreshed}` : "Daten aktualisieren"}
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -919,9 +921,17 @@ ${properties.map(p => `<tr>
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="text-sm font-medium mb-1">Keine Ergebnisse</p>
-            <p className="text-xs text-muted-foreground">Keine Objekte gefunden für „{search}“</p>
-            <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => setSearch("")}>
-              Suche zurücksetzen
+            <p className="text-xs text-muted-foreground">
+              {search ? `Keine Objekte gefunden für „${search}"` : "Keine Objekte in dieser Kategorie"}
+            </p>
+            {/* STR-10: Better empty search state with search tips */}
+            {search && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tipp: Suche nach Name, Adresse oder Objekttyp
+              </p>
+            )}
+            <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
+              {search ? "Suche zurücksetzen" : "Filter zurücksetzen"}
             </Button>
           </div>
         ) : (

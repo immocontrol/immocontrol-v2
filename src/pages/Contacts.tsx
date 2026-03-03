@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
@@ -82,6 +82,19 @@ const ContactManagement = () => {
 
   /* IMP-41: Dynamic document title */
   useEffect(() => { document.title = `Kontakte (${contacts.length}) – ImmoControl`; }, [contacts.length]);
+
+  /* STR-13: Keyboard shortcut Ctrl+N to open new contact dialog */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "n" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        resetForm();
+        setOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   // Synergy 7: Fetch ticket count per handworker contact
   const { data: contactTicketCounts = {} } = useQuery({

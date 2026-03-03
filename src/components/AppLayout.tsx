@@ -393,8 +393,17 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div data-session-id={sessionIdRef.current} className="min-h-screen bg-background flex flex-col theme-transition-smooth dark-mode-contrast">
+      {/* STR-11: Improved offline banner with auto-dismiss and reconnect detection */}
       {!isOnline && (
-        <div className="offline-banner" role="alert">⚠️ Keine Internetverbindung – Änderungen werden nicht gespeichert</div>
+        <div className="offline-banner animate-fade-in" role="alert" aria-live="assertive">
+          <span className="inline-flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-loss/75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-loss"></span>
+            </span>
+            Keine Internetverbindung &ndash; Lokale Änderungen werden beim Reconnect synchronisiert
+          </span>
+        </div>
       )}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">
         Zum Inhalt springen

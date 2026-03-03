@@ -131,6 +131,10 @@ const PropertyCard = memo(({
           <div className={`font-semibold ${monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
             {formatCurrency(monthlyCashflow)}
           </div>
+          {/* STR-14: Show annual cashflow for quick yearly overview */}
+          <div className={`text-[10px] ${monthlyCashflow >= 0 ? "text-profit/70" : "text-loss/70"}`}>
+            {formatCurrency(monthlyCashflow * 12)}/J
+          </div>
           {monthlyRent > 0 && (
             <div className="h-1 mt-1 bg-secondary rounded-full overflow-hidden">
               <div
