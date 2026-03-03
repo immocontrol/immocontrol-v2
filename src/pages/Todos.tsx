@@ -776,10 +776,10 @@ const TodoRow = memo(({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
       </div>
 
       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(todo)}>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(todo)} aria-label="Aufgabe bearbeiten">
           <Edit2 className="h-3 w-3" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(todo.id)}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(todo.id)} aria-label="Aufgabe löschen">
           <Trash2 className="h-3 w-3" />
         </Button>
       </div>
