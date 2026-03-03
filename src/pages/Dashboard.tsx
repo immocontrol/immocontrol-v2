@@ -160,6 +160,27 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     "bulkRent", "recurringTodos", "autoNebenkosten", "contractTemplates",
     "taxYear", "auditLog", "dataBackup", "dragDropDocs",
   ];
+  /* Human-readable labels for widget drag overlay */
+  const widgetLabels: Record<WidgetId, string> = {
+    health: "Portfolio Health Score", stats: "Statistiken", occupancy: "Belegungsquote",
+    heatmap: "Heatmap", typeChart: "Objekttypen", goals: "Ziele", forecast: "Prognose",
+    rendite: "Rendite-Optimierer", wasserfall: "Wasserfall-Diagramm", diversifikation: "Diversifikation",
+    tilgung: "Tilgungsfortschritt", steuer: "Steuer-Optimierung", annual: "Jahresübersicht",
+    cashReserve: "Cash-Reserve", stress: "Stresstest", milestones: "Meilensteine",
+    tax: "Steuerübersicht", geg: "GEG-Check", mietpreisbremse: "Mietpreisbremse",
+    refinancing: "Refinanzierung", grundsteuer: "Grundsteuer", hausgeld: "Hausgeld",
+    vacancy: "Leerstand", renovation: "Renovierung", budget: "Budget",
+    rentCollection: "Mieteinzug", yoy: "Jahresvergleich", contractExpiry: "Vertragsablauf",
+    expense: "Ausgaben", maintenance: "Wartung", allocation: "Allokation",
+    amortization: "Amortisation", debtEquity: "Fremd-/Eigenkapital", netWorth: "Nettovermögen",
+    leaseAlerts: "Mietvertrags-Alerts", actions: "Quick Actions", historie: "Historie",
+    reporting: "Reporting", kpiAlerts: "KPI-Alerts", zinsmonitor: "Zinsmonitor",
+    cashflowScenarios: "Cashflow-Szenarien", breakEven: "Break-Even", dscr: "DSCR",
+    bulkRent: "Mietanpassung", recurringTodos: "Wiederkehrende Aufgaben",
+    autoNebenkosten: "Nebenkosten", contractTemplates: "Vertragsvorlagen",
+    taxYear: "Steuerjahr", auditLog: "Audit-Log", dataBackup: "Datensicherung",
+    dragDropDocs: "Dokumente",
+  };
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
       const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
@@ -1189,7 +1210,7 @@ ${properties.map(p => `<tr>
                   {/* Widget label overlay during drag for quick identification */}
                   {isWidgetDragOverview && (
                     <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
-                      <span className="text-[10px] font-semibold text-foreground">{wId}</span>
+                      <span className="text-[10px] font-semibold text-foreground">{widgetLabels[wId] || wId}</span>
                     </div>
                   )}
                   <WidgetErrorBoundary name={wId}>

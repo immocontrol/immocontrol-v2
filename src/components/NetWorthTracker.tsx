@@ -21,9 +21,9 @@ const NetWorthTracker = ({ currentEquity, totalValue, totalDebt }: NetWorthTrack
       const { data } = await supabase
         /* FIX-21: Replace `as any` with typed table name cast */
         .from("property_value_history" as never)
-        .select("date, value")
+        .select("date, value, property_id")
         .order("date", { ascending: true });
-      return (data || []) as unknown as { date: string; value: number }[];
+      return (data || []) as unknown as { date: string; value: number; property_id: string }[];
     },
     enabled: !!user,
   });
@@ -41,12 +41,17 @@ const NetWorthTracker = ({ currentEquity, totalValue, totalDebt }: NetWorthTrack
         { month: now.toLocaleDateString("de-DE", { month: "short", year: "2-digit" }), networth: Math.round(currentEquity) },
       ];
     }
-    /* Group by month — take the MAX value per month (latest snapshot, not sum of all properties) */
-    const grouped: Record<string, number> = {};
+    /* Group by month AND property — take latest/max value per property per month, then sum across properties */
+    const perPropMonth: Record<string, Record<string, number>> = {};
     valueHistory.forEach(h => {
       const month = h.date.slice(0, 7);
-      const val = Number(h.value);
-      grouped[month] = Math.max(grouped[month] || 0, val);
+      const propId = h.property_id || "_default";
+      if (!perPropMonth[month]) perPropMonth[month] = {};
+      perPropMonth[month][propId] = Math.max(perPropMonth[month][propId] || 0, Number(h.value));
+    });
+    const grouped: Record<string, number> = {};
+    Object.entries(perPropMonth).forEach(([month, props]) => {
+      grouped[month] = Object.values(props).reduce((s, v) => s + v, 0);
     });
     /* Use current LTV ratio to estimate historical debt proportionally */
     const ltvRatio = totalValue > 0 ? totalDebt / totalValue : 0;
