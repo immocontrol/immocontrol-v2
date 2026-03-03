@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
+import { escapeHtml } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
 
 interface Tenant {
@@ -33,6 +34,9 @@ function generateTemplate(
   tenant: { name: string; monthly_rent: number; email: string | null },
 ): string {
   const today = new Date().toLocaleDateString("de-DE");
+  const pName = escapeHtml(property.name);
+  const pAddr = escapeHtml(property.address || "[Adresse eintragen]");
+  const tName = escapeHtml(tenant.name);
 
   switch (type) {
     case "mietvertrag":
@@ -44,10 +48,10 @@ h1{font-size:22px;text-align:center;margin-bottom:30px}h2{font-size:16px;margin-
 .sig-line{border-top:1px solid #333;width:200px;text-align:center;padding-top:4px;font-size:12px}</style></head><body>
 <h1>Mietvertrag</h1>
 <p>Zwischen <span class="field">Vermieter: [Name eintragen]</span> (nachfolgend „Vermieter")<br/>
-und <span class="field">${tenant.name}</span> (nachfolgend „Mieter")</p>
+und <span class="field">${tName}</span> (nachfolgend „Mieter")</p>
 <h2>§ 1 Mietobjekt</h2>
 <p>Vermietet wird die Wohnung/das Objekt:<br/>
-<strong>${property.name}</strong><br/>${property.address || "[Adresse eintragen]"}</p>
+<strong>${pName}</strong><br/>${pAddr}</p>
 <h2>§ 2 Mietdauer</h2>
 <p>Das Mietverhältnis beginnt am <span class="field">[Datum eintragen]</span> und wird auf unbestimmte Zeit geschlossen.</p>
 <h2>§ 3 Miete</h2>
@@ -69,9 +73,9 @@ h1{font-size:20px}
 .field{background:#f5f5f5;padding:2px 8px;border-radius:4px;font-weight:600}</style></head><body>
 <p>${today}</p>
 <h1>Kündigung des Mietverhältnisses</h1>
-<p>Sehr geehrte/r ${tenant.name},</p>
+<p>Sehr geehrte/r ${tName},</p>
 <p>hiermit kündige ich das Mietverhältnis über die Wohnung<br/>
-<strong>${property.name}</strong>, ${property.address || "[Adresse]"}<br/>
+<strong>${pName}</strong>, ${pAddr}<br/>
 ordentlich mit einer Frist von 3 Monaten zum <span class="field">[Datum eintragen]</span>.</p>
 <p>Bitte vereinbaren Sie einen Termin zur Wohnungsübergabe.</p>
 <p>Mit freundlichen Grüßen<br/><br/><br/>_______________________<br/>Vermieter</p>
@@ -82,8 +86,8 @@ ordentlich mit einer Frist von 3 Monaten zum <span class="field">[Datum eintrage
 <style>body{font-family:system-ui,sans-serif;padding:40px;color:#222;max-width:800px;margin:0 auto;line-height:1.6}
 h1{font-size:20px;text-align:center}</style></head><body>
 <h1>Mietbescheinigung</h1>
-<p>Hiermit bestätige ich, dass <strong>${tenant.name}</strong> seit <span style="background:#f5f5f5;padding:2px 8px;border-radius:4px">[Datum]</span>
-die Wohnung <strong>${property.name}</strong>, ${property.address || "[Adresse]"} bewohnt.</p>
+<p>Hiermit bestätige ich, dass <strong>${tName}</strong> seit <span style="background:#f5f5f5;padding:2px 8px;border-radius:4px">[Datum]</span>
+die Wohnung <strong>${pName}</strong>, ${pAddr} bewohnt.</p>
 <p>Die monatliche Kaltmiete beträgt <strong>${formatCurrency(tenant.monthly_rent)}</strong>.</p>
 <p>Die Miete wird regelmäßig und pünktlich gezahlt.</p>
 <p>${today}<br/><br/><br/>_______________________<br/>Vermieter</p>
@@ -95,8 +99,8 @@ die Wohnung <strong>${property.name}</strong>, ${property.address || "[Adresse]"
 h1{font-size:20px;text-align:center}h2{font-size:16px;margin-top:20px}
 table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;border:1px solid #ddd}th{background:#f5f5f5}</style></head><body>
 <h1>Wohnungsübergabeprotokoll</h1>
-<p><strong>Objekt:</strong> ${property.name}, ${property.address || "[Adresse]"}<br/>
-<strong>Mieter:</strong> ${tenant.name}<br/>
+<p><strong>Objekt:</strong> ${pName}, ${pAddr}<br/>
+<strong>Mieter:</strong> ${tName}<br/>
 <strong>Datum:</strong> ${today}</p>
 <h2>Zählerstände</h2>
 <table><tr><th>Zähler</th><th>Nr.</th><th>Stand</th></tr>
