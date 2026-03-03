@@ -3,7 +3,7 @@
  */
 import { useState, useMemo, useCallback } from "react";
 import { Users, Percent, ArrowRight, CheckCircle2, AlertTriangle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -22,6 +22,7 @@ interface Tenant {
 export function BulkRentAdjustment() {
   const { user } = useAuth();
   const { properties } = useProperties();
+  const queryClient = useQueryClient();
   const [adjustmentType, setAdjustmentType] = useState<"percent" | "fixed">("percent");
   const [adjustmentValue, setAdjustmentValue] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -97,6 +98,9 @@ export function BulkRentAdjustment() {
           .eq("id", item.id);
       }
       toast.success(`${preview.length} Mieten angepasst`);
+      // Invalidate tenant queries so UI reflects updated rents
+      await queryClient.invalidateQueries({ queryKey: ["all_tenants_bulk"] });
+      await queryClient.invalidateQueries({ queryKey: ["tenants"] });
       setSelectedIds(new Set());
       setShowPreview(false);
       setAdjustmentValue("");
