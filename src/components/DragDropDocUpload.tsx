@@ -2,14 +2,15 @@
  * #12: Drag & Drop Dokumenten-Upload — Documents per Drag & Drop auf ein Objekt ziehen
  */
 import { useState, useCallback, useRef } from "react";
-import { Upload, FileText, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileText, X, CheckCircle2, Loader2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProperties } from "@/context/PropertyContext";
 import { toast } from "sonner";
 import { formatFileSize } from "@/lib/formatters";
 
 interface DragDropDocUploadProps {
-  propertyId: string;
+  propertyId?: string;
   onUploaded?: () => void;
 }
 
@@ -26,8 +27,11 @@ const ALLOWED_TYPES = [
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-export function DragDropDocUpload({ propertyId, onUploaded }: DragDropDocUploadProps) {
+export function DragDropDocUpload({ propertyId: externalPropertyId, onUploaded }: DragDropDocUploadProps) {
   const { user } = useAuth();
+  const { properties } = useProperties();
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>(externalPropertyId || "");
+  const propertyId = externalPropertyId || selectedPropertyId;
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<{ name: string; size: number; status: "pending" | "uploading" | "done" | "error" }[]>([]);
@@ -46,7 +50,7 @@ export function DragDropDocUpload({ propertyId, onUploaded }: DragDropDocUploadP
   }, []);
 
   const uploadFiles = useCallback(async (fileList: FileList | File[]) => {
-    if (!user) return;
+    if (!user || !propertyId) return;
     const validFiles = Array.from(fileList).filter(f => {
       if (!ALLOWED_TYPES.includes(f.type)) {
         toast.error(`${f.name}: Dateityp nicht erlaubt`);
@@ -123,15 +127,34 @@ export function DragDropDocUpload({ propertyId, onUploaded }: DragDropDocUploadP
 
   return (
     <div className="space-y-2">
+      {/* Property selector — shown when no propertyId is provided externally (e.g. on Dashboard) */}
+      {!externalPropertyId && (
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+          <select
+            value={selectedPropertyId}
+            onChange={e => setSelectedPropertyId(e.target.value)}
+            className="text-xs bg-secondary border border-border rounded px-2 py-1.5 flex-1"
+          >
+            <option value="">Objekt auswählen...</option>
+            {properties.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
-        className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-          isDragOver
-            ? "border-primary bg-primary/5 scale-[1.02]"
-            : "border-border hover:border-primary/30 hover:bg-secondary/30"
+        className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+          !propertyId
+            ? "border-border/50 opacity-50 cursor-not-allowed"
+            : isDragOver
+              ? "border-primary bg-primary/5 scale-[1.02] cursor-pointer"
+              : "border-border hover:border-primary/30 hover:bg-secondary/30 cursor-pointer"
         }`}
       >
         <input
@@ -141,10 +164,11 @@ export function DragDropDocUpload({ propertyId, onUploaded }: DragDropDocUploadP
           accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.csv,.doc,.docx"
           onChange={handleFileChange}
           className="hidden"
+          disabled={!propertyId}
         />
         <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragOver ? "text-primary" : "text-muted-foreground"}`} />
         <p className="text-sm font-medium">
-          {isDragOver ? "Hier ablegen" : "Dokumente hierher ziehen"}
+          {!propertyId ? "Bitte zuerst ein Objekt auswählen" : isDragOver ? "Hier ablegen" : "Dokumente hierher ziehen"}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           PDF, Bilder, Excel, Word · Max. 10 MB

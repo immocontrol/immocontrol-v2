@@ -615,7 +615,18 @@ ${properties.map(p => `<tr>
       <FavoritesBar />
 
       {/* Dashboard Presets — save/load widget layouts */}
-      <DashboardPresets />
+      <DashboardPresets
+        currentWidgetOrder={widgetOrder}
+        currentChartOrder={chartOrder}
+        chartsCollapsed={chartsCollapsed}
+        widgetsCollapsed={widgetsCollapsed}
+        onApply={({ widgetOrder: wo, chartOrder: co, chartsCollapsed: cc, widgetsCollapsed: wc }) => {
+          setWidgetOrder(wo as typeof widgetOrder);
+          setChartOrder(co as typeof chartOrder);
+          setChartsCollapsed(cc);
+          setWidgetsCollapsed(wc);
+        }}
+      />
 
       {mode === "personal" && (
         <>
