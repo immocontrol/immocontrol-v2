@@ -137,6 +137,10 @@ const AddPropertyDialog = () => {
   /* #9: Form draft auto-recovery via sessionStorage */
   const { values: draftValues, setValues: setDraftValues, clearDraft, hasDraft } = useFormDraft<FormData>("add-property", FORM_DEFAULTS);
 
+  const form = useForm<FormData>({
+    resolver: zodResolver(fullSchema),
+    defaultValues: hasDraft ? draftValues : FORM_DEFAULTS,
+  });
   const {
     register,
     handleSubmit,
@@ -145,10 +149,7 @@ const AddPropertyDialog = () => {
     watch,
     trigger,
     formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(fullSchema),
-    defaultValues: hasDraft ? draftValues : FORM_DEFAULTS,
-  });
+  } = form;
 
   /* Sync form changes to draft storage — use watch subscription to avoid infinite loop */
   useEffect(() => {
@@ -172,21 +173,23 @@ const AddPropertyDialog = () => {
     if (valid) {
       setStep((s) => Math.min(s + 1, 2));
     } else {
-      /* Fix 5: Show validation hint and focus first invalid field */
-      const firstInvalidField = STEP_FIELDS[step].find((f) => errors[f]);
+      /* Fix 5: Show validation hint and focus first invalid field.
+         Use form.formState.errors (live ref) instead of closure-captured errors. */
+      const liveErrors = form.formState.errors;
+      const firstInvalidField = STEP_FIELDS[step].find((f) => liveErrors[f]);
       if (firstInvalidField) {
         const fieldEl = document.getElementById(firstInvalidField);
         if (fieldEl) {
           fieldEl.focus();
           fieldEl.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-        const errorMsg = errors[firstInvalidField]?.message as string;
+        const errorMsg = liveErrors[firstInvalidField]?.message as string;
         toast.error(errorMsg || `Bitte "${firstInvalidField}" ausfüllen`);
       } else {
         toast.error("Bitte alle Pflichtfelder ausfüllen");
       }
     }
-  }, [step, trigger, errors]);
+  }, [step, trigger, form]);
 
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
 
