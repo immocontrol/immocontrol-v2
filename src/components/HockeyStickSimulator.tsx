@@ -163,8 +163,9 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
     return null;
   }, [data]);
 
-  /* FEAT-20: Financial freedom milestone */
+  /* FEAT-20: Financial freedom milestone — only meaningful when monthlyInvestment > 0 */
   const financialFreedomYear = useMemo(() => {
+    if (params.monthlyInvestment <= 0) return null;
     const threshold = params.monthlyInvestment * 3;
     for (const d of data) {
       if (d.monthlyNetRent >= threshold && d.year > 0) return d.year;
