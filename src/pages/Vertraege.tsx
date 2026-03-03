@@ -30,7 +30,9 @@ const Vertraege = () => {
         const daysLeft = Math.ceil((new Date(c.end_date).getTime() - Date.now()) / 86400000);
         return daysLeft > 0 && daysLeft < 90;
       }).length;
-      const overdueInvoices = (invoices.data || []).filter(i => i.due_date && new Date(i.due_date) < new Date()).length;
+      const overdueInvoicesList = (invoices.data || []).filter(i => i.due_date && new Date(i.due_date) < new Date());
+      const overdueInvoices = overdueInvoicesList.length;
+      const overdueInvoiceAmount = overdueInvoicesList.reduce((s, i) => s + Number(i.amount), 0);
       const openInvoiceAmount = (invoices.data || []).reduce((s, i) => s + Number(i.amount), 0);
       const totalServiceCost = (services.data || []).reduce((s, c) => s + Number(c.annual_cost), 0);
       return {
@@ -38,6 +40,7 @@ const Vertraege = () => {
         expiringContracts,
         openInvoices: (invoices.data || []).length,
         overdueInvoices,
+        overdueInvoiceAmount,
         openInvoiceAmount,
         activeServices: (services.data || []).length,
         totalServiceCost,
@@ -50,7 +53,7 @@ const Vertraege = () => {
   useEffect(() => { document.title = `Verträge (${contractStats?.activeContracts ?? 0}) – ImmoControl`; }, [contractStats?.activeContracts]);
 
   /* IMPROVE-12: Memoize default stats to avoid object recreation on every render */
-  const stats = useMemo(() => contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 }, [contractStats]);
+  const stats = useMemo(() => contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, overdueInvoiceAmount: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 }, [contractStats]);
 
   /* IMPROVE-13: Total contract value summary for quick reference */
   const totalMonthlyBurn = useMemo(() => {
@@ -76,7 +79,7 @@ const Vertraege = () => {
             <AlertTriangle className="h-4 w-4 text-loss" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold">{stats.overdueInvoices} Rechnung{stats.overdueInvoices > 1 ? "en" : ""} überfällig ({formatCurrency(stats.openInvoiceAmount)})</p>
+            <p className="text-sm font-semibold">{stats.overdueInvoices} Rechnung{stats.overdueInvoices > 1 ? "en" : ""} überfällig ({formatCurrency(stats.overdueInvoiceAmount)})</p>
             <p className="text-xs text-muted-foreground">Bitte prüfe offene Rechnungen und mahne rechtzeitig.</p>
           </div>
         </div>
