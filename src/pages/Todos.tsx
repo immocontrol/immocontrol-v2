@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { createDebounce, groupBy, sortByKey, truncate, pluralDE } from "@/lib/formatters";
+import { createDebounce, groupBy, sortByKey, truncate, pluralDE, parseNaturalDateDE } from "@/lib/formatters";
 import { toast } from "sonner";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { useSwipeAction } from "@/hooks/useSwipeAction";
@@ -218,9 +218,24 @@ const Todos = () => {
     toast.success("Gespeichert");
   }, [editTodo, editForm, updateMutation]);
 
+  /* IMP-41-7: Smart quick-add with natural language date parsing
+     Supports: "Aufgabe morgen", "Aufgabe heute", "Aufgabe nächste woche", "Aufgabe in 3d" */
   const handleQuickAdd = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && quickInput.trim()) {
-      addMutation.mutate({ title: quickInput });
+      const words = quickInput.trim().split(/\s+/);
+      /* Try to parse the last 1-2 words as a date */
+      let title = quickInput.trim();
+      let dueDate: string | undefined;
+      for (let len = 1; len <= Math.min(3, words.length - 1); len++) {
+        const candidate = words.slice(-len).join(" ");
+        const parsed = parseNaturalDateDE(candidate);
+        if (parsed) {
+          dueDate = parsed;
+          title = words.slice(0, -len).join(" ");
+          break;
+        }
+      }
+      addMutation.mutate({ title, due_date: dueDate });
     }
   }, [quickInput, addMutation]);
 
@@ -533,7 +548,7 @@ const Todos = () => {
             <Plus className="h-4 w-4 text-primary shrink-0" />
             <Input
               ref={quickInputRef}
-              placeholder="Neue Aufgabe hinzufügen… (Enter)"
+              placeholder="Neue Aufgabe… (z.B. 'Anruf morgen', 'Meeting nächste woche')"
               value={quickInput}
               onChange={e => setQuickInput(e.target.value)}
               onKeyDown={handleQuickAdd}

@@ -12,6 +12,33 @@ import { toast } from "sonner";
 
 type AuthMode = "login" | "register" | "forgot";
 
+/* IMP-41-1: Client-side login rate limiting — prevents brute-force spam */
+const LOGIN_RATE_LIMIT_KEY = "immocontrol_login_attempts";
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 60_000; /* 1 minute lockout */
+const getLoginAttempts = (): { count: number; resetAt: number } => {
+  try {
+    const raw = sessionStorage.getItem(LOGIN_RATE_LIMIT_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { count: 0, resetAt: 0 };
+};
+const recordLoginAttempt = () => {
+  const current = getLoginAttempts();
+  const now = Date.now();
+  if (now > current.resetAt) {
+    sessionStorage.setItem(LOGIN_RATE_LIMIT_KEY, JSON.stringify({ count: 1, resetAt: now + LOCKOUT_MS }));
+  } else {
+    sessionStorage.setItem(LOGIN_RATE_LIMIT_KEY, JSON.stringify({ count: current.count + 1, resetAt: current.resetAt }));
+  }
+};
+const clearLoginAttempts = () => sessionStorage.removeItem(LOGIN_RATE_LIMIT_KEY);
+const isLoginLocked = (): boolean => {
+  const { count, resetAt } = getLoginAttempts();
+  if (Date.now() > resetAt) return false;
+  return count >= MAX_ATTEMPTS;
+};
+
 const Auth = () => {
   /* IMP-6: Document title for Auth page */
   useEffect(() => { document.title = "Anmelden – ImmoControl"; }, []);
@@ -206,6 +233,13 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    /* IMP-41-1: Check rate limit before attempting login */
+    if (mode === "login" && isLoginLocked()) {
+      const { resetAt } = getLoginAttempts();
+      const secsLeft = Math.ceil((resetAt - Date.now()) / 1000);
+      toast.error(`Zu viele Versuche. Bitte warte ${secsLeft} Sekunden.`);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -218,7 +252,11 @@ const Auth = () => {
         toast.success("Link zum Zurücksetzen wurde gesendet!");
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          recordLoginAttempt();
+          throw error;
+        }
+        clearLoginAttempts();
         /* Check if MFA is required (AAL2) */
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {

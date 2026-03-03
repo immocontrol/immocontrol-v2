@@ -22,6 +22,7 @@ import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useEnterToNext } from "@/hooks/useEnterToNext";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -176,6 +177,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   /* Auto-save global state every 10 seconds to protect against crashes */
   useGlobalAutoSave();
 
+  /* FIX: Global Enter → next field on mobile keyboard */
+  const { handleKeyDown: enterToNextHandler } = useEnterToNext();
+
   /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
   const qc = useQueryClient();
   const { indicatorRef: pullIndicatorRef } = usePullToRefresh({
@@ -211,6 +215,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   useEffect(() => {
     const onScroll = () => {
+      /* FIX: Skip scroll-based nav visibility updates when an input/textarea is focused
+         to prevent re-renders that steal focus on mobile keyboards */
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT" || (active as HTMLElement).isContentEditable)) {
+        return;
+      }
       if (scrollTicking.current) return;
       scrollTicking.current = true;
       requestAnimationFrame(() => {
@@ -554,7 +564,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </header>
 
-      <main id="main-content" className="flex-1 container py-6 pb-24 md:pb-6">
+      {/* IMP-41-3: Offline indicator banner — persistent visual feedback when no connection */}
+      {!isOnline && (
+        <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 text-center text-xs text-destructive font-medium flex items-center justify-center gap-2" role="alert">
+          <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+          Keine Internetverbindung — Änderungen werden lokal gespeichert
+        </div>
+      )}
+
+      {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
+      <main id="main-content" className="flex-1 container py-6 pb-24 md:pb-6" onKeyDown={enterToNextHandler}>
         {children}
       </main>
 

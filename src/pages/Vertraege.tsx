@@ -15,8 +15,6 @@ import { formatCurrency } from "@/lib/formatters";
 const Vertraege = () => {
   const { user } = useAuth();
 
-  useEffect(() => { document.title = "Verträge – ImmoControl"; }, []);
-
   // Summary stats across all contract types
   const { data: contractStats } = useQuery({
     queryKey: ["vertraege_stats"],
@@ -48,6 +46,9 @@ const Vertraege = () => {
     enabled: !!user,
   });
 
+  /* IMP-41-10: Dynamic document title with contract count */
+  useEffect(() => { document.title = `Verträge (${contractStats?.activeContracts ?? 0}) – ImmoControl`; }, [contractStats?.activeContracts]);
+
   /* IMPROVE-12: Memoize default stats to avoid object recreation on every render */
   const stats = useMemo(() => contractStats || { activeContracts: 0, expiringContracts: 0, openInvoices: 0, overdueInvoices: 0, openInvoiceAmount: 0, activeServices: 0, totalServiceCost: 0 }, [contractStats]);
 
@@ -67,6 +68,19 @@ const Vertraege = () => {
           {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
         </p>
       </div>
+
+      {/* IMP-41-11: Overdue invoice warning banner — alerts when invoices are past due */}
+      {stats.overdueInvoices > 0 && (
+        <div className="rounded-xl border-2 border-loss/30 bg-loss/5 p-4 flex items-center gap-3 animate-fade-in">
+          <div className="w-9 h-9 rounded-lg bg-loss/10 flex items-center justify-center shrink-0">
+            <AlertTriangle className="h-4 w-4 text-loss" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{stats.overdueInvoices} Rechnung{stats.overdueInvoices > 1 ? "en" : ""} überfällig ({formatCurrency(stats.openInvoiceAmount)})</p>
+            <p className="text-xs text-muted-foreground">Bitte prüfe offene Rechnungen und mahne rechtzeitig.</p>
+          </div>
+        </div>
+      )}
 
       {/* Renewal Warning Banner */}
       {stats.expiringContracts > 0 && (

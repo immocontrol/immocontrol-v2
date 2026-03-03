@@ -371,3 +371,54 @@ export const formatIBAN = (iban: string): string => {
 export const formatLastRefreshed = (): string => {
   return new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 };
+
+/* IMP-41-16: Validate email format — used in Auth, Settings, Contacts */
+export const validateEmail = (email: string): boolean => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+};
+
+/* IMP-41-17: Format ISO timestamp to German date+time for display */
+export const formatTimestamp = (iso: string): string => {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "–";
+  return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};
+
+/* IMP-41-2: Sanitize user input — strips HTML tags to prevent XSS in text displays */
+export const sanitizeText = (input: string): string =>
+  input.replace(/<[^>]*>/g, "").trim();
+
+/* IMP-41-5: Format German date as relative "vor X Tagen" for recent items */
+export const formatRelativeDaysDE = (dateStr: string): string => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000);
+  if (diffDays === 0) return "Heute";
+  if (diffDays === 1) return "Gestern";
+  if (diffDays < 7) return `vor ${diffDays} Tagen`;
+  if (diffDays < 30) return `vor ${Math.floor(diffDays / 7)} Wochen`;
+  return formatDate(dateStr);
+};
+
+/* IMP-41-6: Validate German phone number format */
+export const isValidPhoneDE = (phone: string): boolean => {
+  const cleaned = phone.replace(/[\s\-()]/g, "");
+  return /^(\+49|0)\d{8,12}$/.test(cleaned);
+};
+
+/* IMP-41-7: Parse German natural language date strings for quick-add ("heute", "morgen", "übermorgen", "nächste woche") */
+export const parseNaturalDateDE = (input: string): string | null => {
+  const lower = input.toLowerCase().trim();
+  const today = new Date();
+  if (lower === "heute") return today.toISOString().split("T")[0];
+  if (lower === "morgen") { today.setDate(today.getDate() + 1); return today.toISOString().split("T")[0]; }
+  if (lower === "übermorgen") { today.setDate(today.getDate() + 2); return today.toISOString().split("T")[0]; }
+  if (lower.includes("nächste woche") || lower.includes("naechste woche")) { today.setDate(today.getDate() + 7); return today.toISOString().split("T")[0]; }
+  if (lower.includes("nächsten monat") || lower.includes("naechsten monat")) { today.setMonth(today.getMonth() + 1); return today.toISOString().split("T")[0]; }
+  /* Match "in Xd" / "in X tagen" patterns */
+  const daysMatch = lower.match(/^in\s+(\d+)\s*(?:d|tag|tagen?)$/i);
+  if (daysMatch) { today.setDate(today.getDate() + parseInt(daysMatch[1], 10)); return today.toISOString().split("T")[0]; }
+  return null;
+};

@@ -386,14 +386,14 @@ export default function SpotlightSearch() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* IMP-41-8: Enhanced footer with search tip and result count */}
         <div className="border-t border-border px-4 py-2 flex items-center justify-between text-[10px] text-muted-foreground">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1"><Command className="h-3 w-3" />K öffnen</span>
             <span>↑↓ navigieren</span>
             <span>↵ auswählen</span>
           </div>
-          <span>{results.length} Ergebnisse</span>
+          <span>{results.length} Ergebnis{results.length !== 1 ? "se" : ""}</span>
         </div>
       </DialogContent>
     </Dialog>
