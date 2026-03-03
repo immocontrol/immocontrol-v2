@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
+import { escapeHtml } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
 
 interface BillingItem {
@@ -90,6 +91,8 @@ export function AutoNebenkosten() {
 
   const generatePDF = useCallback(() => {
     if (!property || tenantShares.length === 0) return;
+    const pName = escapeHtml(property.name);
+    const pAddr = escapeHtml(property.address || "–");
     const html = `<!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8"><title>Nebenkostenabrechnung ${selectedYear}</title>
 <style>
@@ -102,14 +105,14 @@ th{background:#f5f5f5;font-weight:600}
 .footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center}
 </style></head><body>
 <h1>Nebenkostenabrechnung ${selectedYear}</h1>
-<p><strong>Objekt:</strong> ${property.name}<br/>
-<strong>Adresse:</strong> ${property.address || "–"}<br/>
+<p><strong>Objekt:</strong> ${pName}<br/>
+<strong>Adresse:</strong> ${pAddr}<br/>
 <strong>Abrechnungszeitraum:</strong> 01.01.${selectedYear} – 31.12.${selectedYear}</p>
 <p><strong>Gesamtkosten:</strong> ${formatCurrency(totalNebenkosten)}</p>
 <table>
 <tr><th>Mieter</th><th>m²</th><th>Anteil</th><th>Kosten</th><th>Vorauszahlung</th><th>Differenz</th></tr>
 ${tenantShares.map(t => `<tr>
-<td>${t.name}</td><td>${t.sqm.toFixed(0)}</td><td>${t.share.toFixed(1)}%</td>
+<td>${escapeHtml(t.name)}</td><td>${t.sqm.toFixed(0)}</td><td>${t.share.toFixed(1)}%</td>
 <td>${formatCurrency(t.amount)}</td><td>${formatCurrency(t.prepaid)}</td>
 <td class="${t.isCredit ? 'positive' : 'negative'}">${t.isCredit ? "Guthaben" : "Nachzahlung"}: ${formatCurrency(Math.abs(t.diff))}</td>
 </tr>`).join("")}

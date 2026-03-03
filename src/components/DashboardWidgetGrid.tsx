@@ -71,7 +71,7 @@ export const defaultWidgetOrder: WidgetId[] = [
   "taxYear", "auditLog", "dataBackup", "dragDropDocs",
 ];
 
-const FULL_WIDTH_WIDGETS = new Set<WidgetId>(["health", "occupancy", "heatmap", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts", "bulkRent", "auditLog"]);
+const FULL_WIDTH_WIDGETS = new Set<WidgetId>(["health", "occupancy", "heatmap", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts", "bulkRent", "auditLog", "dragDropDocs"]);
 
 interface Property {
   id: string;
