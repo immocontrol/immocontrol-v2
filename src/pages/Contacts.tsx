@@ -28,6 +28,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { ContactDuplicateDetector } from "@/components/ContactDuplicateDetector";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { logAudit } from "@/lib/auditLog";
+import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
+import { LoadingButton } from "@/components/LoadingButton";
+import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
+import { useHaptic } from "@/hooks/useHaptic";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 
 interface ContactItem {
   id: string;
@@ -53,6 +58,8 @@ const TRASH_RETENTION_DAYS = 30;
 const ContactManagement = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const haptic = useHaptic();
+  const { visible: successVisible, trigger: triggerSuccess } = useSuccessAnimation();
 
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("alle");
@@ -181,6 +188,10 @@ const ContactManagement = () => {
         details: editContact ? "Kontakt aktualisiert" : "Neuer Kontakt angelegt",
         userId: user?.id,
       });
+      /* UX-4: Haptic feedback on save */
+      haptic.success();
+      /* UX-15: Success animation */
+      triggerSuccess();
       toast.success(editContact ? "Kontakt aktualisiert" : "Kontakt angelegt");
       resetForm();
       setOpen(false);
@@ -198,6 +209,7 @@ const ContactManagement = () => {
     onSuccess: (_data, id) => {
       const c = contacts.find(x => x.id === id);
       logAudit("delete", "contact", { entityId: id, entityName: c?.name, details: "In Papierkorb verschoben", userId: user?.id });
+      haptic.medium();
       toast.success("Kontakt in Papierkorb verschoben"); invalidate();
     },
     onError: () => toast.error("Fehler beim Löschen"),
@@ -330,16 +342,11 @@ const ContactManagement = () => {
             <Archive className="h-3.5 w-3.5" /> {showTrash ? "Zur\u00fcck" : "Papierkorb"}
           </Button>
           <AddContactDialog onCreated={() => invalidate()} />
-          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="gap-1.5 hidden">
-              <Plus className="h-3.5 w-3.5" /> Kontakt
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editContact ? "Kontakt bearbeiten" : "Neuen Kontakt anlegen"}</DialogTitle>
-            </DialogHeader>
+            {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
+          <ResponsiveDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle>{editContact ? "Kontakt bearbeiten" : "Neuen Kontakt anlegen"}</ResponsiveDialogTitle>
+            </ResponsiveDialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -382,12 +389,12 @@ const ContactManagement = () => {
                 <Label className="text-xs">Notizen</Label>
                 <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="text-sm min-h-[60px]" placeholder="Notizen zum Kontakt..." />
               </div>
-              <Button onClick={() => saveMutation.mutate()} className="w-full" disabled={saveMutation.isPending}>
+              {/* UX-14: LoadingButton with spinner during save */}
+              <LoadingButton onClick={() => saveMutation.mutate()} className="w-full" loading={saveMutation.isPending}>
                 {editContact ? "Speichern" : "Kontakt anlegen"}
-              </Button>
+              </LoadingButton>
             </div>
-          </DialogContent>
-        </Dialog>
+        </ResponsiveDialog>
         </div>
       </div>
 
@@ -607,6 +614,11 @@ const ContactManagement = () => {
           </div>
         </>
       )}
+      {/* UX-15: Success animation overlay */}
+      <SuccessAnimation visible={successVisible} />
+
+      {/* UX-5: Floating Action Button on mobile */}
+      <FloatingActionButton onClick={() => { resetForm(); setOpen(true); }} />
     </div>
   );
 };

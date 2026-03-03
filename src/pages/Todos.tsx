@@ -29,6 +29,11 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
+import { LoadingButton } from "@/components/LoadingButton";
+import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
+import { useHaptic } from "@/hooks/useHaptic";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 
 interface Todo {
   id: string;
@@ -104,6 +109,8 @@ const emptyForm = {
 const Todos = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const haptic = useHaptic();
+  const { visible: successVisible, trigger: triggerSuccess } = useSuccessAnimation();
   const [view, setView] = useState<ViewType>("inbox");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -178,6 +185,8 @@ const Todos = () => {
   });
 
   const toggleComplete = useCallback((todo: Todo) => {
+    /* UX-4: Haptic feedback on toggle */
+    haptic.tap();
     updateMutation.mutate({
       id: todo.id,
       updates: {
@@ -185,7 +194,7 @@ const Todos = () => {
         completed_at: todo.completed ? null : new Date().toISOString(),
       },
     });
-  }, [updateMutation]);
+  }, [updateMutation, haptic]);
 
   const openEdit = useCallback((todo: Todo) => {
     setEditTodo(todo);
@@ -215,8 +224,11 @@ const Todos = () => {
       },
     });
     setEditTodo(null);
+    /* UX-4: Haptic + UX-15: Success animation on save */
+    haptic.success();
+    triggerSuccess();
     toast.success("Gespeichert");
-  }, [editTodo, editForm, updateMutation]);
+  }, [editTodo, editForm, updateMutation, haptic, triggerSuccess]);
 
   /* IMP-41-7: Smart quick-add with natural language date parsing
      Supports: "Aufgabe morgen", "Aufgabe heute", "Aufgabe nächste woche", "Aufgabe in 3d" */
@@ -651,12 +663,13 @@ const Todos = () => {
         )}
       </main>
 
-      <Dialog open={!!editTodo} onOpenChange={open => !open && setEditTodo(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Aufgabe bearbeiten</DialogTitle>
-          </DialogHeader>
+      {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
+      <ResponsiveDialog open={!!editTodo} onOpenChange={open => !open && setEditTodo(null)}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Aufgabe bearbeiten</ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
           <div className="space-y-3">
+            {/* UX-19: Auto-focus first field in dialogs */}
             <Input
               value={editForm.title}
               onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
@@ -713,14 +726,14 @@ const Todos = () => {
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <Button onClick={saveEdit} className="flex-1" disabled={!editForm.title.trim() || updateMutation.isPending}>
+              {/* UX-14: LoadingButton with spinner during save */}
+              <LoadingButton onClick={saveEdit} className="flex-1" loading={updateMutation.isPending} disabled={!editForm.title.trim()}>
                 Speichern
-              </Button>
+              </LoadingButton>
               <Button variant="outline" onClick={() => setEditTodo(null)}>Abbrechen</Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* Wiederkehrende Aufgaben — moved from Dashboard */}
       <RecurringTodos onCreateTodo={(title, dueDate) => {
@@ -728,6 +741,12 @@ const Todos = () => {
           addMutation.mutate({ title, due_date: dueDate });
         }
       }} />
+
+      {/* UX-15: Success animation overlay */}
+      <SuccessAnimation visible={successVisible} />
+
+      {/* UX-5: Floating Action Button on mobile */}
+      <FloatingActionButton onClick={() => quickInputRef.current?.focus()} />
     </div>
   );
 };
