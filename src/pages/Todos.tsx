@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { createDebounce, groupBy, sortByKey, truncate, pluralDE, parseNaturalDateDE } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -144,43 +145,67 @@ const Todos = () => {
     enabled: !!user,
   });
 
-  const addMutation = useMutation({
-    mutationFn: async (input: { title: string; due_date?: string }) => {
+  /* Fix 8: Optimistic mutations — instant UI feedback with automatic rollback on error */
+  const todoQueryKey = queryKeys.todos.all(user?.id ?? "");
+
+  const addMutation = useOptimisticMutation<Todo, { title: string; due_date?: string }>({
+    queryKey: todoQueryKey,
+    mutationFn: async (input) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("todos" as never).insert({
+      const { data, error } = await supabase.from("todos" as never).insert({
         user_id: user.id,
         title: input.title.trim(),
         priority: 4,
         ...(input.due_date ? { due_date: input.due_date } : {}),
-      });
+      }).select().single();
       if (error) throw error;
+      return data as unknown as Todo;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") });
-      setQuickInput("");
-    },
-    onError: () => toast.error("Fehler beim Anlegen"),
+    optimisticUpdate: (old, input) => [
+      ...(old || []),
+      {
+        id: `temp-${Date.now()}`,
+        user_id: user?.id ?? "",
+        title: input.title.trim(),
+        description: "",
+        due_date: input.due_date ?? null,
+        due_time: null,
+        priority: 4,
+        completed: false,
+        completed_at: null,
+        project: "",
+        labels: [],
+        sort_order: (old?.length ?? 0) + 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ],
+    successMessage: "Aufgabe erstellt",
+    errorMessage: "Fehler beim Anlegen",
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Todo> }) => {
-      const { error } = await supabase.from("todos" as never).update({ ...updates, updated_at: new Date().toISOString() } as never).eq("id", id);
+  const updateMutation = useOptimisticMutation<Todo, { id: string; updates: Partial<Todo> }>({
+    queryKey: todoQueryKey,
+    mutationFn: async ({ id, updates }) => {
+      const { data, error } = await supabase.from("todos" as never).update({ ...updates, updated_at: new Date().toISOString() } as never).eq("id", id).select().single();
       if (error) throw error;
+      return data as unknown as Todo;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") }),
-    onError: () => toast.error("Fehler beim Aktualisieren"),
+    optimisticUpdate: (old, { id, updates }) =>
+      (old || []).map((t) => (t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t)),
+    errorMessage: "Fehler beim Aktualisieren",
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticMutation<Todo, string>({
+    queryKey: todoQueryKey,
+    mutationFn: async (id) => {
       const { error } = await supabase.from("todos" as never).delete().eq("id", id);
       if (error) throw error;
+      return { id } as unknown as Todo;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") });
-      toast.success("Aufgabe gelöscht");
-    },
-    onError: () => toast.error("Fehler beim Löschen"),
+    optimisticUpdate: (old, id) => (old || []).filter((t) => t.id !== id),
+    successMessage: "Aufgabe gelöscht",
+    errorMessage: "Fehler beim Löschen",
   });
 
   const toggleComplete = useCallback((todo: Todo) => {
