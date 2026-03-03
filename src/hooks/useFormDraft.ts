@@ -18,6 +18,7 @@ export function useFormDraft<T extends Record<string, unknown>>(
 } {
   const storageKey = `${PREFIX}${key}`;
   const initialRef = useRef(initialValues);
+  const clearedRef = useRef(false);
 
   const [values, setValues] = useState<T>(() => {
     try {
@@ -41,8 +42,12 @@ export function useFormDraft<T extends Record<string, unknown>>(
     } catch { return false; }
   });
 
-  // Persist to sessionStorage on change (debounced via effect)
+  // Persist to sessionStorage on change — skip if draft was just cleared
   useEffect(() => {
+    if (clearedRef.current) {
+      clearedRef.current = false;
+      return;
+    }
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(values));
     } catch { /* storage full — ignore */ }
@@ -54,6 +59,7 @@ export function useFormDraft<T extends Record<string, unknown>>(
 
   const clearDraft = useCallback(() => {
     try { sessionStorage.removeItem(storageKey); } catch { /* ignore */ }
+    clearedRef.current = true;
     setValues(initialRef.current);
   }, [storageKey]);
 
