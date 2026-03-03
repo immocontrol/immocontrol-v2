@@ -18,7 +18,8 @@ import {
   Search, Building2, Users, Phone, MapPin, FileText, Landmark,
   X, Loader2, Clock, Zap, ArrowRight, Command, Plus, Download,
   Settings, BarChart3, Calculator, CheckSquare, Wrench, Target,
-  Handshake, FolderOpen, Receipt
+  Handshake, FolderOpen, Receipt, PieChart, TrendingUp, Activity,
+  Map, PiggyBank, Banknote, LineChart, Shield, Calendar, Lightbulb
 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -124,6 +125,30 @@ export default function SpotlightSearch() {
     }));
   }, [go]);
 
+  /** SPOTLIGHT-NEW: Dashboard widgets & charts — searchable by name and keywords */
+  const widgetResults = useMemo<SpotlightResult[]>(() => {
+    const widgets = [
+      { id: "widget-euribor", title: "Euribor / Zinsmonitor", subtitle: "Aktuelle Zinssätze & EZB-Leitzins", icon: <TrendingUp className="h-4 w-4" />, keywords: "euribor zins zinsen ezb leitzins zinsmonitor interest rate bauzins" },
+      { id: "widget-cashflow", title: "Cashflow-Übersicht", subtitle: "Monatlicher Cashflow aller Objekte", icon: <LineChart className="h-4 w-4" />, keywords: "cashflow einnahmen ausgaben netto brutto" },
+      { id: "widget-portfolio", title: "Portfolio-Verteilung", subtitle: "Objektverteilung nach Typ & Wert", icon: <PieChart className="h-4 w-4" />, keywords: "portfolio verteilung chart torte" },
+      { id: "widget-monthly", title: "Monatsübersicht", subtitle: "Trends über die letzten 12 Monate", icon: <BarChart3 className="h-4 w-4" />, keywords: "monat trend übersicht monthly" },
+      { id: "widget-map", title: "Standortkarte", subtitle: "Alle Objekte auf der Karte", icon: <Map className="h-4 w-4" />, keywords: "karte map standort geolocation" },
+      { id: "widget-networth", title: "Vermögensaufbau", subtitle: "Eigenkapital-Entwicklung", icon: <PiggyBank className="h-4 w-4" />, keywords: "vermögen eigenkapital nettovermögen equity wealth" },
+      { id: "widget-health", title: "Portfolio Health Score", subtitle: "Gesundheitsbewertung des Portfolios", icon: <Activity className="h-4 w-4" />, keywords: "health score gesundheit bewertung portfolio" },
+      { id: "widget-annual", title: "Jahresübersicht", subtitle: "Jährliche Einnahmen, Kosten, Cashflow", icon: <Calendar className="h-4 w-4" />, keywords: "jahresübersicht annual jahres zusammenfassung" },
+      { id: "widget-dscr", title: "DSCR-Analyse", subtitle: "Debt Service Coverage Ratio", icon: <Shield className="h-4 w-4" />, keywords: "dscr debt service coverage schuldendienstdeckung" },
+      { id: "widget-breakeven", title: "Break-Even-Analyse", subtitle: "Wann sich ein Objekt rechnet", icon: <Target className="h-4 w-4" />, keywords: "breakeven break even amortisation" },
+      { id: "widget-forecast", title: "Portfolio-Prognose", subtitle: "Wertentwicklung in 5-30 Jahren", icon: <TrendingUp className="h-4 w-4" />, keywords: "prognose forecast zukunft wertentwicklung" },
+      { id: "widget-scenarios", title: "Cashflow-Szenarien", subtitle: "Best/Worst/Base Case Simulation", icon: <Lightbulb className="h-4 w-4" />, keywords: "szenario simulation best worst case" },
+      { id: "widget-rent-timeline", title: "Mieterhöhungs-Timeline", subtitle: "Nächste Mieterhöhungen", icon: <Calendar className="h-4 w-4" />, keywords: "mieterhöhung timeline miete erhöhung" },
+      { id: "widget-loan-countdown", title: "Zinsbindungs-Countdown", subtitle: "Ablauf der Zinsbindung", icon: <Banknote className="h-4 w-4" />, keywords: "zinsbindung countdown kredit ablauf" },
+    ];
+    return widgets.map(w => ({
+      ...w, category: "Dashboard-Widgets",
+      action: () => { go("/"); /* Scroll to widget after navigation */ },
+    }));
+  }, [go]);
+
   /** SPOTLIGHT-5: Property results */
   const propertyResults = useMemo<SpotlightResult[]>(() => {
     return properties.map(p => ({
@@ -220,7 +245,8 @@ export default function SpotlightSearch() {
     const filteredNav = navResults.filter(r => fuzzyMatch(r, q));
     const filteredProps = propertyResults.filter(r => fuzzyMatch(r, q));
     const filteredActions = quickActions.filter(r => fuzzyMatch(r, q));
-    setResults([...filteredActions, ...filteredNav, ...filteredProps]);
+    const filteredWidgets = widgetResults.filter(r => fuzzyMatch(r, q));
+    setResults([...filteredActions, ...filteredNav, ...filteredWidgets, ...filteredProps]);
 
     setLoading(true);
     debounceRef.current = setTimeout(async () => {
@@ -233,7 +259,7 @@ export default function SpotlightSearch() {
     }, 200);
 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [query, navResults, propertyResults, quickActions, searchDB, fuzzyMatch]);
+  }, [query, navResults, propertyResults, quickActions, widgetResults, searchDB, fuzzyMatch]);
 
   useEffect(() => { setSelectedIndex(0); }, [results]);
 
@@ -297,8 +323,22 @@ export default function SpotlightSearch() {
               <Loader2 className="h-4 w-4 animate-spin" /> Suche…
             </div>
           ) : results.length === 0 && query.trim() ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              Keine Ergebnisse für „{query}"
+            <div className="py-8 text-center">
+              <div className="text-sm text-muted-foreground mb-3">
+                Keine Ergebnisse für „{query}“
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">Versuche stattdessen:</p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {["Euribor", "Cashflow", "Portfolio", "Zinsen", "Miete", "Wartung"].map(suggestion => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setQuery(suggestion)}
+                    className="text-[10px] px-2 py-1 rounded-full bg-secondary text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="py-2">

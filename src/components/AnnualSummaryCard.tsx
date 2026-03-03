@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Minus, Info } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AnnualSummaryCard = () => {
   const { properties, stats } = useProperties();
@@ -32,7 +33,7 @@ const AnnualSummaryCard = () => {
 
     return {
       annualRent, annualExpenses, annualCreditRates, annualCashflow,
-      totalTilgung, totalReturn,
+      totalTilgung, annualAppreciation, totalReturn,
     };
   }, [properties, stats]);
 
@@ -44,6 +45,7 @@ const AnnualSummaryCard = () => {
     { label: "Kreditraten", value: -summary.annualCreditRates, type: "expense" },
     { label: "Netto-Cashflow", value: summary.annualCashflow, type: "result" },
     { label: "Tilgungsaufbau", value: summary.totalTilgung, type: "equity" },
+    { label: "Wertzuwachs", value: summary.annualAppreciation, type: "equity" },
   ];
 
   return (
@@ -66,9 +68,21 @@ const AnnualSummaryCard = () => {
           </div>
         ))}
       </div>
-      <div className="mt-3 p-2 rounded-lg bg-primary/5 flex justify-between text-xs font-semibold">
-        <span>Vermögensaufbau/Jahr (Cashflow + Tilgung)</span>
-        <span className="text-primary">{formatCurrency(summary.annualCashflow + summary.totalTilgung)}</span>
+      <div className="mt-3 p-2 rounded-lg bg-primary/5 flex justify-between items-center text-xs font-semibold">
+        <span className="flex items-center gap-1">
+          Vermögensaufbau/Jahr
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-[10px] max-w-[200px]">
+              Cashflow + Tilgung + Wertzuwachs = Gesamter jährlicher Vermögensaufbau
+            </TooltipContent>
+          </Tooltip>
+        </span>
+        <span className={summary.totalReturn >= 0 ? "text-profit" : "text-loss"}>
+          {summary.totalReturn >= 0 ? "+" : ""}{formatCurrency(summary.totalReturn)}
+        </span>
       </div>
     </div>
   );
