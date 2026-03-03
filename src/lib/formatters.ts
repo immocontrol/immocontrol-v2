@@ -350,6 +350,17 @@ export const formatMonthsToYearsDE = (totalMonths: number): string => {
   return `${years}J ${months}M`;
 };
 
+/* IMP-34-9: Centralized blob download with automatic URL cleanup — prevents memory leaks from orphaned ObjectURLs */
+export const downloadBlob = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  // Revoke after a short delay to ensure the download starts
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+};
+
 /* STR-3: Format IBAN for display with spacing (DE89 3704 0044 0532 0130 00) */
 export const formatIBAN = (iban: string): string => {
   const cleaned = iban.replace(/\s/g, "").toUpperCase();

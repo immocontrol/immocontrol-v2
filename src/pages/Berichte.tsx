@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, downloadBlob } from "@/lib/formatters";
 
 const Berichte = () => {
   const { properties, stats } = useProperties();
@@ -131,11 +131,9 @@ th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}th{background:#f5
       }
     });
     const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    /* IMP-34-12: Use downloadBlob utility for consistent URL cleanup */
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `DATEV_Export_${year}.csv`; a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `DATEV_Export_${year}.csv`);
     toast.success("DATEV-Export erstellt!");
   }, [properties, loans, insurances, year]);
 
@@ -187,7 +185,7 @@ ${relevantTenants.map(t => {
 <table>
 <tr><td>Kaufpreis</td><td>${formatCurrency(prop.purchasePrice)}</td></tr>
 <tr><td>Aktueller Wert</td><td>${formatCurrency(prop.currentValue)}</td></tr>
-<tr><td>Wertzuwachs</td><td class="${prop.currentValue >= prop.purchasePrice ? "positive" : "negative"}">${((prop.currentValue - prop.purchasePrice) / prop.purchasePrice * 100).toFixed(1)}%</td></tr>
+<tr><td>Wertzuwachs</td><td class="${prop.currentValue >= prop.purchasePrice ? "positive" : "negative"}">${prop.purchasePrice > 0 ? ((prop.currentValue - prop.purchasePrice) / prop.purchasePrice * 100).toFixed(1) : "0.0"}%</td></tr>
 <tr><td>Miete/Monat</td><td>${formatCurrency(prop.monthlyRent)}</td></tr>
 <tr><td>Cashflow/Monat</td><td class="${prop.monthlyCashflow >= 0 ? "positive" : "negative"}">${formatCurrency(prop.monthlyCashflow)}</td></tr>
 <tr><td>Brutto-Rendite</td><td>${bruttoRendite.toFixed(1)}%</td></tr>

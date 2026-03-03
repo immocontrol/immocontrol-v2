@@ -382,7 +382,9 @@ ${properties.map(p => `<tr>
       const months = Math.floor((Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
       return s + months;
     }, 0);
-    return Math.round(totalMonths / properties.length);
+    /* IMP-34-20: NaN guard — ensure finite result even with invalid dates */
+    const raw = totalMonths / properties.length;
+    return Number.isFinite(raw) ? Math.round(raw) : 0;
   }, [properties]);
 
   /* FUNC-5: Highest and lowest yield properties */

@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency, getISOWeek } from "@/lib/formatters";
+import { formatCurrency, getISOWeek, downloadBlob } from "@/lib/formatters";
 import { Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid, Line, ComposedChart, ReferenceLine } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -100,13 +100,9 @@ const CashForecast = () => {
     const headers = ["Woche", "Zeitraum", "Einnahmen", "Ausgaben", "Netto", "Kumulativ"];
     const rows = forecastData.map(w => [w.week, w.label, w.einnahmen, Math.abs(w.ausgaben), w.netto, w.kumulativ]);
     const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    /* IMP-34-11: Use downloadBlob utility for consistent URL cleanup */
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `cashforecast_${forecastWeeks}w_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `cashforecast_${forecastWeeks}w_${new Date().toISOString().split("T")[0]}.csv`);
     toast.success("CSV exportiert!");
   };
 

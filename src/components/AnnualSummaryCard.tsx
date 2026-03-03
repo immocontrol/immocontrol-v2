@@ -17,10 +17,18 @@ const AnnualSummaryCard = () => {
       return s + Math.max(0, tilgung) * 12;
     }, 0);
     const totalAppreciation = properties.reduce((s, p) => s + (p.currentValue - p.purchasePrice), 0);
-    const totalReturn = annualCashflow + totalTilgung + totalAppreciation / Math.max(1, properties.reduce((s, p) => {
-      const years = (Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      return s + Math.max(1, years);
-    }, 0) / properties.length);
+    /* IMP-34-5: Fix operator precedence — parentheses clarify intended calculation order;
+       guard against division by zero when properties.length is 0 */
+    const avgHoldingYears = properties.length > 0
+      ? properties.reduce((s, p) => {
+          const years = (Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+          return s + Math.max(1, years);
+        }, 0) / properties.length
+      : 1;
+    /* IMP-34-19: NaN guard on annualAppreciation — ensures finite result even with invalid dates */
+    const rawAppreciation = totalAppreciation / Math.max(1, avgHoldingYears);
+    const annualAppreciation = Number.isFinite(rawAppreciation) ? rawAppreciation : 0;
+    const totalReturn = annualCashflow + totalTilgung + annualAppreciation;
 
     return {
       annualRent, annualExpenses, annualCreditRates, annualCashflow,
