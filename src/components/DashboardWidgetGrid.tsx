@@ -42,8 +42,19 @@ import ReportingDashboard from "@/components/ReportingDashboard";
 import KPIAlerts from "@/components/KPIAlerts";
 import DashboardActionCenter from "@/components/DashboardActionCenter";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
+import InterestRateMonitor from "@/components/InterestRateMonitor";
+import { CashflowScenarios } from "@/components/CashflowScenarios";
+import { BreakEvenAnalysis } from "@/components/BreakEvenAnalysis";
+import { DSCRWidget } from "@/components/DSCRWidget";
+import { BulkRentAdjustment } from "@/components/BulkRentAdjustment";
+import { RecurringTodos } from "@/components/RecurringTodos";
+import { AutoNebenkosten } from "@/components/AutoNebenkosten";
+import { ContractTemplates } from "@/components/ContractTemplates";
+import { TaxYearOverview } from "@/components/TaxYearOverview";
+import { AuditLog } from "@/components/AuditLog";
+import { DataBackup } from "@/components/DataBackup";
 
-export type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts";
+export type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup";
 
 export const defaultWidgetOrder: WidgetId[] = [
   "health", "actions", "kpiAlerts",
@@ -54,9 +65,12 @@ export const defaultWidgetOrder: WidgetId[] = [
   "rentCollection", "expense", "annual", "hausgeld", "vacancy", "renovation",
   "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
   "historie", "reporting",
+  "zinsmonitor", "cashflowScenarios", "breakEven", "dscr",
+  "bulkRent", "recurringTodos", "autoNebenkosten", "contractTemplates",
+  "taxYear", "auditLog", "dataBackup",
 ];
 
-const FULL_WIDTH_WIDGETS = new Set<WidgetId>(["health", "occupancy", "heatmap", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts"]);
+const FULL_WIDTH_WIDGETS = new Set<WidgetId>(["health", "occupancy", "heatmap", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts", "bulkRent", "auditLog"]);
 
 interface Property {
   id: string;
@@ -137,6 +151,17 @@ function getWidgetContent(
     case "reporting": return <ReportingDashboard />;
     case "kpiAlerts": return <KPIAlerts />;
     case "stats": return <CashflowPerSqmWidget properties={properties} />;
+    case "zinsmonitor": return <InterestRateMonitor />;
+    case "cashflowScenarios": return <CashflowScenarios />;
+    case "breakEven": return <BreakEvenAnalysis />;
+    case "dscr": return <DSCRWidget />;
+    case "bulkRent": return <BulkRentAdjustment />;
+    case "recurringTodos": return <RecurringTodos />;
+    case "autoNebenkosten": return <AutoNebenkosten />;
+    case "contractTemplates": return <ContractTemplates />;
+    case "taxYear": return <TaxYearOverview />;
+    case "auditLog": return <AuditLog />;
+    case "dataBackup": return <DataBackup />;
     default: return <QuickNoteWidget />;
   }
 }

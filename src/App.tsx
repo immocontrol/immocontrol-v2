@@ -19,6 +19,7 @@ import { useBackgroundSync } from "@/hooks/useOfflineCache";
 import { queryKeys } from "@/lib/queryKeys";
 import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
+import { PrivacyProvider } from "@/components/PrivacyMode";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -302,6 +303,7 @@ const App = () => {
         <AuthProvider>
           <PropertyProvider>
             <AccessibilityProvider>
+            <PrivacyProvider>
             {/* UI-UPDATE-1: 1s tooltip delay on all action icons */}
             <TooltipProvider delayDuration={1000}>
               <Toaster />
@@ -322,6 +324,7 @@ const App = () => {
                 </ErrorBoundary>
               </BrowserRouter>
             </TooltipProvider>
+            </PrivacyProvider>
             </AccessibilityProvider>
           </PropertyProvider>
         </AuthProvider>
