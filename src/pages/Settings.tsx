@@ -37,8 +37,8 @@ const SETTINGS_SECTIONS = [
   { id: "tastenkombinationen", label: "Tasten", icon: Keyboard },
   { id: "telegram", label: "Telegram", icon: MessageSquare },
   { id: "team", label: "Team", icon: Users },
-  { id: "system-info", label: "System-Info", icon: Database },
   { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
+  { id: "system-info", label: "System-Info", icon: Database },
 ] as const;
 
 /** Available pages for "default page after login" selection */
