@@ -109,12 +109,11 @@ const Settings = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  /* Email change state — multi-step: password → code to old email → enter new email → code to new email */
-  const [emailChangeStep, setEmailChangeStep] = useState<"idle" | "password" | "old-code" | "new-email" | "new-code" | "done">("idle");
+  /* Email change state — secure flow:
+     password verification → enter new email → confirm via Supabase email links (old + new email) */
+  const [emailChangeStep, setEmailChangeStep] = useState<"idle" | "password" | "new-email" | "new-code">("idle");
   const [emailChangePassword, setEmailChangePassword] = useState("");
-  const [emailChangeOldCode, setEmailChangeOldCode] = useState("");
   const [emailChangeNewEmail, setEmailChangeNewEmail] = useState("");
-  const [emailChangeNewCode, setEmailChangeNewCode] = useState("");
   const [emailChangeLoading, setEmailChangeLoading] = useState(false);
   const [showEmailChangePassword, setShowEmailChangePassword] = useState(false);
 
@@ -600,7 +599,8 @@ const Settings = () => {
     }
   };
 
-  /** Remove a device from the tracked devices list and sign out its session */
+  /** Remove a device from the tracked devices list.
+      Note: Supabase client SDK cannot revoke a single session. */
   const removeDevice = async (deviceId: string) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -608,11 +608,9 @@ const Settings = () => {
       const updated = storedDevices.filter(d => d.id !== deviceId);
       await supabase.auth.updateUser({ data: { devices: updated } });
       setDevices(prev => prev.filter(d => d.id !== deviceId));
-      /* Sign out other sessions so the removed device is actually logged out */
-      await supabase.auth.signOut({ scope: "others" });
-      toast.success("Ger\u00e4t erfolgreich abgemeldet");
+      toast.success("Ger\u00e4t aus Liste entfernt");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Abmelden des Ger\u00e4ts");
+      toast.error(err instanceof Error ? err.message : "Fehler beim Entfernen des Ger\u00e4ts");
     }
   };
 
@@ -725,27 +723,14 @@ const Settings = () => {
         setEmailChangeLoading(false);
         return;
       }
-      /* Password verified — move to old email code step.
-         Supabase will send a confirmation to the old email when we later call updateUser. */
-      setEmailChangeStep("old-code");
-      /* Generate a random 6-digit code and store it for verification */
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem("immocontrol_email_change_code", code);
-      toast.success(`Bestätigungscode an ${user.email} gesendet`);
+      /* Password verified — skip directly to new email entry.
+         Supabase handles sending confirmation to both old and new email. */
+      setEmailChangeStep("new-email");
+      toast.success("Passwort bestätigt — gib jetzt deine neue E-Mail ein");
     } catch {
       toast.error("Fehler bei der Passwort-Überprüfung");
     } finally {
       setEmailChangeLoading(false);
-    }
-  };
-
-  const handleEmailChangeVerifyOldCode = () => {
-    const storedCode = localStorage.getItem("immocontrol_email_change_code");
-    if (emailChangeOldCode === storedCode || emailChangeOldCode.length === 6) {
-      setEmailChangeStep("new-email");
-      toast.success("Code bestätigt — gib jetzt deine neue E-Mail ein");
-    } else {
-      toast.error("Ungültiger Code");
     }
   };
 
@@ -780,10 +765,7 @@ const Settings = () => {
   const resetEmailChange = () => {
     setEmailChangeStep("idle");
     setEmailChangePassword("");
-    setEmailChangeOldCode("");
     setEmailChangeNewEmail("");
-    setEmailChangeNewCode("");
-    localStorage.removeItem("immocontrol_email_change_code");
   };
 
   const handleAiChatToggle = (enabled: boolean) => {
@@ -980,7 +962,8 @@ const Settings = () => {
           <Mail className="h-4 w-4 text-muted-foreground" /> E-Mail-Adresse ändern
         </h2>
         <p className="text-xs text-muted-foreground">
-          Um deine E-Mail zu ändern, bestätige zuerst dein Passwort. Dann erhältst du einen Code auf deine aktuelle E-Mail.
+          Zur Sicherheit bestätigst du zuerst dein aktuelles Passwort. Danach gibst du die neue E-Mail ein.
+          Supabase sendet Bestätigungslinks an die alte und neue E-Mail-Adresse.
         </p>
 
         {emailChangeStep === "idle" && (
@@ -1025,39 +1008,12 @@ const Settings = () => {
           </div>
         )}
 
-        {emailChangeStep === "old-code" && (
-          <div className="space-y-3">
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5" /> Passwort bestätigt
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Bestätigungscode (an {user?.email} gesendet)</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={emailChangeOldCode}
-                onChange={(e) => setEmailChangeOldCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="000000"
-                className="h-10 text-center text-lg font-mono tracking-[0.5em]"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleEmailChangeVerifyOldCode} disabled={emailChangeOldCode.length !== 6}>
-                Code bestätigen
-              </Button>
-              <Button variant="ghost" size="sm" onClick={resetEmailChange}>Abbrechen</Button>
-            </div>
-          </div>
-        )}
 
         {emailChangeStep === "new-email" && (
           <div className="space-y-3">
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
               <p className="text-xs text-primary font-medium flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5" /> Alte E-Mail bestätigt
+                <Check className="h-3.5 w-3.5" /> Passwort bestätigt
               </p>
             </div>
             <div className="space-y-1.5">
@@ -1390,6 +1346,8 @@ const Settings = () => {
         ) : (
           <button
             type="button"
+            role="switch"
+            aria-checked={biometricEnabled}
             onClick={() => handleBiometricToggle(!biometricEnabled)}
             className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
               biometricEnabled
@@ -1512,6 +1470,8 @@ const Settings = () => {
         </p>
         <button
           type="button"
+          role="switch"
+          aria-checked={aiChatEnabled}
           onClick={() => handleAiChatToggle(!aiChatEnabled)}
           className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
             aiChatEnabled
