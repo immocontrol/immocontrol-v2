@@ -27,7 +27,7 @@ const fullSchema = z.object({
   address: z.string().min(5, "Adresse angeben"),
   type: z.enum(["MFH", "ZFH", "ETW", "EFH", "Gewerbe"]),
   units: z.coerce.number().min(1),
-  ownership: z.string().min(1, "Besitzverhältnis waehlen"),
+  ownership: z.string().min(1, "Besitzverhältnis wählen"),
   purchasePrice: z.coerce.number().min(1),
   purchaseDate: z.string().min(1, "Kaufdatum angeben"),
   currentValue: z.coerce.number().min(1),

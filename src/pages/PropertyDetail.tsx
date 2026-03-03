@@ -285,7 +285,7 @@ const PropertyDetail = () => {
         <StatCard
           label="Kaufpreis"
           value={formatCurrency(property.purchasePrice)}
-          subValue={`${(property.purchasePrice / property.sqm).toFixed(0)} €/m²`}
+          subValue={property.sqm > 0 ? `${(property.purchasePrice / property.sqm).toFixed(0)} €/m²` : undefined}
           icon={<Landmark className="h-4 w-4" />}
           delay={100}
         />

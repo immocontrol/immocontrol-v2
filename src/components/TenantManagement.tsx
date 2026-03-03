@@ -104,7 +104,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.first_name.trim() || !form.last_name.trim()) throw new Error("Invalid");
-      if (form.email && !isValidEmail(form.email)) throw new Error("Bitte eine gueltige E-Mail-Adresse eingeben");
+      if (form.email && !isValidEmail(form.email)) throw new Error("Bitte eine gültige E-Mail-Adresse eingeben");
       if (editTenant) {
         const { error } = await supabase.from("tenants").update({
           first_name: form.first_name.trim(),

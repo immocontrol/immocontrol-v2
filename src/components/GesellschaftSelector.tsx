@@ -60,9 +60,9 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
       onChange(name);
       setNewName("");
       setAdding(false);
-      toast.success("Gesellschaft hinzugefuegt");
+      toast.success("Gesellschaft hinzugefügt");
     },
-    onError: () => toast.error("Fehler beim Hinzufuegen"),
+    onError: () => toast.error("Fehler beim Hinzufügen"),
   });
 
   const deleteMutation = useMutation({
@@ -76,9 +76,9 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.customCompanies.all });
-      toast.success("Gesellschaft geloescht");
+      toast.success("Gesellschaft gelöscht");
     },
-    onError: () => toast.error("Fehler beim Loeschen"),
+    onError: () => toast.error("Fehler beim Löschen"),
   });
 
   const allOptions = [
@@ -125,7 +125,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
             aria-expanded={open}
             className={cn("w-full h-9 justify-between text-sm font-normal", !value && "text-muted-foreground")}
           >
-            {value || "Gesellschaft waehlen"}
+            {value || "Gesellschaft wählen"}
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>

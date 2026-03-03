@@ -5,7 +5,7 @@ export const isValidEmail = (email: string): boolean =>
 
 export const validateEmail = (email: string): string | null => {
   if (!email.trim()) return null;
-  if (!isValidEmail(email)) return "Bitte eine gueltige E-Mail-Adresse eingeben";
+  if (!isValidEmail(email)) return "Bitte eine gültige E-Mail-Adresse eingeben";
   return null;
 };
 
@@ -35,7 +35,7 @@ export const isValidDate = (val: unknown): boolean => {
 
 /** IMP20-12: Validate German phone numbers — landline & mobile (+49, 0xxx) */
 export const isValidPhoneDE = (phone: string): boolean => {
-  const cleaned = phone.replace(/[\s\-\/().]/g, "");
+  const cleaned = phone.replace(/[\s\-/().]/g, "");
   // +49 followed by 2-4 digit area code + 4-8 digit subscriber
   if (/^\+49\d{8,12}$/.test(cleaned)) return true;
   // 0 followed by area code + subscriber (10-14 digits total)
