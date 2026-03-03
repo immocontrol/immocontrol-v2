@@ -24,6 +24,8 @@ import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
 import { scheduleAutoBackup } from "@/lib/autoBackup";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -192,6 +194,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
   useRealtimeSync();
+
+  /* UX-20: Remember scroll position on navigation — restores scroll when navigating back */
+  useScrollPosition();
 
   /* Improvement 17: Auto backup scheduling — backs up localStorage data every hour */
   useEffect(() => {
@@ -622,6 +627,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       <BackToTop />
       <ImmoAIBubble />
+
+      {/* UX-7: Enhanced offline indicator with reconnection feedback */}
+      <OfflineIndicator />
 
       {/* Mobile nav — 5 grouped tabs with expandable sub-items */}
       <nav

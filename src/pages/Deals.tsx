@@ -24,6 +24,11 @@ import { useSupabaseStorage } from "@/hooks/useSupabaseStorage";
 import { queryKeys } from "@/lib/queryKeys";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { logAudit } from "@/lib/auditLog";
+import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
+import { LoadingButton } from "@/components/LoadingButton";
+import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
+import { useHaptic } from "@/hooks/useHaptic";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -145,6 +150,8 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 const Deals = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const haptic = useHaptic();
+  const { visible: successVisible, trigger: triggerSuccess } = useSuccessAnimation();
   const [addOpen, setAddOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<DealRecord | null>(null);
   /* Improvement 18: Form Draft Recovery — auto-save deal form to sessionStorage */
@@ -193,6 +200,9 @@ const Deals = () => {
         userId: user?.id,
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
+      /* UX-4: Haptic feedback + UX-15: Success animation on save */
+      haptic.success();
+      triggerSuccess();
       toast.success(editDeal ? "Deal aktualisiert" : "Deal angelegt");
       setAddOpen(false);
       setEditDeal(null);
@@ -210,6 +220,7 @@ const Deals = () => {
       const d = deals.find(x => x.id === id);
       logAudit("delete", "deal", { entityId: id, entityName: d?.title, details: "Deal gelöscht", userId: user?.id });
       queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
+      haptic.medium();
       toast.success("Deal gelöscht");
       setDeleteTarget(null);
     },
@@ -712,15 +723,15 @@ const Deals = () => {
         </Card>
       )}
 
-      {/* Add/Edit Dialog */}
+      {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
       {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
-      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</DialogTitle>
-          </DialogHeader>
+      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }} className="max-w-lg">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
           <div className="space-y-3">
-            <Input placeholder="Titel / Objektname *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} aria-label="Deal Titel" />
+            {/* UX-19: Auto-focus first field in dialogs */}
+            <Input placeholder="Titel / Objektname *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} aria-label="Deal Titel" autoFocus />
             <Input placeholder="Adresse" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} aria-label="Adresse" />
             {/* UPD-41: Show description field */}
             <Textarea placeholder="Beschreibung" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} aria-label="Beschreibung" />
@@ -764,16 +775,16 @@ const Deals = () => {
                   <Trash2 className="h-4 w-4 mr-1" /> L\u00f6schen
                 </Button>
               )}
-              {/* UPD-43: Loading state on save button */}
-              <Button
+              {/* UX-14: LoadingButton with spinner during save */}
+              <LoadingButton
                 onClick={() => saveDeal.mutate()}
-                disabled={!isFormValid(form) || saveDeal.isPending}
+                disabled={!isFormValid(form)}
+                loading={saveDeal.isPending}
                 className="flex-1"
                 aria-label={editDeal ? "Deal speichern" : "Deal anlegen"}
               >
-                {saveDeal.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                 {editDeal ? "Speichern" : "Deal anlegen"}
-              </Button>
+              </LoadingButton>
             </div>
             {editDeal && form.stage !== "abgeschlossen" && form.stage !== "abgelehnt" && (
               <div className="flex gap-1 flex-wrap">
@@ -789,8 +800,7 @@ const Deals = () => {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* UPD-44: Delete confirmation dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={o => { if (!o) setDeleteTarget(null); }}>
@@ -818,6 +828,12 @@ const Deals = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* UX-15: Success animation overlay */}
+      <SuccessAnimation visible={successVisible} />
+
+      {/* UX-5: Floating Action Button on mobile */}
+      <FloatingActionButton onClick={() => { setEditDeal(null); setForm({ ...emptyForm }); setAddOpen(true); }} />
     </div>
   );
 };
