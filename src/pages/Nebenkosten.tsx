@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { AutoNebenkosten } from "@/components/AutoNebenkosten";
 
 const NK_CATEGORIES = [
   "Grundsteuer", "Wasserversorgung", "Entwässerung", "Heizkosten", "Warmwasser",
@@ -450,6 +451,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
           </div>
         )
       )}
+      {/* Automatische Nebenkostenabrechnung — moved from Dashboard */}
+      <AutoNebenkosten />
     </div>
   );
 };

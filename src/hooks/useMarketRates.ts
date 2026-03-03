@@ -12,8 +12,9 @@ export interface MarketRateData {
   lastUpdated: string | null;
 }
 
-const ECB_URL = "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA?lastNObservations=24&format=csvdata";
-const BUNDESBANK_URL = "https://api.statistiken.bundesbank.de/rest/data/BBIM1/M.DE.B.A2C.I.R.A.2250.EUR.N?lastNObservations=24&format=csv";
+/* 20-year history (240 monthly observations) for long-term trend charts */
+const ECB_URL = "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA?lastNObservations=240&format=csvdata";
+const BUNDESBANK_URL = "https://api.statistiken.bundesbank.de/rest/data/BBIM1/M.DE.B.A2C.I.R.A.2250.EUR.N?lastNObservations=240&format=csv";
 
 function parseECBCsv(csv: string): { date: string; rate: number }[] {
   const lines = csv.split("\n").filter(l => l.trim());

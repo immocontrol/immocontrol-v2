@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
+import { TaxYearOverview } from "@/components/TaxYearOverview";
 
 const Berichte = () => {
   const { properties, stats } = useProperties();
@@ -490,6 +491,9 @@ ${properties.map(p => {
           </Button>
         </div>
       </div>
+
+      {/* Steuerliche Jahresübersicht — moved from Dashboard */}
+      <TaxYearOverview />
     </div>
   );
 };

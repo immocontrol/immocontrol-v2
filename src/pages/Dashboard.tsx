@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, GripVertical } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import PortfolioGoals from "@/components/PortfolioGoals";
@@ -39,7 +39,7 @@ import PortfolioAllocationWidget from "@/components/PortfolioAllocationWidget";
 import BudgetVsActual from "@/components/BudgetVsActual";
 import LoanAmortizationMini from "@/components/LoanAmortizationMini";
 import PortfolioHistorie from "@/components/PortfolioHistorie";
-import WidgetCustomizer from "@/components/WidgetCustomizer";
+/* Removed: WidgetCustomizer — no longer needed, all widgets always visible */
 import ReportingDashboard from "@/components/ReportingDashboard";
 import KPIAlerts from "@/components/KPIAlerts";
 import { escapeHtml } from "@/lib/sanitize";
@@ -54,13 +54,15 @@ import { CashflowScenarios } from "@/components/CashflowScenarios";
 import { BreakEvenAnalysis } from "@/components/BreakEvenAnalysis";
 import { DSCRWidget } from "@/components/DSCRWidget";
 import { BulkRentAdjustment } from "@/components/BulkRentAdjustment";
-import { RecurringTodos } from "@/components/RecurringTodos";
-import { AutoNebenkosten } from "@/components/AutoNebenkosten";
-import { ContractTemplates } from "@/components/ContractTemplates";
-import { TaxYearOverview } from "@/components/TaxYearOverview";
-import { AuditLog } from "@/components/AuditLog";
-import { DataBackup } from "@/components/DataBackup";
-import { DragDropDocUpload } from "@/components/DragDropDocUpload";
+/* Removed from Dashboard — moved to appropriate menus:
+   RecurringTodos → Todos page
+   AutoNebenkosten → Nebenkosten page
+   ContractTemplates → Verträge page
+   TaxYearOverview → Berichte page
+   AuditLog → removed (admin, not visual)
+   DataBackup → Settings page
+   DragDropDocUpload → Dokumente page */
+
 import { FavoritesBar } from "@/components/FavoritesBar";
 import { PrivacyToggle } from "@/components/PrivacyMode";
 import { DashboardPresets } from "@/components/DashboardPresets";
@@ -121,44 +123,35 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   /* STR-9: Track last refresh timestamp for user transparency */
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  /* BUG-4: Dashboard minimalist cleanup — collapse charts and widgets by default for cleaner look */
-  /* IMP-2: Collapse charts and widgets by default for less crowded portfolio page */
-  const [chartsCollapsed, setChartsCollapsed] = useState(mode === "portfolio");
-  const [widgetsCollapsed, setWidgetsCollapsed] = useState(mode === "portfolio");
-  const [isChartDragOverview, setIsChartDragOverview] = useState(false);
+  /* Dashboard: No collapsible sections — everything visible at once */
   const [isWidgetDragOverview, setIsWidgetDragOverview] = useState(false);
-
-  useEffect(() => {
-    // Reset default section visibility on mode switch
-    setChartsCollapsed(mode === "portfolio");
-    setWidgetsCollapsed(mode === "portfolio");
-    setIsChartDragOverview(false);
-  }, [mode]);
 
   /* Dashboard widgets drag & drop reordering */
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
-  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup" | "dragDropDocs";
-  /* Widget order grouped by content:
-     1. Overview: health, actions, kpiAlerts
-     2. Portfolio: stats, occupancy, heatmap, typeChart, allocation
-     3. Performance: goals, rendite, diversifikation, wasserfall, yoy, forecast
-     4. Financial: debtEquity, netWorth, tilgung, amortization, cashReserve, budget
-     5. Loans: stress, refinancing
-     6. Revenue: rentCollection, expense, annual, hausgeld, vacancy, renovation
-     7. Compliance: steuer, tax, geg, grundsteuer, mietpreisbremse, leaseAlerts, contractExpiry, maintenance, milestones
-     8. Reports: historie, reporting */
+  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "chart_cashflow" | "chart_monthly" | "chart_portfolio" | "chart_map";
+  /* Unified widget order — charts and widgets in single draggable grid.
+     Non-visual/admin widgets removed (moved to their respective menus).
+     1. Charts: cashflow, monthly, portfolio, map
+     2. Overview: health, actions, kpiAlerts
+     3. Portfolio: stats, occupancy, heatmap, typeChart, allocation
+     4. Performance: goals, rendite, diversifikation, wasserfall, yoy, forecast
+     5. Financial: debtEquity, netWorth, tilgung, amortization, cashReserve, budget
+     6. Loans: stress, refinancing, zinsmonitor
+     7. Revenue: rentCollection, expense, annual, hausgeld, vacancy, renovation
+     8. Analysis: cashflowScenarios, breakEven, dscr, bulkRent
+     9. Compliance: steuer, tax, geg, grundsteuer, mietpreisbremse, leaseAlerts, contractExpiry, maintenance, milestones
+     10. Reports: historie, reporting */
   const defaultWidgetOrder: WidgetId[] = [
+    "chart_cashflow", "chart_monthly", "chart_portfolio", "chart_map",
     "health", "actions", "kpiAlerts",
     "stats", "occupancy", "heatmap", "typeChart", "allocation",
     "goals", "rendite", "diversifikation", "wasserfall", "yoy", "forecast",
     "debtEquity", "netWorth", "tilgung", "amortization", "cashReserve", "budget",
     "stress", "refinancing",
     "rentCollection", "expense", "annual", "hausgeld", "vacancy", "renovation",
+    "zinsmonitor", "cashflowScenarios", "breakEven", "dscr", "bulkRent",
     "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
     "historie", "reporting",
-    "zinsmonitor", "cashflowScenarios", "breakEven", "dscr",
-    "bulkRent", "recurringTodos", "autoNebenkosten", "contractTemplates",
-    "taxYear", "auditLog", "dataBackup", "dragDropDocs",
   ];
   /* Human-readable labels for widget drag overlay */
   const widgetLabels: Record<WidgetId, string> = {
@@ -176,10 +169,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     leaseAlerts: "Mietvertrags-Alerts", actions: "Quick Actions", historie: "Historie",
     reporting: "Reporting", kpiAlerts: "KPI-Alerts", zinsmonitor: "Zinsmonitor",
     cashflowScenarios: "Cashflow-Szenarien", breakEven: "Break-Even", dscr: "DSCR",
-    bulkRent: "Mietanpassung", recurringTodos: "Wiederkehrende Aufgaben",
-    autoNebenkosten: "Nebenkosten", contractTemplates: "Vertragsvorlagen",
-    taxYear: "Steuerjahr", auditLog: "Audit-Log", dataBackup: "Datensicherung",
-    dragDropDocs: "Dokumente",
+    bulkRent: "Mietanpassung",
+    chart_cashflow: "Cashflow-Übersicht", chart_monthly: "Monatsübersicht",
+    chart_portfolio: "Portfolio-Verteilung", chart_map: "Standortkarte",
   };
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
@@ -188,10 +180,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         const parsed = JSON.parse(stored) as WidgetId[];
         // Accept stored order if it has all widgets, or if close enough (allow adding new ones)
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // Remove stale widget IDs no longer in defaultWidgetOrder
+          const valid = parsed.filter(w => defaultWidgetOrder.includes(w));
           // Add any new widgets not in stored order
-          const missing = defaultWidgetOrder.filter(w => !parsed.includes(w));
-          if (missing.length > 0) return [...parsed, ...missing];
-          return parsed;
+          const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
+          if (missing.length > 0) return [...valid, ...missing];
+          return valid.length > 0 ? valid : defaultWidgetOrder;
         }
       }
     } catch { /* ignore */ }
@@ -207,39 +201,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   useEffect(() => {
     setIsWidgetDragOverview(widgetDrag.isDragging);
   }, [widgetDrag.isDragging]);
-
-  /* Dashboard charts drag & drop reordering */
-  const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
-  type ChartId = "portfolio" | "cashflow" | "monthly" | "map";
-  /* Chart order: Cashflow first (most actionable), then monthly trends, portfolio distribution, map */
-  const defaultChartOrder: ChartId[] = ["cashflow", "monthly", "portfolio", "map"];
-  const [chartOrder, setChartOrder] = useState<ChartId[]>(() => {
-    try {
-      const stored = localStorage.getItem(CHART_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as ChartId[];
-        if (Array.isArray(parsed) && parsed.length === 4) return parsed;
-      }
-    } catch { /* ignore */ }
-    return defaultChartOrder;
-  });
-
-  const chartDrag = useDragReorder(
-    chartOrder,
-    (next) => { setChartOrder(next); setIsChartDragOverview(false); },
-    CHART_STORAGE_KEY,
-  );
-
-  useEffect(() => {
-    setIsChartDragOverview(chartDrag.isDragging);
-  }, [chartDrag.isDragging]);
-
-  const chartComponents: Record<ChartId, { label: string; component: React.ReactNode; span?: number }> = useMemo(() => ({
-    portfolio: { label: "Portfolio-Verteilung", component: <PortfolioChart />, span: 1 },
-    cashflow: { label: "Cashflow-Übersicht", component: <CashflowChart />, span: 1 },
-    monthly: { label: "Monatsübersicht", component: <MonthlyOverviewChart />, span: 2 },
-    map: { label: "Standortkarte", component: <PropertyMap />, span: 2 },
-  }), []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -904,64 +865,6 @@ ${properties.map(p => `<tr>
 
       {mode === "portfolio" && (
         <>
-          {/* Collapsible Charts Section for portfolio mode — drag & drop reorderable */}
-      <div>
-        <button
-          onClick={() => setChartsCollapsed(!chartsCollapsed)}
-          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3 w-full"
-        >
-          {chartsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          Grafiken & Charts {chartsCollapsed ? "einblenden" : "ausblenden"}
-          {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
-        </button>
-        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <div
-            ref={chartDrag.containerRef}
-            className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
-              isChartDragOverview
-                ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
-                : ""
-            }`}
-          >
-            {chartOrder.map((chartId, idx) => {
-              const chart = chartComponents[chartId];
-              const isDragging = chartDrag.dragIdx === idx;
-              const isOver = chartDrag.overIdx === idx;
-              return (
-                <div
-                  key={chartId}
-                  {...chartDrag.getItemProps(idx)}
-                  className={`relative group transition-all duration-200 rounded-xl ${
-                    (chart.span ?? 1) >= 2 ? "md:col-span-2" : ""
-                  } ${
-                    isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
-                  } ${
-                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
-                  }`}
-                >
-                  <div
-                    {...chartDrag.getHandleProps(idx)}
-                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
-                    aria-label="Ziehen zum Umsortieren"
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {/* Show label overlay during drag for quick identification */}
-                  {isChartDragOverview && (
-                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
-                      <span className="text-[10px] font-semibold text-foreground">{chart.label}</span>
-                    </div>
-                  )}
-                  <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
-                    {chart.component}
-                  </Suspense>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
           {/* Search + Sort + Filter - MOVED UP for sticky properties */}
       <div className="flex flex-col gap-3">
         <div className="relative flex-1">
@@ -1103,186 +1006,112 @@ ${properties.map(p => `<tr>
         </>
       )}
 
-      {mode === "personal" && (
-        <>
-          {/* Collapsible Widgets Section — all widgets drag & drop reorderable */}
+      {/* Unified Dashboard Grid — ALL elements (charts + widgets) draggable, no sub-menus */}
       <div>
-        <button
-          onClick={() => setWidgetsCollapsed(!widgetsCollapsed)}
-          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3 w-full"
+        <p className="text-[10px] font-normal text-muted-foreground mb-2">Ziehen zum Umsortieren</p>
+        <div
+          ref={widgetDrag.containerRef}
+          className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
+            isWidgetDragOverview
+              ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
+              : ""
+          }`}
         >
-          {widgetsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          Analyse & Widgets {widgetsCollapsed ? "einblenden" : "ausblenden"}
-          {!widgetsCollapsed && <span className="text-[10px] font-normal ml-2">Ziehen zum Umsortieren</span>}
-          {!widgetsCollapsed && <span className="ml-auto"><WidgetCustomizer /></span>}
-        </button>
-        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[20000px] opacity-100"}`}>
-          <div
-            ref={widgetDrag.containerRef}
-            className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
-              isWidgetDragOverview
-                ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
-                : ""
-            }`}
-          >
-            {widgetOrder.map((wId, idx) => {
-              const isDragging = widgetDrag.dragIdx === idx;
-              const isOver = widgetDrag.overIdx === idx;
-              const widgetContent = (() => {
-                switch (wId) {
-                  case "health": return <PortfolioHealthScore totalValue={stats.totalValue} totalDebt={stats.totalDebt} totalCashflow={stats.totalCashflow} totalRent={stats.totalRent} totalExpenses={totalMonthlyExpenses} totalCreditRate={totalMonthlyCreditRate} vacancyRate={vacancyRate} propertyCount={stats.propertyCount} />;
-                  case "occupancy": return allTenants.length > 0 ? <OccupancyTracker properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))} tenants={allTenants} /> : null;
-                  case "heatmap": return <YieldHeatmap properties={properties} />;
-                  case "typeChart": return <PortfolioTypeChart properties={properties} />;
-                  case "goals": return <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />;
-                  case "forecast": return <PortfolioForecast />;
-                  case "rendite": return <RenditeRanking />;
-                  case "wasserfall": return <WasserfallChart />;
-                  case "diversifikation": return <DiversifikationsScore />;
-                  case "tilgung": return <TilgungsProgress />;
-                  case "steuer": return <SteuerHelfer />;
-                  case "annual": return <AnnualSummaryCard />;
-                  case "cashReserve": return <CashReserveWidget />;
-                  case "stress": return <MortgageStressTest />;
-                  case "milestones": return <PortfolioMilestones />;
-                  case "tax": return <TaxDeadlineReminder />;
-                  case "geg": return <GEGComplianceChecker />;
-                  case "mietpreisbremse": return <MietpreisbremseChecker />;
-                  case "refinancing": return <LoanRefinancingCalc />;
-                  case "grundsteuer": return <GrundsteuerCalculator />;
-                  case "hausgeld": return <HausgeldTracker />;
-                  case "vacancy": return <VacancyCostCalc />;
-                  case "renovation": return <RenovationROICalc />;
-                  case "budget": return <BudgetVsActual />;
-                  case "rentCollection": return <RentCollectionChart />;
-                  case "yoy": return <YearOverYear />;
-                  case "contractExpiry": return <ContractExpiryCountdown />;
-                  case "expense": return <ExpenseCategoryBreakdown />;
-                  case "maintenance": return <MaintenanceCostTrend />;
-                  case "allocation": return <PortfolioAllocationWidget />;
-                  case "amortization": return <LoanAmortizationMini />;
-                  case "debtEquity": return <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />;
-                  case "netWorth": return <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />;
-                  case "leaseAlerts": return <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />;
-                  case "actions": return <DashboardActionCenter />;
-                  case "historie": return <PortfolioHistorie />;
-                  case "reporting": return <ReportingDashboard />;
-                  case "kpiAlerts": return <KPIAlerts />;
-                  case "stats": return <CashflowPerSqmWidget properties={properties} />;
-                  case "zinsmonitor": return <InterestRateMonitor />;
-                  case "cashflowScenarios": return <CashflowScenarios />;
-                  case "breakEven": return <BreakEvenAnalysis />;
-                  case "dscr": return <DSCRWidget />;
-                  case "bulkRent": return <BulkRentAdjustment />;
-                  case "recurringTodos": return <RecurringTodos />;
-                  case "autoNebenkosten": return <AutoNebenkosten />;
-                  case "contractTemplates": return <ContractTemplates />;
-                  case "taxYear": return <TaxYearOverview />;
-                  case "auditLog": return <AuditLog />;
-                  case "dataBackup": return <DataBackup />;
-                  case "dragDropDocs": return <DragDropDocUpload />;
-                  default: return <QuickNoteWidget />;
-                }
-              })();
-              if (widgetContent === null) return null;
-              /* Full-width widgets span 2 columns */
-              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts" || wId === "bulkRent" || wId === "auditLog" || wId === "dragDropDocs";
-              return (
+          {widgetOrder.map((wId, idx) => {
+            const isDragging = widgetDrag.dragIdx === idx;
+            const isOver = widgetDrag.overIdx === idx;
+            const widgetContent = (() => {
+              switch (wId) {
+                /* Charts — integrated into unified grid */
+                case "chart_cashflow": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><CashflowChart /></Suspense>;
+                case "chart_monthly": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><MonthlyOverviewChart /></Suspense>;
+                case "chart_portfolio": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><PortfolioChart /></Suspense>;
+                case "chart_map": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><PropertyMap /></Suspense>;
+                /* Widgets — only visual/charting widgets remain */
+                case "health": return <PortfolioHealthScore totalValue={stats.totalValue} totalDebt={stats.totalDebt} totalCashflow={stats.totalCashflow} totalRent={stats.totalRent} totalExpenses={totalMonthlyExpenses} totalCreditRate={totalMonthlyCreditRate} vacancyRate={vacancyRate} propertyCount={stats.propertyCount} />;
+                case "occupancy": return allTenants.length > 0 ? <OccupancyTracker properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))} tenants={allTenants} /> : null;
+                case "heatmap": return <YieldHeatmap properties={properties} />;
+                case "typeChart": return <PortfolioTypeChart properties={properties} />;
+                case "goals": return <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />;
+                case "forecast": return <PortfolioForecast />;
+                case "rendite": return <RenditeRanking />;
+                case "wasserfall": return <WasserfallChart />;
+                case "diversifikation": return <DiversifikationsScore />;
+                case "tilgung": return <TilgungsProgress />;
+                case "steuer": return <SteuerHelfer />;
+                case "annual": return <AnnualSummaryCard />;
+                case "cashReserve": return <CashReserveWidget />;
+                case "stress": return <MortgageStressTest />;
+                case "milestones": return <PortfolioMilestones />;
+                case "tax": return <TaxDeadlineReminder />;
+                case "geg": return <GEGComplianceChecker />;
+                case "mietpreisbremse": return <MietpreisbremseChecker />;
+                case "refinancing": return <LoanRefinancingCalc />;
+                case "grundsteuer": return <GrundsteuerCalculator />;
+                case "hausgeld": return <HausgeldTracker />;
+                case "vacancy": return <VacancyCostCalc />;
+                case "renovation": return <RenovationROICalc />;
+                case "budget": return <BudgetVsActual />;
+                case "rentCollection": return <RentCollectionChart />;
+                case "yoy": return <YearOverYear />;
+                case "contractExpiry": return <ContractExpiryCountdown />;
+                case "expense": return <ExpenseCategoryBreakdown />;
+                case "maintenance": return <MaintenanceCostTrend />;
+                case "allocation": return <PortfolioAllocationWidget />;
+                case "amortization": return <LoanAmortizationMini />;
+                case "debtEquity": return <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />;
+                case "netWorth": return <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />;
+                case "leaseAlerts": return <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />;
+                case "actions": return <DashboardActionCenter />;
+                case "historie": return <PortfolioHistorie />;
+                case "reporting": return <ReportingDashboard />;
+                case "kpiAlerts": return <KPIAlerts />;
+                case "stats": return <CashflowPerSqmWidget properties={properties} />;
+                case "zinsmonitor": return <InterestRateMonitor />;
+                case "cashflowScenarios": return <CashflowScenarios />;
+                case "breakEven": return <BreakEvenAnalysis />;
+                case "dscr": return <DSCRWidget />;
+                case "bulkRent": return <BulkRentAdjustment />;
+                default: return <QuickNoteWidget />;
+              }
+            })();
+            if (widgetContent === null) return null;
+            /* Full-width widgets span 2 columns */
+            const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts" || wId === "bulkRent" || wId === "chart_monthly" || wId === "chart_map";
+            return (
+              <div
+                key={wId}
+                {...widgetDrag.getItemProps(idx)}
+                className={`relative group transition-all duration-200 rounded-xl ${
+                  fullWidth ? "md:col-span-2" : ""
+                } ${
+                  isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
+                } ${
+                  isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
+                }`}
+              >
+                {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
                 <div
-                  key={wId}
-                  {...widgetDrag.getItemProps(idx)}
-                  className={`relative group transition-all duration-200 rounded-xl ${
-                    fullWidth ? "md:col-span-2" : ""
-                  } ${
-                    isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
-                  } ${
-                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
-                  }`}
+                  {...widgetDrag.getHandleProps(idx)}
+                  className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
+                  aria-label="Ziehen zum Umsortieren"
                 >
-                  {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
-                  <div
-                    {...widgetDrag.getHandleProps(idx)}
-                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
-                    aria-label="Ziehen zum Umsortieren"
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {/* Widget label overlay during drag for quick identification */}
-                  {isWidgetDragOverview && (
-                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
-                      <span className="text-[10px] font-semibold text-foreground">{widgetLabels[wId] || wId}</span>
-                    </div>
-                  )}
-                  <WidgetErrorBoundary name={wId}>
-                    {widgetContent}
-                  </WidgetErrorBoundary>
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
                 </div>
-              );
-            })}
-          </div>
+                {/* Widget label overlay during drag for quick identification */}
+                {isWidgetDragOverview && (
+                  <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
+                    <span className="text-[10px] font-semibold text-foreground">{widgetLabels[wId] || wId}</span>
+                  </div>
+                )}
+                <WidgetErrorBoundary name={wId}>
+                  {widgetContent}
+                </WidgetErrorBoundary>
+              </div>
+            );
+          })}
         </div>
       </div>
-
-      {/* Collapsible Charts Section — drag & drop reorderable tiles */}
-      <div>
-        <button
-          onClick={() => setChartsCollapsed(!chartsCollapsed)}
-          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mb-3 w-full"
-        >
-          {chartsCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          Grafiken & Charts {chartsCollapsed ? "einblenden" : "ausblenden"}
-          {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
-        </button>
-        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <div
-            ref={chartDrag.containerRef}
-            className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
-              isChartDragOverview
-                ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
-                : ""
-            }`}
-          >
-            {chartOrder.map((chartId, idx) => {
-              const chart = chartComponents[chartId];
-              const isDragging = chartDrag.dragIdx === idx;
-              const isOver = chartDrag.overIdx === idx;
-              return (
-                <div
-                  key={chartId}
-                  {...chartDrag.getItemProps(idx)}
-                  className={`relative group transition-all duration-200 rounded-xl ${
-                    (chart.span ?? 1) >= 2 ? "md:col-span-2" : ""
-                  } ${
-                    isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
-                  } ${
-                    isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
-                  }`}
-                >
-                  {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
-                  <div
-                    {...chartDrag.getHandleProps(idx)}
-                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
-                    aria-label="Ziehen zum Umsortieren"
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {/* Show label overlay during drag for quick identification */}
-                  {isChartDragOverview && (
-                    <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
-                      <span className="text-[10px] font-semibold text-foreground">{chart.label}</span>
-                    </div>
-                  )}
-                  <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
-                    {chart.component}
-                  </Suspense>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-        </>
-      )}
     </div>
   );
 };
