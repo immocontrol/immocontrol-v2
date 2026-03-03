@@ -358,9 +358,9 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                       <span className="text-xs text-muted-foreground">{formatCurrency(Number(item.total_amount))}</span>
                       <span className="font-medium">{formatCurrency(Number(item.tenant_amount))}</span>
                       {selectedBillingData.status === "draft" && (
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteItem.mutate(item.id)} aria-label="Position löschen">
-                                                  <Trash2 className="h-3 w-3" />
-                                                </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteItem.mutate(item.id)} aria-label="Position löschen">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -450,9 +450,9 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                           Gesamt: {formatCurrency(Number(b.total_costs))}
                         </div>
                       </div>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); deleteBilling.mutate(b.id); }} aria-label="Abrechnung löschen">
-                                              <Trash2 className="h-3 w-3" />
-                                            </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); deleteBilling.mutate(b.id); }} aria-label="Abrechnung löschen">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 </button>

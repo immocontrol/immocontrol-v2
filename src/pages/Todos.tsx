@@ -201,7 +201,7 @@ const Todos = () => {
     mutationFn: async (id) => {
       const { error } = await supabase.from("todos" as never).delete().eq("id", id);
       if (error) throw error;
-      return { id } as unknown as Todo;
+      return { id, user_id: "", title: "", description: "", due_date: null, due_time: null, priority: 0, completed: false, completed_at: null, project: "", labels: [], sort_order: 0, created_at: "", updated_at: "" } satisfies Todo;
     },
     optimisticUpdate: (old, id) => (old || []).filter((t) => t.id !== id),
     successMessage: "Aufgabe gelöscht",
@@ -272,6 +272,7 @@ const Todos = () => {
         }
       }
       addMutation.mutate({ title, due_date: dueDate });
+      setQuickInput("");
     }
   }, [quickInput, addMutation]);
 

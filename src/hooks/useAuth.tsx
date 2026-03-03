@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         /* Silent — no notification needed */
         break;
       case "USER_UPDATED":
-        toast.success("Profil aktualisiert");
+        /* Silent — individual callers show their own context-specific toasts */
         break;
       case "SIGNED_OUT":
         /* Silent — handled by redirect */
