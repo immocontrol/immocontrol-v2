@@ -83,6 +83,16 @@ const ContactManagement = () => {
   /* IMP-41: Dynamic document title */
   useEffect(() => { document.title = `Kontakte (${contacts.length}) – ImmoControl`; }, [contacts.length]);
 
+  /* IMP20-14: Auto-purge expired trash entries on mount — silently delete contacts older than TRASH_RETENTION_DAYS */
+  useEffect(() => {
+    if (!user || !showTrash) return;
+    const purgeExpired = async () => {
+      const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 86400000).toISOString();
+      await supabase.from("contacts").delete().not("deleted_at", "is", null).lt("deleted_at", cutoff);
+    };
+    purgeExpired();
+  }, [user, showTrash]);
+
   /* STR-13: Keyboard shortcut Ctrl+N to open new contact dialog */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -240,7 +250,8 @@ const ContactManagement = () => {
     return contacts.length;
   }, [contacts, showTrash]);
 
-  // New: Duplicate detection
+  /* IMP20-20: Memoize duplicateGroups with stable dependency — avoids re-computation when contacts ref is same */
+  const contactIds = useMemo(() => contacts.map(c => c.id).join(","), [contacts]);
   const duplicateGroups = useMemo(() => {
     const seen = new Map<string, string[]>();
     contacts.forEach(c => {
@@ -249,7 +260,8 @@ const ContactManagement = () => {
       seen.get(key)!.push(c.id);
     });
     return Array.from(seen.values()).filter(ids => ids.length > 1);
-  }, [contacts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactIds]);
   const possibleDuplicates = duplicateGroups.flat();
 
   return (

@@ -13,6 +13,10 @@ interface PortfolioStats {
   totalCashflow: number;
   totalDebt: number;
   totalUnits: number;
+  /** IMP20-1: Pre-computed totals — avoids redundant reduce() in Dashboard */
+  totalSqm: number;
+  totalExpenses: number;
+  totalCreditRate: number;
   equity: number;
   propertyCount: number;
   appreciation: number;
@@ -95,8 +99,8 @@ const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string
 
 const EMPTY_STATS: PortfolioStats = {
   totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0,
-  totalDebt: 0, totalUnits: 0, equity: 0, propertyCount: 0,
-  appreciation: 0, avgRendite: 0,
+  totalDebt: 0, totalUnits: 0, totalSqm: 0, totalExpenses: 0, totalCreditRate: 0,
+  equity: 0, propertyCount: 0, appreciation: 0, avgRendite: 0,
 };
 
 const fetchPropertiesFromDb = async () => {
@@ -118,6 +122,8 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
     enabled: !!user,
   });
 
+  /* IMP20-1: Single-pass aggregation — includes totalSqm, totalExpenses, totalCreditRate
+     so Dashboard/Loans don't need to re-iterate properties */
   const stats = useMemo<PortfolioStats>(() => {
     if (properties.length === 0) return EMPTY_STATS;
     const acc = properties.reduce(
@@ -128,8 +134,11 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         totalCashflow: s.totalCashflow + p.monthlyCashflow,
         totalDebt: s.totalDebt + p.remainingDebt,
         totalUnits: s.totalUnits + p.units,
+        totalSqm: s.totalSqm + (p.sqm || 0),
+        totalExpenses: s.totalExpenses + (p.monthlyExpenses || 0),
+        totalCreditRate: s.totalCreditRate + (p.monthlyCreditRate || 0),
       }),
-      { totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0, totalDebt: 0, totalUnits: 0 }
+      { totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0, totalDebt: 0, totalUnits: 0, totalSqm: 0, totalExpenses: 0, totalCreditRate: 0 }
     );
     const equity = acc.totalValue - acc.totalDebt;
     return {

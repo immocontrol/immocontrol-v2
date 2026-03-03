@@ -265,8 +265,13 @@ const Todos = () => {
 
   const inboxCount = useMemo(() => todos.filter(t => !t.completed).length, [todos]);
 
-  /* IMPROVE-31: Dynamic document title with task count */
-  useEffect(() => { document.title = `Aufgaben (${inboxCount}) – ImmoControl`; }, [inboxCount]);
+  /* IMP20-8: Show overdue count in document title for urgency awareness */
+  useEffect(() => {
+    const title = overdueCount > 0
+      ? `Aufgaben (${inboxCount}) · ${overdueCount} überfällig – ImmoControl`
+      : `Aufgaben (${inboxCount}) – ImmoControl`;
+    document.title = title;
+  }, [inboxCount, overdueCount]);
 
   /* FUNC-8: Todo completion rate tracking */
   const completionRate = useMemo(() => {

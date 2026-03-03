@@ -92,18 +92,21 @@ const Mietuebersicht = () => {
     return { thisYear: thisYearTotal, lastYear: lastYearTotal, change };
   }, [payments]);
 
-  // Stats
-  const totalDue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
-  const confirmed = filteredPayments.filter(p => p.status === "confirmed");
-  const totalConfirmed = confirmed.reduce((s, p) => s + Number(p.amount), 0);
-  const overdue = filteredPayments.filter(p => p.status === "overdue");
-  const totalOverdue = overdue.reduce((s, p) => s + Number(p.amount), 0);
-  const pending = filteredPayments.filter(p => p.status === "pending");
-  const collectionRate = totalDue > 0 ? Math.round((totalConfirmed / totalDue) * 100) : 0;
+  /* IMP20-10: Memoize inline stats — 7 reduce/filter calls were running on every render */
+  const { totalDue, confirmed, totalConfirmed, overdue, totalOverdue, pending, collectionRate } = useMemo(() => {
+    const due = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
+    const conf = filteredPayments.filter(p => p.status === "confirmed");
+    const confTotal = conf.reduce((s, p) => s + Number(p.amount), 0);
+    const od = filteredPayments.filter(p => p.status === "overdue");
+    const odTotal = od.reduce((s, p) => s + Number(p.amount), 0);
+    const pend = filteredPayments.filter(p => p.status === "pending");
+    const rate = due > 0 ? Math.round((confTotal / due) * 100) : 0;
+    return { totalDue: due, confirmed: conf, totalConfirmed: confTotal, overdue: od, totalOverdue: odTotal, pending: pend, collectionRate: rate };
+  }, [filteredPayments]);
 
   // Active tenants with rent
-  const activeTenants = tenants.filter(t => t.is_active);
-  const totalMonthlyRent = activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0);
+  const activeTenants = useMemo(() => tenants.filter(t => t.is_active), [tenants]);
+  const totalMonthlyRent = useMemo(() => activeTenants.reduce((s, t) => s + Number(t.monthly_rent || 0), 0), [activeTenants]);
 
   /* FUNC-23: Top paying tenants */
   const topTenants = useMemo(() => {

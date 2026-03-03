@@ -127,8 +127,14 @@ const Wartungsplaner = () => {
     enabled: !!user,
   });
 
-  /* IMP-43: Dynamic document title */
-  useEffect(() => { document.title = `Wartungsplaner (${allItems.length}) – ImmoControl`; }, [allItems.length]);
+  /* IMP20-9: Show overdue count in document title for urgency awareness */
+  const overdueItemCount = useMemo(() => allItems.filter(i => getDueStatus(i) === "overdue").length, [allItems]);
+  useEffect(() => {
+    const title = overdueItemCount > 0
+      ? `Wartungsplaner (${allItems.length}) · ${overdueItemCount} überfällig – ImmoControl`
+      : `Wartungsplaner (${allItems.length}) – ImmoControl`;
+    document.title = title;
+  }, [allItems.length, overdueItemCount]);
 
   const propMap = useMemo(() => new Map(properties.map(p => [p.id, p.name])), [properties]);
 
