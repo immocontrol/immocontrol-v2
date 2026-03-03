@@ -198,7 +198,7 @@ const AddPropertyDialog = () => {
         </TooltipTrigger>
         <TooltipContent>Neues Objekt anlegen (Ctrl+N)</TooltipContent>
       </Tooltip>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Neues Objekt anlegen</DialogTitle>
           <DialogDescription>
