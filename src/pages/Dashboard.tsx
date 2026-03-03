@@ -596,17 +596,14 @@ ${properties.map(p => `<tr>
       {/* Favorites bar — quick access to favorite pages */}
       <FavoritesBar />
 
-      {/* Dashboard Presets — save/load widget layouts */}
+      {/* Dashboard Presets — save/load widget layouts (unified grid, no separate chart order) */}
       <DashboardPresets
         currentWidgetOrder={widgetOrder}
-        currentChartOrder={chartOrder}
-        chartsCollapsed={chartsCollapsed}
-        widgetsCollapsed={widgetsCollapsed}
-        onApply={({ widgetOrder: wo, chartOrder: co, chartsCollapsed: cc, widgetsCollapsed: wc }) => {
+        currentChartOrder={[]}
+        chartsCollapsed={false}
+        widgetsCollapsed={false}
+        onApply={({ widgetOrder: wo }) => {
           setWidgetOrder(wo as typeof widgetOrder);
-          setChartOrder(co as typeof chartOrder);
-          setChartsCollapsed(cc);
-          setWidgetsCollapsed(wc);
         }}
       />
 
