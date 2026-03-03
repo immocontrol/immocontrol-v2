@@ -116,7 +116,25 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   /* Dashboard widgets drag & drop reordering */
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
   type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts";
-  const defaultWidgetOrder: WidgetId[] = ["health", "stats", "occupancy", "heatmap", "typeChart", "goals", "forecast", "rendite", "wasserfall", "diversifikation", "tilgung", "steuer", "annual", "cashReserve", "stress", "milestones", "tax", "geg", "mietpreisbremse", "refinancing", "grundsteuer", "hausgeld", "vacancy", "renovation", "budget", "rentCollection", "yoy", "contractExpiry", "expense", "maintenance", "allocation", "amortization", "debtEquity", "netWorth", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts"];
+  /* Widget order grouped by content:
+     1. Overview: health, actions, kpiAlerts
+     2. Portfolio: stats, occupancy, heatmap, typeChart, allocation
+     3. Performance: goals, rendite, diversifikation, wasserfall, yoy, forecast
+     4. Financial: debtEquity, netWorth, tilgung, amortization, cashReserve, budget
+     5. Loans: stress, refinancing
+     6. Revenue: rentCollection, expense, annual, hausgeld, vacancy, renovation
+     7. Compliance: steuer, tax, geg, grundsteuer, mietpreisbremse, leaseAlerts, contractExpiry, maintenance, milestones
+     8. Reports: historie, reporting */
+  const defaultWidgetOrder: WidgetId[] = [
+    "health", "actions", "kpiAlerts",
+    "stats", "occupancy", "heatmap", "typeChart", "allocation",
+    "goals", "rendite", "diversifikation", "wasserfall", "yoy", "forecast",
+    "debtEquity", "netWorth", "tilgung", "amortization", "cashReserve", "budget",
+    "stress", "refinancing",
+    "rentCollection", "expense", "annual", "hausgeld", "vacancy", "renovation",
+    "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
+    "historie", "reporting",
+  ];
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
       const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
@@ -141,7 +159,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   /* Dashboard charts drag & drop reordering */
   const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
   type ChartId = "portfolio" | "cashflow" | "monthly" | "map";
-  const defaultChartOrder: ChartId[] = ["portfolio", "cashflow", "monthly", "map"];
+  /* Chart order: Cashflow first (most actionable), then monthly trends, portfolio distribution, map */
+  const defaultChartOrder: ChartId[] = ["cashflow", "monthly", "portfolio", "map"];
   const [chartOrder, setChartOrder] = useState<ChartId[]>(() => {
     try {
       const stored = localStorage.getItem(CHART_STORAGE_KEY);
