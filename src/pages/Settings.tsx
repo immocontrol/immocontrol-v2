@@ -701,11 +701,9 @@ const Settings = () => {
     }
   };
 
-  /* Email change flow — multi-step verification:
+  /* Email change flow — secure two-step verification:
      Step 1: Verify current password
-     Step 2: Send OTP to old email (Supabase sends automatically on email change request)
-     Step 3: Enter new email address
-     Step 4: Confirm via link/code sent to new email (handled by Supabase) */
+     Step 2: Enter new email address → Supabase sends confirmation links to both old and new email */
   const handleEmailChangeStart = async () => {
     if (!user?.email || !emailChangePassword.trim()) {
       toast.error("Bitte gib dein aktuelles Passwort ein");
