@@ -187,9 +187,13 @@ const AddressAutocomplete = ({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter" && highlightIndex >= 0) {
+    } else if (e.key === "Enter") {
+      /* Stop propagation so the parent form's onKeyDown doesn't also fire */
       e.preventDefault();
-      selectSuggestion(suggestions[highlightIndex]);
+      e.stopPropagation();
+      if (highlightIndex >= 0) {
+        selectSuggestion(suggestions[highlightIndex]);
+      }
     } else if (e.key === "Escape") {
       setShowDropdown(false);
     }
