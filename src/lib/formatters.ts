@@ -339,3 +339,14 @@ export const formatSignedCompact = (value: number): string => {
   const sign = value >= 0 ? "+" : "";
   return `${sign}${formatCompactDE(value)}`;
 };
+
+/* STR-3: Format IBAN for display with spacing (DE89 3704 0044 0532 0130 00) */
+export const formatIBAN = (iban: string): string => {
+  const cleaned = iban.replace(/\s/g, "").toUpperCase();
+  return cleaned.replace(/(.{4})/g, "$1 ").trim();
+};
+
+/* STR-4: Format relative timestamp for "last refreshed" display */
+export const formatLastRefreshed = (): string => {
+  return new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+};

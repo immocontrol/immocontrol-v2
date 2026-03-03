@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3 } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
@@ -79,9 +79,32 @@ const PropertyDetail = () => {
     }).catch(() => {});
   }, [property?.id, tenantVersion]);
 
-  const scrollToSection = (section: string) => {
+  const scrollToSection = useCallback((section: string) => {
     sectionRefs.current[section]?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  }, []);
+
+  /* STR-5: Dynamic document title for PropertyDetail — shows property name in browser tab */
+  useEffect(() => {
+    if (property) {
+      document.title = `${property.name} – ImmoControl`;
+    }
+    return () => { document.title = "ImmoControl"; };
+  }, [property?.name]);
+
+  /* STR-15: Keyboard navigation between sections — Alt+1..7 to jump to sections */
+  useEffect(() => {
+    const sections = ["overview", "tenants", "messages", "tickets", "payments", "notes", "documents"];
+    const handler = (e: KeyboardEvent) => {
+      if (!e.altKey || e.ctrlKey || e.metaKey) return;
+      const idx = parseInt(e.key) - 1;
+      if (idx >= 0 && idx < sections.length) {
+        e.preventDefault();
+        scrollToSection(sections[idx]);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [scrollToSection]);
 
   if (!property) {
     return (
@@ -92,27 +115,32 @@ const PropertyDetail = () => {
     );
   }
 
-  const bruttoRendite = property.purchasePrice > 0 ? ((property.monthlyRent * 12) / property.purchasePrice) * 100 : 0;
-  const nettoRendite = property.purchasePrice > 0 ? (((property.monthlyRent - property.monthlyExpenses) * 12) / property.purchasePrice) * 100 : 0;
-  const appreciation = property.purchasePrice > 0 ? ((property.currentValue - property.purchasePrice) / property.purchasePrice) * 100 : 0;
-  const eigenkapital = property.purchasePrice - property.remainingDebt;
-  const cashOnCash = eigenkapital > 0 ? ((property.monthlyCashflow * 12) / eigenkapital) * 100 : 0;
-  const mietmultiplikator = property.monthlyRent > 0 ? property.purchasePrice / (property.monthlyRent * 12) : 0;
-  const ltv = property.currentValue > 0 ? (property.remainingDebt / property.currentValue) * 100 : 0;
-  // New Feature: DSCR (Debt Service Coverage Ratio)
-  const dscr = property.monthlyCreditRate > 0 ? (property.monthlyRent - property.monthlyExpenses) / property.monthlyCreditRate : 0;
-  // New Feature: Break-even occupancy
-  const breakEvenOccupancy = property.monthlyRent > 0 ? ((property.monthlyExpenses + property.monthlyCreditRate) / property.monthlyRent) * 100 : 0;
-  // New Feature: Price per unit
-  const pricePerUnit = property.units > 0 ? property.purchasePrice / property.units : 0;
+  /* STR-6: Memoize all expensive PropertyDetail calculations to prevent re-computation on every render */
+  const calculatedMetrics = useMemo(() => {
+    const bruttoRendite = property.purchasePrice > 0 ? ((property.monthlyRent * 12) / property.purchasePrice) * 100 : 0;
+    const nettoRendite = property.purchasePrice > 0 ? (((property.monthlyRent - property.monthlyExpenses) * 12) / property.purchasePrice) * 100 : 0;
+    const appreciation = property.purchasePrice > 0 ? ((property.currentValue - property.purchasePrice) / property.purchasePrice) * 100 : 0;
+    const eigenkapital = property.purchasePrice - property.remainingDebt;
+    const cashOnCash = eigenkapital > 0 ? ((property.monthlyCashflow * 12) / eigenkapital) * 100 : 0;
+    const mietmultiplikator = property.monthlyRent > 0 ? property.purchasePrice / (property.monthlyRent * 12) : 0;
+    const ltv = property.currentValue > 0 ? (property.remainingDebt / property.currentValue) * 100 : 0;
+    const dscr = property.monthlyCreditRate > 0 ? (property.monthlyRent - property.monthlyExpenses) / property.monthlyCreditRate : 0;
+    const breakEvenOccupancy = property.monthlyRent > 0 ? ((property.monthlyExpenses + property.monthlyCreditRate) / property.monthlyRent) * 100 : 0;
+    const pricePerUnit = property.units > 0 ? property.purchasePrice / property.units : 0;
+    return { bruttoRendite, nettoRendite, appreciation, cashOnCash, mietmultiplikator, ltv, dscr, breakEvenOccupancy, pricePerUnit };
+  }, [property.purchasePrice, property.monthlyRent, property.monthlyExpenses, property.currentValue, property.remainingDebt, property.monthlyCashflow, property.monthlyCreditRate, property.units]);
 
-  // Besitzdauer
-  const purchaseDate = new Date(property.purchaseDate);
-  const now = new Date();
-  const diffMs = now.getTime() - purchaseDate.getTime();
-  const diffYears = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25));
-  const diffMonths = Math.floor((diffMs % (1000 * 60 * 60 * 24 * 365.25)) / (1000 * 60 * 60 * 24 * 30.44));
-  const besitzdauer = diffYears > 0 ? `${diffYears}J ${diffMonths}M` : `${diffMonths} Monate`;
+  const { bruttoRendite, nettoRendite, appreciation, cashOnCash, mietmultiplikator, ltv, dscr, breakEvenOccupancy, pricePerUnit } = calculatedMetrics;
+
+  /* STR-7: Memoize besitzdauer calculation */
+  const besitzdauer = useMemo(() => {
+    const purchaseDate = new Date(property.purchaseDate);
+    const now = new Date();
+    const diffMs = now.getTime() - purchaseDate.getTime();
+    const diffYears = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25));
+    const diffMonths = Math.floor((diffMs % (1000 * 60 * 60 * 24 * 365.25)) / (1000 * 60 * 60 * 24 * 30.44));
+    return diffYears > 0 ? `${diffYears}J ${diffMonths}M` : `${diffMonths} Monate`;
+  }, [property.purchaseDate]);
 
   const copyAddress = () => {
     navigator.clipboard.writeText(property.address).then(

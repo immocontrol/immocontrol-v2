@@ -288,6 +288,17 @@ const Loans = () => {
   const MARKET_RATE_THRESHOLD = 3.5;
   const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
 
+  /* STR-12: Refinancing savings estimate — shows potential monthly savings if high-rate loans were refinanced at market rate */
+  const refinancingSavings = useMemo(() => {
+    if (highRateLoans.length === 0) return { monthlySavings: 0, annualSavings: 0, loanCount: 0 };
+    const monthlySavings = highRateLoans.reduce((s, l) => {
+      const currentMonthlyInterest = l.remaining_balance * l.interest_rate / 100 / 12;
+      const newMonthlyInterest = l.remaining_balance * MARKET_RATE_THRESHOLD / 100 / 12;
+      return s + (currentMonthlyInterest - newMonthlyInterest);
+    }, 0);
+    return { monthlySavings, annualSavings: monthlySavings * 12, loanCount: highRateLoans.length };
+  }, [highRateLoans]);
+
   /* FUNC-11: Loan maturity warnings - loans ending within 12 months */
   const maturingLoans = useMemo(() => {
     const oneYear = new Date();

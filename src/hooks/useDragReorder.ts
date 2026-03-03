@@ -56,10 +56,15 @@ export function useDragReorder<T>(
     return () => stopAutoScroll();
   }, [stopAutoScroll]);
 
+  /* STR-8: Haptic feedback on drag start for mobile devices */
   const handleDragStart = useCallback((idx: number) => {
     dragItemRef.current = idx;
     setDragIdx(idx);
     setIsDragging(true);
+    // Trigger haptic feedback on supported devices
+    if (navigator.vibrate) {
+      navigator.vibrate(30);
+    }
   }, []);
 
   const handleDragOver = useCallback((idx: number) => {
@@ -84,6 +89,10 @@ export function useDragReorder<T>(
     setOverIdx(null);
     setIsDragging(false);
     stopAutoScroll();
+    /* STR-8: Short haptic pulse on drop */
+    if (navigator.vibrate && from !== null && to !== null && from !== to) {
+      navigator.vibrate(15);
+    }
   }, [items, overIdx, onReorder, storageKey, stopAutoScroll]);
 
   /** Props to spread on the drag handle element (the grip icon) */
