@@ -27,6 +27,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ContactDuplicateDetector } from "@/components/ContactDuplicateDetector";
 import { ListSkeleton } from "@/components/ListSkeleton";
+import { logAudit } from "@/lib/auditLog";
 
 interface ContactItem {
   id: string;
@@ -173,6 +174,13 @@ const ContactManagement = () => {
       }
     },
     onSuccess: () => {
+      /* Improvement 16: Audit log integration */
+      logAudit(editContact ? "update" : "create", "contact", {
+        entityName: form.name,
+        entityId: editContact?.id,
+        details: editContact ? "Kontakt aktualisiert" : "Neuer Kontakt angelegt",
+        userId: user?.id,
+      });
       toast.success(editContact ? "Kontakt aktualisiert" : "Kontakt angelegt");
       resetForm();
       setOpen(false);
@@ -187,7 +195,11 @@ const ContactManagement = () => {
       const { error } = await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Kontakt in Papierkorb verschoben"); invalidate(); },
+    onSuccess: (_data, id) => {
+      const c = contacts.find(x => x.id === id);
+      logAudit("delete", "contact", { entityId: id, entityName: c?.name, details: "In Papierkorb verschoben", userId: user?.id });
+      toast.success("Kontakt in Papierkorb verschoben"); invalidate();
+    },
     onError: () => toast.error("Fehler beim Löschen"),
   });
 

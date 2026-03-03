@@ -68,6 +68,51 @@ export function exportPortfolioCSV(properties: ExportableProperty[]): void {
   toast.success("CSV exportiert!");
 }
 
+/** Export portfolio as JSON file for backup/import */
+export function exportPortfolioJSON(properties: ExportableProperty[], stats: PortfolioStats): void {
+  if (properties.length === 0) return;
+  const data = {
+    meta: {
+      exported: new Date().toISOString(),
+      version: "1.0",
+      propertyCount: stats.propertyCount,
+      totalUnits: stats.totalUnits,
+    },
+    stats: {
+      totalValue: stats.totalValue,
+      equity: stats.equity,
+      totalCashflow: stats.totalCashflow,
+      avgRendite: stats.avgRendite,
+    },
+    properties: properties.map(p => ({
+      name: p.name,
+      address: p.address,
+      type: p.type,
+      units: p.units,
+      purchasePrice: p.purchasePrice,
+      currentValue: p.currentValue,
+      monthlyRent: p.monthlyRent,
+      monthlyExpenses: p.monthlyExpenses,
+      monthlyCreditRate: p.monthlyCreditRate,
+      monthlyCashflow: p.monthlyCashflow,
+      remainingDebt: p.remainingDebt,
+      interestRate: p.interestRate,
+      sqm: p.sqm,
+      yearBuilt: p.yearBuilt,
+      ownership: p.ownership,
+    })),
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `portfolio_${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("JSON exportiert!");
+}
+
 /** Export portfolio as printable PDF report */
 export function exportPortfolioPDF(
   properties: ExportableProperty[],
