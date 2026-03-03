@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo, useMemo } from "react";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useOnlineStatusNotifications } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -166,7 +166,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { getProperty } = useProperties();
-  const isOnline = useOnlineStatus();
+  const isOnline = useOnlineStatusNotifications();
   const desktopNavRef = useRef<HTMLElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
   /* OPT-46: generateTempId for stable session tag */

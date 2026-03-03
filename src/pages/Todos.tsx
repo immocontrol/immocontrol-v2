@@ -559,7 +559,16 @@ const Todos = () => {
               className="h-7 px-3 text-xs shrink-0 gap-1"
               onClick={() => {
                 if (quickInput.trim()) {
-                  addMutation.mutate({ title: quickInput });
+                  /* IMP-41-7: Button uses same natural language date parsing as Enter key */
+                  const words = quickInput.trim().split(/\s+/);
+                  let title = quickInput.trim();
+                  let dueDate: string | undefined;
+                  for (let len = 1; len <= Math.min(3, words.length - 1); len++) {
+                    const candidate = words.slice(-len).join(" ");
+                    const parsed = parseNaturalDateDE(candidate);
+                    if (parsed) { dueDate = parsed; title = words.slice(0, -len).join(" "); break; }
+                  }
+                  addMutation.mutate({ title, due_date: dueDate });
                 } else {
                   quickInputRef.current?.focus();
                 }

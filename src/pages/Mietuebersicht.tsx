@@ -25,9 +25,6 @@ const Mietuebersicht = () => {
   const [propertyFilter, setPropertyFilter] = useState("alle");
   const [monthFilter, setMonthFilter] = useState("alle");
 
-  /* IMP-41-4: Dynamic document title with tenant count for browser tab clarity */
-  useEffect(() => { document.title = `Mietübersicht (${tenants.filter(t => t.is_active).length}) – ImmoControl`; }, [tenants]);
-
   const { data: tenants = [] } = useQuery({
     queryKey: ["mietuebersicht_tenants"],
     queryFn: async () => {
@@ -45,6 +42,9 @@ const Mietuebersicht = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-41-4: Dynamic document title with tenant count for browser tab clarity */
+  useEffect(() => { document.title = `Mietübersicht (${tenants.filter(t => t.is_active).length}) – ImmoControl`; }, [tenants]);
 
   const tenantMap = useMemo(() => Object.fromEntries(tenants.map(t => [t.id, t])), [tenants]);
   const propertyMap = useMemo(() => Object.fromEntries(properties.map(p => [p.id, p])), [properties]);

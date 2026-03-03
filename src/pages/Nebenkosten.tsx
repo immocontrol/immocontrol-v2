@@ -34,9 +34,6 @@ const Nebenkosten = () => {
   });
   const [itemForm, setItemForm] = useState({ category: "Grundsteuer", description: "", total_amount: "", distribution_key: "Fläche", tenant_amount: "" });
 
-  /* IMP-41-12: Dynamic document title with billing count */
-  useEffect(() => { document.title = `Nebenkosten (${billings.length}) – ImmoControl`; }, [billings.length]);
-
   const { data: billings = [] } = useQuery({
     queryKey: ["utility_billings"],
     queryFn: async () => {
@@ -45,6 +42,9 @@ const Nebenkosten = () => {
     },
     enabled: !!user,
   });
+
+  /* IMP-41-12: Dynamic document title with billing count */
+  useEffect(() => { document.title = `Nebenkosten (${billings.length}) – ImmoControl`; }, [billings.length]);
 
   const { data: tenants = [] } = useQuery({
     queryKey: ["all_tenants_nk"],
