@@ -1,6 +1,10 @@
 /**
  * UX-20: Remember scroll position on navigation
  * Saves and restores scroll position per route path.
+ *
+ * Uses a passive scroll listener to continuously track the current scroll position,
+ * so when navigation occurs the saved value reflects the user's actual position
+ * (not the post-render position of the new page).
  */
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
@@ -11,20 +15,22 @@ export function useScrollPosition() {
   const location = useLocation();
   const prevPath = useRef(location.pathname);
 
-  /* Save scroll position when leaving a page */
+  /* Continuously save scroll position via scroll event listener.
+     This ensures the map always has the user's *actual* scroll position
+     for the current route, even before a navigation triggers a re-render. */
   useEffect(() => {
-    return () => {
-      scrollPositions.set(prevPath.current, window.scrollY);
+    const onScroll = () => {
+      scrollPositions.set(location.pathname, window.scrollY);
     };
-  }, []);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [location.pathname]);
 
-  /* Update prevPath on navigation */
+  /* On navigation: restore saved position for the new route, or scroll to top */
   useEffect(() => {
-    /* Save old position */
-    scrollPositions.set(prevPath.current, window.scrollY);
+    if (prevPath.current === location.pathname) return;
     prevPath.current = location.pathname;
 
-    /* Restore saved position for new route, or scroll to top */
     const saved = scrollPositions.get(location.pathname);
     if (saved !== undefined && saved > 0) {
       requestAnimationFrame(() => {
