@@ -266,25 +266,26 @@ const RoleRouter = () => {
     <AppLayout>
       <PageTransition>
         <Routes>
-          <Route path={ROUTES.HOME} element={<Dashboard />} />
-          <Route path={ROUTES.PERSONAL_DASHBOARD} element={<Dashboard mode="personal" />} />
-          <Route path={`${ROUTES.PROPERTY}/:id`} element={<PropertyDetail />} />
-          <Route path={ROUTES.LOANS} element={<Loans />} />
-          <Route path={ROUTES.FORECAST} element={<CashForecast />} />
-          <Route path={ROUTES.ANALYSE} element={<AnalysisCalculator />} />
-          <Route path={ROUTES.CONTACTS} element={<Contacts />} />
-          <Route path={ROUTES.TODOS} element={<Todos />} />
-          <Route path={ROUTES.NK} element={<Nebenkosten />} />
-          <Route path={ROUTES.REPORTS} element={<Berichte />} />
-          <Route path={ROUTES.RENT} element={<Mietuebersicht />} />
-          <Route path={ROUTES.AI} element={<ImmoAI />} />
-          <Route path={ROUTES.CONTRACTS} element={<Vertraege />} />
-          <Route path={ROUTES.CRM} element={<CRM />} />
-          <Route path={ROUTES.DEALS} element={<Deals />} />
-          <Route path={ROUTES.DOKUMENTE} element={<Dokumente />} />
-          <Route path={ROUTES.WARTUNG} element={<Wartungsplaner />} />
-          <Route path={ROUTES.HOCKEY_STICK} element={<HockeyStickPage />} />
-          <Route path={ROUTES.SETTINGS} element={<Settings />} />
+          {/* Improvement 6: ErrorBoundary per Page — each route wrapped individually */}
+          <Route path={ROUTES.HOME} element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+          <Route path={ROUTES.PERSONAL_DASHBOARD} element={<ErrorBoundary><Dashboard mode="personal" /></ErrorBoundary>} />
+          <Route path={`${ROUTES.PROPERTY}/:id`} element={<ErrorBoundary><PropertyDetail /></ErrorBoundary>} />
+          <Route path={ROUTES.LOANS} element={<ErrorBoundary><Loans /></ErrorBoundary>} />
+          <Route path={ROUTES.FORECAST} element={<ErrorBoundary><CashForecast /></ErrorBoundary>} />
+          <Route path={ROUTES.ANALYSE} element={<ErrorBoundary><AnalysisCalculator /></ErrorBoundary>} />
+          <Route path={ROUTES.CONTACTS} element={<ErrorBoundary><Contacts /></ErrorBoundary>} />
+          <Route path={ROUTES.TODOS} element={<ErrorBoundary><Todos /></ErrorBoundary>} />
+          <Route path={ROUTES.NK} element={<ErrorBoundary><Nebenkosten /></ErrorBoundary>} />
+          <Route path={ROUTES.REPORTS} element={<ErrorBoundary><Berichte /></ErrorBoundary>} />
+          <Route path={ROUTES.RENT} element={<ErrorBoundary><Mietuebersicht /></ErrorBoundary>} />
+          <Route path={ROUTES.AI} element={<ErrorBoundary><ImmoAI /></ErrorBoundary>} />
+          <Route path={ROUTES.CONTRACTS} element={<ErrorBoundary><Vertraege /></ErrorBoundary>} />
+          <Route path={ROUTES.CRM} element={<ErrorBoundary><CRM /></ErrorBoundary>} />
+          <Route path={ROUTES.DEALS} element={<ErrorBoundary><Deals /></ErrorBoundary>} />
+          <Route path={ROUTES.DOKUMENTE} element={<ErrorBoundary><Dokumente /></ErrorBoundary>} />
+          <Route path={ROUTES.WARTUNG} element={<ErrorBoundary><Wartungsplaner /></ErrorBoundary>} />
+          <Route path={ROUTES.HOCKEY_STICK} element={<ErrorBoundary><HockeyStickPage /></ErrorBoundary>} />
+          <Route path={ROUTES.SETTINGS} element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </PageTransition>

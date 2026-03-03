@@ -23,6 +23,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
+import { scheduleAutoBackup } from "@/lib/autoBackup";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -191,6 +192,21 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
   useRealtimeSync();
+
+  /* Improvement 17: Auto backup scheduling — backs up localStorage data every hour */
+  useEffect(() => {
+    const cleanup = scheduleAutoBackup(() => {
+      const data: Record<string, unknown> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("immo") && !key.startsWith("immocontrol_backup")) {
+          try { data[key] = JSON.parse(localStorage.getItem(key) || ""); } catch { data[key] = localStorage.getItem(key); }
+        }
+      }
+      return data;
+    }, 60 * 60 * 1000); // 1 hour
+    return cleanup;
+  }, []);
 
   /* MIGRATE-3: One-time localStorage → Supabase migration on login */
   const migrationDoneRef = useRef(false);

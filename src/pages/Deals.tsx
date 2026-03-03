@@ -22,6 +22,8 @@ import { TelegramDealImport, telegramDealToForm } from "@/components/TelegramDea
 import { useTelegramBot } from "@/hooks/useTelegramBot";
 import { useSupabaseStorage } from "@/hooks/useSupabaseStorage";
 import { queryKeys } from "@/lib/queryKeys";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { logAudit } from "@/lib/auditLog";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -145,7 +147,8 @@ const Deals = () => {
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<DealRecord | null>(null);
-  const [form, setForm] = useState({ ...emptyForm });
+  /* Improvement 18: Form Draft Recovery — auto-save deal form to sessionStorage */
+  const { values: form, setValues: setForm, clearDraft: clearDealDraft, hasDraft: hasDealDraft } = useFormDraft("deals", { ...emptyForm });
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   /* UPD-18: Search and filter state */
   const [search, setSearch] = useState("");
@@ -182,11 +185,18 @@ const Deals = () => {
       }
     },
     onSuccess: () => {
+      /* Improvement 16: Audit log integration */
+      logAudit(editDeal ? "update" : "create", "deal", {
+        entityName: form.title,
+        entityId: editDeal?.id,
+        details: editDeal ? "Deal aktualisiert" : "Neuer Deal angelegt",
+        userId: user?.id,
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
       toast.success(editDeal ? "Deal aktualisiert" : "Deal angelegt");
       setAddOpen(false);
       setEditDeal(null);
-      setForm({ ...emptyForm });
+      clearDealDraft();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -196,9 +206,11 @@ const Deals = () => {
       const { error } = await supabase.from("deals").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      const d = deals.find(x => x.id === id);
+      logAudit("delete", "deal", { entityId: id, entityName: d?.title, details: "Deal gelöscht", userId: user?.id });
       queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
-      toast.success("Deal gel\u00f6scht");
+      toast.success("Deal gelöscht");
       setDeleteTarget(null);
     },
     /* UPD-22: Error handler for delete mutation */
@@ -423,7 +435,8 @@ const Deals = () => {
         const active = document.activeElement;
         if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT")) return;
         e.preventDefault();
-        setForm({ ...emptyForm });
+        /* Fix: Only reset form if no draft exists — preserve draft for recovery */
+        if (!hasDealDraft) setForm({ ...emptyForm });
         setEditDeal(null);
         setAddOpen(true);
       }
@@ -498,7 +511,7 @@ const Deals = () => {
             <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("kanban")}>Kanban</Button>
             <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("list")}>Liste</Button>
           </div>
-          <Button size="sm" onClick={() => { setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen">
+          <Button size="sm" onClick={() => { if (!hasDealDraft) setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen">
             <Plus className="h-4 w-4 mr-1" /> Deal anlegen
           </Button>
         </div>
@@ -700,7 +713,8 @@ const Deals = () => {
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); setForm({ ...emptyForm }); } }}>
+      {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
+      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</DialogTitle>
