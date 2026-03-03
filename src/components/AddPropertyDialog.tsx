@@ -148,7 +148,8 @@ const AddPropertyDialog = () => {
     const monthlyCashflow = data.monthlyRent - data.monthlyExpenses - data.monthlyCreditRate;
     await addProperty({ ...data, monthlyCashflow, location: "" } as Omit<import("@/data/mockData").Property, "id">);
     toast.success(`${data.name} wurde angelegt!`);
-    reset();
+    reset(FORM_DEFAULTS);
+    clearDraft();
     setStep(0);
     setOpen(false);
   };

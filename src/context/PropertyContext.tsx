@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { propertyRowSchema, safeParseRows } from "@/lib/supabaseSchemas";
-import { rateLimiters, withRateLimit } from "@/lib/rateLimiter";
 
 interface PortfolioStats {
   totalValue: number;
@@ -105,17 +104,16 @@ const EMPTY_STATS: PortfolioStats = {
   equity: 0, propertyCount: 0, appreciation: 0, avgRendite: 0,
 };
 
-/* #18: Rate-limited fetch + #19: Zod-validated response */
+/* #19: Zod-validated response (rate limiting removed — React Query staleTime + refetch control
+   already prevents excessive API calls; client-side rate limiter caused spurious errors on tab switch) */
 const fetchPropertiesFromDb = async () => {
-  return withRateLimit(rateLimiters.supabase, async () => {
-    const { data, error } = await supabase
-      .from("properties")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    const validated = safeParseRows(propertyRowSchema, data || [], "properties");
-    return validated.map(mapDbToProperty);
-  }, "properties");
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const validated = safeParseRows(propertyRowSchema, data || [], "properties");
+  return validated.map(mapDbToProperty);
 };
 
 export const PropertyProvider = ({ children }: { children: ReactNode }) => {
