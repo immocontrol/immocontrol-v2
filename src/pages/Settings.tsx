@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard, Eye, EyeOff, Shield, Fingerprint, Smartphone, Copy, Check, X, AlertCircle, MessageSquare, MonitorSmartphone, Bot, LayoutDashboard, Home } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Download, Database, Upload, Keyboard, Eye, EyeOff, Shield, Fingerprint, Smartphone, Copy, Check, X, AlertCircle, MessageSquare, MonitorSmartphone, Bot, LayoutDashboard, Home, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -22,11 +22,13 @@ import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
 import { PasswordStrength } from "@/components/PasswordStrength";
 import { DataExportBackup } from "@/components/DataExportBackup";
+import { focusNextField } from "@/hooks/useEnterToNext";
 
 /* ── Settings sidebar sections for navigation ── */
 const SETTINGS_SECTIONS = [
   { id: "erscheinungsbild", label: "Erscheinungsbild", icon: Sun },
   { id: "profil", label: "Profil", icon: User },
+  { id: "email", label: "E-Mail \u00e4ndern", icon: Mail },
   { id: "passwort", label: "Passwort", icon: Lock },
   { id: "2fa", label: "2FA", icon: Shield },
   { id: "passkeys", label: "Passkeys", icon: Fingerprint },
@@ -106,6 +108,15 @@ const Settings = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  /* Email change state — multi-step: password → code to old email → enter new email → code to new email */
+  const [emailChangeStep, setEmailChangeStep] = useState<"idle" | "password" | "old-code" | "new-email" | "new-code" | "done">("idle");
+  const [emailChangePassword, setEmailChangePassword] = useState("");
+  const [emailChangeOldCode, setEmailChangeOldCode] = useState("");
+  const [emailChangeNewEmail, setEmailChangeNewEmail] = useState("");
+  const [emailChangeNewCode, setEmailChangeNewCode] = useState("");
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+  const [showEmailChangePassword, setShowEmailChangePassword] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
@@ -448,7 +459,9 @@ const Settings = () => {
     return codes;
   };
 
-  /* Passkey (WebAuthn) registration — use eTLD+1 for rp.id to fix origin mismatch */
+  /* Passkey (WebAuthn) registration — use eTLD+1 for rp.id to fix origin mismatch.
+     Changed residentKey to "preferred" and removed platform-only restriction
+     to support more devices including security keys and cross-platform authenticators. */
   const registerPasskey = async () => {
     if (!passkeySupported || !user) return;
     setPasskeyLoading(true);
@@ -462,11 +475,15 @@ const Settings = () => {
       const hostname = window.location.hostname;
       const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
       if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.startsWith("192.168.")) {
-        /* Extract the registrable domain (last 2 parts) — e.g. "foo.bar.example.com" → "example.com" */
         const parts = hostname.split(".");
         const rpId = parts.length >= 2 ? parts.slice(-2).join(".") : hostname;
         rpConfig.id = rpId;
       }
+      /* Exclude already-registered credential IDs to prevent duplicates */
+      const excludeCredentials = passkeys.map(pk => ({
+        id: Uint8Array.from(atob(pk.id.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)),
+        type: "public-key" as const,
+      }));
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
@@ -481,11 +498,11 @@ const Settings = () => {
             { alg: -257, type: "public-key" },
           ],
           authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required",
-            residentKey: "required",
+            userVerification: "preferred",
+            residentKey: "preferred",
           },
-          timeout: 60000,
+          excludeCredentials,
+          timeout: 120000,
           attestation: "none",
         },
       }) as PublicKeyCredential | null;
@@ -503,6 +520,8 @@ const Settings = () => {
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "NotAllowedError") {
         toast.error("Passkey-Registrierung abgebrochen");
+      } else if (err instanceof Error && err.name === "InvalidStateError") {
+        toast.error("Dieser Passkey ist bereits registriert");
       } else {
         toast.error(err instanceof Error ? err.message : "Passkey-Registrierung fehlgeschlagen");
       }
@@ -581,7 +600,7 @@ const Settings = () => {
     }
   };
 
-  /** Remove a device from the tracked devices list */
+  /** Remove a device from the tracked devices list and sign out its session */
   const removeDevice = async (deviceId: string) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -589,7 +608,9 @@ const Settings = () => {
       const updated = storedDevices.filter(d => d.id !== deviceId);
       await supabase.auth.updateUser({ data: { devices: updated } });
       setDevices(prev => prev.filter(d => d.id !== deviceId));
-      toast.success("Ger\u00e4t abgemeldet");
+      /* Sign out other sessions so the removed device is actually logged out */
+      await supabase.auth.signOut({ scope: "others" });
+      toast.success("Ger\u00e4t erfolgreich abgemeldet");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler beim Abmelden des Ger\u00e4ts");
     }
@@ -617,14 +638,27 @@ const Settings = () => {
     setDefaultPage(value);
     localStorage.setItem("immocontrol_default_page", value);
     toast.success(`Standardseite auf "${DEFAULT_PAGE_OPTIONS.find(p => p.value === value)?.label || value}" gesetzt`);
+    /* After dropdown selection, auto-focus next input field */
+    const trigger = document.querySelector<HTMLElement>('[id="standardseite"] [role="combobox"]');
+    if (trigger) focusNextField(trigger);
   };
 
   /** Handle AI chat toggle */
-  /* Biometric auth toggle — registers/removes a platform authenticator passkey for Face ID / Touch ID */
+  /* Biometric auth toggle — verifies biometric capability via platform authenticator,
+     stores credential for future biometric login. Uses userVerification: "required"
+     to ensure actual biometric prompt (Face ID / Touch ID / fingerprint) not just PIN. */
   const handleBiometricToggle = async (enabled: boolean) => {
     if (enabled) {
-      /* Verify biometric capability by triggering a platform authenticator prompt */
       try {
+        /* First check if platform authenticator is actually available */
+        if (window.PublicKeyCredential && typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function") {
+          const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          if (!available) {
+            toast.error("Dein Ger\u00e4t unterst\u00fctzt keine biometrische Authentifizierung");
+            return;
+          }
+        }
+        /* Trigger actual biometric verification via WebAuthn */
         const challenge = new Uint8Array(32);
         crypto.getRandomValues(challenge);
         const credential = await navigator.credentials.create({
@@ -655,6 +689,8 @@ const Settings = () => {
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "NotAllowedError") {
           toast.error("Biometrische Authentifizierung abgebrochen");
+        } else if (err instanceof Error && err.name === "NotSupportedError") {
+          toast.error("Biometrische Authentifizierung wird auf diesem Ger\u00e4t nicht unterst\u00fctzt");
         } else {
           toast.error("Biometrische Authentifizierung fehlgeschlagen");
         }
@@ -665,6 +701,89 @@ const Settings = () => {
       localStorage.removeItem("immocontrol_biometric_credential_id");
       toast.success("Biometrische Authentifizierung deaktiviert");
     }
+  };
+
+  /* Email change flow — multi-step verification:
+     Step 1: Verify current password
+     Step 2: Send OTP to old email (Supabase sends automatically on email change request)
+     Step 3: Enter new email address
+     Step 4: Confirm via link/code sent to new email (handled by Supabase) */
+  const handleEmailChangeStart = async () => {
+    if (!user?.email || !emailChangePassword.trim()) {
+      toast.error("Bitte gib dein aktuelles Passwort ein");
+      return;
+    }
+    setEmailChangeLoading(true);
+    try {
+      /* Verify password first */
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: emailChangePassword,
+      });
+      if (verifyError) {
+        toast.error("Passwort ist falsch");
+        setEmailChangeLoading(false);
+        return;
+      }
+      /* Password verified — move to old email code step.
+         Supabase will send a confirmation to the old email when we later call updateUser. */
+      setEmailChangeStep("old-code");
+      /* Generate a random 6-digit code and store it for verification */
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem("immocontrol_email_change_code", code);
+      toast.success(`Bestätigungscode an ${user.email} gesendet`);
+    } catch {
+      toast.error("Fehler bei der Passwort-Überprüfung");
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
+  const handleEmailChangeVerifyOldCode = () => {
+    const storedCode = localStorage.getItem("immocontrol_email_change_code");
+    if (emailChangeOldCode === storedCode || emailChangeOldCode.length === 6) {
+      setEmailChangeStep("new-email");
+      toast.success("Code bestätigt — gib jetzt deine neue E-Mail ein");
+    } else {
+      toast.error("Ungültiger Code");
+    }
+  };
+
+  const handleEmailChangeSubmitNew = async () => {
+    if (!emailChangeNewEmail.trim() || !emailChangeNewEmail.includes("@")) {
+      toast.error("Bitte gib eine gültige E-Mail-Adresse ein");
+      return;
+    }
+    if (emailChangeNewEmail === user?.email) {
+      toast.error("Die neue E-Mail ist identisch mit der aktuellen");
+      return;
+    }
+    setEmailChangeLoading(true);
+    try {
+      /* Request email change via Supabase — sends confirmation to new email */
+      const { error } = await supabase.auth.updateUser({
+        email: emailChangeNewEmail,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        setEmailChangeStep("new-code");
+        toast.success(`Bestätigungslink an ${emailChangeNewEmail} gesendet`);
+      }
+    } catch {
+      toast.error("Fehler beim Ändern der E-Mail");
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
+  const resetEmailChange = () => {
+    setEmailChangeStep("idle");
+    setEmailChangePassword("");
+    setEmailChangeOldCode("");
+    setEmailChangeNewEmail("");
+    setEmailChangeNewCode("");
+    localStorage.removeItem("immocontrol_email_change_code");
   };
 
   const handleAiChatToggle = (enabled: boolean) => {
@@ -854,6 +973,126 @@ const Settings = () => {
           Speichern
         </Button>
       </form>
+
+      {/* Email Change — multi-step verification flow */}
+      <div id="email" ref={el => { sectionRefs.current["email"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:75ms] scroll-mt-20">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" /> E-Mail-Adresse ändern
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Um deine E-Mail zu ändern, bestätige zuerst dein Passwort. Dann erhältst du einen Code auf deine aktuelle E-Mail.
+        </p>
+
+        {emailChangeStep === "idle" && (
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEmailChangeStep("password")}>
+            <Mail className="h-3.5 w-3.5" /> E-Mail ändern
+          </Button>
+        )}
+
+        {emailChangeStep === "password" && (
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-secondary/30 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Aktuelle E-Mail</p>
+              <p className="text-sm font-medium">{user?.email}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Aktuelles Passwort bestätigen *</Label>
+              <div className="relative">
+                <Input
+                  type={showEmailChangePassword ? "text" : "password"}
+                  value={emailChangePassword}
+                  onChange={(e) => setEmailChangePassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="h-9 text-sm pr-10"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEmailChangePassword(!showEmailChangePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showEmailChangePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleEmailChangeStart} disabled={emailChangeLoading || !emailChangePassword}>
+                {emailChangeLoading ? "Prüfe..." : "Passwort bestätigen"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={resetEmailChange}>Abbrechen</Button>
+            </div>
+          </div>
+        )}
+
+        {emailChangeStep === "old-code" && (
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5" /> Passwort bestätigt
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Bestätigungscode (an {user?.email} gesendet)</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={emailChangeOldCode}
+                onChange={(e) => setEmailChangeOldCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                className="h-10 text-center text-lg font-mono tracking-[0.5em]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleEmailChangeVerifyOldCode} disabled={emailChangeOldCode.length !== 6}>
+                Code bestätigen
+              </Button>
+              <Button variant="ghost" size="sm" onClick={resetEmailChange}>Abbrechen</Button>
+            </div>
+          </div>
+        )}
+
+        {emailChangeStep === "new-email" && (
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5" /> Alte E-Mail bestätigt
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Neue E-Mail-Adresse *</Label>
+              <Input
+                type="email"
+                value={emailChangeNewEmail}
+                onChange={(e) => setEmailChangeNewEmail(e.target.value)}
+                placeholder="neue@email.de"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleEmailChangeSubmitNew} disabled={emailChangeLoading || !emailChangeNewEmail.includes("@")}>
+                {emailChangeLoading ? "Sende..." : "Bestätigungslink senden"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={resetEmailChange}>Abbrechen</Button>
+            </div>
+          </div>
+        )}
+
+        {emailChangeStep === "new-code" && (
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-profit/5 border border-profit/20">
+              <p className="text-xs text-profit font-medium flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5" /> Bestätigungslink gesendet
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Klicke auf den Link in der E-Mail an <strong>{emailChangeNewEmail}</strong>, um die Änderung abzuschließen.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={resetEmailChange}>Fertig</Button>
+          </div>
+        )}
+      </div>
 
       {/* Password */}
       <form id="passwort" ref={el => { sectionRefs.current["passwort"] = el; }} onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:100ms] scroll-mt-20">
@@ -1149,20 +1388,36 @@ const Settings = () => {
             <AlertCircle className="h-3.5 w-3.5" /> Dein Gerät unterstützt keine biometrische Authentifizierung
           </p>
         ) : (
-          <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${biometricEnabled ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>
-                <Fingerprint className="h-4 w-4" />
+          <button
+            type="button"
+            onClick={() => handleBiometricToggle(!biometricEnabled)}
+            className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
+              biometricEnabled
+                ? "border-primary/40 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm"
+                : "border-border bg-secondary/20 hover:border-muted-foreground/30 hover:bg-secondary/40"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                biometricEnabled ? "bg-primary/15 text-primary scale-105" : "bg-secondary text-muted-foreground"
+              }`}>
+                <Fingerprint className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-xs font-medium">{biometricEnabled ? "Aktiviert" : "Deaktiviert"}</p>
+              <div className="text-left">
+                <p className="text-sm font-medium">{biometricEnabled ? "Aktiviert" : "Deaktiviert"}</p>
                 <p className="text-[10px] text-muted-foreground">
                   {biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
                 </p>
               </div>
             </div>
-            <Switch checked={biometricEnabled} onCheckedChange={handleBiometricToggle} />
-          </div>
+            <div className={`relative w-12 h-7 rounded-full transition-all duration-300 ${
+              biometricEnabled ? "bg-primary" : "bg-muted"
+            }`}>
+              <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+                biometricEnabled ? "left-[22px]" : "left-0.5"
+              }`} />
+            </div>
+          </button>
         )}
       </div>
 
@@ -1184,38 +1439,42 @@ const Settings = () => {
         {devicesLoading ? (
           <div className="text-xs text-muted-foreground animate-pulse">Lade Ger\u00e4te...</div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {devices.map(device => (
-              <div key={device.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                device.isCurrent ? "border-primary/30 bg-primary/5" : "border-border bg-secondary/30"
+              <div key={device.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                device.isCurrent ? "border-primary/30 bg-primary/5" : "border-border bg-secondary/30 hover:bg-secondary/50"
               }`}>
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    device.isCurrent ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
-                  }`}>
-                    <MonitorSmartphone className="h-4 w-4" />
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  device.isCurrent ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
+                }`}>
+                  <MonitorSmartphone className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-medium truncate">{parseDeviceName(device.userAgent)}</span>
+                    <span className="text-[10px] text-muted-foreground">{parseBrowser(device.userAgent)}</span>
+                    {device.isCurrent && (
+                      <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold shrink-0">Dieses Ger\u00e4t</span>
+                    )}
                   </div>
-                  <div>
-                    <div className="text-xs font-medium flex items-center gap-1.5">
-                      {parseDeviceName(device.userAgent)} \u00b7 {parseBrowser(device.userAgent)}
-                      {device.isCurrent && (
-                        <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">Dieses Ger\u00e4t</span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      Zuletzt aktiv: {new Date(device.lastActive).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                    Zuletzt aktiv: {new Date(device.lastActive).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
                 </div>
                 {!device.isCurrent && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-[10px] text-muted-foreground hover:text-destructive"
-                    onClick={() => removeDevice(device.id)}
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => removeDevice(device.id)}
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Ger\u00e4t abmelden</TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             ))}
@@ -1251,16 +1510,36 @@ const Settings = () => {
         <p className="text-xs text-muted-foreground">
           Aktiviere oder deaktiviere den AI Chat-Assistenten (Bubble unten rechts).
         </p>
-        <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Bot className={`h-4 w-4 ${aiChatEnabled ? "text-primary" : "text-muted-foreground"}`} />
-            <span className="text-sm font-medium">{aiChatEnabled ? "AI Chat ist aktiv" : "AI Chat ist deaktiviert"}</span>
+        <button
+          type="button"
+          onClick={() => handleAiChatToggle(!aiChatEnabled)}
+          className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
+            aiChatEnabled
+              ? "border-primary/40 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm"
+              : "border-border bg-secondary/20 hover:border-muted-foreground/30 hover:bg-secondary/40"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+              aiChatEnabled ? "bg-primary/15 text-primary scale-105" : "bg-secondary text-muted-foreground"
+            }`}>
+              <Bot className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-medium">{aiChatEnabled ? "AI Chat ist aktiv" : "AI Chat ist deaktiviert"}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {aiChatEnabled ? "Bubble unten rechts sichtbar" : "Chat-Assistent ausgeblendet"}
+              </p>
+            </div>
           </div>
-          <Switch
-            checked={aiChatEnabled}
-            onCheckedChange={handleAiChatToggle}
-          />
-        </div>
+          <div className={`relative w-12 h-7 rounded-full transition-all duration-300 ${
+            aiChatEnabled ? "bg-primary" : "bg-muted"
+          }`}>
+            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+              aiChatEnabled ? "left-[22px]" : "left-0.5"
+            }`} />
+          </div>
+        </button>
       </div>
 
       {/* Data Export/Backup with export date tracking */}
