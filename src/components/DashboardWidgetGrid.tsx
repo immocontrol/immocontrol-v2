@@ -53,8 +53,9 @@ import { ContractTemplates } from "@/components/ContractTemplates";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
 import { AuditLog } from "@/components/AuditLog";
 import { DataBackup } from "@/components/DataBackup";
+import { DragDropDocUpload } from "@/components/DragDropDocUpload";
 
-export type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup";
+export type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup" | "dragDropDocs";
 
 export const defaultWidgetOrder: WidgetId[] = [
   "health", "actions", "kpiAlerts",
@@ -67,7 +68,7 @@ export const defaultWidgetOrder: WidgetId[] = [
   "historie", "reporting",
   "zinsmonitor", "cashflowScenarios", "breakEven", "dscr",
   "bulkRent", "recurringTodos", "autoNebenkosten", "contractTemplates",
-  "taxYear", "auditLog", "dataBackup",
+  "taxYear", "auditLog", "dataBackup", "dragDropDocs",
 ];
 
 const FULL_WIDTH_WIDGETS = new Set<WidgetId>(["health", "occupancy", "heatmap", "leaseAlerts", "actions", "historie", "reporting", "kpiAlerts", "bulkRent", "auditLog"]);
@@ -162,6 +163,7 @@ function getWidgetContent(
     case "taxYear": return <TaxYearOverview />;
     case "auditLog": return <AuditLog />;
     case "dataBackup": return <DataBackup />;
+    case "dragDropDocs": return <DragDropDocUpload />;
     default: return <QuickNoteWidget />;
   }
 }

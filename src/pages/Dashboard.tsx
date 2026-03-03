@@ -60,6 +60,7 @@ import { ContractTemplates } from "@/components/ContractTemplates";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
 import { AuditLog } from "@/components/AuditLog";
 import { DataBackup } from "@/components/DataBackup";
+import { DragDropDocUpload } from "@/components/DragDropDocUpload";
 import { FavoritesBar } from "@/components/FavoritesBar";
 import { PrivacyToggle } from "@/components/PrivacyMode";
 import { DashboardPresets } from "@/components/DashboardPresets";
@@ -136,7 +137,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   /* Dashboard widgets drag & drop reordering */
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
-  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup";
+  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup" | "dragDropDocs";
   /* Widget order grouped by content:
      1. Overview: health, actions, kpiAlerts
      2. Portfolio: stats, occupancy, heatmap, typeChart, allocation
@@ -157,7 +158,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     "historie", "reporting",
     "zinsmonitor", "cashflowScenarios", "breakEven", "dscr",
     "bulkRent", "recurringTodos", "autoNebenkosten", "contractTemplates",
-    "taxYear", "auditLog", "dataBackup",
+    "taxYear", "auditLog", "dataBackup", "dragDropDocs",
   ];
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
@@ -609,6 +610,12 @@ ${properties.map(p => `<tr>
           </div>
         </div>
       )}
+
+      {/* Favorites bar — quick access to favorite pages */}
+      <FavoritesBar />
+
+      {/* Dashboard Presets — save/load widget layouts */}
+      <DashboardPresets />
 
       {mode === "personal" && (
         <>
@@ -1078,12 +1085,13 @@ ${properties.map(p => `<tr>
                   case "taxYear": return <TaxYearOverview />;
                   case "auditLog": return <AuditLog />;
                   case "dataBackup": return <DataBackup />;
+                  case "dragDropDocs": return <DragDropDocUpload />;
                   default: return <QuickNoteWidget />;
                 }
               })();
               if (widgetContent === null) return null;
               /* Full-width widgets span 2 columns */
-              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts" || wId === "bulkRent" || wId === "auditLog";
+              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts" || wId === "bulkRent" || wId === "auditLog" || wId === "dragDropDocs";
               return (
                 <div
                   key={wId}
