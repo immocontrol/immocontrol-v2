@@ -166,7 +166,8 @@ const AddPropertyDialog = () => {
     [reset, clearDraft]
   );
 
-  const goNext = useCallback(async () => {
+  const goNext = useCallback(async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     const valid = await trigger(STEP_FIELDS[step]);
     if (valid) setStep((s) => Math.min(s + 1, 2));
   }, [step, trigger]);
@@ -198,7 +199,7 @@ const AddPropertyDialog = () => {
         </TooltipTrigger>
         <TooltipContent>Neues Objekt anlegen (Ctrl+N)</TooltipContent>
       </Tooltip>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Neues Objekt anlegen</DialogTitle>
           <DialogDescription>
@@ -208,7 +209,13 @@ const AddPropertyDialog = () => {
 
         <StepIndicator current={step} total={3} />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} onKeyDown={(e) => {
+          /* Prevent Enter key from submitting the form on non-final steps */
+          if (e.key === "Enter" && step < 2) {
+            e.preventDefault();
+            goNext();
+          }
+        }} className="space-y-5">
           <div className={step === 0 ? "block" : "hidden"}>
             <div className="space-y-3">
               <Field label="Bezeichnung *" name="name" placeholder="z.B. MFH Duesseldorf" register={register} errors={errors} />
