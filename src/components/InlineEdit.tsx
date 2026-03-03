@@ -80,6 +80,7 @@ export function InlineEdit({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleSave}
+          onMouseDown={(e) => e.stopPropagation()}
           type={type === "text" ? "text" : "number"}
           step={type === "currency" ? "0.01" : undefined}
           className="h-6 text-xs px-1.5 min-w-0"
@@ -88,14 +89,14 @@ export function InlineEdit({
           autoFocus
         />
         <button
-          onClick={handleSave}
+          onMouseDown={(e) => { e.preventDefault(); handleSave(); }}
           className="h-5 w-5 flex items-center justify-center rounded hover:bg-profit/10 text-profit transition-colors"
           aria-label="Speichern"
         >
           <Check className="h-3 w-3" />
         </button>
         <button
-          onClick={handleCancel}
+          onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
           className="h-5 w-5 flex items-center justify-center rounded hover:bg-loss/10 text-loss transition-colors"
           aria-label="Abbrechen"
         >

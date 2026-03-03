@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TourStep {
   /** CSS selector of the target element */
@@ -59,11 +60,13 @@ const TOUR_STEPS: TourStep[] = [
 const TOUR_STORAGE_KEY = "immocontrol_tour_completed";
 
 export function OnboardingTour() {
+  const { user } = useAuth();
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
+    if (!user) return; // Don't show tour for unauthenticated users
     try {
       const completed = localStorage.getItem(TOUR_STORAGE_KEY);
       if (!completed) {
@@ -72,7 +75,7 @@ export function OnboardingTour() {
         return () => clearTimeout(timer);
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [user]);
 
   const updatePosition = useCallback(() => {
     if (!active || step >= TOUR_STEPS.length) return;
@@ -157,7 +160,7 @@ export function OnboardingTour() {
     }
   };
 
-  if (!active || step >= TOUR_STEPS.length) return null;
+  if (!active || step >= TOUR_STEPS.length || !user) return null;
 
   const currentStep = TOUR_STEPS[step];
 

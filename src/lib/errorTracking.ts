@@ -16,7 +16,7 @@ interface ErrorEntry {
   componentStack?: string;
 }
 
-const STORAGE_KEY = "immocontrol_error_log";
+const STORAGE_KEY = "immocontrol_error_tracking";
 const MAX_ERRORS = 100;
 
 function loadErrors(): ErrorEntry[] {
