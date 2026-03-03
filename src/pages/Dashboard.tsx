@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import PortfolioGoals from "@/components/PortfolioGoals";
 import PortfolioForecast from "@/components/PortfolioForecast";
@@ -126,32 +127,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     } catch { /* ignore */ }
     return defaultWidgetOrder;
   });
-  const [dragWidgetIdx, setDragWidgetIdx] = useState<number | null>(null);
-  const [dragWidgetOverIdx, setDragWidgetOverIdx] = useState<number | null>(null);
 
-  const handleWidgetDragStart = useCallback((idx: number) => {
-    setDragWidgetIdx(idx);
-    setIsWidgetDragOverview(true);
-  }, []);
+  const widgetDrag = useDragReorder(
+    widgetOrder,
+    (next) => { setWidgetOrder(next); setIsWidgetDragOverview(false); },
+    WIDGET_STORAGE_KEY,
+  );
 
-  const handleWidgetDragOver = useCallback((idx: number) => {
-    setDragWidgetOverIdx(idx);
-  }, []);
-
-  const handleWidgetDragEnd = useCallback(() => {
-    if (dragWidgetIdx !== null && dragWidgetOverIdx !== null && dragWidgetIdx !== dragWidgetOverIdx) {
-      setWidgetOrder(prev => {
-        const next = [...prev];
-        const [removed] = next.splice(dragWidgetIdx, 1);
-        next.splice(dragWidgetOverIdx, 0, removed);
-        try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }
-        return next;
-      });
-    }
-    setDragWidgetIdx(null);
-    setDragWidgetOverIdx(null);
-    setIsWidgetDragOverview(false);
-  }, [dragWidgetIdx, dragWidgetOverIdx]);
+  useEffect(() => {
+    setIsWidgetDragOverview(widgetDrag.isDragging);
+  }, [widgetDrag.isDragging]);
 
   /* Dashboard charts drag & drop reordering */
   const CHART_STORAGE_KEY = "immo-dashboard-chart-order";
@@ -167,35 +152,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     } catch { /* ignore */ }
     return defaultChartOrder;
   });
-  const dragChartRef = useRef<{ idx: number; startY: number } | null>(null);
-  const [dragChartIdx, setDragChartIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  const handleChartDragStart = useCallback((idx: number, clientY: number) => {
-    dragChartRef.current = { idx, startY: clientY };
-    setDragChartIdx(idx);
-    setIsChartDragOverview(true);
-  }, []);
+  const chartDrag = useDragReorder(
+    chartOrder,
+    (next) => { setChartOrder(next); setIsChartDragOverview(false); },
+    CHART_STORAGE_KEY,
+  );
 
-  const handleChartDragOver = useCallback((idx: number) => {
-    setDragOverIdx(idx);
-  }, []);
-
-  const handleChartDragEnd = useCallback(() => {
-    if (dragChartIdx !== null && dragOverIdx !== null && dragChartIdx !== dragOverIdx) {
-      setChartOrder(prev => {
-        const next = [...prev];
-        const [removed] = next.splice(dragChartIdx, 1);
-        next.splice(dragOverIdx, 0, removed);
-        try { localStorage.setItem(CHART_STORAGE_KEY, JSON.stringify(next)); } catch { /* */ }
-        return next;
-      });
-    }
-    dragChartRef.current = null;
-    setDragChartIdx(null);
-    setDragOverIdx(null);
-    setIsChartDragOverview(false);
-  }, [dragChartIdx, dragOverIdx]);
+  useEffect(() => {
+    setIsChartDragOverview(chartDrag.isDragging);
+  }, [chartDrag.isDragging]);
 
   const chartComponents: Record<ChartId, { label: string; component: React.ReactNode; span?: number }> = useMemo(() => ({
     portfolio: { label: "Portfolio-Verteilung", component: <PortfolioChart /> },
@@ -972,10 +938,13 @@ ${properties.map(p => `<tr>
           {!widgetsCollapsed && <span className="ml-auto"><WidgetCustomizer /></span>}
         </button>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${widgetsCollapsed ? "max-h-0 opacity-0" : "max-h-[20000px] opacity-100"}`}>
-          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isWidgetDragOverview ? "scale-[0.85] opacity-80" : ""}`}>
+          <div
+            ref={widgetDrag.containerRef}
+            className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isWidgetDragOverview ? "scale-[0.92] opacity-90" : ""}`}
+          >
             {widgetOrder.map((wId, idx) => {
-              const isDragging = dragWidgetIdx === idx;
-              const isOver = dragWidgetOverIdx === idx;
+              const isDragging = widgetDrag.dragIdx === idx;
+              const isOver = widgetDrag.overIdx === idx;
               const widgetContent = (() => {
                 switch (wId) {
                   case "health": return <PortfolioHealthScore totalValue={stats.totalValue} totalDebt={stats.totalDebt} totalCashflow={stats.totalCashflow} totalRent={stats.totalRent} totalExpenses={totalMonthlyExpenses} totalCreditRate={totalMonthlyCreditRate} vacancyRate={vacancyRate} propertyCount={stats.propertyCount} />;
@@ -1026,10 +995,7 @@ ${properties.map(p => `<tr>
               return (
                 <div
                   key={wId}
-                  draggable
-                  onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; handleWidgetDragStart(idx); }}
-                  onDragOver={(e) => { e.preventDefault(); handleWidgetDragOver(idx); }}
-                  onDragEnd={handleWidgetDragEnd}
+                  {...widgetDrag.getItemProps(idx)}
                   className={`relative group transition-all duration-200 rounded-xl ${
                     fullWidth ? "md:col-span-2" : ""
                   } ${
@@ -1038,8 +1004,13 @@ ${properties.map(p => `<tr>
                     isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
                   }`}
                 >
-                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1 border border-border/50">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
+                  <div
+                    {...widgetDrag.getHandleProps(idx)}
+                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
+                    aria-label="Ziehen zum Umsortieren"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
                   {widgetContent}
                 </div>
@@ -1060,23 +1031,18 @@ ${properties.map(p => `<tr>
           {!chartsCollapsed && <span className="text-[10px] font-normal ml-auto">Ziehen zum Umsortieren</span>}
         </button>
         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${chartsCollapsed ? "max-h-0 opacity-0" : "max-h-[5000px] opacity-100"}`}>
-          <div className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isChartDragOverview ? "scale-[0.85] opacity-80" : ""}`}>
+          <div
+            ref={chartDrag.containerRef}
+            className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isChartDragOverview ? "scale-[0.92] opacity-90" : ""}`}
+          >
             {chartOrder.map((chartId, idx) => {
               const chart = chartComponents[chartId];
-              const isDragging = dragChartIdx === idx;
-              const isOver = dragOverIdx === idx;
+              const isDragging = chartDrag.dragIdx === idx;
+              const isOver = chartDrag.overIdx === idx;
               return (
                 <div
                   key={chartId}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    handleChartDragStart(idx, e.clientY);
-                  }}
-                  onDragOver={(e) => { e.preventDefault(); handleChartDragOver(idx); }}
-                  onDragEnd={handleChartDragEnd}
-                  onTouchStart={() => handleChartDragStart(idx, 0)}
-                  onTouchEnd={handleChartDragEnd}
+                  {...chartDrag.getItemProps(idx)}
                   className={`relative group transition-all duration-200 rounded-xl ${
                     chart.span === 2 ? "md:col-span-2" : ""
                   } ${
@@ -1085,11 +1051,15 @@ ${properties.map(p => `<tr>
                     isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
                   }`}
                 >
-                  {/* Drag handle */}
-                  <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1 border border-border/50">
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
+                  <div
+                    {...chartDrag.getHandleProps(idx)}
+                    className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
+                    aria-label="Ziehen zum Umsortieren"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <Suspense fallback={<div className={`${chart.span === 2 ? "h-64" : "h-64"} bg-secondary/50 rounded-xl animate-pulse`} />}>
+                  <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}>
                     {chart.component}
                   </Suspense>
                 </div>
