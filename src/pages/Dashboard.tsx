@@ -607,7 +607,9 @@ ${properties.map(p => `<tr>
           // Reconcile: remove stale IDs and add any missing widgets (e.g. chart_* from old presets)
           const valid = typed.filter(w => defaultWidgetOrder.includes(w));
           const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
-          setWidgetOrder(valid.length > 0 ? [...valid, ...missing] : defaultWidgetOrder);
+          const finalOrder = valid.length > 0 ? [...valid, ...missing] : defaultWidgetOrder;
+          setWidgetOrder(finalOrder);
+          try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(finalOrder)); } catch { /* */ }
         }}
       />
 
