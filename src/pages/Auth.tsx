@@ -50,10 +50,8 @@ const Auth = () => {
       toast.success("E-Mail-Adresse erfolgreich geändert! Bitte melde dich mit deiner neuen E-Mail an.", { duration: 8000 });
       setSearchParams({}, { replace: true });
     }
-    if (searchParams.get("password_reset") === "true") {
-      toast.success("Passwort erfolgreich zurückgesetzt! Bitte melde dich mit deinem neuen Passwort an.", { duration: 8000 });
-      setSearchParams({}, { replace: true });
-    }
+    /* Note: password_reset redirects to /einstellungen (not /auth) so the user
+       lands on the password change form with an active recovery session. */
   }, [searchParams, setSearchParams]);
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -258,12 +256,12 @@ const Auth = () => {
 
     try {
       if (mode === "forgot") {
-        /* FIX-10: Redirect to /auth?password_reset=true instead of /einstellungen.
-           This ensures the user lands on the login page with a success toast,
-           and the redirect always goes to the current deployed app origin
-           (not an old Lovable build URL). */
+        /* FIX-10: Redirect to /einstellungen where the password change form is.
+           Supabase creates a recovery session and redirects the user there,
+           so they can immediately set a new password. Uses window.location.origin
+           to always point to the current deployed app (not an old build URL). */
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth?password_reset=true`,
+          redirectTo: `${window.location.origin}/einstellungen`,
         });
         if (error) throw error;
         setResetSent(true);
