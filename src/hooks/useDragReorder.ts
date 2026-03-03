@@ -69,8 +69,12 @@ export function useDragReorder<T>(
 
   const handleDragOver = useCallback((idx: number) => {
     if (dragItemRef.current === null) return;
-    setOverIdx(idx);
-  }, []);
+    if (idx !== overIdx) {
+      setOverIdx(idx);
+      /* iOS-style: light haptic on hover change */
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+  }, [overIdx]);
 
   const handleDragEnd = useCallback(() => {
     const from = dragItemRef.current;
@@ -128,7 +132,7 @@ export function useDragReorder<T>(
     onPointerCancel: () => {
       handleDragEnd();
     },
-    style: { touchAction: "none" as const, cursor: "grab" },
+    style: { touchAction: "none" as const, cursor: isDragging ? "grabbing" : "grab" },
   }), [handleDragStart, handleDragOver, handleDragEnd, startAutoScroll, stopAutoScroll]);
 
   /** Also support native HTML5 drag for desktop (better UX with drag ghost) */

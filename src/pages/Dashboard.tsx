@@ -555,7 +555,7 @@ ${properties.map(p => `<tr>
                (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             <PrivacyToggle />
-            <AddPropertyDialog />
+            {/* Fix 9: AddPropertyDialog only on Portfolio, not Dashboard */}
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
               <Share2 className="h-3.5 w-3.5" />
               Teilen
@@ -1019,7 +1019,7 @@ ${properties.map(p => `<tr>
         <p className="text-[10px] font-normal text-muted-foreground mb-2">Ziehen zum Umsortieren</p>
         <div
           ref={widgetDrag.containerRef}
-          className={`grid md:grid-cols-2 gap-3 transition-all duration-300 origin-top ${
+          className={`grid md:grid-cols-2 gap-3 auto-rows-auto transition-all duration-300 origin-top ${
             isWidgetDragOverview
               ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
               : ""

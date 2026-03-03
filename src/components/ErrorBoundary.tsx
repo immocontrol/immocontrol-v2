@@ -89,11 +89,7 @@ class ErrorBoundary extends Component<Props, State> {
               Zur Startseite
             </Button>
           </div>
-          {this.state.retryCount > 0 && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Versuch {this.state.retryCount} von 3{this.state.retryCount >= 3 ? " — nächster Klick lädt die Seite neu" : ""}
-            </p>
-          )}
+          {/* Fix 13: Removed "Versuch X von 3" retry counter — not needed for bank upload errors */}
         </div>
       );
     }

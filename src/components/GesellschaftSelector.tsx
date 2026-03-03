@@ -193,8 +193,8 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="ghost" size="sm" className="w-full h-8 justify-start text-sm gap-1.5" onClick={() => setAdding(true)}>
-                <Plus className="h-3.5 w-3.5" /> Neue Gesellschaft
+              <Button type="button" variant="ghost" size="sm" className="w-full h-8 justify-start text-sm gap-1.5 min-w-0" onClick={() => setAdding(true)}>
+                <Plus className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Neue Gesellschaft</span>
               </Button>
             )}
           </div>

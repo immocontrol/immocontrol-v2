@@ -186,7 +186,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     setHighlightFields([]);
     setSaving(true);
     try {
-      const { error } = await supabase.from("loans").insert({
+      const payload: Record<string, unknown> = {
         user_id: user.id,
         property_id: form.property_id,
         bank_name: form.bank_name,
@@ -201,9 +201,15 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
         start_date: form.start_date || null,
         end_date: form.end_date || null,
         notes: form.notes || null,
-      });
+      };
+      /* Fix 11: Retry without tilgungsfreie_monate if column doesn't exist in schema */
+      let { error } = await supabase.from("loans").insert(payload);
+      if (error?.message?.includes("tilgungsfreie_monate")) {
+        delete payload.tilgungsfreie_monate;
+        const retry = await supabase.from("loans").insert(payload);
+        error = retry.error;
+      }
       if (error) {
-        /* Show specific Supabase error messages */
         const msg = error.message || "Unbekannter Fehler";
         toast.error(`Fehler beim Speichern: ${msg}`);
         return;

@@ -59,11 +59,11 @@ export interface SavedProfile {
 /* ── Constants ── */
 
 export const DEFAULT_PARAMS: SimParams = {
-  startCapital: 50000, monthlyInvestment: 1000, annualReturn: 5,
-  annualAppreciation: 2, inflationRate: 2, taxRate: 25, years: 20,
-  rentYield: 4, leverageRatio: 75, maintenancePct: 1,
-  vacancyRate: 3, rentGrowthRate: 1.5, managementFee: 5,
-  insurancePct: 0.3, additionalProperties: 0, propertyPurchaseInterval: 5,
+  startCapital: 0, monthlyInvestment: 0, annualReturn: 0,
+  annualAppreciation: 0, inflationRate: 0, taxRate: 0, years: 0,
+  rentYield: 0, leverageRatio: 0, maintenancePct: 0,
+  vacancyRate: 0, rentGrowthRate: 0, managementFee: 0,
+  insurancePct: 0, additionalProperties: 0, propertyPurchaseInterval: 0,
   renovationBudgetPct: 0,
 };
 
