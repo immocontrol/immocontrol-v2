@@ -711,16 +711,37 @@ const Settings = () => {
     }
     setEmailChangeLoading(true);
     try {
-      /* Verify password first */
+      /* Save current session before signInWithPassword replaces it.
+         This prevents MFA users from being downgraded from AAL2 to AAL1. */
+      const { data: sessionData } = await supabase.auth.getSession();
+      const previousSession = sessionData?.session;
+
+      /* Verify password */
       const { error: verifyError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: emailChangePassword,
       });
       if (verifyError) {
+        /* Restore previous session on failure */
+        if (previousSession) {
+          await supabase.auth.setSession({
+            access_token: previousSession.access_token,
+            refresh_token: previousSession.refresh_token,
+          });
+        }
         toast.error("Passwort ist falsch");
         setEmailChangeLoading(false);
         return;
       }
+
+      /* Restore previous session to preserve AAL2 for MFA users */
+      if (previousSession) {
+        await supabase.auth.setSession({
+          access_token: previousSession.access_token,
+          refresh_token: previousSession.refresh_token,
+        });
+      }
+
       /* Password verified — skip directly to new email entry.
          Supabase handles sending confirmation to both old and new email. */
       setEmailChangeStep("new-email");
