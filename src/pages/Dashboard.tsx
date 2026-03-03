@@ -211,12 +211,18 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   // Feature 4: CSV Export
   const exportCSV = useCallback(() => {
     if (properties.length === 0) return;
-    const headers = ["Name", "Adresse", "Typ", "Einheiten", "Kaufpreis", "Aktueller Wert", "Miete/M", "Kosten/M", "Kreditrate/M", "Cashflow/M", "Restschuld", "Zinssatz", "m²", "Baujahr", "Besitz"];
-    const rows = properties.map((p) => [
-      escapeHtml(p.name), escapeHtml(p.address || ""), p.type, p.units, p.purchasePrice, p.currentValue,
-      p.monthlyRent, p.monthlyExpenses, p.monthlyCreditRate, p.monthlyCashflow,
-      p.remainingDebt, p.interestRate, p.sqm, p.yearBuilt, escapeHtml(p.ownership),
-    ]);
+    /* IMP20-13: Extended CSV export — includes Rendite, annual Cashflow, and Netto-Rendite columns */
+    const headers = ["Name", "Adresse", "Typ", "Einheiten", "Kaufpreis", "Aktueller Wert", "Miete/M", "Kosten/M", "Kreditrate/M", "Cashflow/M", "Cashflow/J", "Brutto-Rendite %", "Netto-Rendite %", "Restschuld", "Zinssatz", "m²", "Baujahr", "Besitz"];
+    const rows = properties.map((p) => {
+      const bruttoRendite = p.purchasePrice > 0 ? ((p.monthlyRent * 12) / p.purchasePrice * 100).toFixed(2) : "0";
+      const nettoRendite = p.purchasePrice > 0 ? (((p.monthlyRent - p.monthlyExpenses) * 12) / p.purchasePrice * 100).toFixed(2) : "0";
+      return [
+        escapeHtml(p.name), escapeHtml(p.address || ""), p.type, p.units, p.purchasePrice, p.currentValue,
+        p.monthlyRent, p.monthlyExpenses, p.monthlyCreditRate, p.monthlyCashflow,
+        p.monthlyCashflow * 12, bruttoRendite, nettoRendite,
+        p.remainingDebt, p.interestRate, p.sqm, p.yearBuilt, escapeHtml(p.ownership),
+      ];
+    });
     const csv = [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -368,14 +374,12 @@ ${properties.map(p => `<tr>
     return allTenants.filter(t => t.is_active).reduce((s, t) => s + (t.monthly_rent || 0), 0);
   }, [allTenants]);
 
-  /* FUNC-4: Average holding period calculation */
+  /* IMP20-3: Fix unsafe Record<string, unknown> cast — use typed Property.purchaseDate directly */
   const avgHoldingPeriodMonths = useMemo(() => {
     if (properties.length === 0) return 0;
     const totalMonths = properties.reduce((s, p) => {
-      const purchase = (p as Record<string, unknown>).purchase_date as string | undefined
-        || (p as Record<string, unknown>).purchaseDate as string | undefined;
-      if (!purchase) return s;
-      const months = Math.floor((Date.now() - new Date(purchase).getTime()) / (1000 * 60 * 60 * 24 * 30));
+      if (!p.purchaseDate) return s;
+      const months = Math.floor((Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
       return s + months;
     }, 0);
     return Math.round(totalMonths / properties.length);
@@ -473,20 +477,21 @@ ${properties.map(p => `<tr>
     );
   }
 
-  // Improvement 10: Greeting with user name
-  const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-  const greeting = (() => {
+  /* IMP20-18: Memoize greeting — avoids IIFE re-execution on every render */
+  const greeting = useMemo(() => {
+    const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
     const h = new Date().getHours();
     const name = userName ? `, ${userName}` : "";
     if (h < 12) return `Guten Morgen${name}`;
     if (h < 18) return `Guten Tag${name}`;
     return `Guten Abend${name}`;
-  })();
+  }, [user]);
 
-  const totalSqm = properties.reduce((s, p) => s + (p.sqm || 0), 0);
+  /* IMP20-2: Use pre-computed stats from PropertyContext — eliminates 3 redundant reduce() calls */
+  const totalSqm = stats.totalSqm;
   const avgPricePerSqm = totalSqm > 0 ? stats.totalValue / totalSqm : 0;
-  const totalMonthlyExpenses = properties.reduce((s, p) => s + (p.monthlyExpenses || 0), 0);
-  const totalMonthlyCreditRate = properties.reduce((s, p) => s + (p.monthlyCreditRate || 0), 0);
+  const totalMonthlyExpenses = stats.totalExpenses;
+  const totalMonthlyCreditRate = stats.totalCreditRate;
   const totalCosts = totalMonthlyExpenses + totalMonthlyCreditRate;
 
   /* STR-2: Reuse memoized avgHoldingPeriodMonths instead of recalculating */

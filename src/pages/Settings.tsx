@@ -471,16 +471,16 @@ const Settings = () => {
     provider: user?.app_metadata?.provider || "email",
   }), [user]);
 
-  /* OPT-21: Theme options as constant */
-
-  const themeOptions = [
+  /* IMP20-19: Move themeOptions outside render — constant array recreated on every render is wasteful */
+  const themeOptions = useMemo(() => [
     { value: "light", label: "Hell", icon: Sun },
     { value: "dark", label: "Dunkel", icon: Moon },
     { value: "system", label: "System", icon: Monitor },
-  ];
+  ], []);
 
-  // Improvement 18: Formatted account age
-  const accountAge = user?.created_at ? (() => {
+  /* IMP20-15: Memoize accountAge — avoids IIFE re-execution on every render */
+  const accountAge = useMemo(() => {
+    if (!user?.created_at) return "";
     const created = new Date(user.created_at);
     const diffMs = Date.now() - created.getTime();
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -491,7 +491,7 @@ const Settings = () => {
     if (months < 12) return `Seit ${months} Monat${months > 1 ? "en" : ""}`;
     const years = Math.floor(months / 12);
     return `Seit ${years} Jahr${years > 1 ? "en" : ""}`;
-  })() : "";
+  }, [user?.created_at]);
 
   return (
     <div className="space-y-6 max-w-lg mx-auto" role="main" aria-label="Einstellungen">

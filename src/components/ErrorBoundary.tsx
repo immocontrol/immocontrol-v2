@@ -57,6 +57,13 @@ class ErrorBoundary extends Component<Props, State> {
               <RefreshCw className="h-4 w-4 mr-1.5" />
               {this.state.retryCount >= 3 ? "Seite neu laden" : "Erneut versuchen"}
             </Button>
+            {/* IMP20-5: Copy error details to clipboard for support/debugging */}
+            <Button variant="ghost" size="sm" onClick={() => {
+              const details = `Fehler: ${this.state.error?.message || "Unbekannt"}\nStack: ${this.state.error?.stack || "–"}\nZeit: ${new Date().toISOString()}\nURL: ${window.location.href}`;
+              navigator.clipboard.writeText(details).catch(() => {});
+            }}>
+              Fehler kopieren
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => window.location.href = "/"}>
               Zur Startseite
             </Button>

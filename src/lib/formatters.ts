@@ -340,6 +340,16 @@ export const formatSignedCompact = (value: number): string => {
   return `${sign}${formatCompactDE(value)}`;
 };
 
+/* IMP20-11: Format months to human-readable German "X Jahre Y Monate" — used in Dashboard avgHoldingPeriod */
+export const formatMonthsToYearsDE = (totalMonths: number): string => {
+  if (totalMonths <= 0) return "–";
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+  if (years === 0) return `${months} Monat${months !== 1 ? "e" : ""}`;
+  if (months === 0) return `${years} Jahr${years !== 1 ? "e" : ""}`;
+  return `${years}J ${months}M`;
+};
+
 /* STR-3: Format IBAN for display with spacing (DE89 3704 0044 0532 0130 00) */
 export const formatIBAN = (iban: string): string => {
   const cleaned = iban.replace(/\s/g, "").toUpperCase();

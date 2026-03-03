@@ -40,9 +40,12 @@ const CashForecast = () => {
     const today = new Date();
     const scenarioMultiplier = scenario === "optimistic" ? 1.05 : scenario === "pessimistic" ? 0.90 : 1.0;
     const expenseMultiplier = scenario === "optimistic" ? 0.95 : scenario === "pessimistic" ? 1.10 : 1.0;
-    const totalMonthlyExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0) * expenseMultiplier;
+    /* IMP20-16: Guard NaN — ensure multipliers produce valid numbers even with empty data */
+    const rawExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0) * expenseMultiplier;
+    const totalMonthlyExpenses = Number.isFinite(rawExpenses) ? rawExpenses : 0;
     const weeklyExpenses = totalMonthlyExpenses / 4.33;
-    const totalMonthlyLoanPayments = loans.reduce((s, l) => s + l.monthly_payment, 0);
+    const rawLoanPayments = loans.reduce((s, l) => s + l.monthly_payment, 0);
+    const totalMonthlyLoanPayments = Number.isFinite(rawLoanPayments) ? rawLoanPayments : 0;
     const weeklyLoanPayments = totalMonthlyLoanPayments / 4.33;
 
     let cumulativeCashflow = 0;

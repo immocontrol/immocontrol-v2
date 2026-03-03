@@ -50,10 +50,12 @@ const PropertyCard = memo(({
     const expenseRatio = monthlyRent > 0 ? ((monthlyExpenses + monthlyCreditRate) / monthlyRent) * 100 : 0;
     /* NEW-62: Net yield after expenses */
     const nettoRendite = purchasePrice > 0 ? (((monthlyRent - monthlyExpenses) * 12) / purchasePrice) * 100 : 0;
-    return { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite };
+    /* IMP20-7: DSCR (Debt Service Coverage Ratio) — key loan health indicator */
+    const dscr = monthlyCreditRate > 0 ? (monthlyRent - monthlyExpenses) / monthlyCreditRate : 0;
+    return { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite, dscr };
   }, [purchasePrice, currentValue, monthlyRent, sqm, remainingDebt, monthlyExpenses, monthlyCreditRate]);
 
-  const { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite } = metrics;
+  const { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite, dscr } = metrics;
 
   return (
     <Link
@@ -80,6 +82,14 @@ const PropertyCard = memo(({
                 ltv <= 60 ? "bg-profit/10 text-profit" : ltv <= 80 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
               }`}>
                 LTV {ltv.toFixed(0)}%
+              </span>
+            )}
+            {/* IMP20-7: DSCR badge — shows loan coverage health at a glance */}
+            {dscr > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                dscr >= 1.25 ? "bg-profit/10 text-profit" : dscr >= 1.0 ? "bg-gold/10 text-gold" : "bg-loss/10 text-loss"
+              }`}>
+                DSCR {dscr.toFixed(2)}
               </span>
             )}
           </div>

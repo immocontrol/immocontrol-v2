@@ -92,9 +92,15 @@ const PropertyDetail = () => {
   }, [property?.name]);
 
   /* STR-15: Keyboard navigation between sections — Alt+1..7 to jump to sections */
+  /* IMP20-6: Add Escape key to navigate back to portfolio */
   useEffect(() => {
     const sections = ["overview", "tenants", "messages", "tickets", "payments", "notes", "documents"];
     const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        navigate("/");
+        return;
+      }
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
       const idx = parseInt(e.key) - 1;
       if (idx >= 0 && idx < sections.length) {
@@ -104,7 +110,7 @@ const PropertyDetail = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [scrollToSection]);
+  }, [scrollToSection, navigate]);
 
   /* STR-6: Memoize all expensive PropertyDetail calculations to prevent re-computation on every render
      NOTE: Hooks MUST be called before any early return to satisfy React Rules of Hooks */
