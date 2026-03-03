@@ -323,7 +323,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
 
             {/* Summary */}
             {/* UPD-22: Add stagger animation to billing summary */}
-            <div className="grid grid-cols-3 gap-3 card-stagger-enter">
+            {/* IMP-44-15: Add aria-label to billing summary grid for screen readers */}
+            <div className="grid grid-cols-3 gap-3 card-stagger-enter" aria-label="Abrechnungszusammenfassung">
               <div className="bg-secondary/30 rounded-lg p-3 text-center">
                 <div className="text-[10px] text-muted-foreground">Gesamtkosten</div>
                 <div className="text-sm font-bold">{formatCurrency(Number(selectedBillingData.total_costs))}</div>

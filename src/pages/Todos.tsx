@@ -631,13 +631,15 @@ const Todos = () => {
           </div>
         )}
 
-        {view === "inbox" && !search && todos.filter(t => t.completed).length > 0 && (
+        {/* IMP-44-16: Use memoized completedCount instead of inline filter() recalculation */}
+        {view === "inbox" && !search && completedTodos.length > 0 && (
           <button
             onClick={() => setShowCompleted(!showCompleted)}
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pt-2"
+            aria-expanded={showCompleted}
           >
             {showCompleted ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            Erledigte anzeigen ({todos.filter(t => t.completed).length})
+            Erledigte anzeigen ({completedTodos.length})
           </button>
         )}
         {showCompleted && view === "inbox" && (
@@ -743,7 +745,8 @@ const TodoRow = memo(({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
   const isOver = todo.due_date && !todo.completed && isOverdue(todo.due_date);
 
   return (
-    <div className={cn(
+    /* IMP-44-17: Add data-priority attribute for potential CSS targeting and testing */
+    <div data-priority={todo.priority} className={cn(
       "group flex items-start gap-3 gradient-card border border-border rounded-xl px-4 py-3 hover:border-primary/20 transition-all hover-lift min-w-0",
       todo.completed && "opacity-50",
       isOver && "border-loss/30 bg-loss/5"

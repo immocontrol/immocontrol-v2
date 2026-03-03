@@ -1473,7 +1473,8 @@ const Settings = () => {
       </div>
 
       {/* Danger zone - Delete account */}
-      <div id="gefahrenzone" ref={el => { sectionRefs.current["gefahrenzone"] = el; }} className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms] scroll-mt-20">
+      {/* IMP-44-18: Add ARIA alert role to danger zone for screen reader urgency */}
+      <div id="gefahrenzone" ref={el => { sectionRefs.current["gefahrenzone"] = el; }} role="alert" className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms] scroll-mt-20">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-destructive" />
           <h2 className="text-sm font-semibold text-destructive">Gefahrenzone</h2>
@@ -1521,11 +1522,12 @@ const Settings = () => {
       </div>
 
       {/* System Info */}
+      {/* IMP-44-19: Add aria-label to system info grid for screen readers */}
       <div id="system-info" ref={el => { sectionRefs.current["system-info"] = el; }} className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in [animation-delay:180ms] scroll-mt-20">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Database className="h-4 w-4 text-muted-foreground" /> System-Info
         </h2>
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="grid grid-cols-2 gap-2 text-xs" aria-label="Systeminformationen">
           <div className="p-2 rounded-lg bg-secondary/30">
             <span className="text-muted-foreground">Lokaler Speicher</span>
             <p className="font-medium">{(dataUsageEstimate / 1024).toFixed(1)} KB</p>

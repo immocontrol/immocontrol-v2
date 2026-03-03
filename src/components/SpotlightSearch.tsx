@@ -393,7 +393,8 @@ export default function SpotlightSearch() {
             <span>↑↓ navigieren</span>
             <span>↵ auswählen</span>
           </div>
-          <span>{results.length} Ergebnis{results.length !== 1 ? "se" : ""}</span>
+          {/* IMP-44-13: Add aria-live to result count so screen readers announce changes */}
+          <span aria-live="polite">{results.length} Ergebnis{results.length !== 1 ? "se" : ""}</span>
         </div>
       </DialogContent>
     </Dialog>

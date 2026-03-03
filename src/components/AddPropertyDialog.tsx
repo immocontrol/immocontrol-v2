@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useCallback, useEffect, memo } from "react";
+import { useForm, UseFormRegister, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, ChevronRight, ChevronLeft } from "lucide-react";
@@ -22,6 +22,7 @@ import {
 import { useProperties } from "@/context/PropertyContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { focusNextField } from "@/hooks/useEnterToNext";
 
 const fullSchema = z.object({
   name: z.string().min(2, "Name zu kurz"),
@@ -42,6 +43,34 @@ const fullSchema = z.object({
 });
 
 type FormData = z.infer<typeof fullSchema>;
+
+/* FIX: Move Field component outside AddPropertyDialog to prevent re-creation on every
+   render. Previously defined as a closure inside the component, causing React to unmount/
+   remount inputs on each keystroke (via watch subscription) → mobile focus loss. */
+interface FieldProps {
+  label: string;
+  name: keyof FormData;
+  type?: string;
+  placeholder?: string;
+  register: UseFormRegister<FormData>;
+  errors: FieldErrors<FormData>;
+}
+
+const Field = memo(({ label, name, type = "text", placeholder, register, errors }: FieldProps) => (
+  <div className="space-y-1.5">
+    <Label htmlFor={name} className="text-xs text-muted-foreground">{label}</Label>
+    <Input
+      id={name}
+      type={type}
+      placeholder={placeholder}
+      step={type === "number" ? "any" : undefined}
+      className="h-9 text-sm"
+      {...register(name)}
+    />
+    {errors[name] && <p className="text-xs text-destructive">{errors[name]?.message as string}</p>}
+  </div>
+));
+Field.displayName = "Field";
 
 const STEP_LABELS = ["Grunddaten", "Finanzen", "Objektdetails"];
 
@@ -154,31 +183,6 @@ const AddPropertyDialog = () => {
     setOpen(false);
   };
 
-  const Field = ({
-    label,
-    name,
-    type = "text",
-    placeholder,
-  }: {
-    label: string;
-    name: keyof FormData;
-    type?: string;
-    placeholder?: string;
-  }) => (
-    <div className="space-y-1.5">
-      <Label htmlFor={name} className="text-xs text-muted-foreground">{label}</Label>
-      <Input
-        id={name}
-        type={type}
-        placeholder={placeholder}
-        step={type === "number" ? "any" : undefined}
-        className="h-9 text-sm"
-        {...register(name)}
-      />
-      {errors[name] && <p className="text-xs text-destructive">{errors[name]?.message as string}</p>}
-    </div>
-  );
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {/* UI-UPDATE-50: Tooltip on add property trigger — avoid double-asChild nesting */}
@@ -207,7 +211,7 @@ const AddPropertyDialog = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className={step === 0 ? "block" : "hidden"}>
             <div className="space-y-3">
-              <Field label="Bezeichnung *" name="name" placeholder="z.B. MFH Duesseldorf" />
+              <Field label="Bezeichnung *" name="name" placeholder="z.B. MFH Duesseldorf" register={register} errors={errors} />
               <div className="space-y-1.5">
                 <Label htmlFor="address" className="text-xs text-muted-foreground">Adresse</Label>
                 <AddressAutocomplete
@@ -221,8 +225,13 @@ const AddPropertyDialog = () => {
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Objekttyp</Label>
-                  <Select value={watch("type")} onValueChange={(v) => setValue("type", v as FormData["type"])}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <Select value={watch("type")} onValueChange={(v) => {
+                    setValue("type", v as FormData["type"]);
+                    /* FIX: After dropdown selection, focus next field */
+                    const trigger = document.querySelector<HTMLElement>('[data-field="type"]');
+                    focusNextField(trigger);
+                  }}>
+                    <SelectTrigger className="h-9 text-sm" data-field="type"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="MFH">MFH</SelectItem>
                       <SelectItem value="ZFH">ZFH</SelectItem>
@@ -240,7 +249,7 @@ const AddPropertyDialog = () => {
                     error={errors.ownership?.message as string}
                   />
                 </div>
-                <Field label="Einheiten" name="units" type="number" placeholder="1" />
+                <Field label="Einheiten" name="units" type="number" placeholder="1" register={register} errors={errors} />
               </div>
             </div>
           </div>
@@ -248,27 +257,27 @@ const AddPropertyDialog = () => {
           <div className={step === 1 ? "block" : "hidden"}>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Kaufpreis (EUR)" name="purchasePrice" type="number" placeholder="300000" />
-                <Field label="Kaufdatum" name="purchaseDate" type="date" />
+                <Field label="Kaufpreis (EUR)" name="purchasePrice" type="number" placeholder="300000" register={register} errors={errors} />
+                <Field label="Kaufdatum" name="purchaseDate" type="date" register={register} errors={errors} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Aktueller Wert (EUR)" name="currentValue" type="number" placeholder="320000" />
-                <Field label="Restschuld (EUR)" name="remainingDebt" type="number" placeholder="250000" />
+                <Field label="Aktueller Wert (EUR)" name="currentValue" type="number" placeholder="320000" register={register} errors={errors} />
+                <Field label="Restschuld (EUR)" name="remainingDebt" type="number" placeholder="250000" register={register} errors={errors} />
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <Field label="Miete/M (EUR)" name="monthlyRent" type="number" placeholder="1200" />
-                <Field label="Kosten/M (EUR)" name="monthlyExpenses" type="number" placeholder="300" />
-                <Field label="Rate/M (EUR)" name="monthlyCreditRate" type="number" placeholder="800" />
+                <Field label="Miete/M (EUR)" name="monthlyRent" type="number" placeholder="1200" register={register} errors={errors} />
+                <Field label="Kosten/M (EUR)" name="monthlyExpenses" type="number" placeholder="300" register={register} errors={errors} />
+                <Field label="Rate/M (EUR)" name="monthlyCreditRate" type="number" placeholder="800" register={register} errors={errors} />
               </div>
-              <Field label="Zinssatz (%)" name="interestRate" type="number" placeholder="3.5" />
+              <Field label="Zinssatz (%)" name="interestRate" type="number" placeholder="3.5" register={register} errors={errors} />
             </div>
           </div>
 
           <div className={step === 2 ? "block" : "hidden"}>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Wohnfläche (m2)" name="sqm" type="number" placeholder="120" />
-                <Field label="Baujahr" name="yearBuilt" type="number" placeholder="1975" />
+                <Field label="Wohnfläche (m2)" name="sqm" type="number" placeholder="120" register={register} errors={errors} />
+                <Field label="Baujahr" name="yearBuilt" type="number" placeholder="1975" register={register} errors={errors} />
               </div>
             </div>
           </div>

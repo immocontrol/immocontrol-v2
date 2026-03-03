@@ -41,7 +41,8 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentWillUnmount() {
-    if (this.autoRetryTimer) clearTimeout(this.autoRetryTimer);
+    /* IMP-44-20: Clear auto-retry timer on unmount to prevent memory leaks */
+  if (this.autoRetryTimer) clearTimeout(this.autoRetryTimer);
   }
 
   handleRetry = () => {
@@ -65,8 +66,12 @@ class ErrorBoundary extends Component<Props, State> {
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
           <h2 className="text-lg font-semibold mb-2">Etwas ist schiefgelaufen</h2>
-          <p className="text-sm text-muted-foreground max-w-sm mb-4">
+          <p className="text-sm text-muted-foreground max-w-sm mb-2">
             {this.state.error?.message || "Ein unerwarteter Fehler ist aufgetreten."}
+          </p>
+          {/* IMP-44-4: Show error timestamp for debugging context */}
+          <p className="text-[10px] text-muted-foreground mb-4">
+            Zeitpunkt: {new Date().toLocaleString("de-DE")}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={this.handleRetry}>

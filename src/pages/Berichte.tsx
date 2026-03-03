@@ -338,18 +338,19 @@ ${properties.map(p => {
       {/* Quick Summary */}
       {/* IMP-38: Make KPI cards responsive on mobile */}
       {/* UPD-7: Add stagger animation to report summary cards */}
+      {/* IMP-44-7: Use memoized reportMetrics instead of inline reduce() recalculations */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0 card-stagger-enter">
         <div className="gradient-card rounded-xl border border-border p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
-          <p className="text-lg font-bold text-profit">{formatCurrency(properties.reduce((s, p) => s + p.monthlyRent * 12, 0))}</p>
+          <p className="text-lg font-bold text-profit">{formatCurrency(reportMetrics.totalRent)}</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahreskosten</p>
-          <p className="text-lg font-bold text-loss">{formatCurrency(properties.reduce((s, p) => s + p.monthlyExpenses * 12, 0))}</p>
+          <p className="text-lg font-bold text-loss">{formatCurrency(reportMetrics.totalExpenses)}</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Berichte</p>
-          <p className="text-lg font-bold">7 verfügbar</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Netto-Cashflow</p>
+          <p className={`text-lg font-bold ${reportMetrics.totalCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(reportMetrics.totalCashflow)}</p>
         </div>
       </div>
 

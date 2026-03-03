@@ -635,7 +635,8 @@ ${properties.map(p => `<tr>
 
       {/* IMPROVE-40: Responsive stat card grid — 2 columns on mobile, 5 on desktop for optimal readability */}
       {/* Key stats — UI-2: card-stagger-enter */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
+      {/* IMP-44-10: Add aria-label to stat card grid for screen readers */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter" aria-label="Portfolio-Kennzahlen">
         <StatCard
           label="Gesamtwert"
           value={formatCurrency(stats.totalValue)}
@@ -677,7 +678,8 @@ ${properties.map(p => `<tr>
       </div>
 
       {/* Improvement 15: Quick KPI row — UI-2/UI-15/UI-42: card-stagger-enter, card-accent-shadow, currency-display */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 card-stagger-enter">
+      {/* IMP-44-11: Add aria-label to quick KPI row for screen readers */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 card-stagger-enter" aria-label="Schnell-KPIs">
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>

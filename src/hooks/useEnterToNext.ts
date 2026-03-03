@@ -1,6 +1,26 @@
 import { useCallback } from "react";
 
 /**
+ * Focus the next focusable element after the given trigger element.
+ * Used by dropdown/popover components after a selection is made.
+ */
+export function focusNextField(triggerEl: HTMLElement | null) {
+  if (!triggerEl) return;
+  const form = triggerEl.closest("form");
+  const container = form || triggerEl.closest("[role='dialog']") || triggerEl.closest("section") || document.body;
+  const focusable = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'input:not([type="hidden"]):not([disabled]):not([readonly]), textarea:not([disabled]), select:not([disabled]), [role="combobox"]:not([disabled]), button[type="submit"]'
+    )
+  );
+  const idx = focusable.indexOf(triggerEl);
+  if (idx >= 0 && idx < focusable.length - 1) {
+    /* Small delay to let dropdown close animation finish */
+    setTimeout(() => focusable[idx + 1].focus(), 50);
+  }
+}
+
+/**
  * Hook that provides an onKeyDown handler to move focus to the next
  * input/textarea/select when Enter is pressed (not on textareas).
  * If the current field is the last focusable field, it submits the form
