@@ -1,90 +1,28 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useDashboardExports } from "@/hooks/useDashboardExports";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, GripVertical } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import PortfolioGoals from "@/components/PortfolioGoals";
-import PortfolioForecast from "@/components/PortfolioForecast";
-import RenditeRanking from "@/components/RenditeRanking";
-import DiversifikationsScore from "@/components/DiversifikationsScore";
-import WasserfallChart from "@/components/WasserfallChart";
-import SteuerHelfer from "@/components/SteuerHelfer";
-import TilgungsProgress from "@/components/TilgungsProgress";
-import QuickNoteWidget from "@/components/QuickNoteWidget";
-import OccupancyTracker from "@/components/OccupancyTracker";
-import MietpreisbremseChecker from "@/components/MietpreisbremseChecker";
-import GrundsteuerCalculator from "@/components/GrundsteuerCalculator";
-import CashReserveWidget from "@/components/CashReserveWidget";
-import LoanRefinancingCalc from "@/components/LoanRefinancingCalc";
-import VacancyCostCalc from "@/components/VacancyCostCalc";
-import MortgageStressTest from "@/components/MortgageStressTest";
-import GEGComplianceChecker from "@/components/GEGComplianceChecker";
-import PortfolioMilestones from "@/components/PortfolioMilestones";
-import TaxDeadlineReminder from "@/components/TaxDeadlineReminder";
-import RenovationROICalc from "@/components/RenovationROICalc";
-import HausgeldTracker from "@/components/HausgeldTracker";
-import AnnualSummaryCard from "@/components/AnnualSummaryCard";
-import DebtEquityWidget from "@/components/DebtEquityWidget";
-import YieldHeatmap from "@/components/YieldHeatmap";
-import PortfolioTypeChart from "@/components/PortfolioTypeChart";
-import TenantLeaseAlerts from "@/components/TenantLeaseAlerts";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
-import NetWorthTracker from "@/components/NetWorthTracker";
-import CashflowPerSqmWidget from "@/components/CashflowPerSqmWidget";
-import RentCollectionChart from "@/components/RentCollectionChart";
-import ExpenseCategoryBreakdown from "@/components/ExpenseCategoryBreakdown";
-import YearOverYear from "@/components/YearOverYear";
-import ContractExpiryCountdown from "@/components/ContractExpiryCountdown";
-import MaintenanceCostTrend from "@/components/MaintenanceCostTrend";
-import PortfolioAllocationWidget from "@/components/PortfolioAllocationWidget";
-import BudgetVsActual from "@/components/BudgetVsActual";
-import LoanAmortizationMini from "@/components/LoanAmortizationMini";
-import PortfolioHistorie from "@/components/PortfolioHistorie";
-/* Removed: WidgetCustomizer — no longer needed, all widgets always visible */
-import ReportingDashboard from "@/components/ReportingDashboard";
-import KPIAlerts from "@/components/KPIAlerts";
 import { escapeHtml } from "@/lib/sanitize";
-import DashboardActionCenter from "@/components/DashboardActionCenter";
-import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { AnomalyDetection } from "@/components/AnomalyDetection";
 import { RentIncreaseTimeline } from "@/components/RentIncreaseTimeline";
 import { LoanFixedInterestCountdown } from "@/components/LoanFixedInterestCountdown";
-import { ListSkeleton } from "@/components/ListSkeleton";
-import InterestRateMonitor from "@/components/InterestRateMonitor";
-import { CashflowScenarios } from "@/components/CashflowScenarios";
-import { BreakEvenAnalysis } from "@/components/BreakEvenAnalysis";
-import { DSCRWidget } from "@/components/DSCRWidget";
-import { BulkRentAdjustment } from "@/components/BulkRentAdjustment";
-/* Removed from Dashboard — moved to appropriate menus:
-   RecurringTodos → Todos page
-   AutoNebenkosten → Nebenkosten page
-   ContractTemplates → Verträge page
-   TaxYearOverview → Berichte page
-   AuditLog → removed (admin, not visual)
-   DataBackup → Settings page
-   DragDropDocUpload → Dokumente page */
-
 import { FavoritesBar } from "@/components/FavoritesBar";
 import { PrivacyToggle } from "@/components/PrivacyMode";
 import { DashboardPresets } from "@/components/DashboardPresets";
 import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
-/* Removed: QuickCalculator, PropertyComparison, HandoverProtocol, RentIncreaseLetter,
-   HockeyStickSimulator — these are accessible via navigation menus and were duplicated on Dashboard */
 import PropertyCard from "@/components/PropertyCard";
-import { lazy, Suspense } from "react";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
-/* Removed: FinanceExportDialog, SelbstauskunftGenerator — accessible via navigation menus */
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { supabase } from "@/integrations/supabase/client";
-
-const PortfolioChart = lazy(() => import("@/components/PortfolioChart"));
-const CashflowChart = lazy(() => import("@/components/CashflowChart"));
-const MonthlyOverviewChart = lazy(() => import("@/components/MonthlyOverviewChart"));
-const PropertyMap = lazy(() => import("@/components/PropertyMap"));
+import { DashboardWidgetGrid, DEFAULT_WIDGET_ORDER, WIDGET_LABELS, type WidgetId } from "@/components/dashboard/DashboardWidgetGrid";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -129,70 +67,22 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   /* Dashboard: No collapsible sections — everything visible at once */
   const [isWidgetDragOverview, setIsWidgetDragOverview] = useState(false);
 
-  /* Dashboard widgets drag & drop reordering */
+  /* Fix 3: Widget order/labels extracted to DashboardWidgetGrid component */
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
-  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "chart_cashflow" | "chart_monthly" | "chart_portfolio" | "chart_map";
-  /* Unified widget order — charts and widgets in single draggable grid.
-     Non-visual/admin widgets removed (moved to their respective menus).
-     1. Charts: cashflow, monthly, portfolio, map
-     2. Overview: health, actions, kpiAlerts
-     3. Portfolio: stats, occupancy, heatmap, typeChart, allocation
-     4. Performance: goals, rendite, diversifikation, wasserfall, yoy, forecast
-     5. Financial: debtEquity, netWorth, tilgung, amortization, cashReserve, budget
-     6. Loans: stress, refinancing, zinsmonitor
-     7. Revenue: rentCollection, expense, annual, hausgeld, vacancy, renovation
-     8. Analysis: cashflowScenarios, breakEven, dscr, bulkRent
-     9. Compliance: steuer, tax, geg, grundsteuer, mietpreisbremse, leaseAlerts, contractExpiry, maintenance, milestones
-     10. Reports: historie, reporting */
-  const defaultWidgetOrder: WidgetId[] = [
-    "chart_cashflow", "chart_monthly", "chart_portfolio", "chart_map",
-    "health", "actions", "kpiAlerts",
-    "stats", "occupancy", "heatmap", "typeChart", "allocation",
-    "goals", "rendite", "diversifikation", "wasserfall", "yoy", "forecast",
-    "debtEquity", "netWorth", "tilgung", "amortization", "cashReserve", "budget",
-    "stress", "refinancing",
-    "rentCollection", "expense", "annual", "hausgeld", "vacancy", "renovation",
-    "zinsmonitor", "cashflowScenarios", "breakEven", "dscr", "bulkRent",
-    "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
-    "historie", "reporting",
-  ];
-  /* Human-readable labels for widget drag overlay */
-  const widgetLabels: Record<WidgetId, string> = {
-    health: "Portfolio Health Score", stats: "Statistiken", occupancy: "Belegungsquote",
-    heatmap: "Heatmap", typeChart: "Objekttypen", goals: "Ziele", forecast: "Prognose",
-    rendite: "Rendite-Optimierer", wasserfall: "Wasserfall-Diagramm", diversifikation: "Diversifikation",
-    tilgung: "Tilgungsfortschritt", steuer: "Steuer-Optimierung", annual: "Jahresübersicht",
-    cashReserve: "Cash-Reserve", stress: "Stresstest", milestones: "Meilensteine",
-    tax: "Steuerübersicht", geg: "GEG-Check", mietpreisbremse: "Mietpreisbremse",
-    refinancing: "Refinanzierung", grundsteuer: "Grundsteuer", hausgeld: "Hausgeld",
-    vacancy: "Leerstand", renovation: "Renovierung", budget: "Budget",
-    rentCollection: "Mieteinzug", yoy: "Jahresvergleich", contractExpiry: "Vertragsablauf",
-    expense: "Ausgaben", maintenance: "Wartung", allocation: "Allokation",
-    amortization: "Amortisation", debtEquity: "Fremd-/Eigenkapital", netWorth: "Nettovermögen",
-    leaseAlerts: "Mietvertrags-Alerts", actions: "Quick Actions", historie: "Historie",
-    reporting: "Reporting", kpiAlerts: "KPI-Alerts", zinsmonitor: "Zinsmonitor",
-    cashflowScenarios: "Cashflow-Szenarien", breakEven: "Break-Even", dscr: "DSCR",
-    bulkRent: "Mietanpassung",
-    chart_cashflow: "Cashflow-Übersicht", chart_monthly: "Monatsübersicht",
-    chart_portfolio: "Portfolio-Verteilung", chart_map: "Standortkarte",
-  };
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
       const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as WidgetId[];
-        // Accept stored order if it has all widgets, or if close enough (allow adding new ones)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Remove stale widget IDs no longer in defaultWidgetOrder
-          const valid = parsed.filter(w => defaultWidgetOrder.includes(w));
-          // Add any new widgets not in stored order
-          const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
+          const valid = parsed.filter(w => DEFAULT_WIDGET_ORDER.includes(w));
+          const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
           if (missing.length > 0) return [...valid, ...missing];
-          return valid.length > 0 ? valid : defaultWidgetOrder;
+          return valid.length > 0 ? valid : DEFAULT_WIDGET_ORDER;
         }
       }
     } catch { /* ignore */ }
-    return defaultWidgetOrder;
+    return DEFAULT_WIDGET_ORDER;
   });
 
   const widgetDrag = useDragReorder(
@@ -222,85 +112,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Feature 4: CSV Export
-  const exportCSV = useCallback(() => {
-    if (properties.length === 0) return;
-    /* IMP20-13: Extended CSV export — includes Rendite, annual Cashflow, and Netto-Rendite columns */
-    const headers = ["Name", "Adresse", "Typ", "Einheiten", "Kaufpreis", "Aktueller Wert", "Miete/M", "Kosten/M", "Kreditrate/M", "Cashflow/M", "Cashflow/J", "Brutto-Rendite %", "Netto-Rendite %", "Restschuld", "Zinssatz", "m²", "Baujahr", "Besitz"];
-    const rows = properties.map((p) => {
-      const bruttoRendite = p.purchasePrice > 0 ? ((p.monthlyRent * 12) / p.purchasePrice * 100).toFixed(2) : "0";
-      const nettoRendite = p.purchasePrice > 0 ? (((p.monthlyRent - p.monthlyExpenses) * 12) / p.purchasePrice * 100).toFixed(2) : "0";
-      return [
-        escapeHtml(p.name), escapeHtml(p.address || ""), p.type, p.units, p.purchasePrice, p.currentValue,
-        p.monthlyRent, p.monthlyExpenses, p.monthlyCreditRate, p.monthlyCashflow,
-        p.monthlyCashflow * 12, bruttoRendite, nettoRendite,
-        p.remainingDebt, p.interestRate, p.sqm, p.yearBuilt, escapeHtml(p.ownership),
-      ];
-    });
-    const csv = [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `portfolio_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("CSV exportiert!");
-  }, [properties]);
-
-  // PDF Export
-  const exportPDF = useCallback(() => {
-    if (properties.length === 0) return;
-    const pdfStats = stats;
-    const html = `
-<!DOCTYPE html>
-<html lang="de"><head><meta charset="UTF-8"><title>ImmoControl Portfoliobericht</title>
-<style>
-  body{font-family:system-ui,sans-serif;padding:40px;color:#222;max-width:800px;margin:0 auto}
-  h1{font-size:24px;border-bottom:2px solid #2a9d6e;padding-bottom:8px}
-  h2{font-size:16px;margin-top:28px;color:#555}
-  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
-  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #eee}
-  th{background:#f5f5f5;font-weight:600}
-  .positive{color:#2a9d6e} .negative{color:#d94040}
-  .summary{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
-  .stat{background:#f9f9f9;padding:14px 18px;border-radius:8px;flex:1;min-width:150px}
-  .stat-label{font-size:11px;text-transform:uppercase;color:#888;letter-spacing:0.5px}
-  .stat-value{font-size:20px;font-weight:700;margin-top:4px}
-  .footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center}
-</style></head><body>
-<h1>📊 ImmoControl Portfoliobericht</h1>
-<p style="color:#888;font-size:13px">Erstellt am ${new Date().toLocaleDateString("de-DE")} · ${pdfStats.propertyCount} Objekte · ${pdfStats.totalUnits} Einheiten</p>
-
-<div class="summary">
-  <div class="stat"><div class="stat-label">Gesamtwert</div><div class="stat-value">${formatCurrency(pdfStats.totalValue)}</div></div>
-  <div class="stat"><div class="stat-label">Eigenkapital</div><div class="stat-value">${formatCurrency(pdfStats.equity)}</div></div>
-  <div class="stat"><div class="stat-label">Cashflow / Monat</div><div class="stat-value ${pdfStats.totalCashflow >= 0 ? 'positive' : 'negative'}">${formatCurrency(pdfStats.totalCashflow)}</div></div>
-  <div class="stat"><div class="stat-label">Brutto-Rendite</div><div class="stat-value">${pdfStats.avgRendite.toFixed(1)}%</div></div>
-</div>
-
-<h2>Objektübersicht</h2>
-<table>
-<tr><th>Objekt</th><th>Adresse</th><th>Typ</th><th>Wert</th><th>Miete/M</th><th>Cashflow/M</th><th>Restschuld</th></tr>
-${properties.map(p => `<tr>
-  <td><strong>${escapeHtml(p.name)}</strong></td><td>${escapeHtml(p.address || "")}</td><td>${escapeHtml(p.type)}</td>
-  <td>${formatCurrency(p.currentValue)}</td><td>${formatCurrency(p.monthlyRent)}</td>
-  <td class="${p.monthlyCashflow >= 0 ? 'positive' : 'negative'}">${formatCurrency(p.monthlyCashflow)}</td>
-  <td>${formatCurrency(p.remainingDebt)}</td>
-</tr>`).join("")}
-</table>
-
-<div class="footer">ImmoControl · Portfoliobericht · Vertraulich</div>
-</body></html>`;
-
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(html);
-      printWindow.document.close();
-      printWindow.print();
-    }
-    toast.success("PDF-Bericht geöffnet");
-  }, [properties, stats]);
+  /* Fix 3b: CSV/PDF export logic extracted to useDashboardExports hook */
+  const { exportCSV, exportPDF } = useDashboardExports(properties, stats);
 
   // Feature 1 + 2 + filter
   const filteredProperties = useMemo(() => {
@@ -1014,112 +827,18 @@ ${properties.map(p => `<tr>
         </>
       )}
 
-      {/* Unified Dashboard Grid — only shown in personal/dashboard mode to differentiate from Portfolio view */}
-      {mode === "personal" && <div>
-        <p className="text-[10px] font-normal text-muted-foreground mb-2">Ziehen zum Umsortieren</p>
-        <div
-          ref={widgetDrag.containerRef}
-          className={`grid md:grid-cols-2 gap-3 auto-rows-auto transition-all duration-300 origin-top ${
-            isWidgetDragOverview
-              ? "scale-[0.85] opacity-80 bg-secondary/20 rounded-2xl p-3 ring-2 ring-primary/20"
-              : ""
-          }`}
-        >
-          {widgetOrder.map((wId, idx) => {
-            const isDragging = widgetDrag.dragIdx === idx;
-            const isOver = widgetDrag.overIdx === idx;
-            const widgetContent = (() => {
-              switch (wId) {
-                /* Charts — integrated into unified grid */
-                case "chart_cashflow": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><CashflowChart /></Suspense>;
-                case "chart_monthly": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><MonthlyOverviewChart /></Suspense>;
-                case "chart_portfolio": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><PortfolioChart /></Suspense>;
-                case "chart_map": return <Suspense fallback={<div className="h-64 bg-secondary/50 rounded-xl animate-pulse" />}><PropertyMap /></Suspense>;
-                /* Widgets — only visual/charting widgets remain */
-                case "health": return <PortfolioHealthScore totalValue={stats.totalValue} totalDebt={stats.totalDebt} totalCashflow={stats.totalCashflow} totalRent={stats.totalRent} totalExpenses={totalMonthlyExpenses} totalCreditRate={totalMonthlyCreditRate} vacancyRate={vacancyRate} propertyCount={stats.propertyCount} />;
-                case "occupancy": return allTenants.length > 0 ? <OccupancyTracker properties={properties.map(p => ({ id: p.id, name: p.name, units: p.units, monthlyRent: p.monthlyRent }))} tenants={allTenants} /> : null;
-                case "heatmap": return <YieldHeatmap properties={properties} />;
-                case "typeChart": return <PortfolioTypeChart properties={properties} />;
-                case "goals": return <PortfolioGoals currentStats={{ totalValue: stats.totalValue, totalCashflow: stats.totalCashflow, totalUnits: stats.totalUnits, equity: stats.equity }} />;
-                case "forecast": return <PortfolioForecast />;
-                case "rendite": return <RenditeRanking />;
-                case "wasserfall": return <WasserfallChart />;
-                case "diversifikation": return <DiversifikationsScore />;
-                case "tilgung": return <TilgungsProgress />;
-                case "steuer": return <SteuerHelfer />;
-                case "annual": return <AnnualSummaryCard />;
-                case "cashReserve": return <CashReserveWidget />;
-                case "stress": return <MortgageStressTest />;
-                case "milestones": return <PortfolioMilestones />;
-                case "tax": return <TaxDeadlineReminder />;
-                case "geg": return <GEGComplianceChecker />;
-                case "mietpreisbremse": return <MietpreisbremseChecker />;
-                case "refinancing": return <LoanRefinancingCalc />;
-                case "grundsteuer": return <GrundsteuerCalculator />;
-                case "hausgeld": return <HausgeldTracker />;
-                case "vacancy": return <VacancyCostCalc />;
-                case "renovation": return <RenovationROICalc />;
-                case "budget": return <BudgetVsActual />;
-                case "rentCollection": return <RentCollectionChart />;
-                case "yoy": return <YearOverYear />;
-                case "contractExpiry": return <ContractExpiryCountdown />;
-                case "expense": return <ExpenseCategoryBreakdown />;
-                case "maintenance": return <MaintenanceCostTrend />;
-                case "allocation": return <PortfolioAllocationWidget />;
-                case "amortization": return <LoanAmortizationMini />;
-                case "debtEquity": return <DebtEquityWidget totalValue={stats.totalValue} totalDebt={stats.totalDebt} equity={stats.equity} />;
-                case "netWorth": return <NetWorthTracker currentEquity={stats.equity} totalValue={stats.totalValue} totalDebt={stats.totalDebt} />;
-                case "leaseAlerts": return <TenantLeaseAlerts propertyNames={Object.fromEntries(properties.map(p => [p.id, p.name]))} />;
-                case "actions": return <DashboardActionCenter />;
-                case "historie": return <PortfolioHistorie />;
-                case "reporting": return <ReportingDashboard />;
-                case "kpiAlerts": return <KPIAlerts />;
-                case "stats": return <CashflowPerSqmWidget properties={properties} />;
-                case "zinsmonitor": return <InterestRateMonitor />;
-                case "cashflowScenarios": return <CashflowScenarios />;
-                case "breakEven": return <BreakEvenAnalysis />;
-                case "dscr": return <DSCRWidget />;
-                case "bulkRent": return <BulkRentAdjustment />;
-                default: return <QuickNoteWidget />;
-              }
-            })();
-            if (widgetContent === null) return null;
-            /* Full-width widgets span 2 columns */
-            const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts" || wId === "bulkRent" || wId === "chart_monthly" || wId === "chart_map";
-            return (
-              <div
-                key={wId}
-                {...widgetDrag.getItemProps(idx)}
-                className={`relative group transition-all duration-200 rounded-xl ${
-                  fullWidth ? "md:col-span-2" : ""
-                } ${
-                  isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
-                } ${
-                  isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
-                }`}
-              >
-                {/* Drag handle — visible on hover (desktop) and always tappable (mobile) */}
-                <div
-                  {...widgetDrag.getHandleProps(idx)}
-                  className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
-                  aria-label="Ziehen zum Umsortieren"
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                </div>
-                {/* Widget label overlay during drag for quick identification */}
-                {isWidgetDragOverview && (
-                  <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
-                    <span className="text-[10px] font-semibold text-foreground">{widgetLabels[wId] || wId}</span>
-                  </div>
-                )}
-                <WidgetErrorBoundary name={wId}>
-                  {widgetContent}
-                </WidgetErrorBoundary>
-              </div>
-            );
-          })}
-        </div>
-      </div>}
+      {/* Fix 3: Extracted to DashboardWidgetGrid component */}
+      {mode === "personal" && (
+        <DashboardWidgetGrid
+          widgetOrder={widgetOrder}
+          widgetDrag={widgetDrag}
+          isWidgetDragOverview={isWidgetDragOverview}
+          stats={{ ...stats, totalExpenses: totalMonthlyExpenses, totalCreditRate: totalMonthlyCreditRate, propertyCount: stats.propertyCount }}
+          vacancyRate={vacancyRate}
+          properties={properties}
+          allTenants={allTenants}
+        />
+      )}
     </div>
   );
 };

@@ -29,8 +29,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
-import { LoadingButton } from "@/components/LoadingButton";
+import { TodoEditDialog } from "@/components/todos/TodoEditDialog";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -663,77 +662,15 @@ const Todos = () => {
         )}
       </main>
 
-      {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
-      <ResponsiveDialog open={!!editTodo} onOpenChange={open => !open && setEditTodo(null)}>
-          <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Aufgabe bearbeiten</ResponsiveDialogTitle>
-          </ResponsiveDialogHeader>
-          <div className="space-y-3">
-            {/* UX-19: Auto-focus first field in dialogs */}
-            <Input
-              value={editForm.title}
-              onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="Titel"
-              className="h-9 text-sm font-medium"
-              autoFocus
-            />
-            <Textarea
-              value={editForm.description}
-              onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Beschreibung (optional)"
-              className="text-sm min-h-[80px] resize-none"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Fälligkeitsdatum</label>
-                <Input
-                  type="date"
-                  value={editForm.due_date}
-                  onChange={e => setEditForm(f => ({ ...f, due_date: e.target.value }))}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Uhrzeit</label>
-                <Input
-                  type="time"
-                  value={editForm.due_time}
-                  onChange={e => setEditForm(f => ({ ...f, due_time: e.target.value }))}
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Priorität</label>
-                <Select value={String(editForm.priority)} onValueChange={v => setEditForm(f => ({ ...f, priority: Number(v) }))}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Projekt</label>
-                <Input
-                  value={editForm.project}
-                  onChange={e => setEditForm(f => ({ ...f, project: e.target.value }))}
-                  placeholder="z.B. Arbeit"
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 pt-1">
-              {/* UX-14: LoadingButton with spinner during save */}
-              <LoadingButton onClick={saveEdit} className="flex-1" loading={updateMutation.isPending} disabled={!editForm.title.trim()}>
-                Speichern
-              </LoadingButton>
-              <Button variant="outline" onClick={() => setEditTodo(null)}>Abbrechen</Button>
-            </div>
-          </div>
-      </ResponsiveDialog>
+      {/* Fix 3c: Extracted to TodoEditDialog component */}
+      <TodoEditDialog
+        open={!!editTodo}
+        onClose={() => setEditTodo(null)}
+        form={editForm}
+        onFormChange={setEditForm}
+        onSave={saveEdit}
+        isSaving={updateMutation.isPending}
+      />
 
       {/* Wiederkehrende Aufgaben — moved from Dashboard */}
       <RecurringTodos onCreateTodo={(title, dueDate) => {
