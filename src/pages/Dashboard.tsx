@@ -49,6 +49,21 @@ import { AnomalyDetection } from "@/components/AnomalyDetection";
 import { RentIncreaseTimeline } from "@/components/RentIncreaseTimeline";
 import { LoanFixedInterestCountdown } from "@/components/LoanFixedInterestCountdown";
 import { ListSkeleton } from "@/components/ListSkeleton";
+import InterestRateMonitor from "@/components/InterestRateMonitor";
+import { CashflowScenarios } from "@/components/CashflowScenarios";
+import { BreakEvenAnalysis } from "@/components/BreakEvenAnalysis";
+import { DSCRWidget } from "@/components/DSCRWidget";
+import { BulkRentAdjustment } from "@/components/BulkRentAdjustment";
+import { RecurringTodos } from "@/components/RecurringTodos";
+import { AutoNebenkosten } from "@/components/AutoNebenkosten";
+import { ContractTemplates } from "@/components/ContractTemplates";
+import { TaxYearOverview } from "@/components/TaxYearOverview";
+import { AuditLog } from "@/components/AuditLog";
+import { DataBackup } from "@/components/DataBackup";
+import { DragDropDocUpload } from "@/components/DragDropDocUpload";
+import { FavoritesBar } from "@/components/FavoritesBar";
+import { PrivacyToggle } from "@/components/PrivacyMode";
+import { DashboardPresets } from "@/components/DashboardPresets";
 import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 /* Removed: QuickCalculator, PropertyComparison, HandoverProtocol, RentIncreaseLetter,
@@ -122,7 +137,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   /* Dashboard widgets drag & drop reordering */
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
-  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts";
+  type WidgetId = "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals" | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung" | "steuer" | "annual" | "cashReserve" | "stress" | "milestones" | "tax" | "geg" | "mietpreisbremse" | "refinancing" | "grundsteuer" | "hausgeld" | "vacancy" | "renovation" | "budget" | "rentCollection" | "yoy" | "contractExpiry" | "expense" | "maintenance" | "allocation" | "amortization" | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie" | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios" | "breakEven" | "dscr" | "bulkRent" | "recurringTodos" | "autoNebenkosten" | "contractTemplates" | "taxYear" | "auditLog" | "dataBackup" | "dragDropDocs";
   /* Widget order grouped by content:
      1. Overview: health, actions, kpiAlerts
      2. Portfolio: stats, occupancy, heatmap, typeChart, allocation
@@ -141,13 +156,22 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     "rentCollection", "expense", "annual", "hausgeld", "vacancy", "renovation",
     "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
     "historie", "reporting",
+    "zinsmonitor", "cashflowScenarios", "breakEven", "dscr",
+    "bulkRent", "recurringTodos", "autoNebenkosten", "contractTemplates",
+    "taxYear", "auditLog", "dataBackup", "dragDropDocs",
   ];
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
       const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as WidgetId[];
-        if (Array.isArray(parsed) && parsed.length === defaultWidgetOrder.length) return parsed;
+        // Accept stored order if it has all widgets, or if close enough (allow adding new ones)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Add any new widgets not in stored order
+          const missing = defaultWidgetOrder.filter(w => !parsed.includes(w));
+          if (missing.length > 0) return [...parsed, ...missing];
+          return parsed;
+        }
       }
     } catch { /* ignore */ }
     return defaultWidgetOrder;
@@ -545,6 +569,7 @@ ${properties.map(p => `<tr>
           {/* Cleaned up: removed buttons that are already accessible via navigation menus
                (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <PrivacyToggle />
             <AddPropertyDialog />
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
               <Share2 className="h-3.5 w-3.5" />
@@ -585,6 +610,23 @@ ${properties.map(p => `<tr>
           </div>
         </div>
       )}
+
+      {/* Favorites bar — quick access to favorite pages */}
+      <FavoritesBar />
+
+      {/* Dashboard Presets — save/load widget layouts */}
+      <DashboardPresets
+        currentWidgetOrder={widgetOrder}
+        currentChartOrder={chartOrder}
+        chartsCollapsed={chartsCollapsed}
+        widgetsCollapsed={widgetsCollapsed}
+        onApply={({ widgetOrder: wo, chartOrder: co, chartsCollapsed: cc, widgetsCollapsed: wc }) => {
+          setWidgetOrder(wo as typeof widgetOrder);
+          setChartOrder(co as typeof chartOrder);
+          setChartsCollapsed(cc);
+          setWidgetsCollapsed(wc);
+        }}
+      />
 
       {mode === "personal" && (
         <>
@@ -1043,12 +1085,24 @@ ${properties.map(p => `<tr>
                   case "reporting": return <ReportingDashboard />;
                   case "kpiAlerts": return <KPIAlerts />;
                   case "stats": return <CashflowPerSqmWidget properties={properties} />;
+                  case "zinsmonitor": return <InterestRateMonitor />;
+                  case "cashflowScenarios": return <CashflowScenarios />;
+                  case "breakEven": return <BreakEvenAnalysis />;
+                  case "dscr": return <DSCRWidget />;
+                  case "bulkRent": return <BulkRentAdjustment />;
+                  case "recurringTodos": return <RecurringTodos />;
+                  case "autoNebenkosten": return <AutoNebenkosten />;
+                  case "contractTemplates": return <ContractTemplates />;
+                  case "taxYear": return <TaxYearOverview />;
+                  case "auditLog": return <AuditLog />;
+                  case "dataBackup": return <DataBackup />;
+                  case "dragDropDocs": return <DragDropDocUpload />;
                   default: return <QuickNoteWidget />;
                 }
               })();
               if (widgetContent === null) return null;
               /* Full-width widgets span 2 columns */
-              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts";
+              const fullWidth = wId === "health" || wId === "occupancy" || wId === "heatmap" || wId === "leaseAlerts" || wId === "actions" || wId === "historie" || wId === "reporting" || wId === "kpiAlerts" || wId === "bulkRent" || wId === "auditLog" || wId === "dragDropDocs";
               return (
                 <div
                   key={wId}
