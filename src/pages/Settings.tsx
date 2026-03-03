@@ -1431,7 +1431,7 @@ const Settings = () => {
                         <LogOut className="h-3.5 w-3.5" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Ger\u00e4t abmelden</TooltipContent>
+                    <TooltipContent>Gerät aus Liste entfernen</TooltipContent>
                   </Tooltip>
                 )}
               </div>
