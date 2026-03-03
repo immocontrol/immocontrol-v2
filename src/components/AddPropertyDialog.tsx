@@ -114,19 +114,19 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
 const FORM_DEFAULTS: FormData = {
   name: "",
   address: "",
-  type: "ETW",
-  ownership: "Privat",
-  units: 1,
-  purchasePrice: 300000,
-  purchaseDate: new Date().toISOString().split("T")[0],
-  currentValue: 300000,
-  monthlyRent: 1000,
-  monthlyExpenses: 200,
-  monthlyCreditRate: 800,
-  remainingDebt: 250000,
-  interestRate: 3.5,
-  sqm: 80,
-  yearBuilt: 1970,
+  type: "" as FormData["type"],
+  ownership: "",
+  units: 0 as unknown as number,
+  purchasePrice: 0 as unknown as number,
+  purchaseDate: "",
+  currentValue: 0 as unknown as number,
+  monthlyRent: 0,
+  monthlyExpenses: 0,
+  monthlyCreditRate: 0,
+  remainingDebt: 0,
+  interestRate: 0,
+  sqm: 0 as unknown as number,
+  yearBuilt: 0 as unknown as number,
 };
 
 const AddPropertyDialog = () => {
@@ -169,8 +169,24 @@ const AddPropertyDialog = () => {
   const goNext = useCallback(async (e?: React.MouseEvent) => {
     e?.preventDefault();
     const valid = await trigger(STEP_FIELDS[step]);
-    if (valid) setStep((s) => Math.min(s + 1, 2));
-  }, [step, trigger]);
+    if (valid) {
+      setStep((s) => Math.min(s + 1, 2));
+    } else {
+      /* Fix 5: Show validation hint and focus first invalid field */
+      const firstInvalidField = STEP_FIELDS[step].find((f) => errors[f]);
+      if (firstInvalidField) {
+        const fieldEl = document.getElementById(firstInvalidField);
+        if (fieldEl) {
+          fieldEl.focus();
+          fieldEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        const errorMsg = errors[firstInvalidField]?.message as string;
+        toast.error(errorMsg || `Bitte "${firstInvalidField}" ausfüllen`);
+      } else {
+        toast.error("Bitte alle Pflichtfelder ausfüllen");
+      }
+    }
+  }, [step, trigger, errors]);
 
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
 
@@ -220,7 +236,7 @@ const AddPropertyDialog = () => {
             <div className="space-y-3">
               <Field label="Bezeichnung *" name="name" placeholder="z.B. MFH Duesseldorf" register={register} errors={errors} />
               <div className="space-y-1.5">
-                <Label htmlFor="address" className="text-xs text-muted-foreground">Adresse</Label>
+                <Label htmlFor="address" className="text-xs text-muted-foreground">Adresse *</Label>
                 <AddressAutocomplete
                   id="address"
                   value={watch("address") || ""}
@@ -231,14 +247,14 @@ const AddPropertyDialog = () => {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Objekttyp</Label>
+                  <Label className="text-xs text-muted-foreground">Objekttyp *</Label>
                   <Select value={watch("type")} onValueChange={(v) => {
                     setValue("type", v as FormData["type"]);
                     /* FIX: After dropdown selection, focus next field */
                     const trigger = document.querySelector<HTMLElement>('[data-field="type"]');
                     focusNextField(trigger);
                   }}>
-                    <SelectTrigger className="h-9 text-sm" data-field="type"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm" data-field="type"><SelectValue placeholder="Typ wählen" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="MFH">MFH</SelectItem>
                       <SelectItem value="ZFH">ZFH</SelectItem>
@@ -249,14 +265,14 @@ const AddPropertyDialog = () => {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Besitzverhältnis</Label>
+                  <Label className="text-xs text-muted-foreground">Besitzverhältnis *</Label>
                   <GesellschaftSelector
                     value={watch("ownership") || ""}
                     onChange={(v) => setValue("ownership", v, { shouldValidate: true })}
                     error={errors.ownership?.message as string}
                   />
                 </div>
-                <Field label="Einheiten" name="units" type="number" placeholder="1" register={register} errors={errors} />
+                <Field label="Einheiten *" name="units" type="number" placeholder="1" register={register} errors={errors} />
               </div>
             </div>
           </div>

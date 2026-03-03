@@ -7,8 +7,9 @@ import { useMemo, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Receipt, Download, Calculator } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Receipt, Download, Calculator, FileText, FileSpreadsheet } from "lucide-react";
+import { formatCurrency, downloadBlob } from "@/lib/formatters";
 import { escapeHtml } from "@/lib/sanitize";
 import { toast } from "sonner";
 
@@ -88,12 +89,53 @@ export function NebenkostenGenerator({
     });
   }, [activeTenants, totalSqm, totalCosts, tenantSqm, monthlyAdvances]);
 
+  /* Fix 14: Export as PDF (print), Word (HTML-based .doc), or CSV — no HTML download */
+  const [exportFormat, setExportFormat] = useState<"pdf" | "word" | "csv">("pdf");
+
+  const costItemsData = useMemo(() => [
+    { label: "Heizkosten", value: costs.heating },
+    { label: "Wasser/Abwasser", value: costs.water },
+    { label: "Müllabfuhr", value: costs.trash },
+    { label: "Versicherungen", value: costs.insurance },
+    { label: "Grundsteuer", value: costs.propertyTax },
+    { label: "Instandhaltung", value: costs.maintenance },
+    { label: "Hausverwaltung", value: costs.management },
+    { label: "Sonstiges", value: costs.other },
+  ].filter((c) => c.value > 0), [costs]);
+
   const generateSettlement = useCallback(() => {
     if (tenantShares.length === 0) {
       toast.error("Keine Mieterdaten vorhanden");
       return;
     }
 
+    if (exportFormat === "csv") {
+      /* CSV/Excel export */
+      const headers = ["Mieter", "Einheit", "Fläche (m²)", "Anteil (%)", "Kosten (€)", "Vorauszahlung (€)", "Ergebnis (€)", "Status"];
+      const rows = tenantShares.map(ts => [
+        `${ts.tenant.first_name} ${ts.tenant.last_name}`,
+        ts.tenant.unit_number || "–",
+        ts.sqm.toFixed(1),
+        (ts.share * 100).toFixed(1),
+        ts.amount.toFixed(2),
+        ts.advance.toFixed(2),
+        Math.abs(ts.balance).toFixed(2),
+        ts.isRefund ? "Guthaben" : "Nachzahlung",
+      ]);
+      /* Add cost breakdown section */
+      const costSection = [[""], ["Kostenaufstellung"], ["Position", "Betrag (€)"],
+        ...costItemsData.map(c => [c.label, c.value.toFixed(2)]),
+        ["Gesamtkosten", totalCosts.toFixed(2)],
+      ];
+      const allRows = [headers, ...rows, ...costSection];
+      const csv = allRows.map(r => r.map(c => `"${c}"`).join(";")).join("\n");
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      downloadBlob(blob, `Nebenkostenabrechnung_${year}_${propertyName.replace(/\s+/g, "_")}.csv`);
+      toast.success("CSV-Export erstellt");
+      return;
+    }
+
+    /* Build HTML for both PDF (print) and Word (.doc) export */
     const tenantRows = tenantShares
       .map(
         (ts) => `<tr>
@@ -108,17 +150,7 @@ export function NebenkostenGenerator({
       )
       .join("");
 
-    const costItems = [
-      { label: "Heizkosten", value: costs.heating },
-      { label: "Wasser/Abwasser", value: costs.water },
-      { label: "Müllabfuhr", value: costs.trash },
-      { label: "Versicherungen", value: costs.insurance },
-      { label: "Grundsteuer", value: costs.propertyTax },
-      { label: "Instandhaltung", value: costs.maintenance },
-      { label: "Hausverwaltung", value: costs.management },
-      { label: "Sonstiges", value: costs.other },
-    ]
-      .filter((c) => c.value > 0)
+    const costItemsHtml = costItemsData
       .map((c) => `<tr><td>${c.label}</td><td class="right">${formatCurrency(c.value)}</td></tr>`)
       .join("");
 
@@ -150,7 +182,7 @@ export function NebenkostenGenerator({
   <h2>Kostenaufstellung</h2>
   <table>
     <thead><tr><th>Position</th><th class="right">Betrag</th></tr></thead>
-    <tbody>${costItems}</tbody>
+    <tbody>${costItemsHtml}</tbody>
     <tfoot><tr class="total"><td>Gesamtkosten</td><td class="right">${formatCurrency(totalCosts)}</td></tr></tfoot>
   </table>
 
@@ -165,16 +197,22 @@ export function NebenkostenGenerator({
   <div class="footer">
     <p>Erstellt am ${new Date().toLocaleDateString("de-DE")} · ImmoControl Nebenkostenabrechnung</p>
   </div>
-  <script>window.onload = () => window.print();</script>
+  ${exportFormat === "pdf" ? '<script>window.onload = () => window.print();</script>' : ''}
 </body>
 </html>`;
 
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    toast.success("Nebenkostenabrechnung erstellt");
-  }, [tenantShares, costs, totalCosts, year, propertyName, propertyAddress]);
+    if (exportFormat === "word") {
+      /* Word (.doc) export — browsers open HTML-based .doc files natively */
+      const blob = new Blob([html], { type: "application/msword;charset=utf-8" });
+      downloadBlob(blob, `Nebenkostenabrechnung_${year}_${propertyName.replace(/\s+/g, "_")}.doc`);
+      toast.success("Word-Export erstellt");
+    } else {
+      /* PDF export via browser print dialog */
+      const w = window.open("", "_blank");
+      if (w) { w.document.write(html); w.document.close(); }
+      toast.success("PDF-Druckvorschau geöffnet");
+    }
+  }, [tenantShares, costs, costItemsData, totalCosts, year, propertyName, propertyAddress, exportFormat]);
 
   const updateCost = (key: keyof NebenkostenCosts, value: string) => {
     setCosts((prev) => ({ ...prev, [key]: parseFloat(value.replace(",", ".")) || 0 }));
@@ -253,11 +291,23 @@ export function NebenkostenGenerator({
         </div>
       )}
 
-      {/* Generate button */}
-      <Button size="sm" className="gap-1.5" onClick={generateSettlement} disabled={totalCosts <= 0}>
-        <Download className="h-3.5 w-3.5" />
-        Abrechnung erstellen
-      </Button>
+      {/* Export format selector + Generate button */}
+      <div className="flex items-center gap-2">
+        <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as "pdf" | "word" | "csv")}>
+          <SelectTrigger className="h-8 w-32 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pdf"><span className="flex items-center gap-1.5"><FileText className="h-3 w-3" /> PDF</span></SelectItem>
+            <SelectItem value="word"><span className="flex items-center gap-1.5"><FileText className="h-3 w-3" /> Word</span></SelectItem>
+            <SelectItem value="csv"><span className="flex items-center gap-1.5"><FileSpreadsheet className="h-3 w-3" /> CSV/Excel</span></SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" className="gap-1.5" onClick={generateSettlement} disabled={totalCosts <= 0}>
+          <Download className="h-3.5 w-3.5" />
+          Abrechnung erstellen
+        </Button>
+      </div>
     </div>
   );
 }

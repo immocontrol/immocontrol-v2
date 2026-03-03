@@ -15,6 +15,7 @@ import ExposeHistory from "@/components/analysis/ExposeHistory";
 /* BUG-3: Import PortfolioHealthScore to integrate into Analyse section */
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 import RenditeOptimizer from "@/components/RenditeOptimizer";
+import LocationAnalysis from "@/components/analysis/LocationAnalysis";
 import { useProperties } from "@/context/PropertyContext";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
 
@@ -182,6 +183,9 @@ th{background:#f5f5f5;font-weight:600}
             <PdfImport onImport={importFromExpose} />
             <ExposeHistory onImport={importFromExpose} />
             <AnalysisInputs inputs={inputs} updateInput={updateInput} />
+
+            {/* Fix 16: Mikro/Makrolage Standortanalyse */}
+            <LocationAnalysis />
 
             {/* Feature 5: Save/Load */}
             <div className="gradient-card rounded-xl border border-border p-5 space-y-3 animate-fade-in [animation-delay:350ms]">

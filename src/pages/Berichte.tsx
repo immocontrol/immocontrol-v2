@@ -319,6 +319,40 @@ ${properties.map(p => {
     toast.success("GuV erstellt!");
   }, [properties, loans, insurances, year]);
 
+  /* Fix 15: Portfolio PDF export — generates actual PDF instead of showing toast */
+  const exportPortfolio = useCallback(() => {
+    if (properties.length === 0) { toast.error("Keine Objekte vorhanden"); return; }
+    const rows = properties.map(p => {
+      const rendite = p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice * 100).toFixed(1) : "0.0";
+      const cfClass = p.monthlyCashflow >= 0 ? "positive" : "negative";
+      return `<tr><td>${p.name}</td><td>${p.address}</td><td>${formatCurrency(p.purchasePrice)}</td><td>${formatCurrency(p.currentValue)}</td><td>${formatCurrency(p.monthlyRent)}</td><td class="${cfClass}">${formatCurrency(p.monthlyCashflow)}</td><td>${rendite}%</td></tr>`;
+    }).join("");
+    const cfClass = reportMetrics.totalCashflow >= 0 ? "positive" : "negative";
+    const ltv = stats.totalValue > 0 ? (reportMetrics.totalDebt / stats.totalValue * 100).toFixed(1) : "0.0";
+    openPrint(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Portfoliobericht ${year}</title>
+<style>${baseStyle}</style></head><body>
+<h1>Portfolioübersicht ${year}</h1>
+<p>${properties.length} Objekte · Gesamtwert: ${formatCurrency(stats.totalValue)} · EK: ${formatCurrency(stats.equity)}</p>
+<div class="summary">
+<div class="stat"><div class="stat-label">Jahresmiete</div><div class="stat-value positive">${formatCurrency(reportMetrics.totalRent)}</div></div>
+<div class="stat"><div class="stat-label">Jahreskosten</div><div class="stat-value negative">${formatCurrency(reportMetrics.totalExpenses)}</div></div>
+<div class="stat"><div class="stat-label">Cashflow/Jahr</div><div class="stat-value ${cfClass}">${formatCurrency(reportMetrics.totalCashflow)}</div></div>
+<div class="stat"><div class="stat-label">Ø Rendite</div><div class="stat-value">${reportMetrics.avgRendite.toFixed(1)}%</div></div>
+</div>
+<h2>Objekte</h2>
+<table><tr><th>Objekt</th><th>Adresse</th><th>Kaufpreis</th><th>Wert</th><th>Miete/M</th><th>Cashflow/M</th><th>Rendite</th></tr>
+${rows}
+</table>
+<h2>Finanzierung</h2>
+<table><tr><td>Gesamtschuld</td><td>${formatCurrency(reportMetrics.totalDebt)}</td></tr>
+<tr><td>Versicherungen/Jahr</td><td>${formatCurrency(reportMetrics.totalInsurance)}</td></tr>
+<tr><td>LTV</td><td>${ltv}%</td></tr>
+</table>
+<p class="footer">ImmoControl · Portfoliobericht · ${new Date().toLocaleDateString("de-DE")}</p>
+</body></html>`);
+    toast.success("Portfoliobericht erstellt!");
+  }, [properties, stats, reportMetrics, year]);
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label="Berichte-Center">
       {/* Improvement 10: Mobile responsive heading */}
@@ -496,7 +530,7 @@ ${properties.map(p => {
           <div className="text-xs text-muted-foreground">
             {stats.propertyCount} Objekte · {formatCurrency(stats.totalValue)}
           </div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={() => toast.info("Nutze den PDF-Export im Dashboard.")}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportPortfolio}>
             <Download className="h-3.5 w-3.5" /> Portfolio-PDF
           </Button>
         </div>

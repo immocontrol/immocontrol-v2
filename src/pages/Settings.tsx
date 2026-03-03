@@ -147,6 +147,9 @@ const Settings = () => {
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
       setActiveSection(sectionId);
+      /* Animate sidebar active indicator into view */
+      const navBtn = document.querySelector(`[data-settings-nav="${sectionId}"]`);
+      if (navBtn) navBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 
@@ -175,16 +178,17 @@ const Settings = () => {
   return (
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
       {/* Settings sidebar navigation */}
-      <aside className="hidden lg:block w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
-        <nav className="space-y-0.5">
+      <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
+        <nav className="space-y-0.5 w-full">
           {SETTINGS_SECTIONS.map(section => {
             const SectionIcon = section.icon;
             const isActive = activeSection === section.id;
             return (
               <button
                 key={section.id}
+                data-settings-nav={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 text-left ${
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
