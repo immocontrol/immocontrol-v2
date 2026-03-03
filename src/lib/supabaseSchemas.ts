@@ -114,11 +114,7 @@ export function safeParseRows<T>(
       `[Zod] ${tableName}[${idx}] validation warning:`,
       result.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join(", ")
     );
-    // Try lenient parse — strip unknown fields, apply defaults
-    try {
-      return schema.parse(row);
-    } catch {
-      return row as T;
-    }
+    // safeParse failed — return row as-is (parse would fail identically)
+    return row as T;
   });
 }

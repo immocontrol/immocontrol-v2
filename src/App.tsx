@@ -151,8 +151,7 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30_000),
     },
     mutations: {
-      retry: 1,
-      retryDelay: 1000,
+      retry: 0,
     },
   },
 });

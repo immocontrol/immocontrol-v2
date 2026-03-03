@@ -30,7 +30,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }
     if (diff < 0) { pulling.current = false; return; }
     if (diff > 10 && indicatorRef.current) {
       const progress = Math.min(diff / threshold, 1);
-      indicatorRef.current.style.transform = `translateY(${Math.min(diff * 0.5, threshold * 0.6)}px)`;
+      indicatorRef.current.style.transform = `translateX(-50%) translateY(${Math.min(diff * 0.5, threshold * 0.6)}px)`;
       indicatorRef.current.style.opacity = String(progress);
     }
   }, [threshold, disabled]);
@@ -42,7 +42,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }
     const diff = endY - startY.current;
 
     if (indicatorRef.current) {
-      indicatorRef.current.style.transform = "translateY(0)";
+      indicatorRef.current.style.transform = "translateX(-50%) translateY(0)";
       indicatorRef.current.style.opacity = "0";
     }
 

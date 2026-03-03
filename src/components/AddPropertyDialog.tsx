@@ -121,11 +121,13 @@ const AddPropertyDialog = () => {
     defaultValues: hasDraft ? draftValues : FORM_DEFAULTS,
   });
 
-  /* Sync form changes to draft storage */
-  const watchedValues = watch();
+  /* Sync form changes to draft storage — use watch subscription to avoid infinite loop */
   useEffect(() => {
-    setDraftValues(watchedValues);
-  }, [watchedValues, setDraftValues]);
+    const subscription = watch((values) => {
+      setDraftValues(values as FormData);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setDraftValues]);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {

@@ -331,7 +331,7 @@ const Todos = () => {
           {[1, 2, 3, 4].map(i => <div key={i} className="h-9 skeleton-wave rounded-lg" />)}
         </div>
         <div className="flex-1">
-          <ListSkeleton count={6} />
+          <ListSkeleton rows={6} />
         </div>
       </div>
     );
