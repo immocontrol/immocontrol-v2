@@ -623,25 +623,31 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             return (
               /* UPD-12: Use sub-nav-slide-in animation */
               <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in">
-                <div className="grid grid-cols-3 gap-1.5">
-                  {group.items.map((item, idx) => {
-                    const isActive = isRouteActive(item.path, location.pathname);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setMobileActiveGroup(null)}
-                        className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${
-                          isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary/50"
-                        }`}
-                        style={{ animationDelay: `${idx * 40}ms` }}
-                      >
-                        <item.icon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {group.items.map((item, idx) => {
+                      const isActive = isRouteActive(item.path, location.pathname);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setMobileActiveGroup(null)}
+                          className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-[10px] font-medium transition-all duration-200 ${
+                            isActive
+                              ? "bg-primary/12 text-primary shadow-sm border border-primary/20"
+                              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
+                          }`}
+                          style={{ animationDelay: `${idx * 30}ms` }}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                            isActive ? "bg-primary/15 text-primary" : "bg-secondary/50 text-muted-foreground"
+                          }`}>
+                            <item.icon className="h-4 w-4" />
+                          </div>
+                          <span className="truncate max-w-full leading-tight">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
               </div>
             );
           })()}

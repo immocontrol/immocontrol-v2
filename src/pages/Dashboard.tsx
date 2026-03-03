@@ -1014,8 +1014,8 @@ ${properties.map(p => `<tr>
         </>
       )}
 
-      {/* Unified Dashboard Grid — ALL elements (charts + widgets) draggable, no sub-menus */}
-      <div>
+      {/* Unified Dashboard Grid — only shown in personal/dashboard mode to differentiate from Portfolio view */}
+      {mode === "personal" && <div>
         <p className="text-[10px] font-normal text-muted-foreground mb-2">Ziehen zum Umsortieren</p>
         <div
           ref={widgetDrag.containerRef}
@@ -1119,7 +1119,7 @@ ${properties.map(p => `<tr>
             );
           })}
         </div>
-      </div>
+      </div>}
     </div>
   );
 };
