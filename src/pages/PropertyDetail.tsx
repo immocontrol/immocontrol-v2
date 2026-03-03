@@ -106,17 +106,10 @@ const PropertyDetail = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [scrollToSection]);
 
-  if (!property) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-muted-foreground">Objekt nicht gefunden</p>
-        <Link to="/" className="text-primary text-sm mt-2 inline-block">← Zurück</Link>
-      </div>
-    );
-  }
-
-  /* STR-6: Memoize all expensive PropertyDetail calculations to prevent re-computation on every render */
+  /* STR-6: Memoize all expensive PropertyDetail calculations to prevent re-computation on every render
+     NOTE: Hooks MUST be called before any early return to satisfy React Rules of Hooks */
   const calculatedMetrics = useMemo(() => {
+    if (!property) return { bruttoRendite: 0, nettoRendite: 0, appreciation: 0, cashOnCash: 0, mietmultiplikator: 0, ltv: 0, dscr: 0, breakEvenOccupancy: 0, pricePerUnit: 0 };
     const bruttoRendite = property.purchasePrice > 0 ? ((property.monthlyRent * 12) / property.purchasePrice) * 100 : 0;
     const nettoRendite = property.purchasePrice > 0 ? (((property.monthlyRent - property.monthlyExpenses) * 12) / property.purchasePrice) * 100 : 0;
     const appreciation = property.purchasePrice > 0 ? ((property.currentValue - property.purchasePrice) / property.purchasePrice) * 100 : 0;
@@ -128,19 +121,29 @@ const PropertyDetail = () => {
     const breakEvenOccupancy = property.monthlyRent > 0 ? ((property.monthlyExpenses + property.monthlyCreditRate) / property.monthlyRent) * 100 : 0;
     const pricePerUnit = property.units > 0 ? property.purchasePrice / property.units : 0;
     return { bruttoRendite, nettoRendite, appreciation, cashOnCash, mietmultiplikator, ltv, dscr, breakEvenOccupancy, pricePerUnit };
-  }, [property.purchasePrice, property.monthlyRent, property.monthlyExpenses, property.currentValue, property.remainingDebt, property.monthlyCashflow, property.monthlyCreditRate, property.units]);
-
-  const { bruttoRendite, nettoRendite, appreciation, cashOnCash, mietmultiplikator, ltv, dscr, breakEvenOccupancy, pricePerUnit } = calculatedMetrics;
+  }, [property]);
 
   /* STR-7: Memoize besitzdauer calculation */
   const besitzdauer = useMemo(() => {
+    if (!property) return "";
     const purchaseDate = new Date(property.purchaseDate);
     const now = new Date();
     const diffMs = now.getTime() - purchaseDate.getTime();
     const diffYears = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25));
     const diffMonths = Math.floor((diffMs % (1000 * 60 * 60 * 24 * 365.25)) / (1000 * 60 * 60 * 24 * 30.44));
     return diffYears > 0 ? `${diffYears}J ${diffMonths}M` : `${diffMonths} Monate`;
-  }, [property.purchaseDate]);
+  }, [property?.purchaseDate]);
+
+  if (!property) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-muted-foreground">Objekt nicht gefunden</p>
+        <Link to="/" className="text-primary text-sm mt-2 inline-block">← Zurück</Link>
+      </div>
+    );
+  }
+
+  const { bruttoRendite, nettoRendite, appreciation, cashOnCash, mietmultiplikator, ltv, dscr, breakEvenOccupancy, pricePerUnit } = calculatedMetrics;
 
   const copyAddress = () => {
     navigator.clipboard.writeText(property.address).then(
