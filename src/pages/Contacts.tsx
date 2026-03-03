@@ -152,7 +152,7 @@ const ContactManagement = () => {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.name.trim()) throw new Error("Name ist erforderlich");
-      if (form.email && !isValidEmail(form.email)) throw new Error("Bitte eine gueltige E-Mail-Adresse eingeben");
+      if (form.email && !isValidEmail(form.email)) throw new Error("Bitte eine gültige E-Mail-Adresse eingeben");
       const payload = {
         name: form.name.trim(),
         company: form.company || null,

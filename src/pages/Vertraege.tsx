@@ -156,36 +156,5 @@ const Vertraege = () => {
   );
 };
 
-/* FUNC-31: Contract status helper */
-const getContractStatus = (endDate: string | null): "active" | "expiring" | "expired" => {
-  if (!endDate) return "active";
-  const end = new Date(endDate);
-  const now = new Date();
-  const threeMonths = new Date();
-  threeMonths.setMonth(threeMonths.getMonth() + 3);
-  if (end < now) return "expired";
-  if (end < threeMonths) return "expiring";
-  return "active";
-};
-
-/* FUNC-32: Contract renewal reminder days calculation */
-const daysUntilExpiry = (endDate: string): number => {
-  const end = new Date(endDate);
-  const now = new Date();
-  return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-};
-
-/* FUNC-33: Contract type label mapping */
-const contractTypeLabels: Record<string, string> = {
-  mietvertrag: "Mietvertrag",
-  gewerbemietvertrag: "Gewerbemietvertrag",
-  pachtvertrag: "Pachtvertrag",
-  dienstleistungsvertrag: "Dienstleistungsvertrag",
-  versicherungsvertrag: "Versicherungsvertrag",
-  darlehensvertrag: "Darlehensvertrag",
-  kaufvertrag: "Kaufvertrag",
-  sonstig: "Sonstiger Vertrag",
-};
-
 
 export default Vertraege;

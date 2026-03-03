@@ -397,6 +397,17 @@ ${properties.map(p => `<tr>
   }, [properties]);
 
 
+  /* BUG-FIX: Move greeting useMemo BEFORE early returns to satisfy React Rules of Hooks.
+     Hooks must always be called in the same order — conditional returns must come after all hooks. */
+  const greeting = useMemo(() => {
+    const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+    const h = new Date().getHours();
+    const name = userName ? `, ${userName}` : "";
+    if (h < 12) return `Guten Morgen${name}`;
+    if (h < 18) return `Guten Tag${name}`;
+    return `Guten Abend${name}`;
+  }, [user]);
+
   const filters: { key: FilterType; label: string }[] = [
     { key: "alle", label: "Alle" },
     { key: "egbr", label: "eGbR" },
@@ -476,16 +487,6 @@ ${properties.map(p => `<tr>
       </div>
     );
   }
-
-  /* IMP20-18: Memoize greeting — avoids IIFE re-execution on every render */
-  const greeting = useMemo(() => {
-    const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-    const h = new Date().getHours();
-    const name = userName ? `, ${userName}` : "";
-    if (h < 12) return `Guten Morgen${name}`;
-    if (h < 18) return `Guten Tag${name}`;
-    return `Guten Abend${name}`;
-  }, [user]);
 
   /* IMP20-2: Use pre-computed stats from PropertyContext — eliminates 3 redundant reduce() calls */
   const totalSqm = stats.totalSqm;

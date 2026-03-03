@@ -105,7 +105,7 @@ export const TeamManagement = () => {
       return;
     }
     if (!isValidEmail(email)) {
-      toast.error("Bitte eine gueltige E-Mail-Adresse eingeben");
+      toast.error("Bitte eine gültige E-Mail-Adresse eingeben");
       return;
     }
     setLoading(true);
@@ -287,7 +287,7 @@ export const TeamManagement = () => {
                     })}
                   </div>
                   <p className="text-[10px] text-muted-foreground">
-                    Waehle welche Bereiche geteilt werden sollen (z.B. gemeinsame eGbR-Objekte).
+                    Wähle welche Bereiche geteilt werden sollen (z.B. gemeinsame eGbR-Objekte).
                   </p>
                 </div>
 
