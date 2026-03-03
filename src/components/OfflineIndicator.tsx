@@ -12,14 +12,18 @@ export function OfflineIndicator() {
   const [wasOffline, setWasOffline] = useState(false);
 
   useEffect(() => {
+    let onlineTimer: ReturnType<typeof setTimeout> | null = null;
     const handleOnline = () => {
       setIsOnline(true);
-      if (wasOffline) {
-        // Show "back online" for 3 seconds
-        setTimeout(() => setWasOffline(false), 3000);
-      }
+      setWasOffline(prev => {
+        if (prev) {
+          onlineTimer = setTimeout(() => setWasOffline(false), 3000);
+        }
+        return prev;
+      });
     };
     const handleOffline = () => {
+      if (onlineTimer) { clearTimeout(onlineTimer); onlineTimer = null; }
       setIsOnline(false);
       setWasOffline(true);
     };
@@ -27,10 +31,11 @@ export function OfflineIndicator() {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     return () => {
+      if (onlineTimer) clearTimeout(onlineTimer);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [wasOffline]);
+  }, []);
 
   if (isOnline && !wasOffline) return null;
 

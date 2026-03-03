@@ -725,7 +725,7 @@ const Deals = () => {
 
       {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
       {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
-      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }}>
+      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }} className="max-w-lg">
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>

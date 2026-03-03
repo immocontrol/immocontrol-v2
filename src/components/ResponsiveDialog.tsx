@@ -15,15 +15,17 @@ interface ResponsiveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
+  /** Custom className forwarded to DialogContent / SheetContent */
+  className?: string;
 }
 
-export function ResponsiveDialog({ open, onOpenChange, children }: ResponsiveDialogProps) {
+export function ResponsiveDialog({ open, onOpenChange, children, className }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl pb-8">
+        <SheetContent side="bottom" className={`max-h-[85vh] overflow-y-auto rounded-t-2xl pb-8 ${className ?? ""}`}>
           {children}
         </SheetContent>
       </Sheet>
@@ -32,7 +34,7 @@ export function ResponsiveDialog({ open, onOpenChange, children }: ResponsiveDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className={`max-w-md max-h-[85vh] overflow-y-auto ${className ?? ""}`}>
         {children}
       </DialogContent>
     </Dialog>
