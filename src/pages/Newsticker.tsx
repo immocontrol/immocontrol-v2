@@ -166,7 +166,7 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
           const category = categoriseNews(title, description);
           const region = detectRegion(title, description);
           const sentiment = detectSentiment(title, description);
-          const safeId = `${source}-${encodeURIComponent(link).slice(0, 24)}`;
+          const safeId = `${source}-${encodeURIComponent(link).slice(0, 120)}`;
           let publishedAt: string;
           try {
             publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
