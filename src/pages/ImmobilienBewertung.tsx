@@ -157,7 +157,9 @@ const ImmobilienBewertung = () => {
     const yearBuilt = parsedData.baujahr || 1970;
     const brw = params.bodenrichtwert || 0;
 
-    const jahresRohertrag = monthlyRent * 12;
+    // Use jahresmiete directly if available (from Jahresnettokaltmiete/Mieteinnahmen),
+    // otherwise fall back to kaltmiete * 12
+    const jahresRohertrag = parsedData.jahresmiete > 0 ? parsedData.jahresmiete : monthlyRent * 12;
     const bewirtschaftung = jahresRohertrag * (params.bewirtschaftungskosten / 100);
     const jahresReinertrag = jahresRohertrag - bewirtschaftung;
 

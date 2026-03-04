@@ -24,6 +24,8 @@ export interface ParsedExposeData {
   kaufpreis: number;
   /** Monthly cold rent in EUR */
   kaltmiete: number;
+  /** Annual rent in EUR (from Jahresnettokaltmiete/Mieteinnahmen) — 0 if not found */
+  jahresmiete: number;
   /** Property type */
   immobilientyp: "EFH" | "DHH" | "RMH" | "REH" | "MFH" | "ETW" | "Bungalow" | "Villa" | "Sonstige";
   /** Condition */
@@ -213,16 +215,23 @@ export function parseExposeText(rawText: string): ParsedExposeData {
   ]);
   if (kaufpreis > 0) extractedFields.push("kaufpreis");
 
-  // Kaltmiete
+  // Kaltmiete (monthly only — annual patterns extracted separately below)
   const kaltmiete = extractNumber(text, [
     /Kaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
     /Nettokaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
     /Miete\s*(?:kalt)?\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
-    /Mieteinnahmen\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
     /Ist-Miete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
-    /Jahresnettokaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
   ]);
   if (kaltmiete > 0) extractedFields.push("kaltmiete");
+
+  // Jahresmiete (annual rent — Jahresnettokaltmiete, Mieteinnahmen are typically annual values)
+  const jahresmiete = extractNumber(text, [
+    /Jahresnettokaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /Jahresmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /Mieteinnahmen\s*(?:p\.?\s*a\.?|jährlich|gesamt)?\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /Jahresrohertrag\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+  ]);
+  if (jahresmiete > 0) extractedFields.push("jahresmiete");
 
   // Property type
   const immobilientyp = detectImmobilientyp(text);
@@ -300,6 +309,7 @@ export function parseExposeText(rawText: string): ParsedExposeData {
     zimmer,
     kaufpreis,
     kaltmiete,
+    jahresmiete,
     immobilientyp,
     zustand,
     ausstattung,

@@ -29,9 +29,22 @@ export function generateBewertungsPdf(
 ): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - 2 * margin;
+  const footerSpace = 25;
   let y = margin;
+  let pageNum = 1;
+
+  /** Check if adding neededHeight would overflow — if so, add a new page */
+  const checkPageBreak = (neededHeight: number) => {
+    if (y + neededHeight > pageHeight - footerSpace) {
+      addFooter();
+      doc.addPage();
+      pageNum++;
+      y = margin;
+    }
+  };
 
   const addText = (text: string, x: number, yPos: number, opts?: { fontSize?: number; fontStyle?: string; color?: [number, number, number]; maxWidth?: number }) => {
     doc.setFontSize(opts?.fontSize || 10);
@@ -47,21 +60,32 @@ export function generateBewertungsPdf(
     doc.line(margin, yPos, pageWidth - margin, yPos);
   };
 
-  const addSectionHeader = (title: string, yPos: number): number => {
-    doc.setFillColor(37, 99, 235);
-    doc.rect(margin, yPos - 1, contentWidth, 8, "F");
-    addText(title, margin + 3, yPos + 4.5, { fontSize: 11, fontStyle: "bold", color: [255, 255, 255] });
-    return yPos + 12;
+  const addFooter = () => {
+    const footerY = pageHeight - 10;
+    addLine(footerY - 3);
+    addText("ImmoControl - Immobilien-Schnellbewertung", margin, footerY, { fontSize: 7, color: [180, 180, 180] });
+    addText(`Seite ${pageNum} | ${new Date().toLocaleDateString("de-DE")}`, pageWidth - margin - 40, footerY, { fontSize: 7, color: [180, 180, 180] });
   };
 
-  const addKeyValue = (key: string, value: string, yPos: number, highlight = false): number => {
+  const addSectionHeader = (title: string): number => {
+    checkPageBreak(15);
+    doc.setFillColor(37, 99, 235);
+    doc.rect(margin, y - 1, contentWidth, 8, "F");
+    addText(title, margin + 3, y + 4.5, { fontSize: 11, fontStyle: "bold", color: [255, 255, 255] });
+    y += 12;
+    return y;
+  };
+
+  const addKeyValue = (key: string, value: string, highlight = false): number => {
+    checkPageBreak(10);
     if (highlight) {
       doc.setFillColor(245, 247, 250);
-      doc.rect(margin, yPos - 3, contentWidth, 7, "F");
+      doc.rect(margin, y - 3, contentWidth, 7, "F");
     }
-    addText(key, margin + 2, yPos, { fontSize: 9, color: [100, 100, 100] });
-    addText(value, margin + contentWidth / 2, yPos, { fontSize: 9, fontStyle: "bold" });
-    return yPos + 7;
+    addText(key, margin + 2, y, { fontSize: 9, color: [100, 100, 100] });
+    addText(value, margin + contentWidth / 2, y, { fontSize: 9, fontStyle: "bold" });
+    y += 7;
+    return y;
   };
 
   // === HEADER ===
@@ -73,18 +97,19 @@ export function generateBewertungsPdf(
   y = 45;
 
   // === OBJECT DATA ===
-  y = addSectionHeader("Objektdaten", y);
+  addSectionHeader("Objektdaten");
 
-  if (data.address) y = addKeyValue("Adresse", data.address, y);
-  if (data.immobilientyp !== "Sonstige") y = addKeyValue("Immobilientyp", data.immobilientyp, y, true);
-  if (data.wohnflaeche > 0) y = addKeyValue("Wohnflache", `${data.wohnflaeche.toLocaleString("de-DE")} m\u00B2`, y);
-  if (data.grundstueckFlaeche > 0) y = addKeyValue("Grundstucksflache", `${data.grundstueckFlaeche.toLocaleString("de-DE")} m\u00B2`, y, true);
-  if (data.baujahr > 0) y = addKeyValue("Baujahr", String(data.baujahr), y);
-  if (data.zimmer > 0) y = addKeyValue("Zimmer", String(data.zimmer), y, true);
-  if (data.kaufpreis > 0) y = addKeyValue("Kaufpreis", formatCurrency(data.kaufpreis), y);
-  if (data.kaltmiete > 0) y = addKeyValue("Kaltmiete / Monat", formatCurrency(data.kaltmiete), y, true);
-  if (data.zustand !== "Unbekannt") y = addKeyValue("Zustand", data.zustand, y);
-  if (data.ausstattung !== "Unbekannt") y = addKeyValue("Ausstattung", data.ausstattung, y, true);
+  if (data.address) addKeyValue("Adresse", data.address);
+  if (data.immobilientyp !== "Sonstige") addKeyValue("Immobilientyp", data.immobilientyp, true);
+  if (data.wohnflaeche > 0) addKeyValue("Wohnflache", `${data.wohnflaeche.toLocaleString("de-DE")} m\u00B2`);
+  if (data.grundstueckFlaeche > 0) addKeyValue("Grundstucksflache", `${data.grundstueckFlaeche.toLocaleString("de-DE")} m\u00B2`, true);
+  if (data.baujahr > 0) addKeyValue("Baujahr", String(data.baujahr));
+  if (data.zimmer > 0) addKeyValue("Zimmer", String(data.zimmer), true);
+  if (data.kaufpreis > 0) addKeyValue("Kaufpreis", formatCurrency(data.kaufpreis));
+  if (data.kaltmiete > 0) addKeyValue("Kaltmiete / Monat", formatCurrency(data.kaltmiete), true);
+  if (data.jahresmiete > 0) addKeyValue("Jahresmiete", formatCurrency(data.jahresmiete));
+  if (data.zustand !== "Unbekannt") addKeyValue("Zustand", data.zustand);
+  if (data.ausstattung !== "Unbekannt") addKeyValue("Ausstattung", data.ausstattung, true);
 
   // Features
   const features: string[] = [];
@@ -93,28 +118,29 @@ export function generateBewertungsPdf(
   if (data.aufzug) features.push("Aufzug");
   if (data.keller) features.push("Keller");
   if (data.stellplaetze > 0) features.push(`${data.stellplaetze} Stellplatz/e`);
-  if (features.length > 0) y = addKeyValue("Ausstattung", features.join(", "), y);
+  if (features.length > 0) addKeyValue("Merkmale", features.join(", "));
 
-  if (data.energiekennwert > 0) y = addKeyValue("Energiekennwert", `${data.energiekennwert} kWh/(m\u00B2*a)`, y, true);
+  if (data.energiekennwert > 0) addKeyValue("Energiekennwert", `${data.energiekennwert} kWh/(m\u00B2*a)`, true);
 
   y += 5;
 
   // === VALUATION PARAMETERS ===
-  y = addSectionHeader("Bewertungsparameter", y);
-  y = addKeyValue("Bodenrichtwert", `${valuation.bodenrichtwert} EUR/m\u00B2`, y);
-  y = addKeyValue("Bodenwert", formatCurrency(valuation.bodenwert), y, true);
-  y = addKeyValue("Jahresrohertrag", formatCurrency(valuation.jahresRohertrag), y);
-  y = addKeyValue("Jahresreinertrag", formatCurrency(valuation.jahresReinertrag), y, true);
-  y = addKeyValue("Restnutzungsdauer", `${valuation.restnutzungsdauer} Jahre`, y);
-  y = addKeyValue("Vervielfaltiger", valuation.vervielfaeltiger.toFixed(2), y, true);
-  y = addKeyValue("Herstellungskosten", formatCurrency(valuation.herstellungskosten), y);
-  y = addKeyValue("Altersminderung", `${(valuation.altersminderung * 100).toFixed(1)}%`, y, true);
+  addSectionHeader("Bewertungsparameter");
+  addKeyValue("Bodenrichtwert", `${valuation.bodenrichtwert} EUR/m\u00B2`);
+  addKeyValue("Bodenwert", formatCurrency(valuation.bodenwert), true);
+  addKeyValue("Jahresrohertrag", formatCurrency(valuation.jahresRohertrag));
+  addKeyValue("Jahresreinertrag", formatCurrency(valuation.jahresReinertrag), true);
+  addKeyValue("Restnutzungsdauer", `${valuation.restnutzungsdauer} Jahre`);
+  addKeyValue("Vervielfaltiger", valuation.vervielfaeltiger.toFixed(2), true);
+  addKeyValue("Herstellungskosten", formatCurrency(valuation.herstellungskosten));
+  addKeyValue("Altersminderung", `${(valuation.altersminderung * 100).toFixed(1)}%`, true);
   y += 5;
 
   // === RESULTS ===
-  y = addSectionHeader("Bewertungsergebnisse", y);
+  addSectionHeader("Bewertungsergebnisse");
 
   // Ertragswert
+  checkPageBreak(20);
   doc.setFillColor(240, 249, 255);
   doc.rect(margin, y - 2, contentWidth, 14, "F");
   addText("Ertragswertverfahren", margin + 3, y + 3, { fontSize: 9, color: [100, 100, 100] });
@@ -123,6 +149,7 @@ export function generateBewertungsPdf(
   y += 18;
 
   // Sachwert
+  checkPageBreak(20);
   doc.setFillColor(240, 253, 244);
   doc.rect(margin, y - 2, contentWidth, 14, "F");
   addText("Sachwertverfahren", margin + 3, y + 3, { fontSize: 9, color: [100, 100, 100] });
@@ -131,6 +158,7 @@ export function generateBewertungsPdf(
   y += 18;
 
   // Vergleichswert
+  checkPageBreak(20);
   doc.setFillColor(254, 249, 195);
   doc.rect(margin, y - 2, contentWidth, 14, "F");
   addText("Vergleichswertverfahren", margin + 3, y + 3, { fontSize: 9, color: [100, 100, 100] });
@@ -139,6 +167,7 @@ export function generateBewertungsPdf(
   y += 20;
 
   // === COMBINED RESULT ===
+  checkPageBreak(30);
   doc.setFillColor(37, 99, 235);
   doc.rect(margin, y - 2, contentWidth, 22, "F");
   addText("Geschatzter Marktwert (Durchschnitt)", margin + 3, y + 4, { fontSize: 10, color: [200, 220, 255] });
@@ -153,6 +182,7 @@ export function generateBewertungsPdf(
 
   // Sparkasse comparison note
   if (sparkasseResult?.requested) {
+    checkPageBreak(20);
     y += 3;
     addLine(y);
     y += 5;
@@ -170,7 +200,8 @@ export function generateBewertungsPdf(
   }
 
   // === DISCLAIMER ===
-  y = Math.max(y + 5, 250);
+  checkPageBreak(25);
+  y += 3;
   addLine(y);
   y += 4;
   addText("Hinweis", margin, y, { fontSize: 8, fontStyle: "bold", color: [150, 150, 150] });
@@ -184,11 +215,8 @@ export function generateBewertungsPdf(
     { fontSize: 7, color: [150, 150, 150], maxWidth: contentWidth },
   );
 
-  // Footer
-  const footerY = doc.internal.pageSize.getHeight() - 10;
-  addLine(footerY - 3);
-  addText("ImmoControl - Immobilien-Schnellbewertung", margin, footerY, { fontSize: 7, color: [180, 180, 180] });
-  addText(`Seite 1 von 1 | ${new Date().toLocaleDateString("de-DE")}`, pageWidth - margin - 50, footerY, { fontSize: 7, color: [180, 180, 180] });
+  // Footer on last page
+  addFooter();
 
   // Save
   const fileName = data.address
