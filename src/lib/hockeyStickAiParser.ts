@@ -65,7 +65,8 @@ function matchPattern(
 
 /**
  * Parse natural language input into simulation parameters.
- * Always returns a full set of params by filling missing ones with market defaults.
+ * Returns explicit + market defaults merged (explicit takes priority).
+ * This means using the AI field creates a fresh scenario with defaults for unmentioned params.
  */
 export function parseAiPrompt(rawInput: string): AiParseResult {
   const text = normalizeText(rawInput);
@@ -157,8 +158,8 @@ export function parseAiPrompt(rawInput: string): AiParseResult {
     applyScenarioDefaults(SCENARIOS[5].params);
   }
 
-  /* ── Only return explicitly parsed + scenario-matched updates (don't overwrite manual slider values) ── */
-  const updates: Partial<SimParams> = { ...explicitUpdates };
+  /* ── Merge: explicitly parsed values take priority, then fill gaps with market defaults ── */
+  const updates: Partial<SimParams> = { ...MARKET_DEFAULTS, ...explicitUpdates };
 
   /* ── Build description — use key membership, not value comparison ── */
   const parsed: string[] = [];
