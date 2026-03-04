@@ -442,7 +442,8 @@ const Deals = () => {
     a.href = url;
     a.download = `deals-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
-    URL.revokeObjectURL(url);
+    /* STRONG-16: Delay URL.revokeObjectURL — immediate revoke can race with download on slow devices */
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast.success("Deals als CSV exportiert");
   }, [deals]);
 
@@ -461,7 +462,8 @@ const Deals = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [addOpen]);
+    /* STRONG-20: Added hasDealDraft to dependency array — handler reads hasDealDraft but it was missing */
+  }, [addOpen, hasDealDraft]);
 
   /* UPD-32: Document title with deal count */
   useEffect(() => {

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail, Edit2, Save, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { queryKeys } from "@/lib/queryKeys";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   type SearchPlace, type BuildingInfo, type NearbyBusiness,
@@ -80,9 +81,9 @@ const CRM = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fetch leads
+  /* STRONG-12: Use centralised queryKeys instead of inline string arrays — ensures consistent cache invalidation */
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
-    queryKey: ["crm_leads", user?.id],
+    queryKey: queryKeys.crm.leads(user?.id),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("crm_leads")
@@ -94,9 +95,9 @@ const CRM = () => {
     enabled: !!user,
   });
 
-  // Fetch call logs for selected lead
+  /* STRONG-12: Use centralised queryKeys for call logs */
   const { data: callLogs = [] } = useQuery({
-    queryKey: ["crm_call_logs", selectedLead],
+    queryKey: queryKeys.crm.callLogs(selectedLead ?? undefined),
     queryFn: async () => {
       if (!selectedLead) return [];
       const { data, error } = await supabase

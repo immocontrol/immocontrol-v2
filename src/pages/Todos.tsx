@@ -281,7 +281,7 @@ const Todos = () => {
     return Array.from(set).sort();
   }, [todos]);
 
-
+  /* STRONG-7: Removed stray double blank line — consistent code formatting */
   const filtered = useMemo(() => {
     let result = todos.filter(t => !t.completed);
 
@@ -337,15 +337,18 @@ const Todos = () => {
   }, [todos]);
 
   /* FUNC-9: Average time to complete tasks */
+  /* STRONG-14: NaN guard on date arithmetic — prevents NaN display if created_at/completed_at is invalid */
   const avgCompletionDays = useMemo(() => {
     const completedWithDates = todos.filter(t => t.completed && t.completed_at && t.created_at);
     if (completedWithDates.length === 0) return 0;
     const totalDays = completedWithDates.reduce((s, t) => {
       const created = new Date(t.created_at).getTime();
       const completed = new Date(t.completed_at!).getTime();
-      return s + (completed - created) / (1000 * 60 * 60 * 24);
+      const diff = (completed - created) / (1000 * 60 * 60 * 24);
+      return s + (Number.isFinite(diff) ? diff : 0);
     }, 0);
-    return Math.round(totalDays / completedWithDates.length * 10) / 10;
+    const raw = totalDays / completedWithDates.length;
+    return Number.isFinite(raw) ? Math.round(raw * 10) / 10 : 0;
   }, [todos]);
 
   /* FUNC-10: Upcoming deadlines (next 3 days) */

@@ -73,9 +73,11 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
   const secondaryNetWorth = showRealValues ? last.netWorth : last.realNetWorth;
   const primaryNetWorthLabel = showRealValues ? "Real" : "Nominal";
   const secondaryNetWorthLabel = showRealValues ? "Nominal" : "Real";
-  const totalReturn = first.totalInvested > 0
+  /* STRONG-15: NaN/Infinity guard on totalReturn — prevents broken display if totalInvested is 0 or corrupt */
+  const rawTotalReturn = first.totalInvested > 0
     ? ((last.netWorth - first.totalInvested) / first.totalInvested * 100)
     : 0;
+  const totalReturn = Number.isFinite(rawTotalReturn) ? rawTotalReturn : 0;
 
   /* FEAT-17: Hockey Stick inflection point detection */
   const inflectionYear = useMemo(() => {

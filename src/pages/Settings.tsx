@@ -122,17 +122,28 @@ const Settings = () => {
     return () => { mounted = false; };
   }, [user]);
 
+  /* STRONG-11: Add error logging to handleUpdateProfile — previously errors were shown to user but not tracked */
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setLoading(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ display_name: displayName })
-      .eq("user_id", user.id);
-    setLoading(false);
-    if (error) toast.error("Fehler beim Speichern");
-    else toast.success("Profil aktualisiert!");
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName })
+        .eq("user_id", user.id);
+      if (error) {
+        toast.error("Fehler beim Speichern");
+        console.error("[Settings] Profile update failed:", error.message);
+      } else {
+        toast.success("Profil aktualisiert!");
+      }
+    } catch (err) {
+      toast.error("Unerwarteter Fehler beim Speichern");
+      console.error("[Settings] Unexpected profile update error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = async () => {

@@ -298,8 +298,11 @@ const RoleRouter = () => {
   );
 };
 
-/* #16: Initialize error tracking globally */
-initErrorTracking();
+/* STRONG-2: Use cleanup function from initErrorTracking — prevents duplicate listeners on HMR reload */
+const cleanupErrorTracking = initErrorTracking();
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => cleanupErrorTracking());
+}
 
 const App = () => {
   /* Unhandled rejection logging is handled by ErrorInterceptor (ErrorScanner.tsx)
