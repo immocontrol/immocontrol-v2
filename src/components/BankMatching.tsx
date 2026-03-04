@@ -373,7 +373,7 @@ const BankMatching = () => {
     },
   });
 
-  // ── Auto-match all ──
+  // ── IMP20-1: Auto-match all — enhanced: also invalidates MieteingangsTracker so rent tracker shows confirmed payments instantly ──
   const autoMatchAll = async () => {
     const unmatched = filteredTransactions.filter(t => !t.matched_payment_id && t.amount > 0);
     let count = 0;
@@ -386,8 +386,14 @@ const BankMatching = () => {
         } catch { /* skip */ }
       }
     }
-    if (count > 0) toast.success(`${count} Transaktionen automatisch zugeordnet`);
-    else toast.info("Keine neuen Matches gefunden");
+    if (count > 0) {
+      // IMP20-1: Sync MieteingangsTracker to reflect newly confirmed payments
+      queryClient.invalidateQueries({ queryKey: ["mieteingang_tracker"] });
+      queryClient.invalidateQueries({ queryKey: ["mieteingang_tenants"] });
+      toast.success(`${count} Transaktionen automatisch zugeordnet & Mieteingänge aktualisiert`);
+    } else {
+      toast.info("Keine neuen Matches gefunden");
+    }
   };
 
   // ── CSV Import ──

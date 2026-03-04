@@ -29,6 +29,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { DealToPropertyConverter } from "@/components/DealToPropertyConverter";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -854,6 +855,13 @@ const Deals = () => {
                 {editDeal ? "Speichern" : "Deal anlegen"}
               </LoadingButton>
             </div>
+            {/* IMP20-4: Deal → Immobilie Konvertierung for won deals */}
+            {editDeal && form.stage === "abgeschlossen" && (
+              <DealToPropertyConverter
+                deal={editDeal}
+                onConverted={() => { setAddOpen(false); setEditDeal(null); }}
+              />
+            )}
             {editDeal && form.stage !== "abgeschlossen" && form.stage !== "abgelehnt" && (
               <div className="flex gap-1 flex-wrap">
                 <span className="text-xs text-muted-foreground mr-1 mt-1">Verschieben:</span>

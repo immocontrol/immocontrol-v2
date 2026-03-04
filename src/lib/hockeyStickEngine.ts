@@ -67,6 +67,48 @@ export const DEFAULT_PARAMS: SimParams = {
   renovationBudgetPct: 0,
 };
 
+/**
+ * IMP20-3: Generate default params from real portfolio data.
+ * Loads current portfolio values (totalValue, cashflow, debt, property count) as starting parameters
+ * instead of hardcoded zero defaults.
+ */
+export function defaultParamsFromPortfolio(stats: {
+  totalValue: number;
+  totalCashflow: number;
+  totalDebt: number;
+  totalRent: number;
+  totalPurchase: number;
+  propertyCount: number;
+  avgRendite: number;
+}): Partial<SimParams> {
+  if (stats.propertyCount === 0 || stats.totalValue === 0) return {};
+  const equity = stats.totalValue - stats.totalDebt;
+  const leverageRatio = stats.totalValue > 0 ? (stats.totalDebt / stats.totalValue) * 100 : 0;
+  const rentYield = stats.avgRendite > 0 ? stats.avgRendite : 4;
+  const appreciation = stats.totalPurchase > 0
+    ? Math.max(1, Math.min(5, ((stats.totalValue - stats.totalPurchase) / stats.totalPurchase) * 100 / Math.max(1, stats.propertyCount)))
+    : 2;
+  return {
+    startCapital: Math.round(Math.max(0, equity)),
+    monthlyInvestment: Math.round(Math.max(0, stats.totalCashflow)),
+    annualReturn: 3.5,
+    annualAppreciation: Math.round(appreciation * 10) / 10,
+    inflationRate: 2,
+    taxRate: 26.375,
+    years: 20,
+    rentYield: Math.round(rentYield * 10) / 10,
+    leverageRatio: Math.round(Math.min(95, Math.max(0, leverageRatio))),
+    maintenancePct: 1,
+    vacancyRate: 3,
+    rentGrowthRate: 1.5,
+    managementFee: 5,
+    insurancePct: 0.3,
+    additionalProperties: Math.max(0, stats.propertyCount - 1),
+    propertyPurchaseInterval: 3,
+    renovationBudgetPct: 0.5,
+  };
+}
+
 export const SCENARIOS: Scenario[] = [
   { name: "Konservativ", description: "Niedrige Rendite, wenig Fremdkapital", params: { annualAppreciation: 1.5, rentYield: 3.5, leverageRatio: 50, annualReturn: 4, vacancyRate: 5 } },
   { name: "Ausgewogen", description: "Typisches Immobilieninvestment", params: { annualAppreciation: 2, rentYield: 4, leverageRatio: 75, annualReturn: 5, vacancyRate: 3, maintenancePct: 1 } },

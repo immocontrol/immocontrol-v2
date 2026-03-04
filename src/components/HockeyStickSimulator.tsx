@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { TrendingUp, Sliders, RotateCcw, Download, Save, Upload, Bookmark, Target, Zap, BarChart3, PieChart, Table, Copy, Share2, Euro, Building2, Calculator, AlertTriangle, Check, Sparkles, Send } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,30 @@ import jsPDF from "jspdf";
 import {
   type SimParams, type DataPoint, type ChartView, type SavedProfile, type Scenario,
   DEFAULT_PARAMS, SCENARIOS, simulate, sensitivityAnalysis,
-  loadProfiles, saveProfilesStore,
+  loadProfiles, saveProfilesStore, defaultParamsFromPortfolio,
 } from "@/lib/hockeyStickEngine";
 import { parseAiPrompt } from "@/lib/hockeyStickAiParser";
+import { useProperties } from "@/context/PropertyContext";
 
 /* IMP-3: Types, simulation engine, scenarios, and profile persistence
    extracted to @/lib/hockeyStickEngine.ts for modularity & testability */
 /* AI parser extracted to @/lib/hockeyStickAiParser.ts */
 
 export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean } = {}) {
+  const { stats: portfolioStats } = useProperties();
   const [open, setOpen] = useState(false);
   const [params, setParams] = useState<SimParams>(DEFAULT_PARAMS);
+  /* IMP20-3: Seed simulator from real portfolio data once loaded */
+  const hasAppliedPortfolio = useRef(false);
+  useEffect(() => {
+    if (!hasAppliedPortfolio.current && portfolioStats.propertyCount > 0) {
+      const portfolioDefaults = defaultParamsFromPortfolio(portfolioStats);
+      if (Object.keys(portfolioDefaults).length > 0) {
+        setParams(prev => ({ ...prev, ...portfolioDefaults }));
+        hasAppliedPortfolio.current = true;
+      }
+    }
+  }, [portfolioStats]);
   const [chartView, setChartView] = useState<ChartView>("growth");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>(loadProfiles);

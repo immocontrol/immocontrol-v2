@@ -60,6 +60,18 @@ import { DSCRWidget } from "@/components/DSCRWidget";
 import { BulkRentAdjustment } from "@/components/BulkRentAdjustment";
 import QuickNoteWidget from "@/components/QuickNoteWidget";
 
+/* IMP20 widgets */
+import { SteuerCockpit } from "@/components/SteuerCockpit";
+import { MonatsabschlussWidget } from "@/components/MonatsabschlussWidget";
+import { CashflowKalender } from "@/components/CashflowKalender";
+import { AutomaticMahnungen } from "@/components/AutomaticMahnungen";
+import { IndexMietanpassung } from "@/components/IndexMietanpassung";
+import { AutoTodoGenerator } from "@/components/AutoTodoGenerator";
+import { CrmFollowUpReminder } from "@/components/CrmFollowUpReminder";
+import { DatenGesundheitscheck } from "@/components/DatenGesundheitscheck";
+import { WartungskostenPrognose } from "@/components/WartungskostenPrognose";
+import { PortfolioStresstest } from "@/components/PortfolioStresstest";
+
 export type WidgetId =
   | "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals"
   | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung"
@@ -70,7 +82,10 @@ export type WidgetId =
   | "debtEquity" | "netWorth" | "leaseAlerts" | "actions" | "historie"
   | "reporting" | "kpiAlerts" | "zinsmonitor" | "cashflowScenarios"
   | "breakEven" | "dscr" | "bulkRent"
-  | "chart_cashflow" | "chart_monthly" | "chart_portfolio" | "chart_map";
+  | "chart_cashflow" | "chart_monthly" | "chart_portfolio" | "chart_map"
+  | "steuerCockpit" | "monatsabschluss" | "cashflowKalender" | "mahnungen"
+  | "indexMiete" | "autoTodos" | "crmFollowUp" | "datenCheck"
+  | "wartungsprognose" | "portfolioStress";
 
 export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   "chart_cashflow", "chart_monthly", "chart_portfolio", "chart_map",
@@ -83,6 +98,9 @@ export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   "zinsmonitor", "cashflowScenarios", "breakEven", "dscr", "bulkRent",
   "steuer", "tax", "geg", "grundsteuer", "mietpreisbremse", "leaseAlerts", "contractExpiry", "maintenance", "milestones",
   "historie", "reporting",
+  "steuerCockpit", "monatsabschluss", "cashflowKalender", "mahnungen",
+  "indexMiete", "autoTodos", "crmFollowUp", "datenCheck",
+  "wartungsprognose", "portfolioStress",
 ];
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
@@ -103,6 +121,11 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   bulkRent: "Mietanpassung",
   chart_cashflow: "Cashflow-Übersicht", chart_monthly: "Monatsübersicht",
   chart_portfolio: "Portfolio-Verteilung", chart_map: "Standortkarte",
+  steuerCockpit: "Steuer-Cockpit", monatsabschluss: "Monatsabschluss",
+  cashflowKalender: "Cashflow-Kalender", mahnungen: "Mahnungen",
+  indexMiete: "Index-Mietanpassung", autoTodos: "Auto-Todos",
+  crmFollowUp: "CRM Follow-Up", datenCheck: "Daten-Check",
+  wartungsprognose: "Wartungsprognose", portfolioStress: "Portfolio-Stresstest",
 };
 
 const FULL_WIDTH_WIDGETS = new Set<WidgetId>([
@@ -185,6 +208,17 @@ function renderWidgetContent({
     case "breakEven": return <BreakEvenAnalysis />;
     case "dscr": return <DSCRWidget />;
     case "bulkRent": return <BulkRentAdjustment />;
+    /* IMP20 widgets */
+    case "steuerCockpit": return <SteuerCockpit />;
+    case "monatsabschluss": return <MonatsabschlussWidget />;
+    case "cashflowKalender": return <CashflowKalender />;
+    case "mahnungen": return <AutomaticMahnungen />;
+    case "indexMiete": return <IndexMietanpassung />;
+    case "autoTodos": return <AutoTodoGenerator />;
+    case "crmFollowUp": return <CrmFollowUpReminder />;
+    case "datenCheck": return <DatenGesundheitscheck />;
+    case "wartungsprognose": return <WartungskostenPrognose />;
+    case "portfolioStress": return <PortfolioStresstest />;
     default: return <QuickNoteWidget />;
   }
 }
