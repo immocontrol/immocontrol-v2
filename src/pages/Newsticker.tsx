@@ -717,12 +717,12 @@ const Newsticker = () => {
           </div>
 
           {/* Reset filters */}
-          {(selectedCategories.size > 0 || selectedSentiment !== "all") && (
+          {(selectedCategories.size > 0 || selectedSentiment !== "all" || selectedRegion !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               className="text-xs"
-              onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); }}
+              onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedRegion("all"); }}
             >
               Alle Filter zur&#252;cksetzen
             </Button>
