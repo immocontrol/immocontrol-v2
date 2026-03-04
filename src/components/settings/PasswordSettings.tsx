@@ -16,7 +16,7 @@ interface PasswordSettingsProps {
 }
 
 export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
-  const { user } = useAuth();
+  const { user, isRecoverySession, clearRecoverySession } = useAuth();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,38 +28,45 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.email) return;
-    if (!oldPassword.trim()) { toast.error("Bitte gib dein aktuelles Passwort ein"); return; }
+
+    /* Fix 1: In recovery mode, skip old password validation — user doesn't know it */
+    if (!isRecoverySession) {
+      if (!oldPassword.trim()) { toast.error("Bitte gib dein aktuelles Passwort ein"); return; }
+      if (oldPassword === newPassword) { toast.error("Das neue Passwort muss sich vom alten unterscheiden"); return; }
+    }
     if (newPassword !== confirmPassword) { toast.error("Passwörter stimmen nicht überein"); return; }
     if (newPassword.length < 6) { toast.error("Passwort muss mindestens 6 Zeichen lang sein"); return; }
-    if (oldPassword === newPassword) { toast.error("Das neue Passwort muss sich vom alten unterscheiden"); return; }
     setLoading(true);
     try {
-      /* FIX-6: Save current session before signInWithPassword to restore it after verification.
-         signInWithPassword creates a new session at AAL1 which breaks AAL2 for MFA users. */
-      const { data: sessionData } = await supabase.auth.getSession();
-      const previousSession = sessionData?.session;
+      /* Fix 1: In recovery mode, call updateUser directly — Supabase recovery session allows it */
+      if (!isRecoverySession) {
+        /* FIX-6: Save current session before signInWithPassword to restore it after verification.
+           signInWithPassword creates a new session at AAL1 which breaks AAL2 for MFA users. */
+        const { data: sessionData } = await supabase.auth.getSession();
+        const previousSession = sessionData?.session;
 
-      const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: oldPassword });
-      if (verifyError) {
-        /* Restore previous session if verification failed */
+        const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: oldPassword });
+        if (verifyError) {
+          /* Restore previous session if verification failed */
+          if (previousSession) {
+            await supabase.auth.setSession({
+              access_token: previousSession.access_token,
+              refresh_token: previousSession.refresh_token,
+            });
+          }
+          setLoading(false);
+          toast.error("Aktuelles Passwort ist falsch");
+          return;
+        }
+
+        /* Restore the previous (AAL2) session before calling updateUser.
+           This ensures the update call has the proper AAL2 assurance level when MFA is enabled. */
         if (previousSession) {
           await supabase.auth.setSession({
             access_token: previousSession.access_token,
             refresh_token: previousSession.refresh_token,
           });
         }
-        setLoading(false);
-        toast.error("Aktuelles Passwort ist falsch");
-        return;
-      }
-
-      /* Restore the previous (AAL2) session before calling updateUser.
-         This ensures the update call has the proper AAL2 assurance level when MFA is enabled. */
-      if (previousSession) {
-        await supabase.auth.setSession({
-          access_token: previousSession.access_token,
-          refresh_token: previousSession.refresh_token,
-        });
       }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -72,8 +79,9 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
           toast.error(error.message);
         }
       } else {
-        toast.success("Passwort geändert!");
+        toast.success(isRecoverySession ? "Neues Passwort gesetzt! Du kannst dich jetzt damit anmelden." : "Passwort geändert!");
         setOldPassword(""); setNewPassword(""); setConfirmPassword("");
+        if (isRecoverySession) clearRecoverySession();
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler beim Ändern des Passworts");
@@ -85,17 +93,25 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
   return (
     <form id="passwort" ref={sectionRef} onSubmit={handleChangePassword} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:100ms] scroll-mt-20">
       <h2 className="text-sm font-semibold flex items-center gap-2">
-        <Lock className="h-4 w-4 text-muted-foreground" /> Passwort ändern
+        <Lock className="h-4 w-4 text-muted-foreground" />
+        {isRecoverySession ? "Neues Passwort setzen" : "Passwort ändern"}
       </h2>
-      <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Aktuelles Passwort *</Label>
-        <div className="relative">
-          <Input type={showOld ? "text" : "password"} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="••••••••" className="h-9 text-sm pr-10" autoComplete="current-password" required />
-          <button type="button" onClick={() => setShowOld(!showOld)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" tabIndex={-1}>
-            {showOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
+      {isRecoverySession && (
+        <p className="text-xs text-primary bg-primary/10 rounded-lg px-3 py-2">
+          Du wurdest über einen Passwort-Reset-Link hierher geleitet. Bitte setze jetzt ein neues Passwort.
+        </p>
+      )}
+      {!isRecoverySession && (
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Aktuelles Passwort *</Label>
+          <div className="relative">
+            <Input type={showOld ? "text" : "password"} value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="••••••••" className="h-9 text-sm pr-10" autoComplete="current-password" required />
+            <button type="button" onClick={() => setShowOld(!showOld)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" tabIndex={-1}>
+              {showOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground">Neues Passwort *</Label>
         <div className="relative">
@@ -121,8 +137,8 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
           <p className="text-[10px] text-profit flex items-center gap-1"><Check className="h-3 w-3" /> Passwörter stimmen überein</p>
         )}
       </div>
-      <Button type="submit" size="sm" disabled={loading || !oldPassword || !newPassword || newPassword !== confirmPassword}>
-        Passwort ändern
+      <Button type="submit" size="sm" disabled={loading || (!isRecoverySession && !oldPassword) || !newPassword || newPassword !== confirmPassword}>
+        {isRecoverySession ? "Neues Passwort setzen" : "Passwort ändern"}
       </Button>
     </form>
   );

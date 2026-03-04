@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { createDebounce, groupBy, sortByKey, truncate, pluralDE, parseNaturalDateDE } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -29,8 +30,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
-import { LoadingButton } from "@/components/LoadingButton";
+import { TodoEditDialog } from "@/components/todos/TodoEditDialog";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -145,43 +145,67 @@ const Todos = () => {
     enabled: !!user,
   });
 
-  const addMutation = useMutation({
-    mutationFn: async (input: { title: string; due_date?: string }) => {
+  /* Fix 8: Optimistic mutations — instant UI feedback with automatic rollback on error */
+  const todoQueryKey = queryKeys.todos.all(user?.id ?? "");
+
+  const addMutation = useOptimisticMutation<Todo, { title: string; due_date?: string }>({
+    queryKey: todoQueryKey,
+    mutationFn: async (input) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("todos" as never).insert({
+      const { data, error } = await supabase.from("todos" as never).insert({
         user_id: user.id,
         title: input.title.trim(),
         priority: 4,
         ...(input.due_date ? { due_date: input.due_date } : {}),
-      });
+      }).select().single();
       if (error) throw error;
+      return data as unknown as Todo;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") });
-      setQuickInput("");
-    },
-    onError: () => toast.error("Fehler beim Anlegen"),
+    optimisticUpdate: (old, input) => [
+      ...(old || []),
+      {
+        id: `temp-${Date.now()}`,
+        user_id: user?.id ?? "",
+        title: input.title.trim(),
+        description: "",
+        due_date: input.due_date ?? null,
+        due_time: null,
+        priority: 4,
+        completed: false,
+        completed_at: null,
+        project: "",
+        labels: [],
+        sort_order: (old?.length ?? 0) + 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ],
+    successMessage: "Aufgabe erstellt",
+    errorMessage: "Fehler beim Anlegen",
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Todo> }) => {
-      const { error } = await supabase.from("todos" as never).update({ ...updates, updated_at: new Date().toISOString() } as never).eq("id", id);
+  const updateMutation = useOptimisticMutation<Todo, { id: string; updates: Partial<Todo> }>({
+    queryKey: todoQueryKey,
+    mutationFn: async ({ id, updates }) => {
+      const { data, error } = await supabase.from("todos" as never).update({ ...updates, updated_at: new Date().toISOString() } as never).eq("id", id).select().single();
       if (error) throw error;
+      return data as unknown as Todo;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") }),
-    onError: () => toast.error("Fehler beim Aktualisieren"),
+    optimisticUpdate: (old, { id, updates }) =>
+      (old || []).map((t) => (t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t)),
+    errorMessage: "Fehler beim Aktualisieren",
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticMutation<Todo, string>({
+    queryKey: todoQueryKey,
+    mutationFn: async (id) => {
       const { error } = await supabase.from("todos" as never).delete().eq("id", id);
       if (error) throw error;
+      return { id, user_id: "", title: "", description: "", due_date: null, due_time: null, priority: 0, completed: false, completed_at: null, project: "", labels: [], sort_order: 0, created_at: "", updated_at: "" } satisfies Todo;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.todos.all(user?.id ?? "") });
-      toast.success("Aufgabe gelöscht");
-    },
-    onError: () => toast.error("Fehler beim Löschen"),
+    optimisticUpdate: (old, id) => (old || []).filter((t) => t.id !== id),
+    successMessage: "Aufgabe gelöscht",
+    errorMessage: "Fehler beim Löschen",
   });
 
   const toggleComplete = useCallback((todo: Todo) => {
@@ -248,6 +272,7 @@ const Todos = () => {
         }
       }
       addMutation.mutate({ title, due_date: dueDate });
+      setQuickInput("");
     }
   }, [quickInput, addMutation]);
 
@@ -663,77 +688,15 @@ const Todos = () => {
         )}
       </main>
 
-      {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
-      <ResponsiveDialog open={!!editTodo} onOpenChange={open => !open && setEditTodo(null)}>
-          <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Aufgabe bearbeiten</ResponsiveDialogTitle>
-          </ResponsiveDialogHeader>
-          <div className="space-y-3">
-            {/* UX-19: Auto-focus first field in dialogs */}
-            <Input
-              value={editForm.title}
-              onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="Titel"
-              className="h-9 text-sm font-medium"
-              autoFocus
-            />
-            <Textarea
-              value={editForm.description}
-              onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Beschreibung (optional)"
-              className="text-sm min-h-[80px] resize-none"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Fälligkeitsdatum</label>
-                <Input
-                  type="date"
-                  value={editForm.due_date}
-                  onChange={e => setEditForm(f => ({ ...f, due_date: e.target.value }))}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Uhrzeit</label>
-                <Input
-                  type="time"
-                  value={editForm.due_time}
-                  onChange={e => setEditForm(f => ({ ...f, due_time: e.target.value }))}
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Priorität</label>
-                <Select value={String(editForm.priority)} onValueChange={v => setEditForm(f => ({ ...f, priority: Number(v) }))}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Projekt</label>
-                <Input
-                  value={editForm.project}
-                  onChange={e => setEditForm(f => ({ ...f, project: e.target.value }))}
-                  placeholder="z.B. Arbeit"
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 pt-1">
-              {/* UX-14: LoadingButton with spinner during save */}
-              <LoadingButton onClick={saveEdit} className="flex-1" loading={updateMutation.isPending} disabled={!editForm.title.trim()}>
-                Speichern
-              </LoadingButton>
-              <Button variant="outline" onClick={() => setEditTodo(null)}>Abbrechen</Button>
-            </div>
-          </div>
-      </ResponsiveDialog>
+      {/* Fix 3c: Extracted to TodoEditDialog component */}
+      <TodoEditDialog
+        open={!!editTodo}
+        onClose={() => setEditTodo(null)}
+        form={editForm}
+        onFormChange={setEditForm}
+        onSave={saveEdit}
+        isSaving={updateMutation.isPending}
+      />
 
       {/* Wiederkehrende Aufgaben — moved from Dashboard */}
       <RecurringTodos onCreateTodo={(title, dueDate) => {
@@ -814,10 +777,10 @@ const TodoRow = memo(({ todo, onToggle, onEdit, onDelete }: TodoRowProps) => {
       </div>
 
       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(todo)}>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(todo)} aria-label="Aufgabe bearbeiten">
           <Edit2 className="h-3 w-3" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(todo.id)}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(todo.id)} aria-label="Aufgabe löschen">
           <Trash2 className="h-3 w-3" />
         </Button>
       </div>
