@@ -47,6 +47,7 @@ const ROUTES = {
   INVITATION: "/einladung",
   DOKUMENTE: "/dokumente",
   WARTUNG: "/wartungsplaner",
+  NEWSTICKER: "/newsticker",
 } as const;
 
 // Lazy imports with preloading
@@ -74,6 +75,7 @@ const dealsImport = () => import("@/pages/Deals");
 const dokumenteImport = () => import("@/pages/Dokumente");
 const wartungsplanerImport = () => import("@/pages/Wartungsplaner");
 const hockeyStickImport = () => import("@/pages/HockeyStickPage");
+const newstickerImport = () => import("@/pages/Newsticker");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -99,6 +101,7 @@ const Deals = lazy(dealsImport);
 const Dokumente = lazy(dokumenteImport);
 const Wartungsplaner = lazy(wartungsplanerImport);
 const HockeyStickPage = lazy(hockeyStickImport);
+const Newsticker = lazy(newstickerImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -121,6 +124,7 @@ const preloadRoutes = () => {
   dokumenteImport();
   wartungsplanerImport();
   hockeyStickImport();
+  newstickerImport();
 };
 
 const PageLoader = () => (
@@ -290,6 +294,7 @@ const RoleRouter = () => {
           <Route path={ROUTES.DOKUMENTE} element={<ErrorBoundary><Dokumente /></ErrorBoundary>} />
           <Route path={ROUTES.WARTUNG} element={<ErrorBoundary><Wartungsplaner /></ErrorBoundary>} />
           <Route path={ROUTES.HOCKEY_STICK} element={<ErrorBoundary><HockeyStickPage /></ErrorBoundary>} />
+          <Route path={ROUTES.NEWSTICKER} element={<ErrorBoundary><Newsticker /></ErrorBoundary>} />
           <Route path={ROUTES.SETTINGS} element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

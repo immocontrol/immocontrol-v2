@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo, useMemo } from "react";
 import { useOnlineStatusNotifications } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown, TrendingUp, Newspaper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useProperties } from "@/context/PropertyContext";
@@ -73,6 +73,7 @@ const navEntries: NavEntry[] = [
     items: [
       { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
       { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
+      { path: "/newsticker", label: "Newsticker", icon: Newspaper, shortcut: "" },
     ],
   },
   /* Settings moved to header icon bar — no longer a nav entry */
