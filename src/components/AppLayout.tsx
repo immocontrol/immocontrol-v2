@@ -27,7 +27,7 @@ import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
-import { NotificationCenter } from "@/components/NotificationCenter";
+// NotificationCenter import removed — duplicate bell icon with NotificationBell (Devin Review fix)
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -686,8 +686,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
               <NotificationBell />
-              {/* UX-2: Notification Center with History */}
-              <NotificationCenter />
+              {/* UX-2: Notification Center with History — uses NotificationBell for real notifications, Center removed to avoid duplicate bell icons */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link to="/einstellungen" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Einstellungen">

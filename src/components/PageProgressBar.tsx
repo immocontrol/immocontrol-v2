@@ -28,15 +28,16 @@ const PageProgressBar = memo(() => {
 
   useEffect(() => {
     const cleanup = startProgress();
+    let innerTimer: ReturnType<typeof setTimeout>;
     // Complete after a short delay (route loaded)
     const timer = setTimeout(() => {
       setProgress(100);
-      setTimeout(() => {
+      innerTimer = setTimeout(() => {
         setVisible(false);
         setProgress(0);
       }, 300);
     }, 400);
-    return () => { cleanup(); clearTimeout(timer); };
+    return () => { cleanup(); clearTimeout(timer); clearTimeout(innerTimer); };
   }, [location.pathname, startProgress]);
 
   if (!visible) return null;
