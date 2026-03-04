@@ -332,7 +332,8 @@ export function parseExposeText(rawText: string): ParsedExposeData {
 /** Extract text from a PDF file using pdfjs-dist */
 export async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  // Use local worker file copied to public/ (CDN does not carry version 5.4.624)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("/pdf.worker.min.mjs", window.location.origin).href;
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
