@@ -28,7 +28,7 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     logger.error("ErrorBoundary caught", "ErrorBoundary", { error: error.message, stack: info.componentStack });
     /* FUND-20: Persist caught errors to localStorage tracking — survives page reload for diagnostics */
-    trackError(error, "react", info.componentStack ?? undefined);
+    trackError(error, "component", info.componentStack ?? undefined);
   }
 
   /* STR-1: Retry with exponential backoff — prevents rapid retry loops */
