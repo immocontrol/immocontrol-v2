@@ -209,7 +209,7 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
               <Copy className="h-3.5 w-3.5" /> Alle Codes kopieren
             </Button>
             <div className="space-y-1.5 border-t border-border pt-3">
-              <Label className="text-xs text-muted-foreground">Tippe &quot;Bestätigt&quot; um zu bestätigen</Label>
+              <Label className="text-xs text-muted-foreground">Tippe "Bestätigt" um zu bestätigen</Label>
               <Input value={backupConfirmText} onChange={(e) => setBackupConfirmText(e.target.value)} placeholder="Bestätigt" className="h-9 text-sm" />
             </div>
             <Button onClick={() => { setBackupCodesAcknowledged(true); setShowBackupCodes(false); toast.success("Backup-Codes bestätigt!"); }}

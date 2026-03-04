@@ -47,36 +47,111 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
   const handleAiPrompt = useCallback(() => {
     if (!aiPrompt.trim()) return;
     setAiLoading(true);
-    const text = aiPrompt.toLowerCase();
+    const text = aiPrompt.toLowerCase().replace(/\./g, (m, offset, str) => {
+      /* Preserve decimal dots (e.g. 3.5) but remove thousand separators (e.g. 50.000) */
+      const before = str[offset - 1];
+      const after = str[offset + 1];
+      if (before && /\d/.test(before) && after && /\d/.test(after)) {
+        /* Check if it looks like a thousand separator (3+ digits after dot) */
+        const afterDigits = str.slice(offset + 1).match(/^\d+/);
+        if (afterDigits && afterDigits[0].length === 3) return ""; /* thousand separator → remove */
+      }
+      return m;
+    });
     const updates: Partial<SimParams> = {};
 
-    /* Parse common natural language patterns */
-    const capitalMatch = text.match(/(\d+[.,]?\d*)\s*(k|tsd|tausend)?\s*(euro|\u20ac|eur|startkapital|eigenkapital)/i);
-    if (capitalMatch) {
-      let val = parseFloat(capitalMatch[1].replace(",", "."));
-      if (capitalMatch[2]) val *= 1000;
-      updates.startCapital = val;
+    /* Helper: parse a German-style number (supports both , and . as decimal separator) */
+    const parseNum = (s: string) => parseFloat(s.replace(",", "."));
+
+    /* Parse common natural language patterns — support both "number keyword" and "keyword number" */
+    const capitalPatterns = [
+      /(\d+[.,]?\d*)\s*(k|tsd|tausend)?\s*(euro|\u20ac|eur|startkapital|eigenkapital|budget|kapital)/i,
+      /(startkapital|eigenkapital|budget|kapital)[:\s]*(\d+[.,]?\d*)\s*(k|tsd|tausend)?\s*(euro|\u20ac|eur)?/i,
+    ];
+    for (const pat of capitalPatterns) {
+      const m = text.match(pat);
+      if (m && !updates.startCapital) {
+        /* Pattern 1: number first; Pattern 2: keyword first */
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        const numStr = isReverse ? m[2] : m[1];
+        const multiplier = isReverse ? m[3] : m[2];
+        let val = parseNum(numStr);
+        if (multiplier && /^(k|tsd|tausend)$/i.test(multiplier)) val *= 1000;
+        updates.startCapital = val;
+      }
     }
 
-    const monthlyMatch = text.match(/(\d+[.,]?\d*)\s*(euro|\u20ac)?\s*(monat|mtl|pro monat|monthly)/i);
-    if (monthlyMatch) {
-      updates.monthlyInvestment = parseFloat(monthlyMatch[1].replace(",", "."));
+    const monthlyPatterns = [
+      /(\d+[.,]?\d*)\s*(euro|\u20ac|eur)?\s*(monat|mtl|pro monat|monthly|sparrate|investition\/m)/i,
+      /(monat|mtl|sparrate|monatlich)[:\s]*(\d+[.,]?\d*)\s*(euro|\u20ac|eur)?/i,
+    ];
+    for (const pat of monthlyPatterns) {
+      const m = text.match(pat);
+      if (m && !updates.monthlyInvestment) {
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        updates.monthlyInvestment = parseNum(isReverse ? m[2] : m[1]);
+      }
     }
 
-    const yearsMatch = text.match(/(\d+)\s*(jahre|j\.|year)/i);
-    if (yearsMatch) updates.years = parseInt(yearsMatch[1]);
+    const yearPatterns = [
+      /(\d+)\s*(jahre?|j\.|year|laufzeit)/i,
+      /(laufzeit|zeitraum|dauer)[:\s]*(\d+)/i,
+    ];
+    for (const pat of yearPatterns) {
+      const m = text.match(pat);
+      if (m && !updates.years) {
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        updates.years = parseInt(isReverse ? m[2] : m[1]);
+      }
+    }
 
-    const renditeMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(rendite|mietrendite|yield)/i);
-    if (renditeMatch) updates.rentYield = parseFloat(renditeMatch[1].replace(",", "."));
+    const renditePatterns = [
+      /(\d+[.,]?\d*)\s*%?\s*(rendite|mietrendite|yield|brutto)/i,
+      /(rendite|mietrendite|yield)[:\s]*(\d+[.,]?\d*)\s*%?/i,
+    ];
+    for (const pat of renditePatterns) {
+      const m = text.match(pat);
+      if (m && !updates.rentYield) {
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        updates.rentYield = parseNum(isReverse ? m[2] : m[1]);
+      }
+    }
 
-    const zinsMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(zins|zinssatz|interest)/i);
-    if (zinsMatch) updates.annualReturn = parseFloat(zinsMatch[1].replace(",", "."));
+    const zinsPatterns = [
+      /(\d+[.,]?\d*)\s*%?\s*(zins|zinssatz|interest|darlehenszins)/i,
+      /(zins|zinssatz|darlehenszins)[:\s]*(\d+[.,]?\d*)\s*%?/i,
+    ];
+    for (const pat of zinsPatterns) {
+      const m = text.match(pat);
+      if (m && !updates.annualReturn) {
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        updates.annualReturn = parseNum(isReverse ? m[2] : m[1]);
+      }
+    }
 
-    const hebelMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(hebel|fremdkapital|leverage|fk)/i);
-    if (hebelMatch) updates.leverageRatio = parseFloat(hebelMatch[1].replace(",", "."));
+    const hebelPatterns = [
+      /(\d+[.,]?\d*)\s*%?\s*(hebel|fremdkapital|leverage|fk-quote|fk)/i,
+      /(hebel|fremdkapital|leverage|fk-quote|fk)[:\s]*(\d+[.,]?\d*)\s*%?/i,
+    ];
+    for (const pat of hebelPatterns) {
+      const m = text.match(pat);
+      if (m && !updates.leverageRatio) {
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        updates.leverageRatio = parseNum(isReverse ? m[2] : m[1]);
+      }
+    }
 
-    const wertMatch = text.match(/(\d+[.,]?\d*)\s*%?\s*(wertsteigerung|appreciation)/i);
-    if (wertMatch) updates.annualAppreciation = parseFloat(wertMatch[1].replace(",", "."));
+    const wertPatterns = [
+      /(\d+[.,]?\d*)\s*%?\s*(wertsteigerung|appreciation|wachstum)/i,
+      /(wertsteigerung|appreciation|wachstum)[:\s]*(\d+[.,]?\d*)\s*%?/i,
+    ];
+    for (const pat of wertPatterns) {
+      const m = text.match(pat);
+      if (m && !updates.annualAppreciation) {
+        const isReverse = /^[a-zäöü]/i.test(m[1]);
+        updates.annualAppreciation = parseNum(isReverse ? m[2] : m[1]);
+      }
+    }
 
     /* Keyword-based scenario selection — only set keys not already parsed from explicit values */
     const applyScenarioDefaults = (scenarioParams: Partial<SimParams>) => {
@@ -94,9 +169,10 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
       applyScenarioDefaults(SCENARIOS[5].params);
     }
 
+    /* If no explicit params were parsed but we have scenario keywords, still count as success */
     if (Object.keys(updates).length > 0) {
       setParams(prev => ({ ...prev, ...updates }));
-      /* Fix 17: Generate scenario description with assumptions */
+      /* Generate scenario description with assumptions */
       const assumptions: string[] = [];
       if (updates.startCapital) assumptions.push(`Startkapital: ${updates.startCapital.toLocaleString("de-DE")} \u20ac`);
       if (updates.monthlyInvestment) assumptions.push(`Monatliche Investition: ${updates.monthlyInvestment.toLocaleString("de-DE")} \u20ac`);
@@ -447,7 +523,7 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="gradient-card rounded-lg border border-border p-3 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nettoverm&#246;gen ({primaryNetWorthLabel})</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nettovermögen ({primaryNetWorthLabel})</p>
               <p className="text-sm font-bold text-profit mt-1">{formatCurrencyCompact(primaryNetWorth)}</p>
               <p className="text-[9px] text-muted-foreground">{secondaryNetWorthLabel}: {formatCurrencyCompact(secondaryNetWorth)}</p>
             </div>
@@ -652,7 +728,7 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
               <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
                 <div className="text-center space-y-2">
                   <BarChart3 className="h-8 w-8 mx-auto opacity-30" />
-                  <p>Klicke &quot;Als Vergleich&quot; um Szenarien zu vergleichen</p>
+                  <p>Klicke "Als Vergleich" um Szenarien zu vergleichen</p>
                 </div>
               </div>
             )}

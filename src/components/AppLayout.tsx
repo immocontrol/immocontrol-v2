@@ -483,7 +483,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-loss/75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-loss"></span>
             </span>
-            Keine Internetverbindung &ndash; Lokale Änderungen werden beim Reconnect synchronisiert
+            Keine Internetverbindung – Lokale Änderungen werden beim Reconnect synchronisiert
           </span>
         </div>
       )}

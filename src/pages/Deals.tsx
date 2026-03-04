@@ -499,7 +499,7 @@ const Deals = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Deal Pipeline</h1>
           <p className="text-muted-foreground text-sm">
-            {stats.active.length} aktive Deals &middot; {fmt(stats.totalVol)} Volumen
+            {stats.active.length} aktive Deals · {fmt(stats.totalVol)} Volumen
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

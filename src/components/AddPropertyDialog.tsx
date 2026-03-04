@@ -222,7 +222,7 @@ const AddPropertyDialog = () => {
         <DialogHeader>
           <DialogTitle>Neues Objekt anlegen</DialogTitle>
           <DialogDescription>
-            Schritt {step + 1} von 3 &mdash; {STEP_LABELS[step]}
+            Schritt {step + 1} von 3 — {STEP_LABELS[step]}
           </DialogDescription>
         </DialogHeader>
 

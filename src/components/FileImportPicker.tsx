@@ -176,7 +176,7 @@ export function FileImportPicker({
           </div>
           <div className="bg-secondary/50 rounded-lg p-2.5 text-center">
             <p className="text-[10px] text-muted-foreground">
-              <strong>Tipp:</strong> Auf dem iPhone wähle &quot;Durchsuchen&quot; im Datei-Dialog,
+              <strong>Tipp:</strong> Auf dem iPhone wähle "Durchsuchen" im Datei-Dialog,
               um auf iCloud, Google Drive, OneDrive und Dropbox zuzugreifen.
             </p>
           </div>

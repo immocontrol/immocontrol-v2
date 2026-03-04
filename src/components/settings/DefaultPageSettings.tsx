@@ -44,7 +44,7 @@ export function DefaultPageSettings({ sectionRef }: DefaultPageSettingsProps) {
         <Home className="h-4 w-4 text-muted-foreground" /> Standardseite nach Login
       </h2>
       <p className="text-xs text-muted-foreground">
-        W&auml;hle welche Seite nach dem Login als Erstes angezeigt werden soll.
+        Wähle welche Seite nach dem Login als Erstes angezeigt werden soll.
       </p>
       <Select value={defaultPage} onValueChange={handleChange}>
         <SelectTrigger className="h-9 text-sm">
