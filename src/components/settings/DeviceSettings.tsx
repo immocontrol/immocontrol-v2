@@ -63,21 +63,22 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
 
   const removeDevice = async (deviceId: string) => {
     try {
-      /* FIX-9: Immediately update UI before async operations for instant feedback */
+      /* Immediately update UI before async operations for instant feedback */
       setDevices(prev => prev.filter(d => d.id !== deviceId));
+      /* Revoke ALL other sessions so the target device loses access immediately.
+         Supabase doesn't support revoking a single session by device ID,
+         so we revoke all others — the current device stays logged in. */
+      await supabase.auth.signOut({ scope: "others" });
+      /* Then clean up the device list in user metadata */
       const { data: userData } = await supabase.auth.getUser();
       const storedDevices = (userData?.user?.user_metadata?.devices || []) as Array<{ id: string; userAgent: string; lastActive: string }>;
-      const updated = storedDevices.filter(d => d.id !== deviceId);
+      const updated = storedDevices.filter(d => d.id === deviceId ? false : true);
       await supabase.auth.updateUser({ data: { devices: updated } });
-      /* Note: We only remove the device from the metadata list here.
-         Supabase doesn't support revoking a specific session by device ID,
-         so the device entry is removed but the session may persist until it expires.
-         For full session revocation, use "Alle anderen Ger\u00e4te abmelden". */
-      toast.success("Ger\u00e4t aus Liste entfernt");
+      toast.success("Gerät abgemeldet — Session sofort beendet");
     } catch (err: unknown) {
       /* Revert optimistic update on error */
       fetchDevices();
-      toast.error(err instanceof Error ? err.message : "Fehler beim Entfernen des Ger\u00e4ts");
+      toast.error(err instanceof Error ? err.message : "Fehler beim Abmelden des Geräts");
     }
   };
 
@@ -103,7 +104,7 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
     <div id="geraete" ref={sectionRef} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:110ms] scroll-mt-20">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold flex items-center gap-2">
-          <MonitorSmartphone className="h-4 w-4 text-muted-foreground" /> Angemeldete Ger&auml;te
+          <MonitorSmartphone className="h-4 w-4 text-muted-foreground" /> Angemeldete Geräte
         </h2>
         {devices.length > 1 && (
           <Button variant="ghost" size="sm" className="h-7 text-[10px] text-muted-foreground" onClick={logoutAllOtherDevices}>
@@ -112,10 +113,10 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        &Uuml;berblick &uuml;ber alle Ger&auml;te, die aktuell bei deinem Konto angemeldet sind.
+        Überblick über alle Geräte, die aktuell bei deinem Konto angemeldet sind.
       </p>
       {devicesLoading ? (
-        <div className="text-xs text-muted-foreground animate-pulse">Lade Ger&auml;te...</div>
+        <div className="text-xs text-muted-foreground animate-pulse">Lade Geräte...</div>
       ) : (
         <div className="space-y-2">
           {devices.map(device => (
@@ -132,7 +133,7 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
                   <span className="text-xs font-medium truncate">{parseDeviceName(device.userAgent)}</span>
                   <span className="text-[10px] text-muted-foreground">{parseBrowser(device.userAgent)}</span>
                   {device.isCurrent && (
-                    <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold shrink-0">Dieses Ger&auml;t</span>
+                    <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold shrink-0">Dieses Gerät</span>
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground truncate mt-0.5">
@@ -146,7 +147,7 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
                       <LogOut className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Ger&auml;t aus Liste entfernen</TooltipContent>
+                  <TooltipContent>Gerät abmelden</TooltipContent>
                 </Tooltip>
               )}
             </div>

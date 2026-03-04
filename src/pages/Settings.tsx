@@ -178,7 +178,7 @@ const Settings = () => {
   return (
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
       {/* Settings sidebar navigation */}
-      <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <aside className="hidden lg:flex lg:items-center w-48 shrink-0">
         <nav className="space-y-0.5 w-full">
           {SETTINGS_SECTIONS.map(section => {
             const SectionIcon = section.icon;
@@ -323,24 +323,24 @@ const Settings = () => {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Konto l\u00f6schen
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Konto löschen
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-destructive">Konto unwiderruflich l\u00f6schen?</AlertDialogTitle>
+                <AlertDialogTitle className="text-destructive">Konto unwiderruflich löschen?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Alle deine Daten werden dauerhaft gel\u00f6scht. Du hast 30 Tage Zeit, dein Konto per E-Mail an{" "}
+                  Alle deine Daten werden dauerhaft gelöscht. Du hast 30 Tage Zeit, dein Konto per E-Mail an{" "}
                   <a href="mailto:support@immocontrol.app" className="text-primary underline underline-offset-2">support@immocontrol.app</a>{" "}
-                  wiederherzustellen. Danach ist die L\u00f6schung endg\u00fcltig.
+                  wiederherzustellen. Danach ist die Löschung endgültig.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-1.5 my-2">
-                <Label className="text-xs text-muted-foreground">Tippe &bdquo;L\u00d6SCHEN&ldquo; zur Best\u00e4tigung</Label>
+                <Label className="text-xs text-muted-foreground">Tippe „LÖSCHEN" zur Bestätigung</Label>
                 <Input
                   value={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.value)}
-                  placeholder="L\u00d6SCHEN"
+                  placeholder="LÖSCHEN"
                   className="h-9 text-sm"
                 />
               </div>
@@ -348,13 +348,13 @@ const Settings = () => {
                 <AlertDialogCancel onClick={() => setDeleteConfirm("")}>Abbrechen</AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  disabled={deleteConfirm !== "L\u00d6SCHEN"}
+                  disabled={deleteConfirm !== "LÖSCHEN"}
                   onClick={async () => {
-                    toast.info("Bitte kontaktiere den Support, um dein Konto zu l\u00f6schen.");
+                    toast.info("Bitte kontaktiere den Support, um dein Konto zu löschen.");
                     setDeleteConfirm("");
                   }}
                 >
-                  Konto l\u00f6schen
+                  Konto löschen
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

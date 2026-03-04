@@ -28,7 +28,7 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
       </h2>
       <p className="text-xs text-muted-foreground">
         Verbinde deinen Telegram Bot, um Deal-Nachrichten direkt in ImmoControl zu importieren.
-        Kopiere dazu die Nachrichten aus deinem Telegram-Channel und nutze den &quot;Telegram Import&quot; Button auf der Deals-Seite.
+        Kopiere dazu die Nachrichten aus deinem Telegram-Channel und nutze den "Telegram Import" Button auf der Deals-Seite.
       </p>
       <div className="space-y-3">
         <div className="space-y-1.5">
@@ -78,8 +78,8 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
           <ol className="text-[11px] text-muted-foreground space-y-1 list-decimal list-inside">
             <li>Erstelle einen Bot bei <span className="font-mono text-[10px]">@BotFather</span> auf Telegram</li>
             <li>Kopiere den Bot Token und trage ihn oben ein</li>
-            <li>F&uuml;ge den Bot zu deinem Deal-Channel hinzu</li>
-            <li>Gehe zur <span className="font-medium text-foreground">Deals</span>-Seite und nutze den &quot;Telegram Import&quot; Button</li>
+            <li>Füge den Bot zu deinem Deal-Channel hinzu</li>
+            <li>Gehe zur <span className="font-medium text-foreground">Deals</span>-Seite und nutze den "Telegram Import" Button</li>
           </ol>
         </div>
       </div>
