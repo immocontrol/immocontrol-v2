@@ -46,8 +46,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       : `Portfolio (${count}) – ImmoControl`;
   }, [mode, properties.length]);
 
+  /* STRONG-13: Use centralised queryKeys for tenant dashboard query — ensures consistent cache invalidation */
   const { data: allTenants = [] } = useQuery({
-    queryKey: ["all_tenants_dashboard"],
+    queryKey: [...queryKeys.tenants.byProperty("_dashboard")],
     queryFn: async () => {
       const { data } = await supabase.from("tenants").select("property_id, is_active, monthly_rent");
       return (data || []) as { property_id: string; is_active: boolean; monthly_rent: number }[];

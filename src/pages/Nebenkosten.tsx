@@ -196,10 +196,12 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
   };
 
   /* FUNC-34: NK per sqm calculation */
+  /* STRONG-17: NaN/Infinity guard on NK per sqm — prevents broken display if sqm data is missing */
   const nkPerSqm = useMemo(() => {
     const totalCosts = billings.reduce((s, b) => s + Number(b.total_costs || 0), 0);
     const totalSqm = properties.reduce((s, p) => s + (p.sqm || 0), 0);
-    return totalSqm > 0 ? (totalCosts / totalSqm) : 0;
+    const raw = totalSqm > 0 ? (totalCosts / totalSqm) : 0;
+    return Number.isFinite(raw) ? raw : 0;
   }, [billings, properties]);
 
   /* FUNC-35: Billing status summary */
@@ -218,9 +220,10 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
     return totals;
   }, [billingItems]);
 
-
-  const selectedBillingData = billings.find(b => b.id === selectedBilling);
-  const filteredTenants = form.property_id ? tenants.filter(t => t.property_id === form.property_id) : [];
+  /* STRONG-3: Memoize selectedBillingData — previously recalculated via .find() on every render */
+  const selectedBillingData = useMemo(() => billings.find(b => b.id === selectedBilling), [billings, selectedBilling]);
+  /* STRONG-4: Memoize filteredTenants — prevents re-filtering on unrelated state changes */
+  const filteredTenants = useMemo(() => form.property_id ? tenants.filter(t => t.property_id === form.property_id) : [], [tenants, form.property_id]);
 
   /* IMP-41-13: NK per sqm display in subtitle for quick reference */
   const nkPerSqmFormatted = useMemo(() => {

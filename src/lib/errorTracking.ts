@@ -84,21 +84,29 @@ export function getErrorCount(): number {
   return loadErrors().length;
 }
 
-/** Initialize global error listeners */
-export function initErrorTracking() {
-  // Catch unhandled errors
-  window.addEventListener("error", (event) => {
+/* STRONG-1: Return cleanup function from initErrorTracking so listeners can be removed on HMR / unmount.
+   Previously listeners were added but never removed, causing duplicate tracking in development. */
+export function initErrorTracking(): () => void {
+  const onError = (event: ErrorEvent) => {
     trackError(
       event.error instanceof Error ? event.error : new Error(event.message),
       "error"
     );
-  });
+  };
 
-  // Catch unhandled promise rejections
-  window.addEventListener("unhandledrejection", (event) => {
+  const onUnhandledRejection = (event: PromiseRejectionEvent) => {
     const error = event.reason instanceof Error
       ? event.reason
       : new Error(String(event.reason));
     trackError(error, "unhandledrejection");
-  });
+  };
+
+  window.addEventListener("error", onError);
+  window.addEventListener("unhandledrejection", onUnhandledRejection);
+
+  // Return cleanup function
+  return () => {
+    window.removeEventListener("error", onError);
+    window.removeEventListener("unhandledrejection", onUnhandledRejection);
+  };
 }

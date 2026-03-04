@@ -55,9 +55,12 @@ export const formatTime = (dateStr: string) =>
   });
 
 /** IMP-46: Format relative time in German (e.g. "vor 5 Min.") */
+/* STRONG-8: Guard against invalid date strings — prevents NaN propagation in relative time display */
 export const relativeTime = (dateStr: string): string => {
   const now = Date.now();
-  const diff = now - new Date(dateStr).getTime();
+  const parsed = new Date(dateStr).getTime();
+  if (isNaN(parsed)) return "–";
+  const diff = now - parsed;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "gerade eben";
   if (mins < 60) return `vor ${mins} Min.`;
@@ -411,10 +414,13 @@ export const sanitizeText = (input: string): string =>
   input.replace(/<[^>]*>/g, "").trim();
 
 /* IMP-41-5: Format German date as relative "vor X Tagen" for recent items */
+/* STRONG-9: Guard against invalid date strings in formatRelativeDaysDE */
 export const formatRelativeDaysDE = (dateStr: string): string => {
+  if (!dateStr) return "–";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(dateStr);
+  if (isNaN(target.getTime())) return "–";
   target.setHours(0, 0, 0, 0);
   const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000);
   if (diffDays === 0) return "Heute";

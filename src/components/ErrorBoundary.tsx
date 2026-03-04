@@ -63,8 +63,9 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
+      /* STRONG-18: role="alert" + aria-live="polite" announces error to screen readers */
       return (
-        <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center">
+        <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center" role="alert" aria-live="polite">
           <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>

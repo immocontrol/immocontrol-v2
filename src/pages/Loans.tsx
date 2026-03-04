@@ -285,9 +285,9 @@ const Loans = () => {
     const tilgungsfortschritt = safeDivide((loanAmount - balance) * 100, loanAmount, 0);
     return { totalBalance: balance, totalMonthly: monthly, avgRate: rate, totalAnnualInterest: annualInterest, totalLoanAmount: loanAmount, totalTilgungsfortschritt: tilgungsfortschritt };
   }, [filteredLoans]);
-  // Improvement: Refinancing alert - loans with rates above market average
+  /* STRONG-5: Memoize highRateLoans — previously recalculated on every render despite depending only on filteredLoans */
   const MARKET_RATE_THRESHOLD = 3.5;
-  const highRateLoans = filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD);
+  const highRateLoans = useMemo(() => filteredLoans.filter(l => l.interest_rate > MARKET_RATE_THRESHOLD), [filteredLoans]);
 
   /* STR-12: Refinancing savings estimate — shows potential monthly savings if high-rate loans were refinanced at market rate */
   const refinancingSavings = useMemo(() => {
@@ -875,12 +875,13 @@ const Loans = () => {
                     {l.loan_amount > 0 && (
                       <div className="mt-1.5">
                         <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
-                          <span>Tilgung: {((1 - l.remaining_balance / l.loan_amount) * 100).toFixed(0)}%</span>
+                          {/* STRONG-6: NaN guard on progress bar percentage — prevents NaN display when loan_amount is 0 */}
+          <span>Tilgung: {(l.loan_amount > 0 ? ((1 - l.remaining_balance / l.loan_amount) * 100) : 0).toFixed(0)}%</span>
                           <span>{formatCurrency(l.loan_amount - l.remaining_balance)} von {formatCurrency(l.loan_amount)}</span>
                         </div>
                         {/* UI-14: progress-smooth */}
                         <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full progress-smooth" style={{ width: `${Math.max(1, (1 - l.remaining_balance / l.loan_amount) * 100)}%` }} />
+                          <div className="h-full bg-primary rounded-full progress-smooth" style={{ width: `${Math.max(1, l.loan_amount > 0 ? (1 - l.remaining_balance / l.loan_amount) * 100 : 0)}%` }} />
                         </div>
                       </div>
                     )}

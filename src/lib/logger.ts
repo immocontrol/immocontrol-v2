@@ -19,8 +19,25 @@ interface LogEntry {
 const formatEntry = (entry: LogEntry): string =>
   `[${entry.timestamp}] [${entry.level.toUpperCase()}]${entry.context ? ` [${entry.context}]` : ""} ${entry.message}`;
 
+/* STRONG-10: Rate-limit identical log messages — prevents console spam from rapid re-renders or polling loops */
+const recentLogs = new Map<string, number>();
+const LOG_THROTTLE_MS = 1000;
+
 function log(level: LogLevel, message: string, context?: string, data?: unknown): void {
   if (!isDev && level !== "error") return;
+
+  /* STRONG-10: Skip duplicate messages within throttle window */
+  const dedupeKey = `${level}:${context ?? ""}:${message}`;
+  const now = Date.now();
+  const lastSeen = recentLogs.get(dedupeKey);
+  if (lastSeen && now - lastSeen < LOG_THROTTLE_MS) return;
+  recentLogs.set(dedupeKey, now);
+  /* Purge old entries every 50 inserts to prevent unbounded Map growth */
+  if (recentLogs.size > 200) {
+    for (const [k, v] of recentLogs) {
+      if (now - v > LOG_THROTTLE_MS * 5) recentLogs.delete(k);
+    }
+  }
 
   const entry: LogEntry = {
     level,

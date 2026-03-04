@@ -2,7 +2,7 @@
  * DashboardWidgetGrid — extracted from Dashboard.tsx (Fix 3: Split large files).
  * Renders the unified drag-and-drop widget grid for the personal dashboard.
  */
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { GripVertical } from "lucide-react";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 /* useDragReorder return type inferred from the hook */
@@ -218,8 +218,8 @@ export function DashboardWidgetGrid({
     ? (widgetDrag.getPreviewOrder() as WidgetId[])
     : widgetOrder;
 
-  /* Pre-filter widgets that return null to prevent grid gaps */
-  const visibleWidgets = displayOrder.filter(wId => {
+  /* STRONG-19: Memoize visibleWidgets — prevents re-running renderWidgetContent for every widget on each render */
+  const visibleWidgets = useMemo(() => displayOrder.filter(wId => {
     const content = renderWidgetContent({
       wId, stats, totalMonthlyExpenses: stats.totalExpenses,
       totalMonthlyCreditRate: stats.totalCreditRate,
@@ -227,7 +227,7 @@ export function DashboardWidgetGrid({
       properties, allTenants,
     });
     return content !== null;
-  });
+  }), [displayOrder, stats, vacancyRate, properties, allTenants]);
 
   /* Map from original widgetOrder index for drag props */
   const originalIdxOf = (wId: WidgetId) => widgetOrder.indexOf(wId);

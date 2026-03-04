@@ -33,50 +33,18 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
     check();
   }, []);
 
-  const handleToggle = async (enabled: boolean) => {
+  /* FIX: Biometric toggle is a preference-only switch — no WebAuthn credential creation.
+     WebAuthn credential creation belongs in PasskeySettings. Biometric just stores
+     the user's preference to use platform biometrics (Face ID / Touch ID) at login. */
+  const handleToggle = (enabled: boolean) => {
     if (enabled) {
-      try {
-        if (window.PublicKeyCredential && typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function") {
-          const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          if (!available) { toast.error("Dein Gerät unterstützt keine biometrische Authentifizierung"); return; }
-        }
-        const challenge = new Uint8Array(32);
-        crypto.getRandomValues(challenge);
-        /* FIX-8: Build rp config with proper id for non-localhost origins.
-           Without rp.id, browsers on deployed domains may reject the credential
-           creation with "Biometrische Authentifizierung fehlgeschlagen" because
-           the default rp.id derivation doesn't match the origin. */
-        const hostname = window.location.hostname;
-        const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
-        if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.startsWith("192.168.")) {
-          rpConfig.id = hostname;
-        }
-        const credential = await navigator.credentials.create({
-          publicKey: {
-            challenge,
-            rp: rpConfig,
-            user: {
-              id: new TextEncoder().encode(user?.id || "anon"),
-              name: user?.email || "user",
-              displayName: displayName || user?.email || "User",
-            },
-            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "preferred" },
-            timeout: 60000,
-            attestation: "none",
-          },
-        }) as PublicKeyCredential | null;
-        if (credential) {
-          setBiometricEnabled(true);
-          localStorage.setItem("immocontrol_biometric_enabled", "true");
-          localStorage.setItem("immocontrol_biometric_credential_id", credential.id);
-          toast.success("Biometrische Authentifizierung aktiviert!");
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === "NotAllowedError") toast.error("Biometrische Authentifizierung abgebrochen");
-        else if (err instanceof Error && err.name === "NotSupportedError") toast.error("Biometrische Authentifizierung wird auf diesem Gerät nicht unterstützt");
-        else toast.error("Biometrische Authentifizierung fehlgeschlagen");
+      if (!biometricSupported) {
+        toast.error("Dein Gerät unterstützt keine biometrische Authentifizierung");
+        return;
       }
+      setBiometricEnabled(true);
+      localStorage.setItem("immocontrol_biometric_enabled", "true");
+      toast.success("Biometrische Authentifizierung aktiviert!");
     } else {
       setBiometricEnabled(false);
       localStorage.removeItem("immocontrol_biometric_enabled");
