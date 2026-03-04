@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, GripVertical } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
@@ -421,9 +421,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         onApply={({ widgetOrder: wo }) => {
           const typed = wo as typeof widgetOrder;
           // Reconcile: remove stale IDs and add any missing widgets (e.g. chart_* from old presets)
-          const valid = typed.filter(w => defaultWidgetOrder.includes(w));
-          const missing = defaultWidgetOrder.filter(w => !valid.includes(w));
-          const finalOrder = valid.length > 0 ? [...valid, ...missing] : defaultWidgetOrder;
+          const valid = typed.filter(w => DEFAULT_WIDGET_ORDER.includes(w));
+          const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
+          const finalOrder = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
           setWidgetOrder(finalOrder);
           try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(finalOrder)); } catch { /* */ }
         }}
