@@ -122,28 +122,30 @@ function extractAddress(text: string): { strasse: string; plz: string; ort: stri
   return { strasse, plz, ort };
 }
 
-/** Detect property type from text */
+/** Detect property type from text (uses word-boundary regex for short abbreviations to avoid false matches) */
 function detectImmobilientyp(text: string): ParsedExposeData["immobilientyp"] {
   const lower = text.toLowerCase();
-  if (lower.includes("einfamilienhaus") || lower.includes("efh")) return "EFH";
-  if (lower.includes("doppelhaushälfte") || lower.includes("dhh")) return "DHH";
-  if (lower.includes("reihenmittelhaus") || lower.includes("rmh")) return "RMH";
-  if (lower.includes("reihenendhaus") || lower.includes("reh")) return "REH";
-  if (lower.includes("mehrfamilienhaus") || lower.includes("mfh") || lower.includes("zinshaus") || lower.includes("renditeobj")) return "MFH";
-  if (lower.includes("eigentumswohnung") || lower.includes("etw") || lower.includes("wohnung")) return "ETW";
+  if (lower.includes("einfamilienhaus") || /\befh\b/.test(lower)) return "EFH";
+  if (lower.includes("doppelhaushälfte") || /\bdhh\b/.test(lower)) return "DHH";
+  if (lower.includes("reihenmittelhaus") || /\brmh\b/.test(lower)) return "RMH";
+  if (lower.includes("reihenendhaus") || /\breh\b/.test(lower)) return "REH";
+  if (lower.includes("mehrfamilienhaus") || /\bmfh\b/.test(lower) || lower.includes("zinshaus") || lower.includes("renditeobj")) return "MFH";
+  if (lower.includes("eigentumswohnung") || /\betw\b/.test(lower) || lower.includes("wohnung")) return "ETW";
   if (lower.includes("bungalow")) return "Bungalow";
   if (lower.includes("villa")) return "Villa";
   return "Sonstige";
 }
 
-/** Detect property condition from text */
+/** Detect property condition from text (negation-aware: checks "unsaniert"/"nicht saniert" before "saniert") */
 function detectZustand(text: string): ParsedExposeData["zustand"] {
   const lower = text.toLowerCase();
+  // Check negative conditions FIRST to avoid substring false positives
+  if (lower.includes("renovierungsbedürftig") || lower.includes("sanierungsbedürftig") || lower.includes("renovierungsbed")) return "Renovierungsbeduerftig";
+  if (lower.includes("unsaniert") || lower.includes("nicht saniert") || lower.includes("unrenoviert")) return "Renovierungsbeduerftig";
   if (lower.includes("erstbezug")) return "Erstbezug";
   if (lower.includes("neuwertig")) return "Neuwertig";
-  if (lower.includes("modernisiert") || lower.includes("kernsaniert") || lower.includes("saniert")) return "Modernisiert";
+  if (lower.includes("modernisiert") || lower.includes("kernsaniert") || /(?<!un)saniert/.test(lower)) return "Modernisiert";
   if (lower.includes("gepflegt") || lower.includes("gut erhalten")) return "Gepflegt";
-  if (lower.includes("renovierungsbedürftig") || lower.includes("sanierungsbedürftig") || lower.includes("renovierungsbed")) return "Renovierungsbeduerftig";
   return "Unbekannt";
 }
 

@@ -183,7 +183,13 @@ const ImmobilienBewertung = () => {
     const altersminderung = Math.max(1 - ((new Date().getFullYear() - yearBuilt) / (yearBuilt >= 2000 ? 80 : 60)), 0.3);
     const sachwert = bodenwert + herstellungskosten * altersminderung;
 
-    const preisProQm = brw > 0 ? brw * 15 : parsedData.kaufpreis > 0 && sqm > 0 ? parsedData.kaufpreis / sqm : 2000;
+    // Vergleichswert: Convert Bodenrichtwert (land €/m²) to property price (€/m² living area)
+    // Using realistic regional multipliers instead of a fixed factor.
+    // Typical ratio: property price ≈ BRW * (1.5–3.5) depending on density/market.
+    // For high BRW areas (>1000 €/m²), use lower multiplier (urban, smaller plots per m² living area).
+    // For low BRW areas (<200 €/m²), use higher multiplier (rural, larger plots).
+    const brwToPrice = brw > 1000 ? 2.0 : brw > 500 ? 2.5 : brw > 200 ? 3.0 : 3.5;
+    const preisProQm = brw > 0 ? brw * brwToPrice : parsedData.kaufpreis > 0 && sqm > 0 ? parsedData.kaufpreis / sqm : 2000;
     const vergleichswert = sqm * preisProQm;
 
     const validValues = [ertragswert, sachwert, vergleichswert].filter(val => val > 0);
