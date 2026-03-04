@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
-import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -29,26 +29,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearRecoverySession = () => setIsRecoverySession(false);
 
-  /* Fix 5: Global auth event handler — toast notifications for key auth events */
-  const handleAuthEvent = useCallback((event: AuthChangeEvent) => {
-    switch (event) {
-      case "TOKEN_REFRESHED":
-        /* Silent — no notification needed */
-        break;
-      case "USER_UPDATED":
-        /* Silent — individual callers show their own context-specific toasts */
-        break;
-      case "SIGNED_OUT":
-        /* Silent — handled by redirect */
-        break;
-      case "MFA_CHALLENGE_VERIFIED":
-        toast.success("2FA erfolgreich verifiziert");
-        break;
-      default:
-        break;
-    }
-  }, []);
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -66,8 +46,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsRecoverySession(true);
       }
 
-      /* Fix 5: Global auth event handling */
-      handleAuthEvent(event);
+      /* Fix 5: Global auth event handling — inline to avoid useCallback dependency */
+      if (event === "MFA_CHALLENGE_VERIFIED") {
+        toast.success("2FA erfolgreich verifiziert");
+      }
     });
 
     return () => subscription.unsubscribe();
