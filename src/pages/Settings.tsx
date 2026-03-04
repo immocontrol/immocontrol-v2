@@ -192,7 +192,7 @@ const Settings = () => {
   return (
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
       {/* Settings sidebar navigation with progress lines */}
-      <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-none">
+      <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
         <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
           {(() => {
             const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
