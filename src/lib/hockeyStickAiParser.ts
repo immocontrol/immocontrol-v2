@@ -157,30 +157,27 @@ export function parseAiPrompt(rawInput: string): AiParseResult {
     applyScenarioDefaults(SCENARIOS[5].params);
   }
 
-  /* ── Fill remaining with market defaults ── */
+  /* ── Only return explicitly parsed + scenario-matched updates (don't overwrite manual slider values) ── */
   const updates: Partial<SimParams> = { ...explicitUpdates };
-  for (const [k, v] of Object.entries(MARKET_DEFAULTS)) {
-    if (!(k in updates)) (updates as Record<string, unknown>)[k] = v;
-  }
 
-  /* ── Build description ── */
+  /* ── Build description — use key membership, not value comparison ── */
   const parsed: string[] = [];
   const assumed: string[] = [];
 
-  if (updates.startCapital && updates.startCapital !== MARKET_DEFAULTS.startCapital)
-    parsed.push(`Startkapital: ${updates.startCapital.toLocaleString("de-DE")} €`);
-  if (updates.monthlyInvestment && updates.monthlyInvestment !== MARKET_DEFAULTS.monthlyInvestment)
-    parsed.push(`Monatliche Investition: ${updates.monthlyInvestment.toLocaleString("de-DE")} €`);
-  if (updates.years && updates.years !== MARKET_DEFAULTS.years)
-    parsed.push(`Laufzeit: ${updates.years} Jahre`);
-  if (updates.rentYield && updates.rentYield !== MARKET_DEFAULTS.rentYield)
-    parsed.push(`Mietrendite: ${updates.rentYield}%`);
-  if (updates.annualReturn && updates.annualReturn !== MARKET_DEFAULTS.annualReturn)
-    parsed.push(`Zinssatz: ${updates.annualReturn}%`);
-  if (updates.leverageRatio && updates.leverageRatio !== MARKET_DEFAULTS.leverageRatio)
-    parsed.push(`FK-Quote: ${updates.leverageRatio}%`);
-  if (updates.annualAppreciation && updates.annualAppreciation !== MARKET_DEFAULTS.annualAppreciation)
-    parsed.push(`Wertsteigerung: ${updates.annualAppreciation}% p.a.`);
+  if (explicitUpdates.startCapital !== undefined)
+    parsed.push(`Startkapital: ${explicitUpdates.startCapital.toLocaleString("de-DE")} €`);
+  if (explicitUpdates.monthlyInvestment !== undefined)
+    parsed.push(`Monatliche Investition: ${explicitUpdates.monthlyInvestment.toLocaleString("de-DE")} €`);
+  if (explicitUpdates.years !== undefined)
+    parsed.push(`Laufzeit: ${explicitUpdates.years} Jahre`);
+  if (explicitUpdates.rentYield !== undefined)
+    parsed.push(`Mietrendite: ${explicitUpdates.rentYield}%`);
+  if (explicitUpdates.annualReturn !== undefined)
+    parsed.push(`Zinssatz: ${explicitUpdates.annualReturn}%`);
+  if (explicitUpdates.leverageRatio !== undefined)
+    parsed.push(`FK-Quote: ${explicitUpdates.leverageRatio}%`);
+  if (explicitUpdates.annualAppreciation !== undefined)
+    parsed.push(`Wertsteigerung: ${explicitUpdates.annualAppreciation}% p.a.`);
 
   if (!parsed.some(p => p.startsWith("Startkapital")))
     assumed.push(`Startkapital: ${(MARKET_DEFAULTS.startCapital ?? 0).toLocaleString("de-DE")} € (marktüblich)`);

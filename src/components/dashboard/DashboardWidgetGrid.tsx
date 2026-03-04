@@ -258,6 +258,7 @@ export function DashboardWidgetGrid({
           return (
             <div
               key={wId}
+              data-drag-idx={origIdx}
               {...widgetDrag.getItemProps(origIdx)}
               role="listitem"
               aria-label={WIDGET_LABELS[wId] || wId}

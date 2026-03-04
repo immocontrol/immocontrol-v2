@@ -130,7 +130,10 @@ export function useDragReorder<T>(
       for (let i = 0; i < children.length; i++) {
         const rect = children[i].getBoundingClientRect();
         if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
-          handleDragOver(i);
+          /* Use data-drag-idx if present so preview-reordered DOM stays consistent */
+          const attr = children[i].dataset.dragIdx;
+          const idx = attr !== undefined ? Number(attr) : i;
+          handleDragOver(idx);
           break;
         }
       }
