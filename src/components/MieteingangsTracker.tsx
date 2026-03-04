@@ -39,8 +39,8 @@ const MieteingangsTracker = memo(() => {
       const { data } = await supabase
         .from("rent_payments")
         .select("*")
-        .gte("due_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-        .lte("due_date", new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString())
+        .gte("due_date", `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-01`)
+        .lte("due_date", new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split("T")[0])
         .order("due_date", { ascending: true });
       return (data || []) as RentPayment[];
     },
