@@ -311,7 +311,7 @@ export function parseExposeText(rawText: string): ParsedExposeData {
 
   // Provision / Courtage
   let provision = "";
-  const provMatch = text.match(/(?:Provision|Courtage|Maklerprovision|Käuferprovision)\s*[:.]?\s*([^\n]{3,60})/i);
+  const provMatch = rawText.match(/(?:Provision|Courtage|Maklerprovision|Käuferprovision)\s*[:.]?\s*([^\n]{3,60})/i);
   if (provMatch) {
     provision = provMatch[1].trim().replace(/\s+/g, " ").slice(0, 80);
     extractedFields.push("provision");
