@@ -231,7 +231,7 @@ export const sortByKey = <T>(arr: T[], key: keyof T, desc = false): T[] =>
 /* IMP-48: Format percentage with German locale (comma as decimal separator) */
 /* FUND-8: NaN guard */
 export const formatPercentDE = (value: number, decimals = 1): string => {
-  if (!Number.isFinite(value)) return "0,0%";
+  if (!Number.isFinite(value)) return `${(0).toFixed(decimals).replace(".", ",")}%`;
   return `${value.toFixed(decimals).replace(".", ",")}%`;
 };
 
