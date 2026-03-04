@@ -189,15 +189,16 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
 
 /* ─── Utility: Fetch RSS via public CORS proxy ─── */
 const CORS_PROXIES = [
-  "https://api.allorigins.win/raw?url=",
-  "https://corsproxy.io/?",
+  (url: string) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
 ];
 
 async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
-  for (const proxy of CORS_PROXIES) {
+  for (const buildProxyUrl of CORS_PROXIES) {
     try {
-      const resp = await fetch(`${proxy}${encodeURIComponent(feedUrl)}`, {
-        signal: AbortSignal.timeout(8000),
+      const resp = await fetch(buildProxyUrl(feedUrl), {
+        signal: AbortSignal.timeout(10000),
       });
       if (!resp.ok) continue;
       const text = await resp.text();
@@ -207,6 +208,40 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
       continue;
     }
   }
+
+  /* Last resort: try rss2json API (returns JSON, not XML) */
+  try {
+    const resp = await fetch(
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
+      { signal: AbortSignal.timeout(10000) },
+    );
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.status === "ok" && Array.isArray(data.items)) {
+        return data.items.map((item: { title?: string; link?: string; description?: string; pubDate?: string; thumbnail?: string }, idx: number) => {
+          const title = item.title?.trim() || "";
+          const description = (item.description || "").replace(/<[^>]+>/g, "").slice(0, 300);
+          const category = categoriseNews(title, description);
+          const region = detectRegion(title, description);
+          return {
+            id: `${source}-rss2json-${idx}`,
+            title,
+            description,
+            url: item.link || "",
+            source,
+            sourceIcon: icon,
+            publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+            category,
+            region,
+            imageUrl: item.thumbnail && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail) ? item.thumbnail : undefined,
+          } satisfies NewsItem;
+        }).filter((n: NewsItem) => n.title && n.url);
+      }
+    }
+  } catch {
+    /* rss2json also failed */
+  }
+
   return [];
 }
 
