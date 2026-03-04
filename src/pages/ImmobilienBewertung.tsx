@@ -208,6 +208,7 @@ const ImmobilienBewertung = () => {
       vervielfaeltiger: v,
       herstellungskosten: Math.round(herstellungskosten),
       altersminderung,
+      brwToPrice,
     };
   }, [parsedData, params]);
 
@@ -580,7 +581,7 @@ const ImmobilienBewertung = () => {
               <div className="text-xl font-bold">{formatCurrency(valuation.vergleichswert)}</div>
               <p className="text-[10px] text-muted-foreground mt-1">Basierend auf Marktvergleich</p>
               <p className="text-[9px] text-muted-foreground/60 mt-2">
-                BRW: {params.bodenrichtwert} €/m² · Faktor: 15x
+                BRW: {params.bodenrichtwert} €/m² · Faktor: {valuation.brwToPrice}x
               </p>
             </div>
           </div>

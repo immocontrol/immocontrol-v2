@@ -19,6 +19,7 @@ export interface ValuationResults {
   vervielfaeltiger: number;
   herstellungskosten: number;
   altersminderung: number;
+  brwToPrice: number;
 }
 
 /** Generate a professional PDF valuation report */
