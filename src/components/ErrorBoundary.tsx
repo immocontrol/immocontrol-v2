@@ -2,6 +2,7 @@ import { Component, ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
+import { trackError } from "@/lib/errorTracking";
 
 interface Props {
   children: ReactNode;
@@ -26,6 +27,8 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     logger.error("ErrorBoundary caught", "ErrorBoundary", { error: error.message, stack: info.componentStack });
+    /* FUND-20: Persist caught errors to localStorage tracking — survives page reload for diagnostics */
+    trackError(error, "react", info.componentStack ?? undefined);
   }
 
   /* STR-1: Retry with exponential backoff — prevents rapid retry loops */
@@ -42,7 +45,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentWillUnmount() {
     /* IMP-44-20: Clear auto-retry timer on unmount to prevent memory leaks */
-  if (this.autoRetryTimer) clearTimeout(this.autoRetryTimer);
+    if (this.autoRetryTimer) clearTimeout(this.autoRetryTimer);
   }
 
   handleRetry = () => {

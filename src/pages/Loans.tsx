@@ -359,25 +359,25 @@ const Loans = () => {
     return dist;
   }, [filteredLoans]);
 
-
   /* IMPROVE-7: Memoize zinsBindungData to prevent recalculation on unrelated state changes */
+  /* FUND-11: Fixed indentation — body was not indented inside useMemo callback */
   const zinsBindungData = useMemo(() => {
-  const now = new Date();
-  return filteredLoans
-    .filter(l => l.fixed_interest_until)
-    .map(l => {
-      const end = new Date(l.fixed_interest_until!);
-      const monthsLeft = Math.max(0, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
-      return {
-        name: `${getPropertyName(l.property_id).slice(0, 15)} (${l.bank_name.slice(0, 10)})`,
-        monate: monthsLeft,
-        balance: l.remaining_balance,
-        rate: l.interest_rate,
-        end: end.toLocaleDateString("de-DE", { month: "short", year: "numeric" }),
-        risk: monthsLeft <= 12 ? "high" : monthsLeft <= 24 ? "medium" : "low",
-      };
-    })
-    .sort((a, b) => a.monate - b.monate);
+    const now = new Date();
+    return filteredLoans
+      .filter(l => l.fixed_interest_until)
+      .map(l => {
+        const end = new Date(l.fixed_interest_until!);
+        const monthsLeft = Math.max(0, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
+        return {
+          name: `${getPropertyName(l.property_id).slice(0, 15)} (${l.bank_name.slice(0, 10)})`,
+          monate: monthsLeft,
+          balance: l.remaining_balance,
+          rate: l.interest_rate,
+          end: end.toLocaleDateString("de-DE", { month: "short", year: "numeric" }),
+          risk: monthsLeft <= 12 ? "high" : monthsLeft <= 24 ? "medium" : "low",
+        };
+      })
+      .sort((a, b) => a.monate - b.monate);
   }, [filteredLoans, getPropertyName]);
 
   /* IMPROVE-8: Memoize ownershipGroups for stable pie chart data */

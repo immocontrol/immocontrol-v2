@@ -52,6 +52,8 @@ function log(level: LogLevel, message: string, context?: string, data?: unknown)
 /** IMP-50: Track error count for diagnostics */
 let errorCount = 0;
 export const getErrorCount = (): number => errorCount;
+/* FUND-6: Allow resetting error count — useful for diagnostics after viewing errors */
+export const resetErrorCount = (): void => { errorCount = 0; };
 
 export const logger = {
   debug: (message: string, context?: string, data?: unknown) => log("debug", message, context, data),

@@ -340,20 +340,27 @@ const Deals = () => {
   }, []);
 
   /* UPD-25: Memoized stats calculations */
+  /* FUND-17: NaN/Infinity guards on all derived stats — prevents broken UI from invalid dates */
   const stats = useMemo(() => {
     const active = deals.filter(d => d.stage !== "abgelehnt" && d.stage !== "abgeschlossen");
     const won = deals.filter(d => d.stage === "abgeschlossen");
     const totalVol = active.reduce((s, d) => s + (d.purchase_price || 0), 0);
-    const avgAge = active.length > 0
-      ? Math.round(active.reduce((s, d) => s + Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000), 0) / active.length)
+    const rawAvgAge = active.length > 0
+      ? active.reduce((s, d) => {
+          const age = Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000);
+          return s + (Number.isFinite(age) ? age : 0);
+        }, 0) / active.length
       : 0;
+    const avgAge = Number.isFinite(rawAvgAge) ? Math.round(rawAvgAge) : 0;
     const withPrice = deals.filter(d => (d.purchase_price ?? 0) > 0);
-    const avgVal = withPrice.length > 0
+    const rawAvgVal = withPrice.length > 0
       ? withPrice.reduce((s, d) => s + (d.purchase_price || 0), 0) / withPrice.length
       : 0;
-    const velocity = active.length > 0
-      ? Math.round(active.reduce((s, d) => s + (Date.now() - new Date(d.created_at).getTime()) / 86400000, 0) / active.length)
+    const avgVal = Number.isFinite(rawAvgVal) ? rawAvgVal : 0;
+    const rawVelocity = active.length > 0
+      ? active.reduce((s, d) => s + (Date.now() - new Date(d.created_at).getTime()) / 86400000, 0) / active.length
       : 0;
+    const velocity = Number.isFinite(rawVelocity) ? Math.round(rawVelocity) : 0;
     const conversion = deals.length > 0 ? Math.round((won.length / deals.length) * 100) : 0;
     return { active, won, totalVol, avgAge, avgVal, velocity, conversion };
   }, [deals]);

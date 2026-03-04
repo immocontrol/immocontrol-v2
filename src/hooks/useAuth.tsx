@@ -29,14 +29,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearRecoverySession = () => setIsRecoverySession(false);
 
+  /* FUND-1: Mounted guard prevents state updates after unmount —
+     fixes potential memory leak when getSession resolves after provider unmounts */
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -52,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => { mounted = false; subscription.unsubscribe(); };
   }, []);
 
   const signOut = async () => {

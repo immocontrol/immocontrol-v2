@@ -153,6 +153,9 @@ queryClient.setQueryDefaults(queryKeys.loans.all, { staleTime: 5 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.contacts.all, { staleTime: 3 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.deals.all, { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.forecast.all, { staleTime: 5 * 60_000 });
+/* FUND-14: Add missing query defaults for todos and maintenance — prevents over-fetching */
+queryClient.setQueryDefaults(["todos"], { staleTime: 60_000 });
+queryClient.setQueryDefaults(queryKeys.maintenance.all, { staleTime: 5 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -223,8 +226,10 @@ const RoleRouter = () => {
   }, [user]);
 
   /* BUG-6: Preload all routes eagerly after first render to prevent double-loading on tab switch */
+  /* FUND-19: Delay preloading by 2s so initial render isn't blocked by chunk downloads */
   useEffect(() => {
-    preloadRoutes();
+    const timer = setTimeout(preloadRoutes, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading || roleLoading || onboardingDone === null) {

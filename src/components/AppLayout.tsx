@@ -214,13 +214,18 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, []);
 
   /* MIGRATE-3: One-time localStorage → Supabase migration on login */
+  /* FUND-18: Add .catch() to prevent unhandled promise rejection if migration fails */
   const migrationDoneRef = useRef(false);
   useEffect(() => {
     if (!user || migrationDoneRef.current) return;
     migrationDoneRef.current = true;
-    migrateLocalStorageToSupabase(user.id).then((count) => {
-      if (count > 0) logger.info(`${count} localStorage keys migrated to Supabase`, "Migration");
-    });
+    migrateLocalStorageToSupabase(user.id)
+      .then((count) => {
+        if (count > 0) logger.info(`${count} localStorage keys migrated to Supabase`, "Migration");
+      })
+      .catch((err) => {
+        logger.warn(`Migration fehlgeschlagen: ${err instanceof Error ? err.message : String(err)}`, "Migration");
+      });
   }, [user]);
 
   /* BUG-5: Track dropdown open state for click-based dropdowns (fixes hidden dropdowns) */
