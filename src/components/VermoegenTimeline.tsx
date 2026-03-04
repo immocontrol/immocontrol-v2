@@ -45,7 +45,7 @@ const VermoegenTimeline = memo(({
     let equity = totalEquity;
     let value = totalValue;
     let debt = totalDebt;
-    const annualCashflow = monthlyCashflow * 12;
+    let annualCashflow = monthlyCashflow * 12;
     const aprRate = appreciationRate / 100;
 
     for (let y = 0; y <= 30; y++) {
@@ -75,6 +75,7 @@ const VermoegenTimeline = memo(({
       equity = value - Math.max(0, debt);
       // Cashflow grows slightly with appreciation
       // (Rent increases ~1.5% annually in Germany)
+      annualCashflow *= 1.015;
     }
 
     return years;
