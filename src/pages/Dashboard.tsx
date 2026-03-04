@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
 import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, BarChart3, GripVertical } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
@@ -28,6 +28,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
+/* TECH-8: Dynamic imports for heavy dashboard components — reduces initial bundle size */
+const MonthOverMonthComparison = lazy(() => import("@/components/MonthOverMonthComparison").then(m => ({ default: m.MonthOverMonthComparison })));
+const MieteingangsTracker = lazy(() => import("@/components/MieteingangsTracker").then(m => ({ default: m.MieteingangsTracker })));
+const VermoegenTimeline = lazy(() => import("@/components/VermoegenTimeline").then(m => ({ default: m.VermoegenTimeline })));
 
 type FilterType = "alle" | "egbr" | "privat";
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
@@ -367,17 +371,18 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
                (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             {/* Fix 9: AddPropertyDialog only on Portfolio, not Dashboard */}
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
+            {/* MOBILE-FIX: Show buttons on mobile too, but smaller and icon-only */}
+            <Button variant="outline" size="sm" className="gap-1.5 flex" onClick={sharePortfolio}>
               <Share2 className="h-3.5 w-3.5" />
-              Teilen
+              <span className="hidden sm:inline">Teilen</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCSV}>
+            <Button variant="outline" size="sm" className="gap-1.5 flex" onClick={exportCSV}>
               <Download className="h-3.5 w-3.5" />
-              CSV
+              <span className="hidden sm:inline">CSV</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportPDF}>
+            <Button variant="outline" size="sm" className="gap-1.5 flex" onClick={exportPDF}>
               <Printer className="h-3.5 w-3.5" />
-              PDF
+              <span className="hidden sm:inline">PDF</span>
             </Button>
           </div>
         </div>
@@ -389,19 +394,20 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
+          {/* MOBILE-FIX: Portfolio buttons compact + nebeneinander on mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
             <AddPropertyDialog />
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
-              <Share2 className="h-3.5 w-3.5" />
-              Teilen
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={sharePortfolio}>
+              <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Teilen</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCSV}>
-              <Download className="h-3.5 w-3.5" />
-              CSV
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={exportCSV}>
+              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">CSV</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportPDF}>
-              <Printer className="h-3.5 w-3.5" />
-              PDF
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={exportPDF}>
+              <Printer className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">PDF</span>
             </Button>
           </div>
         </div>
@@ -823,6 +829,39 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       </div>
 
         </>
+      )}
+
+      {/* FUNC-11: Month-over-Month Comparison */}
+      {mode === "portfolio" && properties.length > 0 && (
+        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl" />}>
+          <MonthOverMonthComparison
+            currentRent={stats.totalRent}
+            currentCashflow={stats.totalCashflow}
+            currentValue={stats.totalValue}
+            currentExpenses={totalMonthlyExpenses}
+            propertyCount={stats.propertyCount}
+          />
+        </Suspense>
+      )}
+
+      {/* NEW-16: Mieteingangs-Tracker */}
+      {mode === "portfolio" && properties.length > 0 && (
+        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl" />}>
+          <MieteingangsTracker />
+        </Suspense>
+      )}
+
+      {/* NEW-18: Vermögensaufbau-Timeline */}
+      {mode === "portfolio" && properties.length > 0 && (
+        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl" />}>
+          <VermoegenTimeline
+            totalEquity={stats.equity}
+            totalValue={stats.totalValue}
+            totalDebt={stats.totalDebt}
+            monthlyCashflow={stats.totalCashflow}
+            propertyCount={stats.propertyCount}
+          />
+        </Suspense>
       )}
 
       {/* Fix 3: Extracted to DashboardWidgetGrid component */}

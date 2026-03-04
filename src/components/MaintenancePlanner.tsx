@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
@@ -48,9 +49,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
   const { data: items = [] } = useQuery({
     queryKey: ["maintenance", propertyId],
     queryFn: async () => {
-      const { data } = await supabase
-        /* FIX-13: Replace `as any` with typed table name cast */
-        .from("maintenance_items" as never)
+      const { data } = await fromTable("maintenance_items")
         .select("*")
         .eq("property_id", propertyId)
         .order("priority", { ascending: false })
@@ -63,8 +62,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.title.trim()) throw new Error("Titel erforderlich");
-      /* FIX-14: Replace `as any` with typed table name cast */
-      const { error } = await supabase.from("maintenance_items" as never).insert({
+      const { error } = await fromTable("maintenance_items").insert({
         property_id: propertyId,
         user_id: user.id,
         title: form.title.trim(),
@@ -88,15 +86,13 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
-      /* FIX-15: Replace `as any` with typed table name cast */
-      await supabase.from("maintenance_items" as never).update({ completed }).eq("id", id);
+      await fromTable("maintenance_items").update({ completed }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["maintenance", propertyId] }),
   });
 
   const deleteMutation = useMutation({
-    /* FIX-16: Replace `as any` with typed table name cast */
-    mutationFn: async (id: string) => { await supabase.from("maintenance_items" as never).delete().eq("id", id); },
+    mutationFn: async (id: string) => { await fromTable("maintenance_items").delete().eq("id", id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["maintenance", propertyId] }),
   });
 

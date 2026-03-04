@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp } from "lucide-react";
+import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,6 +95,90 @@ const Berichte = () => {
     trackReport();
     setLastReportGenerated(new Date().toLocaleString("de-DE"));
   }, [trackReport]);
+
+  /* FUNC-14: PDF-Export — generates actual downloadable PDF instead of just print window */
+  const exportPDF = useCallback((title: string, sections: { heading?: string; rows: [string, string][] }[]) => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 20;
+    const checkPage = (need: number) => { if (y + need > 270) { doc.addPage(); y = 20; } };
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(42, 157, 110);
+    doc.text(title, 14, y);
+    y += 4;
+    doc.setDrawColor(42, 157, 110);
+    doc.setLineWidth(0.5);
+    doc.line(14, y, pageW - 14, y);
+    y += 8;
+    doc.setTextColor(34, 34, 34);
+    for (const section of sections) {
+      if (section.heading) {
+        checkPage(12);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(section.heading, 14, y);
+        y += 7;
+      }
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      for (const [label, value] of section.rows) {
+        checkPage(7);
+        doc.text(label, 14, y);
+        doc.text(value, pageW - 14, y, { align: "right" });
+        y += 5.5;
+      }
+      y += 3;
+    }
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(170, 170, 170);
+      doc.text(`ImmoControl · ${title} · ${new Date().toLocaleDateString("de-DE")} · Seite ${i}/${pageCount}`, pageW / 2, 287, { align: "center" });
+    }
+    doc.save(`${title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_${year}.pdf`);
+    trackReport();
+    setLastReportGenerated(new Date().toLocaleString("de-DE"));
+    toast.success(`${title} als PDF gespeichert!`);
+  }, [year, trackReport]);
+
+  /* FUNC-14: PDF version of portfolio report */
+  const exportPortfolioPDF = useCallback(() => {
+    if (properties.length === 0) { toast.error("Keine Objekte vorhanden"); return; }
+    const sections: { heading?: string; rows: [string, string][] }[] = [
+      {
+        heading: "Portfolio-Zusammenfassung",
+        rows: [
+          ["Anzahl Objekte", String(properties.length)],
+          ["Gesamtwert", formatCurrency(stats.totalValue)],
+          ["Eigenkapital", formatCurrency(stats.equity)],
+          ["Jahresmiete", formatCurrency(reportMetrics.totalRent)],
+          ["Jahreskosten", formatCurrency(reportMetrics.totalExpenses)],
+          ["Netto-Cashflow/Jahr", formatCurrency(reportMetrics.totalCashflow)],
+          ["Ø Rendite", `${reportMetrics.avgRendite.toFixed(1)}%`],
+          ["Gesamtschuld", formatCurrency(reportMetrics.totalDebt)],
+          ["LTV", `${stats.totalValue > 0 ? (reportMetrics.totalDebt / stats.totalValue * 100).toFixed(1) : "0.0"}%`],
+        ],
+      },
+    ];
+    for (const p of properties) {
+      const rendite = p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice * 100).toFixed(1) : "0.0";
+      sections.push({
+        heading: `${p.name} — ${p.address}`,
+        rows: [
+          ["Kaufpreis", formatCurrency(p.purchasePrice)],
+          ["Aktueller Wert", formatCurrency(p.currentValue)],
+          ["Miete/Monat", formatCurrency(p.monthlyRent)],
+          ["Cashflow/Monat", formatCurrency(p.monthlyCashflow)],
+          ["Brutto-Rendite", `${rendite}%`],
+          ["Restschuld", formatCurrency(p.remainingDebt)],
+        ],
+      });
+    }
+    exportPDF(`Portfoliobericht ${year}`, sections);
+  }, [properties, stats, reportMetrics, year, exportPDF]);
 
   const baseStyle = `body{font-family:system-ui,sans-serif;padding:40px;color:#222;max-width:800px;margin:0 auto}
 h1{font-size:22px;border-bottom:2px solid #2a9d6e;padding-bottom:8px}h2{font-size:16px;margin-top:24px;color:#555}
@@ -530,9 +615,14 @@ ${rows}
           <div className="text-xs text-muted-foreground">
             {stats.propertyCount} Objekte · {formatCurrency(stats.totalValue)}
           </div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportPortfolio}>
-            <Download className="h-3.5 w-3.5" /> Portfolio-PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={exportPortfolio}>
+              <Download className="h-3.5 w-3.5" /> Drucken
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={exportPortfolioPDF}>
+              <FileDown className="h-3.5 w-3.5" /> PDF
+            </Button>
+          </div>
         </div>
       </div>
 

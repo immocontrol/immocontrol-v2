@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 
 interface NetWorthTrackerProps {
@@ -18,9 +19,7 @@ const NetWorthTracker = ({ currentEquity, totalValue, totalDebt }: NetWorthTrack
   const { data: valueHistory = [] } = useQuery({
     queryKey: ["net_worth_history"],
     queryFn: async () => {
-      const { data } = await supabase
-        /* FIX-21: Replace `as any` with typed table name cast */
-        .from("property_value_history" as never)
+      const { data } = await fromTable("property_value_history")
         .select("date, value, property_id")
         .order("date", { ascending: true });
       return (data || []) as unknown as { date: string; value: number; property_id: string }[];

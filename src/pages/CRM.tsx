@@ -307,6 +307,33 @@ const CRM = () => {
   const filteredLeads = useMemo(() => filterStatus === "all" ? leads : leads.filter((l: { status: string }) => l.status === filterStatus), [leads, filterStatus]);
   const selectedLeadData = useMemo(() => leads.find((l: { id: string }) => l.id === selectedLead), [leads, selectedLead]);
 
+  /* FUNC-13: Lead scoring automation — compute a score for each lead (0..100) */
+  const leadScores = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const lead of leads as Array<{ id: string } & Record<string, unknown>>) {
+      map.set(lead.id, calculateLeadScore(lead));
+    }
+    return map;
+  }, [leads]);
+
+  const scoredFilteredLeads = useMemo(() => {
+    const list = (filteredLeads as Array<{ id: string } & Record<string, unknown>>).map((lead) => ({
+      ...lead,
+      score: leadScores.get(lead.id) ?? 0,
+    }));
+    list.sort((a, b) => (b.score as number) - (a.score as number));
+    return list;
+  }, [filteredLeads, leadScores]);
+
+  const selectedLeadScore = selectedLeadData ? (leadScores.get((selectedLeadData as { id: string }).id) ?? 0) : 0;
+
+  const scoreBadgeClass = (score: number): string => {
+    if (score >= 80) return "bg-red-500/10 text-red-700 dark:text-red-400";
+    if (score >= 60) return "bg-orange-500/10 text-orange-700 dark:text-orange-400";
+    if (score >= 40) return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400";
+    return "bg-muted text-muted-foreground";
+  };
+
   /* FUND-2: Wrap leadStats in useMemo — previously recalculated 4x filter() on every render */
   const leadStats = useMemo(() => ({
     total: leads.length,
@@ -379,7 +406,8 @@ const CRM = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
+              {/* MOBILE-FIX: prevent overlap on small screens */}
+              <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1 relative">
                   <Input
                     ref={searchInputRef}
@@ -423,10 +451,10 @@ const CRM = () => {
 
               {/* Building size estimation controls */}
               {placesResults.length > 0 && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/50">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/50">
                   <Ruler className="h-4 w-4 text-primary shrink-0" />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
@@ -450,7 +478,7 @@ const CRM = () => {
                         <>
                           <span className="text-xs text-muted-foreground">Min. Fläche:</span>
                           <Select value={String(minBuildingSize)} onValueChange={v => setMinBuildingSize(Number(v))}>
-                            <SelectTrigger className="h-7 w-[120px] text-xs">
+                            <SelectTrigger className="h-7 w-full sm:w-[120px] text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -464,7 +492,7 @@ const CRM = () => {
                       )}
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="text-xs text-muted-foreground sm:whitespace-nowrap">
                     {filteredPlacesResults.length} von {placesResults.length} Ergebnis{placesResults.length !== 1 ? "sen" : ""}
                   </span>
                 </div>
@@ -675,7 +703,7 @@ const CRM = () => {
               ) : filteredLeads.length === 0 ? (
                 <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Keine Leads gefunden</CardContent></Card>
               ) : (
-                filteredLeads.map((lead: { id: string; name: string; company?: string; phone?: string; status: string; updated_at?: string }) => (
+                scoredFilteredLeads.map((lead: { id: string; name: string; company?: string; phone?: string; status: string; updated_at?: string; score: number }) => (
                   <Card
                     key={lead.id}
                     className={cn("cursor-pointer transition-all hover:shadow-md", selectedLead === lead.id && "ring-2 ring-primary")}
@@ -697,9 +725,18 @@ const CRM = () => {
                             </p>
                           )}
                         </div>
-                        <Badge className={cn("text-[10px] shrink-0", statusColors[lead.status] || "")}>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <Badge className={cn("text-[10px]", statusColors[lead.status] || "")}>
+                            {statusLabels[lead.status] || lead.status}
+                          </Badge>
+                          <Badge className={cn("text-[10px]", scoreBadgeClass(lead.score))}>
+                            Score {lead.score}
+                          </Badge>
+                        </div>
+                        {/* status badge moved into column */}
+                        <span className="sr-only">
                           {statusLabels[lead.status] || lead.status}
-                        </Badge>
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -718,6 +755,9 @@ const CRM = () => {
                         {selectedLeadData.company && <p className="text-sm text-muted-foreground">{selectedLeadData.company}</p>}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={cn("text-[10px]", scoreBadgeClass(selectedLeadScore))}>
+                          Score {selectedLeadScore}
+                        </Badge>
                         <Select
                           value={selectedLeadData.status}
                           onValueChange={v => updateLeadStatus.mutate({ id: selectedLeadData.id, status: v })}

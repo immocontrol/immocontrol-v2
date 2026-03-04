@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { FileWarning, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
   const { data: docs = [] } = useQuery({
     queryKey: ["doc_expiry", propertyId],
     queryFn: async () => {
-      const { data } = await supabase
-        /* FIX-25: Replace `as any` with typed table name cast */
-        .from("document_expiries" as never)
+      const { data } = await fromTable("document_expiries")
         .select("*")
         .eq("property_id", propertyId)
         .order("expiry_date", { ascending: true });
@@ -44,8 +43,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.name.trim() || !form.expiry_date) throw new Error("Pflichtfelder");
-      /* FIX-26: Replace `as any` with typed table name cast */
-      const { error } = await supabase.from("document_expiries" as never).insert({
+      const { error } = await fromTable("document_expiries").insert({
         property_id: propertyId,
         user_id: user.id,
         name: form.name.trim(),
@@ -65,8 +63,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      /* FIX-27: Replace `as any` with typed table name cast */
-      await supabase.from("document_expiries" as never).delete().eq("id", id);
+      await fromTable("document_expiries").delete().eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["doc_expiry", propertyId] }),
   });
