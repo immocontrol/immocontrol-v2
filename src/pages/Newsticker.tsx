@@ -89,7 +89,7 @@ const RSS_FEEDS = [
   /* Brandenburg-Städte-Feeds */
   { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+bernau+OR+eberswalde+OR+oranienburg+OR+luckenwalde+OR+barnim&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg Nord", icon: "\uD83C\uDFE1" },
   { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+strausberg+OR+f%C3%BCrstenwalde+OR+neuruppin+OR+wittenberge+OR+rathenow&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg West/Ost", icon: "\uD83C\uDFE1" },
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+brandenburg+havel+OR+werder+OR+teltow+OR+kleinmachnow+OR+stahnsdorf+OR+blankenfelde&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg S\u00fcd", icon: "\uD83C\uDFE1" },
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+%22brandenburg+havel%22+OR+werder+OR+teltow+OR+kleinmachnow+OR+stahnsdorf+OR+blankenfelde&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg S\u00fcd", icon: "\uD83C\uDFE1" },
 ];
 
 /* ─── Categorise news by keywords ─── */
