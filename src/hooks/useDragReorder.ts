@@ -76,6 +76,15 @@ export function useDragReorder<T>(
     }
   }, [overIdx]);
 
+  /** Compute the preview order during drag (iOS-style live reorder) */
+  const getPreviewOrder = useCallback((): T[] => {
+    if (dragItemRef.current === null || overIdx === null || dragItemRef.current === overIdx) return items;
+    const next = [...items];
+    const [removed] = next.splice(dragItemRef.current, 1);
+    next.splice(overIdx, 0, removed);
+    return next;
+  }, [items, overIdx]);
+
   const handleDragEnd = useCallback(() => {
     const from = dragItemRef.current;
     const to = overIdx;
@@ -158,5 +167,6 @@ export function useDragReorder<T>(
     containerRef,
     getHandleProps,
     getItemProps,
+    getPreviewOrder,
   };
 }

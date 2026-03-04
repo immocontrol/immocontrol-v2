@@ -196,6 +196,7 @@ interface DragReorder {
   containerRef: React.RefObject<HTMLDivElement | null>;
   getHandleProps: (idx: number) => Record<string, unknown>;
   getItemProps: (idx: number) => Record<string, unknown>;
+  getPreviewOrder: () => unknown[];
 }
 
 interface DashboardWidgetGridProps {
@@ -212,6 +213,25 @@ export function DashboardWidgetGrid({
   widgetOrder, widgetDrag, isWidgetDragOverview,
   stats, vacancyRate, properties, allTenants,
 }: DashboardWidgetGridProps) {
+  /* iOS-style: use preview order during drag so items visually shift in real-time */
+  const displayOrder = widgetDrag.isDragging
+    ? (widgetDrag.getPreviewOrder() as WidgetId[])
+    : widgetOrder;
+
+  /* Pre-filter widgets that return null to prevent grid gaps */
+  const visibleWidgets = displayOrder.filter(wId => {
+    const content = renderWidgetContent({
+      wId, stats, totalMonthlyExpenses: stats.totalExpenses,
+      totalMonthlyCreditRate: stats.totalCreditRate,
+      vacancyRate, propertyCount: stats.propertyCount,
+      properties, allTenants,
+    });
+    return content !== null;
+  });
+
+  /* Map from original widgetOrder index for drag props */
+  const originalIdxOf = (wId: WidgetId) => widgetOrder.indexOf(wId);
+
   return (
     <div>
       <p className="text-[10px] font-normal text-muted-foreground mb-2">Ziehen zum Umsortieren</p>
@@ -225,33 +245,32 @@ export function DashboardWidgetGrid({
         role="list"
         aria-label="Dashboard Widgets"
       >
-        {widgetOrder.map((wId, idx) => {
-          const isDragging = widgetDrag.dragIdx === idx;
-          const isOver = widgetDrag.overIdx === idx;
+        {visibleWidgets.map((wId) => {
+          const origIdx = originalIdxOf(wId);
+          const isDraggedItem = widgetDrag.dragIdx === origIdx;
           const widgetContent = renderWidgetContent({
             wId, stats, totalMonthlyExpenses: stats.totalExpenses,
             totalMonthlyCreditRate: stats.totalCreditRate,
             vacancyRate, propertyCount: stats.propertyCount,
             properties, allTenants,
           });
-          if (widgetContent === null) return null;
           const fullWidth = FULL_WIDTH_WIDGETS.has(wId);
           return (
             <div
               key={wId}
-              {...widgetDrag.getItemProps(idx)}
+              {...widgetDrag.getItemProps(origIdx)}
               role="listitem"
               aria-label={WIDGET_LABELS[wId] || wId}
-              className={`relative group transition-all duration-200 rounded-xl ${
+              className={`relative group rounded-xl ${
                 fullWidth ? "md:col-span-2" : ""
               } ${
-                isDragging ? "opacity-40 scale-[0.95] rotate-1 shadow-lg" : ""
-              } ${
-                isOver && !isDragging ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background scale-[1.02]" : ""
+                isDraggedItem
+                  ? "opacity-50 scale-[0.95] shadow-2xl ring-2 ring-primary/50 z-20 transition-transform duration-75"
+                  : "transition-all duration-300 ease-out"
               }`}
             >
               <div
-                {...widgetDrag.getHandleProps(idx)}
+                {...widgetDrag.getHandleProps(origIdx)}
                 className="absolute top-2 right-2 z-10 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-background/80 backdrop-blur-sm rounded-md p-1.5 border border-border/50"
                 aria-label="Ziehen zum Umsortieren"
               >

@@ -9,7 +9,6 @@ import { AnomalyDetection } from "@/components/AnomalyDetection";
 import { RentIncreaseTimeline } from "@/components/RentIncreaseTimeline";
 import { LoanFixedInterestCountdown } from "@/components/LoanFixedInterestCountdown";
 import { FavoritesBar } from "@/components/FavoritesBar";
-import { PrivacyToggle } from "@/components/PrivacyMode";
 import { DashboardPresets } from "@/components/DashboardPresets";
 import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
@@ -367,7 +366,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           {/* Cleaned up: removed buttons that are already accessible via navigation menus
                (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
-            <PrivacyToggle />
             {/* Fix 9: AddPropertyDialog only on Portfolio, not Dashboard */}
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={sharePortfolio}>
               <Share2 className="h-3.5 w-3.5" />
