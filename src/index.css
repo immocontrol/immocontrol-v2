@@ -141,13 +141,14 @@
   /* Smooth scroll behavior */
   html {
     scroll-behavior: smooth;
-    /* IMP-7: Prevent horizontal scroll globally */
-    overflow-x: hidden;
+    /* IMP-7: Prevent horizontal scroll globally
+       Use clip instead of hidden — hidden creates a scroll context that breaks position:sticky */
+    overflow-x: clip;
   }
 
   /* IMP-8: Prevent horizontal overflow on body */
   body {
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100vw;
   }
 }
@@ -325,9 +326,10 @@
     }
   }
 
-  /* IMP-9: Prevent horizontal scroll without clipping dropdowns */
+  /* IMP-9: Prevent horizontal scroll without clipping dropdowns
+     Use clip instead of hidden to preserve position:sticky behavior */
   html, body {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* IMP-10: Responsive grid items never overflow */
