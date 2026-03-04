@@ -219,9 +219,9 @@ export function parseExposeText(rawText: string): ParsedExposeData {
 
   // Kaltmiete (monthly only — annual patterns extracted separately below)
   const kaltmiete = extractNumber(text, [
-    /Kaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
-    /Nettokaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
-    /Miete\s*(?:kalt)?\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /(?<!Jahres(?:netto)?)Kaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /(?<!Jahres)Nettokaltmiete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /(?<!Jahres)Miete\s*(?:kalt)?\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
     /Ist-Miete\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
   ]);
   if (kaltmiete > 0) extractedFields.push("kaltmiete");
