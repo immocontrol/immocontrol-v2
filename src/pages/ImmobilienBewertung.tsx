@@ -445,6 +445,14 @@ const ImmobilienBewertung = () => {
               </div>
 
               <div className="space-y-1">
+                <Label className="text-xs flex items-center gap-1">
+                  Jahresmiete € (p.a.)
+                  {parsedData.extractedFields.includes("jahresmiete") && <Badge variant="outline" className="text-[8px] h-4 ml-1">erkannt</Badge>}
+                </Label>
+                <NumberInput value={parsedData.jahresmiete} onChange={v => updateField("jahresmiete", v)} className="h-8 text-xs" />
+              </div>
+
+              <div className="space-y-1">
                 <Label className="text-xs">Zustand</Label>
                 <Select value={parsedData.zustand} onValueChange={(v) => updateField("zustand", v as ParsedExposeData["zustand"])}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
