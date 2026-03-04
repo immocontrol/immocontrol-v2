@@ -7,6 +7,7 @@ import { NumberInput } from "@/components/NumberInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
@@ -36,9 +37,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
   const { data: entries = [] } = useQuery({
     queryKey: ["value_history", propertyId],
     queryFn: async () => {
-      const { data } = await supabase
-        /* FIX-22: Replace `as any` with typed table name cast */
-        .from("property_value_history" as never)
+      const { data } = await fromTable("property_value_history")
         .select("*")
         .eq("property_id", propertyId)
         .order("date", { ascending: true });
@@ -50,8 +49,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || form.value <= 0) throw new Error("Wert erforderlich");
-      /* FIX-23: Replace `as any` with typed table name cast */
-      const { error } = await supabase.from("property_value_history" as never).insert({
+      const { error } = await fromTable("property_value_history").insert({
         property_id: propertyId,
         user_id: user.id,
         value: form.value,
@@ -71,8 +69,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      /* FIX-24: Replace `as any` with typed table name cast */
-      await supabase.from("property_value_history" as never).delete().eq("id", id);
+      await fromTable("property_value_history").delete().eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["value_history", propertyId] }),
   });

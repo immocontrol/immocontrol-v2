@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
@@ -46,8 +47,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   const { data: goals = [] } = useQuery({
     queryKey: ["portfolio_goals"],
     queryFn: async () => {
-      /* FIX-28: Replace `as any` with typed table name cast */
-      const { data } = await supabase.from("portfolio_goals" as never).select("*").order("created_at");
+      const { data } = await fromTable("portfolio_goals").select("*").order("created_at");
       return (data || []) as unknown as Goal[];
     },
     enabled: !!user,
@@ -60,8 +60,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
         : form.type === "cashflow" ? currentStats.totalCashflow
         : form.type === "units" ? currentStats.totalUnits
         : currentStats.equity;
-      /* FIX-29: Replace `as any` with typed table name cast */
-      const { error } = await supabase.from("portfolio_goals" as never).insert({
+      const { error } = await fromTable("portfolio_goals").insert({
         user_id: user.id, title: form.title.trim(), type: form.type,
         target: form.target, current_value: currentValue,
         deadline: form.deadline || null,
@@ -78,8 +77,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   });
 
   const deleteMutation = useMutation({
-    /* FIX-30: Replace `as any` with typed table name cast */
-    mutationFn: async (id: string) => { await supabase.from("portfolio_goals" as never).delete().eq("id", id); },
+    mutationFn: async (id: string) => { await fromTable("portfolio_goals").delete().eq("id", id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["portfolio_goals"] }),
   });
 

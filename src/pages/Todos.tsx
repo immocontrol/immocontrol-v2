@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
@@ -133,8 +134,7 @@ const Todos = () => {
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: queryKeys.todos.all(user?.id ?? ""),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("todos" as never)
+      const { data, error } = await fromTable("todos")
         .select("id, user_id, title, description, due_date, due_time, priority, completed, completed_at, project, labels, sort_order, created_at, updated_at")
         .order("priority", { ascending: true })
         .order("sort_order", { ascending: true })
@@ -152,7 +152,7 @@ const Todos = () => {
     queryKey: todoQueryKey,
     mutationFn: async (input) => {
       if (!user) throw new Error("Not authenticated");
-      const { data, error } = await supabase.from("todos" as never).insert({
+      const { data, error } = await fromTable("todos").insert({
         user_id: user.id,
         title: input.title.trim(),
         priority: 4,
@@ -187,7 +187,7 @@ const Todos = () => {
   const updateMutation = useOptimisticMutation<Todo, { id: string; updates: Partial<Todo> }>({
     queryKey: todoQueryKey,
     mutationFn: async ({ id, updates }) => {
-      const { data, error } = await supabase.from("todos" as never).update({ ...updates, updated_at: new Date().toISOString() } as never).eq("id", id).select().single();
+      const { data, error } = await fromTable("todos").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", id).select().single();
       if (error) throw error;
       return data as unknown as Todo;
     },
@@ -199,7 +199,7 @@ const Todos = () => {
   const deleteMutation = useOptimisticMutation<Todo, string>({
     queryKey: todoQueryKey,
     mutationFn: async (id) => {
-      const { error } = await supabase.from("todos" as never).delete().eq("id", id);
+      const { error } = await fromTable("todos").delete().eq("id", id);
       if (error) throw error;
       return { id, user_id: "", title: "", description: "", due_date: null, due_time: null, priority: 0, completed: false, completed_at: null, project: "", labels: [], sort_order: 0, created_at: "", updated_at: "" } satisfies Todo;
     },

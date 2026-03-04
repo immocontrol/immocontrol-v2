@@ -10,6 +10,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 
 /* ── Generic helpers ─────────────────────────────────────── */
 
@@ -448,7 +449,7 @@ const userSettings = {
     query<unknown>("user_settings", { eq: [["user_id", userId]], single: true }),
   upsert: async (record: Record<string, unknown>): Promise<QueryResult<unknown>> => {
     try {
-      const { data, error } = await supabase.from("user_settings" as never).upsert(record as never).select().single();
+      const { data, error } = await fromTable("user_settings").upsert(record).select().single();
       if (error) return { data: null, error: error.message };
       return { data, error: null };
     } catch (err: unknown) {

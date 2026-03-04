@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
@@ -45,9 +46,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
   const { data: insurances = [] } = useQuery({
     queryKey: ["insurances", propertyId],
     queryFn: async () => {
-      const { data } = await supabase
-        /* FIX-10: Replace `as any` with typed table name cast */
-        .from("property_insurances" as never)
+      const { data } = await fromTable("property_insurances")
         .select("*")
         .eq("property_id", propertyId)
         .order("renewal_date", { ascending: true });
@@ -59,8 +58,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
   const addMutation = useMutation({
     mutationFn: async () => {
       if (!user || !form.provider.trim()) throw new Error("Anbieter erforderlich");
-      /* FIX-11: Replace `as any` with typed table name cast */
-      const { error } = await supabase.from("property_insurances" as never).insert({
+      const { error } = await fromTable("property_insurances").insert({
         property_id: propertyId,
         user_id: user.id,
         type: form.type,
@@ -82,8 +80,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
   });
 
   const deleteMutation = useMutation({
-    /* FIX-12: Replace `as any` with typed table name cast */
-    mutationFn: async (id: string) => { await supabase.from("property_insurances" as never).delete().eq("id", id); },
+    mutationFn: async (id: string) => { await fromTable("property_insurances").delete().eq("id", id); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["insurances", propertyId] }),
   });
 

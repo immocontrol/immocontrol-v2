@@ -374,25 +374,25 @@ export const calculateLeadScore = (lead: LeadScoreInput): number => {
   if (lead.notes) score += 10;
   const callCount = lead.call_logs?.length || 0;
   score += Math.min(callCount * 10, 30);
-  if (lead.status === "interested") score += 15;
+  if (lead.status === "interessiert" || lead.status === "interested") score += 15;
   return Math.min(score, 100);
 };
 
 /* FUNC-40: Lead status options */
 export const LEAD_STATUS_OPTIONS = [
-  { value: "new", label: "Neu", color: "bg-blue-500" },
-  { value: "contacted", label: "Kontaktiert", color: "bg-yellow-500" },
-  { value: "interested", label: "Interessiert", color: "bg-green-500" },
-  { value: "not_interested", label: "Kein Interesse", color: "bg-red-500" },
+  { value: "neu", label: "Neu", color: "bg-blue-500" },
+  { value: "kontaktiert", label: "Kontaktiert", color: "bg-yellow-500" },
+  { value: "interessiert", label: "Interessiert", color: "bg-green-500" },
+  { value: "nicht_interessiert", label: "Kein Interesse", color: "bg-red-500" },
   { value: "follow_up", label: "Nachfassen", color: "bg-orange-500" },
 ] as const;
 
 /* FUNC-41: CRM statistics helper */
 export const calcCRMStats = (leads: { status?: string }[]) => ({
   total: leads.length,
-  contacted: leads.filter(l => l.status === "contacted").length,
-  interested: leads.filter(l => l.status === "interested").length,
-  conversionRate: leads.length > 0 ? Math.round(leads.filter(l => l.status === "interested").length / leads.length * 100) : 0,
+  contacted: leads.filter(l => l.status === "kontaktiert").length,
+  interested: leads.filter(l => l.status === "interessiert").length,
+  conversionRate: leads.length > 0 ? Math.round(leads.filter(l => l.status === "interessiert").length / leads.length * 100) : 0,
 });
 
 /* OPT-24: Debounce delay constant */

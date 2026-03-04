@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { focusNextField } from "@/hooks/useEnterToNext";
 import { supabase } from "@/integrations/supabase/client";
+import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
@@ -37,9 +38,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
   const { data: customCompanies = [] } = useQuery<CustomCompany[]>({
     queryKey: queryKeys.customCompanies.all,
     queryFn: async () => {
-      const { data, error } = await supabase
-        /* FIX-18: Replace `as any` with typed table name cast */
-        .from("custom_companies" as never)
+      const { data, error } = await fromTable("custom_companies")
         .select("id, name")
         .order("name");
       if (error) throw error;
@@ -51,9 +50,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
   const addMutation = useMutation({
     mutationFn: async (name: string) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase
-        /* FIX-19: Replace `as any` with typed casts */
-        .from("custom_companies" as never)
+      const { error } = await fromTable("custom_companies")
         .insert({ user_id: user.id, name } as Record<string, unknown>);
       if (error) throw error;
     },
@@ -69,9 +66,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        /* FIX-20: Replace `as any` with typed table name cast */
-        .from("custom_companies" as never)
+      const { error } = await fromTable("custom_companies")
         .delete()
         .eq("id", id);
       if (error) throw error;

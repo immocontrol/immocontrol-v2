@@ -86,7 +86,19 @@ const isFormValid = (form: typeof emptyForm): boolean =>
 const fmt = (n: number) => formatCurrency(n);
 
 /* UPD-14: Memoized Kanban deal card for reduced re-renders */
-const DealCard = memo(({ deal, onClick }: { deal: DealRecord; onClick: () => void }) => {
+const DealCard = memo(({
+  deal,
+  onClick,
+  draggable,
+  onDragStart,
+  onDragEnd,
+}: {
+  deal: DealRecord;
+  onClick: () => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
+}) => {
   const dealAge = Math.floor((Date.now() - new Date(deal.created_at).getTime()) / 86400000);
   const isStale = dealAge > 30 && deal.stage !== "abgeschlossen" && deal.stage !== "abgelehnt";
   const isTelegram = deal.source?.toLowerCase().includes("telegram");
@@ -96,7 +108,11 @@ const DealCard = memo(({ deal, onClick }: { deal: DealRecord; onClick: () => voi
       className={cn(
         "cursor-pointer hover:shadow-md transition-all duration-200",
         isStale && "border-yellow-500/40",
+        draggable && "active:scale-[0.98]",
       )}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onClick}
       role="button"
       aria-label={`Deal: ${deal.title}`}
@@ -164,6 +180,10 @@ const Deals = () => {
   const [sortAsc, setSortAsc] = useState(false);
   /* UPD-19: Delete confirmation dialog state */
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  /* FUNC-12: Kanban Drag & Drop between stages */
+  const [draggedDeal, setDraggedDeal] = useState<DealRecord | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
 
   /* UPD-20: Use centralised query keys */
   const { data: deals = [], isLoading } = useQuery({
@@ -613,7 +633,32 @@ const Deals = () => {
           {STAGES.map(stage => {
             const stageDeals = filteredDeals.filter(d => d.stage === stage.key);
             return (
-              <div key={stage.key} className="min-w-[240px] sm:min-w-[260px] w-[240px] sm:w-[260px] shrink-0 snap-start" role="list" aria-label={`Stage: ${stage.label}`}>
+              <div
+                key={stage.key}
+                className={cn(
+                  "min-w-[240px] sm:min-w-[260px] w-[240px] sm:w-[260px] shrink-0 snap-start rounded-lg",
+                  dragOverStage === stage.key && "ring-2 ring-primary/40 bg-primary/5",
+                )}
+                role="list"
+                aria-label={`Stage: ${stage.label}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverStage(stage.key);
+                }}
+                onDragLeave={() => {
+                  setDragOverStage((prev) => (prev === stage.key ? null : prev));
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (!draggedDeal) return;
+                  if (draggedDeal.stage !== stage.key) {
+                    moveDeal.mutate({ id: draggedDeal.id, stage: stage.key });
+                    toast.success(`Verschoben: ${stage.label}`);
+                  }
+                  setDraggedDeal(null);
+                  setDragOverStage(null);
+                }}
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn("w-2.5 h-2.5 rounded-full", stage.color)} />
                   <span className="text-sm font-semibold">{stage.label}</span>
@@ -624,7 +669,21 @@ const Deals = () => {
                 </div>
                 <div className="space-y-2">
                   {stageDeals.map((deal) => (
-                    <DealCard key={deal.id} deal={deal} onClick={() => openEdit(deal)} />
+                    <DealCard
+                      key={deal.id}
+                      deal={deal}
+                      onClick={() => openEdit(deal)}
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedDeal(deal);
+                        e.dataTransfer.setData("text/plain", deal.id);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragEnd={() => {
+                        setDraggedDeal(null);
+                        setDragOverStage(null);
+                      }}
+                    />
                   ))}
                   {stageDeals.length === 0 && (
                     <div className="py-4 text-center text-xs text-muted-foreground/50 border border-dashed rounded-lg">

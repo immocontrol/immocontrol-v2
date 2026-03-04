@@ -26,6 +26,8 @@ import { useEnterToNext } from "@/hooks/useEnterToNext";
 import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import { PageProgressBar } from "@/components/PageProgressBar";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
 interface NavItem {
@@ -237,6 +239,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   /* Mobile grouped nav: which group is expanded (shows sub-items above bottom bar) */
   const [mobileActiveGroup, setMobileActiveGroup] = useState<string | null>(null);
+
+  /* MOBILE-FIX-4/5: Swipe navigation between menus + group-first navigation
+     - swipe left/right switches between top-level nav entries
+     - when landing on a group, only expand its sub-items (no auto-navigation) */
+  const touchStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
 
@@ -479,6 +486,79 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     };
   }, [updateDotPosition, updateMobileDotPosition]);
 
+  const isInteractiveElement = (el: EventTarget | null): boolean => {
+    if (!(el instanceof HTMLElement)) return false;
+    const tag = el.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON") return true;
+    if (el.isContentEditable) return true;
+    return Boolean(el.closest("[data-swipe-ignore='true']"));
+  };
+
+  const isHorizontallyScrollable = (el: HTMLElement | null): boolean => {
+    let cur: HTMLElement | null = el;
+    for (let i = 0; i < 6 && cur; i++) {
+      const style = window.getComputedStyle(cur);
+      const canScrollX = (style.overflowX === "auto" || style.overflowX === "scroll") && cur.scrollWidth > cur.clientWidth + 5;
+      if (canScrollX) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  };
+
+  const getActiveTopLevelIndex = (): number => {
+    for (let i = 0; i < navEntries.length; i++) {
+      const entry = navEntries[i];
+      if (isGroup(entry)) {
+        if (entry.items.some(item => isRouteActive(item.path, location.pathname))) return i;
+      } else {
+        if (isRouteActive(entry.path, location.pathname)) return i;
+      }
+    }
+    return 0;
+  };
+
+  const activateTopLevelEntry = (idx: number) => {
+    const entry = navEntries[idx];
+    if (isGroup(entry)) {
+      setMobileActiveGroup(entry.label);
+      return;
+    }
+    setMobileActiveGroup(null);
+    navigate(entry.path);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.matchMedia("(min-width: 768px)").matches) return;
+    if (isInteractiveElement(e.target)) return;
+    if (isHorizontallyScrollable(e.target as HTMLElement)) return;
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (window.matchMedia("(min-width: 768px)").matches) return;
+    const start = touchStartRef.current;
+    if (!start) return;
+    touchStartRef.current = null;
+
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    const dt = Date.now() - start.t;
+
+    /* Ignore vertical scroll and slow drags */
+    if (dt > 700) return;
+    if (Math.abs(dx) < 80) return;
+    if (Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    const curIdx = getActiveTopLevelIndex();
+    const nextIdx = dx < 0
+      ? Math.min(curIdx + 1, navEntries.length - 1)
+      : Math.max(curIdx - 1, 0);
+    if (nextIdx === curIdx) return;
+    activateTopLevelEntry(nextIdx);
+  };
+
   return (
     <div data-session-id={sessionIdRef.current} className="min-h-screen bg-background flex flex-col theme-transition-smooth dark-mode-contrast">
       {/* STR-11: Improved offline banner with auto-dismiss and reconnect detection */}
@@ -505,6 +585,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       >
         <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
       </div>
+      {/* UX-1: Page transition progress bar */}
+      <PageProgressBar />
       <ScrollProgress />
       <KeyboardShortcuts />
       {/* UI-6/UI-27: glass-header + page-header */}
@@ -604,6 +686,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
               <NotificationBell />
+              {/* UX-2: Notification Center with History */}
+              <NotificationCenter />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link to="/einstellungen" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Einstellungen">
@@ -640,7 +724,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       )}
 
       {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
-      <main id="main-content" className="flex-1 container py-6 pb-24 md:pb-6" onKeyDown={enterToNextHandler}>
+      <main
+        id="main-content"
+        className="flex-1 container py-6 pb-24 md:pb-6"
+        onKeyDown={enterToNextHandler}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {children}
       </main>
 
@@ -662,6 +752,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <OfflineIndicator />
 
       {/* Mobile nav — 5 grouped tabs with expandable sub-items */}
+      {/* MOBILE-FIX-3: Added menu tab animation when switching between tabs */}
       <nav
         className={`fixed bottom-0 left-0 right-0 z-[200] border-t border-border bg-background/95 backdrop-blur-xl md:hidden safe-area-bottom mobile-bottom-safe transition-all duration-300 ${
           mobileNavVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
@@ -715,9 +806,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <button
                   key={entry.label}
                   onClick={() => setMobileActiveGroup(isExpanded ? null : entry.label)}
-                  className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all relative ${
-                    groupActive || isExpanded ? "text-primary" : "text-muted-foreground"
-                  } ${isExpanded ? "scale-105" : ""}`}
+                  className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 ${
+                    groupActive || isExpanded ? "text-primary scale-105" : "text-muted-foreground"
+                  }`}
                 >
                   <entry.icon className="h-4 w-4" />
                   <span className="truncate max-w-[52px] leading-tight">{entry.label}</span>
@@ -734,8 +825,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 data-nav-link
                 onClick={() => setMobileActiveGroup(null)}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all relative ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 ${
+                  isActive ? "text-primary scale-105" : "text-muted-foreground"
                 }`}
               >
                 <item.icon className="h-4 w-4" />

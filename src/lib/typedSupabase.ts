@@ -4,6 +4,14 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+/* Supabase types in this repo may not include all tables; cast once here to avoid `as never` at call sites. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAny = supabase as unknown as {
+  from: (table: string) => ReturnType<typeof supabase.from>;
+};
+
+export const fromTable = (table: string) => supabaseAny.from(table);
+
 /**
  * Type-safe query helper that returns typed data without `as never` casts.
  * Usage: const data = await typedQuery("properties", "*", { eq: { user_id: userId } });
@@ -13,7 +21,7 @@ export async function typedQuery<T = Record<string, unknown>>(
   select = "*",
   filters?: { eq?: Record<string, string | number | boolean>; order?: { column: string; ascending?: boolean }; limit?: number },
 ): Promise<T[]> {
-  let query = supabase.from(table).select(select);
+  let query = supabaseAny.from(table).select(select);
 
   if (filters?.eq) {
     for (const [key, value] of Object.entries(filters.eq)) {
@@ -73,7 +81,7 @@ export async function typedUpdate<T = Record<string, unknown>>(
  * Usage: await typedDelete("todos", id);
  */
 export async function typedDelete(table: string, id: string): Promise<void> {
-  const { error } = await supabase.from(table).delete().eq("id", id);
+  const { error } = await supabaseAny.from(table).delete().eq("id", id);
   if (error) throw error;
 }
 
