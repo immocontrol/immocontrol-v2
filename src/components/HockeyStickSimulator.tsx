@@ -16,17 +16,25 @@ import jsPDF from "jspdf";
 import {
   type SimParams, type DataPoint, type ChartView, type SavedProfile, type Scenario,
   DEFAULT_PARAMS, SCENARIOS, simulate, sensitivityAnalysis,
-  loadProfiles, saveProfilesStore,
+  loadProfiles, saveProfilesStore, defaultParamsFromPortfolio,
 } from "@/lib/hockeyStickEngine";
 import { parseAiPrompt } from "@/lib/hockeyStickAiParser";
+import { useProperties } from "@/context/PropertyContext";
 
 /* IMP-3: Types, simulation engine, scenarios, and profile persistence
    extracted to @/lib/hockeyStickEngine.ts for modularity & testability */
 /* AI parser extracted to @/lib/hockeyStickAiParser.ts */
 
 export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean } = {}) {
+  const { stats: portfolioStats } = useProperties();
   const [open, setOpen] = useState(false);
-  const [params, setParams] = useState<SimParams>(DEFAULT_PARAMS);
+  /* IMP20-3: Initialize with real portfolio data if available, otherwise use defaults */
+  const [params, setParams] = useState<SimParams>(() => {
+    const portfolioDefaults = defaultParamsFromPortfolio(portfolioStats);
+    return Object.keys(portfolioDefaults).length > 0
+      ? { ...DEFAULT_PARAMS, ...portfolioDefaults }
+      : DEFAULT_PARAMS;
+  });
   const [chartView, setChartView] = useState<ChartView>("growth");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>(loadProfiles);
