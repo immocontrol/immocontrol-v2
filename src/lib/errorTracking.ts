@@ -27,10 +27,18 @@ function loadErrors(): ErrorEntry[] {
   return [];
 }
 
+/* FUND-5: Handle localStorage quota exceeded — evict oldest entries when full */
 function saveErrors(errors: ErrorEntry[]) {
+  const trimmed = errors.slice(-MAX_ERRORS);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(errors.slice(-MAX_ERRORS)));
-  } catch { /* localStorage full — clear old errors */ }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+  } catch {
+    /* localStorage full — evict oldest half and retry */
+    try {
+      const reduced = trimmed.slice(Math.floor(trimmed.length / 2));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reduced));
+    } catch { /* still full — give up silently */ }
+  }
 }
 
 /** Log an error to the tracking store */

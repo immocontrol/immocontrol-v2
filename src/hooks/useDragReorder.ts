@@ -1,8 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 /**
- * Custom drag & drop reorder hook using pointer events.
+ * Custom drag & drop reorder hook using pointer events only.
  * Works on both desktop and mobile, supports scrolling while dragging.
+ *
+ * Fixed: removed HTML5 drag (draggable/onDragStart/onDragOver/onDragEnd) to
+ * prevent dual-event conflicts with pointer events on the grip handle.
+ * Fixed: skip dragged item during hit-testing to prevent jitter loop.
+ * Fixed: check both clientX & clientY for 2-column grid layouts.
  *
  * @param items - The array of items to reorder
  * @param onReorder - Callback when items are reordered
@@ -18,27 +23,32 @@ export function useDragReorder<T>(
   const [isDragging, setIsDragging] = useState(false);
 
   const dragItemRef = useRef<number | null>(null);
+  const overIdxRef = useRef<number | null>(null);
   const autoScrollRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  /* Track latest clientY for auto-scroll (updated every pointerMove) */
+  const lastClientY = useRef(0);
 
-  // Auto-scroll when pointer is near viewport edges during drag
-  const startAutoScroll = useCallback((clientY: number) => {
-    if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
+  // Keep overIdxRef in sync with state
+  useEffect(() => { overIdxRef.current = overIdx; }, [overIdx]);
 
+  // Auto-scroll when pointer is near viewport edges during drag.
+  // Uses a ref for clientY so only one rAF loop runs (no restart per move).
+  const startAutoScroll = useCallback(() => {
+    if (autoScrollRef.current) return; // already running
     const EDGE_ZONE = 80; // px from edge to start scrolling
     const MAX_SPEED = 12; // max px per frame
 
     const tick = () => {
+      const y = lastClientY.current;
       const vh = window.innerHeight;
       let speed = 0;
-      if (clientY < EDGE_ZONE) {
-        speed = -MAX_SPEED * (1 - clientY / EDGE_ZONE);
-      } else if (clientY > vh - EDGE_ZONE) {
-        speed = MAX_SPEED * (1 - (vh - clientY) / EDGE_ZONE);
+      if (y < EDGE_ZONE) {
+        speed = -MAX_SPEED * (1 - y / EDGE_ZONE);
+      } else if (y > vh - EDGE_ZONE) {
+        speed = MAX_SPEED * (1 - (vh - y) / EDGE_ZONE);
       }
-      if (speed !== 0) {
-        window.scrollBy(0, speed);
-      }
+      if (speed !== 0) window.scrollBy(0, speed);
       autoScrollRef.current = requestAnimationFrame(tick);
     };
     autoScrollRef.current = requestAnimationFrame(tick);
@@ -52,29 +62,25 @@ export function useDragReorder<T>(
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => stopAutoScroll();
-  }, [stopAutoScroll]);
+  useEffect(() => () => stopAutoScroll(), [stopAutoScroll]);
 
   /* STR-8: Haptic feedback on drag start for mobile devices */
   const handleDragStart = useCallback((idx: number) => {
     dragItemRef.current = idx;
     setDragIdx(idx);
     setIsDragging(true);
-    // Trigger haptic feedback on supported devices
-    if (navigator.vibrate) {
-      navigator.vibrate(30);
-    }
+    if (navigator.vibrate) navigator.vibrate(30);
   }, []);
 
   const handleDragOver = useCallback((idx: number) => {
     if (dragItemRef.current === null) return;
-    if (idx !== overIdx) {
+    if (idx !== overIdxRef.current) {
+      overIdxRef.current = idx;
       setOverIdx(idx);
       /* iOS-style: light haptic on hover change */
       if (navigator.vibrate) navigator.vibrate(10);
     }
-  }, [overIdx]);
+  }, []);
 
   /** Compute the preview order during drag (iOS-style live reorder) */
   const getPreviewOrder = useCallback((): T[] => {
@@ -87,7 +93,7 @@ export function useDragReorder<T>(
 
   const handleDragEnd = useCallback(() => {
     const from = dragItemRef.current;
-    const to = overIdx;
+    const to = overIdxRef.current;
     if (from !== null && to !== null && from !== to) {
       const next = [...items];
       const [removed] = next.splice(from, 1);
@@ -98,6 +104,7 @@ export function useDragReorder<T>(
       }
     }
     dragItemRef.current = null;
+    overIdxRef.current = null;
     setDragIdx(null);
     setOverIdx(null);
     setIsDragging(false);
@@ -106,37 +113,49 @@ export function useDragReorder<T>(
     if (navigator.vibrate && from !== null && to !== null && from !== to) {
       navigator.vibrate(15);
     }
-  }, [items, overIdx, onReorder, storageKey, stopAutoScroll]);
+  }, [items, onReorder, storageKey, stopAutoScroll]);
 
-  /** Props to spread on the drag handle element (the grip icon) */
+  /**
+   * Hit-test: find which grid child the pointer is over.
+   * Checks both X and Y for correct behaviour in multi-column grids.
+   * Skips the dragged item to prevent a jitter feedback loop where
+   * hovering over the dragged item resets the preview order, causing
+   * the DOM to reorder, causing a new hover target, etc.
+   */
+  const hitTest = useCallback((clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+    const children = Array.from(containerRef.current.children) as HTMLElement[];
+    for (let i = 0; i < children.length; i++) {
+      const attr = children[i].dataset.dragIdx;
+      const origIdx = attr !== undefined ? Number(attr) : i;
+      // Skip the item being dragged to prevent jitter
+      if (origIdx === dragItemRef.current) continue;
+      const rect = children[i].getBoundingClientRect();
+      if (
+        clientX >= rect.left && clientX <= rect.right &&
+        clientY >= rect.top && clientY <= rect.bottom
+      ) {
+        handleDragOver(origIdx);
+        return;
+      }
+    }
+  }, [handleDragOver]);
+
+  /** Props to spread on the drag handle element (the grip icon) — pointer events only */
   const getHandleProps = useCallback((idx: number) => ({
     onPointerDown: (e: React.PointerEvent) => {
       // Only primary button
       if (e.button !== 0) return;
       e.preventDefault();
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      lastClientY.current = e.clientY;
       handleDragStart(idx);
-      startAutoScroll(e.clientY);
+      startAutoScroll();
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (dragItemRef.current === null) return;
-      // Update auto-scroll based on pointer position
-      stopAutoScroll();
-      startAutoScroll(e.clientY);
-
-      // Find which item we're over based on pointer position
-      if (!containerRef.current) return;
-      const children = Array.from(containerRef.current.children) as HTMLElement[];
-      for (let i = 0; i < children.length; i++) {
-        const rect = children[i].getBoundingClientRect();
-        if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
-          /* Use data-drag-idx if present so preview-reordered DOM stays consistent */
-          const attr = children[i].dataset.dragIdx;
-          const idx = attr !== undefined ? Number(attr) : i;
-          handleDragOver(idx);
-          break;
-        }
-      }
+      lastClientY.current = e.clientY;
+      hitTest(e.clientX, e.clientY);
     },
     onPointerUp: () => {
       handleDragEnd();
@@ -145,23 +164,14 @@ export function useDragReorder<T>(
       handleDragEnd();
     },
     style: { touchAction: "none" as const, cursor: isDragging ? "grabbing" : "grab" },
-  }), [handleDragStart, handleDragOver, handleDragEnd, startAutoScroll, stopAutoScroll]);
+  }), [handleDragStart, handleDragEnd, hitTest, startAutoScroll, isDragging]);
 
-  /** Also support native HTML5 drag for desktop (better UX with drag ghost) */
-  const getItemProps = useCallback((idx: number) => ({
-    draggable: true,
-    onDragStart: (e: React.DragEvent) => {
-      e.dataTransfer.effectAllowed = "move";
-      handleDragStart(idx);
-    },
-    onDragOver: (e: React.DragEvent) => {
-      e.preventDefault();
-      handleDragOver(idx);
-    },
-    onDragEnd: () => {
-      handleDragEnd();
-    },
-  }), [handleDragStart, handleDragOver, handleDragEnd]);
+  /**
+   * Props to spread on each draggable item container.
+   * No HTML5 drag — avoids dual-event conflict with pointer events on the handle.
+   * Items must set data-drag-idx={originalIndex} for hit-testing.
+   */
+  const getItemProps = useCallback((_idx: number) => ({}), []);
 
   return {
     dragIdx,

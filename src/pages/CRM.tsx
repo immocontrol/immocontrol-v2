@@ -64,6 +64,11 @@ const CRM = () => {
     }, 400);
   }, []);
 
+  /* FUND-3: Cleanup autocomplete timer on unmount to prevent memory leak */
+  useEffect(() => {
+    return () => { if (autocompleteTimer.current) clearTimeout(autocompleteTimer.current); };
+  }, []);
+
   // Close autocomplete on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -297,16 +302,17 @@ const CRM = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["crm_leads"] }),
   });
 
-  const filteredLeads = filterStatus === "all" ? leads : leads.filter((l: { status: string }) => l.status === filterStatus);
-  const selectedLeadData = leads.find((l: { id: string }) => l.id === selectedLead);
+  /* FUND-2: Memoize filtered leads to avoid recalculation on unrelated state changes */
+  const filteredLeads = useMemo(() => filterStatus === "all" ? leads : leads.filter((l: { status: string }) => l.status === filterStatus), [leads, filterStatus]);
+  const selectedLeadData = useMemo(() => leads.find((l: { id: string }) => l.id === selectedLead), [leads, selectedLead]);
 
-  // Lead stats
-  const leadStats = {
+  /* FUND-2: Wrap leadStats in useMemo — previously recalculated 4x filter() on every render */
+  const leadStats = useMemo(() => ({
     total: leads.length,
     neu: leads.filter((l: { status: string }) => l.status === "neu").length,
     kontaktiert: leads.filter((l: { status: string }) => l.status === "kontaktiert").length,
     interessiert: leads.filter((l: { status: string }) => l.status === "interessiert").length,
-  };
+  }), [leads]);
 
   return (
     <div className="space-y-6">

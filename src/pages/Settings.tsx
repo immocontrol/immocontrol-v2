@@ -102,21 +102,24 @@ const Settings = () => {
     checkTotp();
   }, []);
 
+  /* FUND-10: Mounted guard prevents state update after unmount during async profile fetch */
   useEffect(() => {
+    let mounted = true;
     const fetchProfile = async () => {
-      if (!user) return;
+      if (!user) { if (mounted) setProfileLoading(false); return; }
       try {
         const { data } = await supabase
           .from("profiles")
           .select("display_name")
           .eq("user_id", user.id)
           .maybeSingle();
-        if (data?.display_name) setDisplayName(data.display_name);
+        if (mounted && data?.display_name) setDisplayName(data.display_name);
       } finally {
-        setProfileLoading(false);
+        if (mounted) setProfileLoading(false);
       }
     };
     fetchProfile();
+    return () => { mounted = false; };
   }, [user]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {

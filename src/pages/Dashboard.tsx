@@ -224,7 +224,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     return { highest: sorted[0], lowest: sorted[sorted.length - 1] };
   }, [properties]);
 
-
   /* BUG-FIX: Move greeting useMemo BEFORE early returns to satisfy React Rules of Hooks.
      Hooks must always be called in the same order — conditional returns must come after all hooks. */
   const greeting = useMemo(() => {

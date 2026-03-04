@@ -80,4 +80,12 @@ export const queryKeys = {
     all: ["invoices"] as const,
     open: ["invoices", "open"] as const,
   },
+  /* FUND-4: Missing query keys for CRM, user_banks — ensures consistent cache invalidation */
+  crm: {
+    leads: (userId?: string) => ["crm_leads", userId] as const,
+    callLogs: (leadId?: string) => ["crm_call_logs", leadId] as const,
+  },
+  userBanks: {
+    all: ["user_banks"] as const,
+  },
 } as const;

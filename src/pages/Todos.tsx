@@ -129,7 +129,7 @@ const Todos = () => {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const quickInputRef = useRef<HTMLInputElement>(null);
 
-
+  /* FUND-12: Removed stray double blank line — consistent code formatting */
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: queryKeys.todos.all(user?.id ?? ""),
     queryFn: async () => {

@@ -195,7 +195,7 @@ interface DragReorder {
   isDragging: boolean;
   containerRef: React.RefObject<HTMLDivElement | null>;
   getHandleProps: (idx: number) => Record<string, unknown>;
-  getItemProps: (idx: number) => Record<string, unknown>;
+  getItemProps: (idx: number) => Record<string, never>;
   getPreviewOrder: () => unknown[];
 }
 

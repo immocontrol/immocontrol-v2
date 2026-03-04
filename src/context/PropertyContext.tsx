@@ -145,11 +145,14 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       { totalValue: 0, totalPurchase: 0, totalRent: 0, totalCashflow: 0, totalDebt: 0, totalUnits: 0, totalSqm: 0, totalExpenses: 0, totalCreditRate: 0 }
     );
     const equity = acc.totalValue - acc.totalDebt;
+    /* FUND-9: NaN/Infinity guard on derived stats — prevents broken UI if totalPurchase is 0 or corrupt */
+    const rawAppreciation = acc.totalPurchase > 0 ? ((acc.totalValue - acc.totalPurchase) / acc.totalPurchase) * 100 : 0;
+    const rawRendite = acc.totalPurchase > 0 ? (acc.totalRent * 12) / acc.totalPurchase * 100 : 0;
     return {
       ...acc, equity,
       propertyCount: properties.length,
-      appreciation: acc.totalPurchase > 0 ? ((acc.totalValue - acc.totalPurchase) / acc.totalPurchase) * 100 : 0,
-      avgRendite: acc.totalPurchase > 0 ? (acc.totalRent * 12) / acc.totalPurchase * 100 : 0,
+      appreciation: Number.isFinite(rawAppreciation) ? rawAppreciation : 0,
+      avgRendite: Number.isFinite(rawRendite) ? rawRendite : 0,
     };
   }, [properties]);
 

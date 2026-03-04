@@ -14,13 +14,23 @@ const currencyFormatterDecimals = new Intl.NumberFormat("de-DE", {
 });
 
 /** IMP-44: Format currency in EUR (no decimals) */
-export const formatCurrency = (value: number) => currencyFormatter.format(value);
+/* FUND-8: NaN/Infinity guard — prevents "NaN €" or "∞ €" from appearing in the UI */
+export const formatCurrency = (value: number) => {
+  if (!Number.isFinite(value)) return "0 €";
+  return currencyFormatter.format(value);
+};
 
-export const formatCurrencyDecimals = (value: number) => currencyFormatterDecimals.format(value);
+export const formatCurrencyDecimals = (value: number) => {
+  if (!Number.isFinite(value)) return "0,00 €";
+  return currencyFormatterDecimals.format(value);
+};
 
 /** IMP-45: Format percentage with configurable decimals */
-export const formatPercent = (value: number, decimals = 1) =>
-  `${value.toFixed(decimals)}%`;
+/* FUND-8: NaN/Infinity guard for percentages */
+export const formatPercent = (value: number, decimals = 1) => {
+  if (!Number.isFinite(value)) return `${(0).toFixed(decimals)}%`;
+  return `${value.toFixed(decimals)}%`;
+};
 
 export const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("de-DE");
@@ -65,7 +75,9 @@ export const formatFileSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+/* FUND-8: NaN guard for compact currency formatter */
 export const formatCurrencyCompact = (value: number): string => {
+  if (!Number.isFinite(value)) return "0 €";
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
   if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)} Mio. €`;
@@ -217,8 +229,11 @@ export const sortByKey = <T>(arr: T[], key: keyof T, desc = false): T[] =>
   });
 
 /* IMP-48: Format percentage with German locale (comma as decimal separator) */
-export const formatPercentDE = (value: number, decimals = 1): string =>
-  `${value.toFixed(decimals).replace(".", ",")}%`;
+/* FUND-8: NaN guard */
+export const formatPercentDE = (value: number, decimals = 1): string => {
+  if (!Number.isFinite(value)) return `${(0).toFixed(decimals).replace(".", ",")}%`;
+  return `${value.toFixed(decimals).replace(".", ",")}%`;
+};
 
 /* OPT-50: Group array by key */
 export const groupBy = <T>(arr: T[], keyFn: (item: T) => string): Record<string, T[]> => {
@@ -382,6 +397,13 @@ export const formatTimestamp = (iso: string): string => {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "–";
   return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};
+
+/* FUND-16: Defensive date validation — returns false for invalid/empty date strings */
+export const isValidDate = (dateStr: string | null | undefined): boolean => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  return !isNaN(d.getTime());
 };
 
 /* IMP-41-2: Sanitize user input — strips HTML tags to prevent XSS in text displays */
