@@ -70,9 +70,10 @@ const WartungskostenPrognose = memo(() => {
         return dueDate.getFullYear() === date.getFullYear() && dueDate.getMonth() === date.getMonth();
       });
 
-      // Calculate recurring items that fall in this month
+      // Calculate recurring items that fall in this month (exclude items already in dueItems to avoid double-counting)
+      const dueItemIds = new Set(dueItems.map(item => item.id));
       const recurringCost = maintenanceItems
-        .filter(item => item.interval_months > 0 && item.next_due_date)
+        .filter(item => item.interval_months > 0 && item.next_due_date && !dueItemIds.has(item.id))
         .reduce((sum, item) => {
           const dueDate = new Date(item.next_due_date);
           const monthsDiff = (date.getFullYear() - dueDate.getFullYear()) * 12 + (date.getMonth() - dueDate.getMonth());

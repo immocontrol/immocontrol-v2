@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { TrendingUp, Sliders, RotateCcw, Download, Save, Upload, Bookmark, Target, Zap, BarChart3, PieChart, Table, Copy, Share2, Euro, Building2, Calculator, AlertTriangle, Check, Sparkles, Send } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -28,13 +28,18 @@ import { useProperties } from "@/context/PropertyContext";
 export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean } = {}) {
   const { stats: portfolioStats } = useProperties();
   const [open, setOpen] = useState(false);
-  /* IMP20-3: Initialize with real portfolio data if available, otherwise use defaults */
-  const [params, setParams] = useState<SimParams>(() => {
-    const portfolioDefaults = defaultParamsFromPortfolio(portfolioStats);
-    return Object.keys(portfolioDefaults).length > 0
-      ? { ...DEFAULT_PARAMS, ...portfolioDefaults }
-      : DEFAULT_PARAMS;
-  });
+  const [params, setParams] = useState<SimParams>(DEFAULT_PARAMS);
+  /* IMP20-3: Seed simulator from real portfolio data once loaded */
+  const hasAppliedPortfolio = useRef(false);
+  useEffect(() => {
+    if (!hasAppliedPortfolio.current && portfolioStats.propertyCount > 0) {
+      const portfolioDefaults = defaultParamsFromPortfolio(portfolioStats);
+      if (Object.keys(portfolioDefaults).length > 0) {
+        setParams(prev => ({ ...prev, ...portfolioDefaults }));
+        hasAppliedPortfolio.current = true;
+      }
+    }
+  }, [portfolioStats]);
   const [chartView, setChartView] = useState<ChartView>("growth");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>(loadProfiles);

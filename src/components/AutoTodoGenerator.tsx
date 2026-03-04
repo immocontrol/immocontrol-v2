@@ -106,11 +106,22 @@ const AutoTodoGenerator = memo(() => {
     let count = 0;
     for (const todo of suggestedTodos) {
       try {
-        await createTodoMutation.mutateAsync(todo);
-        count++;
+        if (!user) throw new Error("Not authenticated");
+        const { error } = await supabase.from("todos").insert({
+          user_id: user.id,
+          title: todo.title,
+          due_date: todo.dueDate,
+          priority: todo.priority,
+          status: "open",
+          category: todo.source === "document" ? "Dokumente" : todo.source === "maintenance" ? "Wartung" : "Verträge",
+        });
+        if (!error) count++;
       } catch { /* skip */ }
     }
-    if (count > 0) toast.success(`${count} Todos automatisch erstellt`);
+    if (count > 0) {
+      qc.invalidateQueries({ queryKey: ["todos"] });
+      toast.success(`${count} Todos automatisch erstellt`);
+    }
   };
 
   if (suggestedTodos.length === 0) return null;
