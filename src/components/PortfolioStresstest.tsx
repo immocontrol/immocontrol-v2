@@ -77,9 +77,10 @@ const PortfolioStresstest = memo(() => {
 
     const stressedCashflow = stressedRent - stressedExpenses - (stressedCreditRate > 0 ? stressedCreditRate : currentCreditRate);
     const cashflowDelta = stressedCashflow - currentCashflow;
-    const survivalMonths = stressedCashflow < 0
-      ? Math.floor(Math.abs(stats.totalCashflow * 6) / Math.abs(stressedCashflow)) // Assume 6 months reserves
-      : 999;
+    const reserveBase = Math.max(0, stats.totalCashflow) * 6; // Only positive cashflow counts as reserves
+    const survivalMonths = stressedCashflow < 0 && reserveBase > 0
+      ? Math.floor(reserveBase / Math.abs(stressedCashflow))
+      : stressedCashflow < 0 ? 0 : 999;
 
     const totalDebt = loans.reduce((s, l) => s + (l.remaining_balance || 0), 0);
     const totalValue = stats.totalValue || 1;

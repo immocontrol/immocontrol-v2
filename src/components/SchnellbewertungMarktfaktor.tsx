@@ -38,11 +38,11 @@ const SchnellbewertungMarktfaktor = memo(({ baseValue, location }: Schnellbewert
     const clampedFactor = Math.max(0.7, Math.min(1.3, totalFactor)); // Clamp to ±30%
 
     let label = "Neutral";
-    let trend: "up" | "down" | "neutral" = "neutral";
-    if (clampedFactor > 1.05) { label = "Aufschlag (Käufermarkt)"; trend = "up"; }
-    else if (clampedFactor < 0.95) { label = "Abschlag (Verkäufermarkt)"; trend = "down"; }
+    let trendDirection: "up" | "down" | "neutral" = "neutral";
+    if (clampedFactor > 1.05) { label = "Aufschlag (Käufermarkt)"; trendDirection = "up"; }
+    else if (clampedFactor < 0.95) { label = "Abschlag (Verkäufermarkt)"; trendDirection = "down"; }
 
-    return { factor: clampedFactor, label, trend };
+    return { factor: clampedFactor, label, trend: trendDirection };
   }, [marketData]);
 
   const adjustedValue = Math.round(baseValue * marketFactor.factor);
