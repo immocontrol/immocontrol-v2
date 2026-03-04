@@ -28,7 +28,7 @@ export const formatCurrencyDecimals = (value: number) => {
 /** IMP-45: Format percentage with configurable decimals */
 /* FUND-8: NaN/Infinity guard for percentages */
 export const formatPercent = (value: number, decimals = 1) => {
-  if (!Number.isFinite(value)) return "0,0%";
+  if (!Number.isFinite(value)) return `${(0).toFixed(decimals)}%`;
   return `${value.toFixed(decimals)}%`;
 };
 
