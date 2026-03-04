@@ -856,7 +856,7 @@ const Deals = () => {
               </LoadingButton>
             </div>
             {/* IMP20-4: Deal → Immobilie Konvertierung for won deals */}
-            {editDeal && editDeal.stage === "abgeschlossen" && (
+            {editDeal && form.stage === "abgeschlossen" && (
               <DealToPropertyConverter
                 deal={editDeal}
                 onConverted={() => { setAddOpen(false); setEditDeal(null); }}

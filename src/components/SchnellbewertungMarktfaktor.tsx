@@ -27,8 +27,12 @@ const SchnellbewertungMarktfaktor = memo(({ baseValue, location }: Schnellbewert
     // Higher rates = lower prices (inverse relationship)
     const rateImpact = ((historicalAvg - currentRate) / historicalAvg) * 0.15; // ±15% max from rates
     
-    // Sentiment from news (simplified: use rate trend as proxy)
-    const sentimentImpact = marketData.trend === "falling" ? 0.03 : marketData.trend === "rising" ? -0.03 : 0;
+    // Compute trend from mortgage rate history
+    const rates = marketData.mortgageRate ?? [];
+    const trend = rates.length >= 2
+      ? (rates[rates.length - 1].rate < rates[rates.length - 2].rate ? "falling" : rates[rates.length - 1].rate > rates[rates.length - 2].rate ? "rising" : "stable")
+      : "stable";
+    const sentimentImpact = trend === "falling" ? 0.03 : trend === "rising" ? -0.03 : 0;
     
     const totalFactor = 1 + rateImpact + sentimentImpact;
     const clampedFactor = Math.max(0.7, Math.min(1.3, totalFactor)); // Clamp to ±30%
