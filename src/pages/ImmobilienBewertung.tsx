@@ -409,7 +409,7 @@ const ImmobilienBewertung = () => {
         </div>
         {step !== "upload" && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setStep("upload"); setParsedData(null); setSparkasseRequested(false); }}>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setStep("upload"); setParsedData(null); setSparkasseRequested(false); setAddressQuery(""); setAddressSuggestions([]); setShowSuggestions(false); }}>
               Neues Exposé
             </Button>
             {valuation && (
