@@ -76,6 +76,7 @@ const navEntries: NavEntry[] = [
       { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
       { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
       { path: "/newsticker", label: "Newsticker", icon: Newspaper, shortcut: "" },
+      { path: "/bewertung", label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
     ],
   },
   /* Settings moved to header icon bar — no longer a nav entry */
