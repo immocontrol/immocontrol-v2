@@ -31,6 +31,7 @@ const PageProgressBar = memo(() => {
     let innerTimer: ReturnType<typeof setTimeout>;
     // Complete after a short delay (route loaded)
     const timer = setTimeout(() => {
+      cleanup(); // Clear the interval before setting 100%
       setProgress(100);
       innerTimer = setTimeout(() => {
         setVisible(false);
