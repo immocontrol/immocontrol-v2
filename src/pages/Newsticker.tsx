@@ -230,7 +230,7 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
             url: item.link || "",
             source,
             sourceIcon: icon,
-            publishedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+            publishedAt: (() => { try { return item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(); } catch { return new Date().toISOString(); } })(),
             category,
             region,
             imageUrl: item.thumbnail && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail) ? item.thumbnail : undefined,
