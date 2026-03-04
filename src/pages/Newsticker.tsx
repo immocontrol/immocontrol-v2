@@ -73,7 +73,7 @@ const SENTIMENT_CONFIG = {
   neutral: { icon: Minus, label: "Neutral", color: "text-gray-400", bg: "bg-gray-500/10" },
 } as const;
 
-/* ─── RSS Feed Sources (11 sources) ─── */
+/* ─── RSS Feed Sources (14 sources) ─── */
 const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=immobilien+berlin+OR+brandenburg+wohnung+OR+miete+OR+neubau&hl=de&gl=DE&ceid=DE:de", source: "Google News", icon: "\uD83D\uDD0D" },
   { url: "https://www.tagesspiegel.de/wirtschaft/immobilien/rss", source: "Tagesspiegel", icon: "\uD83D\uDCF0" },
@@ -86,6 +86,10 @@ const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=site:bz-berlin.de+immobilien+OR+wohnung+OR+miete&hl=de&gl=DE&ceid=DE:de", source: "BZ Berlin", icon: "\uD83D\uDDDE\uFE0F" },
   { url: "https://news.google.com/rss/search?q=site:berliner-zeitung.de+immobilien+OR+wohnen+OR+miete&hl=de&gl=DE&ceid=DE:de", source: "Berliner Zeitung", icon: "\uD83D\uDCF0" },
   { url: "https://news.google.com/rss/search?q=site:wiwo.de+immobilien+berlin+OR+wohnen&hl=de&gl=DE&ceid=DE:de", source: "WirtschaftsWoche", icon: "\uD83D\uDCC8" },
+  /* Brandenburg-Städte-Feeds */
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+bernau+OR+eberswalde+OR+oranienburg+OR+luckenwalde+OR+barnim&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg Nord", icon: "\uD83C\uDFE1" },
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+strausberg+OR+f%C3%BCrstenwalde+OR+neuruppin+OR+wittenberge+OR+rathenow&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg West/Ost", icon: "\uD83C\uDFE1" },
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+%22brandenburg+havel%22+OR+werder+OR+teltow+OR+kleinmachnow+OR+stahnsdorf+OR+blankenfelde&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg S\u00fcd", icon: "\uD83C\uDFE1" },
 ];
 
 /* ─── Categorise news by keywords ─── */
@@ -130,7 +134,7 @@ function detectSentiment(title: string, description: string): "positive" | "nega
 function detectRegion(title: string, description: string): "berlin" | "brandenburg" | "both" {
   const text = `${title} ${description}`.toLowerCase();
   const hasBerlin = /berlin|charlottenburg|kreuzberg|mitte|neuk\u00f6lln|prenzlauer|friedrichshain|tempelhof|spandau|steglitz|pankow|lichtenberg|treptow|marzahn|reinickendorf|wedding/.test(text);
-  const hasBrandenburg = /brandenburg|potsdam|cottbus|frankfurt.*oder|oranienburg|bernau|falkensee|eberswalde|ludwigsfelde|k\u00f6nigs wusterhausen|wildau|sch\u00f6nefeld/.test(text);
+  const hasBrandenburg = /brandenburg|potsdam|cottbus|frankfurt.*oder|oranienburg|bernau|falkensee|eberswalde|ludwigsfelde|königs.?wusterhausen|wildau|schönefeld|luckenwalde|strausberg|fürstenwalde|neuruppin|wittenberge|rathenow|senftenberg|spremberg|guben|\bforst\b|eisenhüttenstadt|schwedt|\bprenzlau\b|templin|angermünde|bad\s?freienwalde|seelow|beeskow|lübben|lübbenau|herzberg|finsterwalde|elsterwerda|bad\s?belzig|brandenburg.*havel|\bwerder\b|teltow|kleinmachnow|stahnsdorf|blankenfelde|mahlow|rangsdorf|zossen|baruth|jüterbog|\bdahme\b|\bnauen\b|ketzin|henningsdorf|\bvelten\b|hohen\s?neuendorf|birkenwerder|glienicke|mühlenbecker|wandlitz|biesenthal|barnim|oberhavel|havelland|oder.?spree|spree.?neiße|dahme.?spreewald|teltow.?fläming|ostprignitz|prignitz|uckermark|märkisch.?oderland/.test(text);
   if (hasBerlin && hasBrandenburg) return "both";
   if (hasBrandenburg) return "brandenburg";
   return "berlin";
@@ -902,7 +906,7 @@ const Newsticker = () => {
       <div className="text-center text-[10px] text-muted-foreground space-y-1 pb-4">
         <p>
           Nachrichten aus {RSS_FEEDS.length} Quellen (Google News, Tagesspiegel, Morgenpost, rbb24,
-          Handelsblatt, Capital, BZ, Berliner Zeitung, WiWo u.a.)
+          Handelsblatt, Capital, BZ, Berliner Zeitung, WiWo, Brandenburg-St\u00e4dte u.a.)
         </p>
         <p>
           Automatische Aktualisierung alle 10 Min. {"\u00B7"} Sentiment-Analyse per Keyword-Matching{" "}
