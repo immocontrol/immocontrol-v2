@@ -76,6 +76,15 @@ export function useDragReorder<T>(
     }
   }, [overIdx]);
 
+  /** Compute the preview order during drag (iOS-style live reorder) */
+  const getPreviewOrder = useCallback((): T[] => {
+    if (dragItemRef.current === null || overIdx === null || dragItemRef.current === overIdx) return items;
+    const next = [...items];
+    const [removed] = next.splice(dragItemRef.current, 1);
+    next.splice(overIdx, 0, removed);
+    return next;
+  }, [items, overIdx]);
+
   const handleDragEnd = useCallback(() => {
     const from = dragItemRef.current;
     const to = overIdx;
@@ -121,7 +130,10 @@ export function useDragReorder<T>(
       for (let i = 0; i < children.length; i++) {
         const rect = children[i].getBoundingClientRect();
         if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
-          handleDragOver(i);
+          /* Use data-drag-idx if present so preview-reordered DOM stays consistent */
+          const attr = children[i].dataset.dragIdx;
+          const idx = attr !== undefined ? Number(attr) : i;
+          handleDragOver(idx);
           break;
         }
       }
@@ -158,5 +170,6 @@ export function useDragReorder<T>(
     containerRef,
     getHandleProps,
     getItemProps,
+    getPreviewOrder,
   };
 }

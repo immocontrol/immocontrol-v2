@@ -178,7 +178,7 @@ const Settings = () => {
   return (
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
       {/* Settings sidebar navigation */}
-      <aside className="hidden lg:flex lg:items-center w-48 shrink-0">
+      <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
         <nav className="space-y-0.5 w-full">
           {SETTINGS_SECTIONS.map(section => {
             const SectionIcon = section.icon;

@@ -18,9 +18,11 @@ import {
   DEFAULT_PARAMS, SCENARIOS, simulate, sensitivityAnalysis,
   loadProfiles, saveProfilesStore,
 } from "@/lib/hockeyStickEngine";
+import { parseAiPrompt } from "@/lib/hockeyStickAiParser";
 
 /* IMP-3: Types, simulation engine, scenarios, and profile persistence
    extracted to @/lib/hockeyStickEngine.ts for modularity & testability */
+/* AI parser extracted to @/lib/hockeyStickAiParser.ts */
 
 export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean } = {}) {
   const [open, setOpen] = useState(false);
@@ -43,153 +45,15 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
   /* Fix 17: Generated scenario description with assumptions */
   const [scenarioDescription, setScenarioDescription] = useState<string>("");
 
-  /* Item 3: Parse natural language into simulation parameters */
+  /* Item 3: Parse natural language into simulation parameters
+     Logic extracted to @/lib/hockeyStickAiParser.ts for modularity */
   const handleAiPrompt = useCallback(() => {
     if (!aiPrompt.trim()) return;
     setAiLoading(true);
-    const text = aiPrompt.toLowerCase().replace(/\./g, (m, offset, str) => {
-      /* Preserve decimal dots (e.g. 3.5) but remove thousand separators (e.g. 50.000) */
-      const before = str[offset - 1];
-      const after = str[offset + 1];
-      if (before && /\d/.test(before) && after && /\d/.test(after)) {
-        /* Check if it looks like a thousand separator (3+ digits after dot) */
-        const afterDigits = str.slice(offset + 1).match(/^\d+/);
-        if (afterDigits && afterDigits[0].length === 3) return ""; /* thousand separator → remove */
-      }
-      return m;
-    });
-    const updates: Partial<SimParams> = {};
-
-    /* Helper: parse a German-style number (supports both , and . as decimal separator) */
-    const parseNum = (s: string) => parseFloat(s.replace(",", "."));
-
-    /* Parse common natural language patterns — support both "number keyword" and "keyword number" */
-    const capitalPatterns = [
-      /(\d+[.,]?\d*)\s*(k|tsd|tausend)?\s*(euro|\u20ac|eur|startkapital|eigenkapital|budget|kapital)/i,
-      /(startkapital|eigenkapital|budget|kapital)[:\s]*(\d+[.,]?\d*)\s*(k|tsd|tausend)?\s*(euro|\u20ac|eur)?/i,
-    ];
-    for (const pat of capitalPatterns) {
-      const m = text.match(pat);
-      if (m && !updates.startCapital) {
-        /* Pattern 1: number first; Pattern 2: keyword first */
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        const numStr = isReverse ? m[2] : m[1];
-        const multiplier = isReverse ? m[3] : m[2];
-        let val = parseNum(numStr);
-        if (multiplier && /^(k|tsd|tausend)$/i.test(multiplier)) val *= 1000;
-        updates.startCapital = val;
-      }
-    }
-
-    const monthlyPatterns = [
-      /(\d+[.,]?\d*)\s*(euro|\u20ac|eur)?\s*(monat|mtl|pro monat|monthly|sparrate|investition\/m)/i,
-      /(monat|mtl|sparrate|monatlich)[:\s]*(\d+[.,]?\d*)\s*(euro|\u20ac|eur)?/i,
-    ];
-    for (const pat of monthlyPatterns) {
-      const m = text.match(pat);
-      if (m && !updates.monthlyInvestment) {
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        updates.monthlyInvestment = parseNum(isReverse ? m[2] : m[1]);
-      }
-    }
-
-    const yearPatterns = [
-      /(\d+)\s*(jahre?|j\.|year|laufzeit)/i,
-      /(laufzeit|zeitraum|dauer)[:\s]*(\d+)/i,
-    ];
-    for (const pat of yearPatterns) {
-      const m = text.match(pat);
-      if (m && !updates.years) {
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        updates.years = parseInt(isReverse ? m[2] : m[1]);
-      }
-    }
-
-    const renditePatterns = [
-      /(\d+[.,]?\d*)\s*%?\s*(rendite|mietrendite|yield|brutto)/i,
-      /(rendite|mietrendite|yield)[:\s]*(\d+[.,]?\d*)\s*%?/i,
-    ];
-    for (const pat of renditePatterns) {
-      const m = text.match(pat);
-      if (m && !updates.rentYield) {
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        updates.rentYield = parseNum(isReverse ? m[2] : m[1]);
-      }
-    }
-
-    const zinsPatterns = [
-      /(\d+[.,]?\d*)\s*%?\s*(zins|zinssatz|interest|darlehenszins)/i,
-      /(zins|zinssatz|darlehenszins)[:\s]*(\d+[.,]?\d*)\s*%?/i,
-    ];
-    for (const pat of zinsPatterns) {
-      const m = text.match(pat);
-      if (m && !updates.annualReturn) {
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        updates.annualReturn = parseNum(isReverse ? m[2] : m[1]);
-      }
-    }
-
-    const hebelPatterns = [
-      /(\d+[.,]?\d*)\s*%?\s*(hebel|fremdkapital|leverage|fk-quote|fk)/i,
-      /(hebel|fremdkapital|leverage|fk-quote|fk)[:\s]*(\d+[.,]?\d*)\s*%?/i,
-    ];
-    for (const pat of hebelPatterns) {
-      const m = text.match(pat);
-      if (m && !updates.leverageRatio) {
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        updates.leverageRatio = parseNum(isReverse ? m[2] : m[1]);
-      }
-    }
-
-    const wertPatterns = [
-      /(\d+[.,]?\d*)\s*%?\s*(wertsteigerung|appreciation|wachstum)/i,
-      /(wertsteigerung|appreciation|wachstum)[:\s]*(\d+[.,]?\d*)\s*%?/i,
-    ];
-    for (const pat of wertPatterns) {
-      const m = text.match(pat);
-      if (m && !updates.annualAppreciation) {
-        const isReverse = /^[a-zäöü]/i.test(m[1]);
-        updates.annualAppreciation = parseNum(isReverse ? m[2] : m[1]);
-      }
-    }
-
-    /* Keyword-based scenario selection — only set keys not already parsed from explicit values */
-    const applyScenarioDefaults = (scenarioParams: Partial<SimParams>) => {
-      for (const [k, v] of Object.entries(scenarioParams)) {
-        if (!(k in updates)) (updates as Record<string, unknown>)[k] = v;
-      }
-    };
-    if (text.includes("konservativ") || text.includes("sicher") || text.includes("vorsichtig")) {
-      applyScenarioDefaults(SCENARIOS[0].params);
-    } else if (text.includes("aggressiv") || text.includes("riskant") || text.includes("maximal")) {
-      applyScenarioDefaults(SCENARIOS[2].params);
-    } else if (/\bcashflow\b/.test(text) || /\bmiete\b/.test(text)) {
-      applyScenarioDefaults(SCENARIOS[3].params);
-    } else if (text.includes("einsteiger") || text.includes("anfang") || text.includes("klein")) {
-      applyScenarioDefaults(SCENARIOS[5].params);
-    }
-
-    /* If no explicit params were parsed but we have scenario keywords, still count as success */
-    if (Object.keys(updates).length > 0) {
-      setParams(prev => ({ ...prev, ...updates }));
-      /* Generate scenario description with assumptions */
-      const assumptions: string[] = [];
-      if (updates.startCapital) assumptions.push(`Startkapital: ${updates.startCapital.toLocaleString("de-DE")} \u20ac`);
-      if (updates.monthlyInvestment) assumptions.push(`Monatliche Investition: ${updates.monthlyInvestment.toLocaleString("de-DE")} \u20ac`);
-      if (updates.years) assumptions.push(`Laufzeit: ${updates.years} Jahre`);
-      if (updates.rentYield) assumptions.push(`Mietrendite: ${updates.rentYield}%`);
-      if (updates.annualReturn) assumptions.push(`Zinssatz: ${updates.annualReturn}%`);
-      if (updates.leverageRatio) assumptions.push(`FK-Quote: ${updates.leverageRatio}%`);
-      if (updates.annualAppreciation) assumptions.push(`Wertsteigerung: ${updates.annualAppreciation}% p.a.`);
-      if (updates.vacancyRate) assumptions.push(`Leerstand: ${updates.vacancyRate}%`);
-      if (updates.inflationRate) assumptions.push(`Inflation: ${updates.inflationRate}%`);
-      if (updates.taxRate) assumptions.push(`Steuersatz: ${updates.taxRate}%`);
-      const desc = `Szenario basierend auf: "${aiPrompt.trim()}"\n\nAngenommene Parameter:\n${assumptions.length > 0 ? assumptions.map(a => `\u2022 ${a}`).join("\n") : "\u2022 Benutzerdefinierte Werte aus Texteingabe"}`;
-      setScenarioDescription(desc);
-      toast.success(`${Object.keys(updates).length} Parameter angepasst`);
-    } else {
-      toast.info("Tipp: Beschreibe dein Szenario, z.B. '50k Eigenkapital, 1000 Euro monatlich, 20 Jahre, 4% Rendite'");
-    }
+    const result = parseAiPrompt(aiPrompt);
+    setParams(prev => ({ ...prev, ...result.updates }));
+    setScenarioDescription(result.description);
+    toast.success(`Szenario erstellt — ${result.parsed.length} erkannt, ${result.assumed.length} marktüblich angenommen`);
     setAiPrompt("");
     setAiLoading(false);
   }, [aiPrompt]);
