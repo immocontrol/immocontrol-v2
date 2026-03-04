@@ -153,20 +153,32 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
       const imageUrl = mediaUrl && /\.(jpg|jpeg|png|webp|gif)/i.test(mediaUrl) ? mediaUrl : undefined;
 
       if (title && link) {
-        const category = categoriseNews(title, description);
-        const region = detectRegion(title, description);
-        items.push({
-          id: `${source}-${btoa(link).slice(0, 16)}`,
-          title,
-          description,
-          url: link,
-          source,
-          sourceIcon: icon,
-          publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-          category,
-          region,
-          imageUrl,
-        });
+        try {
+          const category = categoriseNews(title, description);
+          const region = detectRegion(title, description);
+          const safeId = `${source}-${encodeURIComponent(link).slice(0, 24)}`;
+          let publishedAt: string;
+          try {
+            publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
+            if (publishedAt === "Invalid Date") throw new Error();
+          } catch {
+            publishedAt = new Date().toISOString();
+          }
+          items.push({
+            id: safeId,
+            title,
+            description,
+            url: link,
+            source,
+            sourceIcon: icon,
+            publishedAt,
+            category,
+            region,
+            imageUrl,
+          });
+        } catch {
+          /* skip this item — don't abort the entire feed */
+        }
       }
     });
   } catch {
