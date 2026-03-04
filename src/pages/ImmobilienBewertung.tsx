@@ -3,7 +3,7 @@
  * Upload an Expose PDF → extract data → run 3 valuation methods → generate PDF report
  * + Optional Sparkasse S-ImmoPreisfinder integration for comparison
  */
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   Upload, FileText, TrendingUp, MapPin, Calculator, Download, Loader2,
   CheckCircle2, AlertTriangle, Building2, RefreshCw, ExternalLink,
@@ -20,6 +20,59 @@ import { formatCurrency, formatPercent } from "@/lib/formatters";
 import { toast } from "sonner";
 import { extractPdfText, parseExposeText, type ParsedExposeData } from "@/lib/exposeParser";
 import { generateBewertungsPdf, type ValuationResults } from "@/lib/bewertungPdfReport";
+import { useDebounce } from "@/hooks/useDebounce";
+
+/** Nominatim address suggestion */
+interface AddressSuggestion {
+  display_name: string;
+  lat: string;
+  lon: string;
+  address?: {
+    road?: string;
+    house_number?: string;
+    postcode?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+  };
+}
+
+/** External valuation providers */
+const VALUATION_PROVIDERS = [
+  {
+    name: "Sparkasse S-ImmoPreisfinder",
+    url: "https://www.spk-barnim.de/de/home/immobilien0/s-immopreisfinder.html?n=true&stref=hnav",
+    description: "Kostenlose Wohnmarktanalyse vom iib Institut. Per E-Mail-Bericht.",
+    icon: "\uD83C\uDFE6",
+    features: ["Gratis", "E-Mail-Bericht", "iib Institut"],
+    primary: true,
+  },
+  {
+    name: "Homeday",
+    url: "https://www.homeday.de/de/immobilienbewertung/",
+    description: "Online-Bewertung mit Marktdaten. Kostenlos, Makler-Kontakt optional.",
+    icon: "\uD83C\uDFE0",
+    features: ["Gratis", "Sofort-Ergebnis", "Marktdaten"],
+    primary: false,
+  },
+  {
+    name: "McMakler",
+    url: "https://www.mcmakler.de/immobilienbewertung",
+    description: "KI-gest\u00fctzte Bewertung basierend auf Vergleichsobjekten.",
+    icon: "\uD83E\uDD16",
+    features: ["Gratis", "KI-Bewertung", "Vergleichsobjekte"],
+    primary: false,
+  },
+  {
+    name: "Immowelt",
+    url: "https://www.immowelt.de/immobilienbewertung/",
+    description: "Preiseinsch\u00e4tzung basierend auf aktuellen Angebotsdaten.",
+    icon: "\uD83D\uDCCA",
+    features: ["Gratis", "Angebotsdaten", "Preis-Check"],
+    primary: false,
+  },
+] as const;
 
 /** Sparkasse ImmoPreisfinder property type mapping */
 const SPARKASSE_TYPES = {
@@ -78,6 +131,14 @@ const ImmobilienBewertung = () => {
   const [sparkasseEmail, setSparkasseEmail] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showRawText, setShowRawText] = useState(false);
+
+  // Address autocomplete state
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const debouncedAddress = useDebounce(addressQuery, 400);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Editable valuation parameters
   const [params, setParams] = useState({
@@ -142,6 +203,77 @@ const ImmobilienBewertung = () => {
       setBrwLoading(false);
     }
   }, []);
+
+  /** Fetch address suggestions from Nominatim */
+  useEffect(() => {
+    if (!debouncedAddress || debouncedAddress.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchSuggestions = async () => {
+      setAddressLoading(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(debouncedAddress)}&countrycodes=de&limit=5&addressdetails=1`,
+          { headers: { "User-Agent": "ImmoControl/1.0" }, signal: AbortSignal.timeout(5000) }
+        );
+        if (!cancelled) {
+          const data: AddressSuggestion[] = await res.json();
+          setAddressSuggestions(data);
+          setShowSuggestions(data.length > 0);
+        }
+      } catch {
+        if (!cancelled) setAddressSuggestions([]);
+      } finally {
+        if (!cancelled) setAddressLoading(false);
+      }
+    };
+    fetchSuggestions();
+    return () => { cancelled = true; };
+  }, [debouncedAddress]);
+
+  /** Close suggestions when clicking outside */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  /** Handle address suggestion selection */
+  const handleSelectAddress = useCallback((suggestion: AddressSuggestion) => {
+    const addr = suggestion.address;
+    const street = addr?.road ? `${addr.road}${addr.house_number ? ` ${addr.house_number}` : ""}` : "";
+    const plz = addr?.postcode || "";
+    const city = addr?.city || addr?.town || addr?.village || "";
+    const fullAddress = [street, plz && city ? `${plz} ${city}` : city].filter(Boolean).join(", ");
+
+    if (parsedData) {
+      setParsedData(prev => prev ? {
+        ...prev,
+        address: fullAddress || suggestion.display_name,
+        strasse: street || prev.strasse,
+        plz: plz || prev.plz,
+        ort: city || prev.ort,
+      } : prev);
+    }
+    setAddressQuery("");
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+
+    // Auto-lookup BRW with the selected coordinates
+    const brw = estimateBodenrichtwert(
+      Number(suggestion.lat),
+      Number(suggestion.lon),
+      fullAddress || suggestion.display_name
+    );
+    setParams(p => ({ ...p, bodenrichtwert: brw }));
+    toast.success(`Adresse ausgew\u00e4hlt, Bodenrichtwert gesch\u00e4tzt: ${brw} \u20ac/m\u00b2`);
+  }, [parsedData]);
 
   /** Update parsed data field */
   const updateField = useCallback(<K extends keyof ParsedExposeData>(key: K, value: ParsedExposeData[K]) => {
@@ -277,7 +409,7 @@ const ImmobilienBewertung = () => {
         </div>
         {step !== "upload" && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setStep("upload"); setParsedData(null); setSparkasseRequested(false); }}>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setStep("upload"); setParsedData(null); setSparkasseRequested(false); setAddressQuery(""); setAddressSuggestions([]); setShowSuggestions(false); }}>
               Neues Exposé
             </Button>
             {valuation && (
@@ -381,15 +513,20 @@ const ImmobilienBewertung = () => {
               <Building2 className="h-3.5 w-3.5" /> Objektdaten
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div className="space-y-1">
+              <div className="space-y-1 relative" ref={suggestionsRef}>
                 <Label className="text-xs flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> Adresse
                   {parsedData.extractedFields.includes("address") && <Badge variant="outline" className="text-[8px] h-4 ml-1">erkannt</Badge>}
                 </Label>
                 <div className="flex gap-1.5">
                   <Input
-                    value={parsedData.address}
-                    onChange={e => updateField("address", e.target.value)}
+                    value={addressQuery || parsedData.address}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setAddressQuery(val);
+                      updateField("address", val);
+                    }}
+                    onFocus={() => { if (addressSuggestions.length > 0) setShowSuggestions(true); }}
                     placeholder="Straße Nr, PLZ Ort"
                     className="h-8 text-xs flex-1"
                   />
@@ -397,6 +534,37 @@ const ImmobilienBewertung = () => {
                     <RefreshCw className={`h-3 w-3 ${brwLoading ? "animate-spin" : ""}`} />
                   </Button>
                 </div>
+                {/* Autocomplete dropdown */}
+                {showSuggestions && addressSuggestions.length > 0 && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+                    {addressLoading && (
+                      <div className="px-3 py-2 text-[10px] text-muted-foreground flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Suche...
+                      </div>
+                    )}
+                    {addressSuggestions.map((s, i) => {
+                      const addr = s.address;
+                      const road = addr?.road ? `${addr.road}${addr.house_number ? ` ${addr.house_number}` : ""}` : "";
+                      const city = addr?.city || addr?.town || addr?.village || "";
+                      const postcode = addr?.postcode || "";
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => handleSelectAddress(s)}
+                          className="w-full text-left px-3 py-2 hover:bg-secondary/80 transition-colors border-b border-border last:border-b-0"
+                        >
+                          <div className="text-xs font-medium truncate">
+                            {road || s.display_name.split(",")[0]}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground truncate">
+                            {postcode && city ? `${postcode} ${city}` : city || s.display_name}
+                            {addr?.state ? ` · ${addr.state}` : ""}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -623,62 +791,107 @@ const ImmobilienBewertung = () => {
             )}
           </div>
 
-          {/* Sparkasse comparison section */}
-          <div className="gradient-card rounded-xl border border-border p-5 space-y-3">
+          {/* Multi-Valuation Providers */}
+          <div className="gradient-card rounded-xl border border-border p-5 space-y-4">
             <div className="flex items-center gap-2">
-              <ExternalLink className="h-4 w-4 text-loss" />
-              <h3 className="text-sm font-semibold">Sparkasse S-ImmoPreisfinder — Vergleichsbewertung</h3>
+              <ExternalLink className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold">Externe Vergleichsbewertungen</h3>
             </div>
             <p className="text-xs text-muted-foreground">
-              Fordern Sie eine kostenlose Vergleichsbewertung der Sparkasse Barnim an.
-              Sie erhalten per E-Mail eine professionelle Wohnmarktanalyse vom iib Institut, die Sie mit unserer Bewertung vergleichen können.
+              Vergleichen Sie unsere Bewertung mit kostenlosen Online-Bewertungstools.
+              Alle Anbieter bieten eine unverbindliche Einschätzung.
             </p>
 
-            {sparkasseRequested ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-profit/5 border border-profit/20">
-                <CheckCircle2 className="h-5 w-5 text-profit shrink-0" />
-                <div>
-                  <p className="text-sm font-medium">Sparkasse-Bewertung angefordert</p>
-                  <p className="text-xs text-muted-foreground">
-                    Der S-ImmoPreisfinder wurde geöffnet. Bitte füllen Sie das Formular aus.
-                    {sparkasseEmail && <> Die Wohnmarktanalyse wird an <strong>{sparkasseEmail}</strong> gesendet.</>}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-2 items-end">
-                <div className="flex-1 space-y-1">
-                  <Label className="text-xs">E-Mail für Sparkasse-Bericht</Label>
-                  <Input
-                    type="email"
-                    value={sparkasseEmail}
-                    onChange={e => setSparkasseEmail(e.target.value)}
-                    placeholder="ihre@email.de"
-                    className="h-8 text-xs"
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSparkasseRequest}
-                  disabled={sparkasseLoading || !sparkasseEmail}
-                  className="gap-1.5 shrink-0 text-xs h-8"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {VALUATION_PROVIDERS.map((provider) => (
+                <div
+                  key={provider.name}
+                  className={`rounded-lg border p-3 space-y-2 transition-all hover:shadow-md ${
+                    provider.primary ? "border-primary/30 bg-primary/5" : "border-border"
+                  }`}
                 >
-                  {sparkasseLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
-                  S-ImmoPreisfinder öffnen
-                </Button>
-              </div>
-            )}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{provider.icon}</span>
+                      <div>
+                        <h4 className="text-xs font-semibold">{provider.name}</h4>
+                        {provider.primary && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                            Empfohlen
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={provider.primary ? "default" : "outline"}
+                      className="gap-1 shrink-0 text-[10px] h-7 px-2"
+                      onClick={() => window.open(provider.url, "_blank")}
+                    >
+                      <ExternalLink className="h-3 w-3" /> Öffnen
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{provider.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {provider.features.map((f) => (
+                      <span key={f} className="px-1.5 py-0.5 rounded-full bg-secondary text-[9px] text-muted-foreground">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
 
-            {/* Pre-filled data summary for Sparkasse form */}
-            {!sparkasseRequested && parsedData && (
-              <div className="text-[10px] text-muted-foreground p-2 rounded bg-secondary/30">
-                <strong>Daten für das Sparkasse-Formular:</strong>{" "}
-                Typ: {SPARKASSE_TYPES[parsedData.immobilientyp]} · {parsedData.address || "—"} ·{" "}
-                {parsedData.wohnflaeche > 0 ? `${parsedData.wohnflaeche} m²` : "—"} ·{" "}
-                Bj. {parsedData.baujahr > 0 ? parsedData.baujahr : "—"}
-              </div>
-            )}
+            {/* Sparkasse E-Mail section */}
+            <div className="border-t border-border pt-3 space-y-2">
+              <p className="text-xs font-medium">Sparkasse S-ImmoPreisfinder — E-Mail-Bericht</p>
+              {sparkasseRequested ? (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-profit/5 border border-profit/20">
+                  <CheckCircle2 className="h-5 w-5 text-profit shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Sparkasse-Bewertung angefordert</p>
+                    <p className="text-xs text-muted-foreground">
+                      Der S-ImmoPreisfinder wurde geöffnet. Bitte füllen Sie das Formular aus.
+                      {sparkasseEmail && <> Die Wohnmarktanalyse wird an <strong>{sparkasseEmail}</strong> gesendet.</>}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">E-Mail für Sparkasse-Bericht</Label>
+                    <Input
+                      type="email"
+                      value={sparkasseEmail}
+                      onChange={e => setSparkasseEmail(e.target.value)}
+                      placeholder="ihre@email.de"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSparkasseRequest}
+                    disabled={sparkasseLoading || !sparkasseEmail}
+                    className="gap-1.5 shrink-0 text-xs h-8"
+                  >
+                    {sparkasseLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                    S-ImmoPreisfinder öffnen
+                  </Button>
+                </div>
+              )}
+
+              {/* Pre-filled data summary */}
+              {!sparkasseRequested && parsedData && (
+                <div className="text-[10px] text-muted-foreground p-2 rounded bg-secondary/30">
+                  <strong>Daten für das Sparkasse-Formular:</strong>{" "}
+                  Typ: {SPARKASSE_TYPES[parsedData.immobilientyp]} · {parsedData.address || "—"} ·{" "}
+                  {parsedData.wohnflaeche > 0 ? `${parsedData.wohnflaeche} m²` : "—"} ·{" "}
+                  Bj. {parsedData.baujahr > 0 ? parsedData.baujahr : "—"}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Action buttons */}
