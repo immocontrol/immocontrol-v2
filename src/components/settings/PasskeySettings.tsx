@@ -39,17 +39,10 @@ export function PasskeySettings({ sectionRef, displayName }: PasskeySettingsProp
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
       const userId = new TextEncoder().encode(user.id);
-      /* FIX-7: Use full hostname as rp.id instead of extracting top-level domain.
-         WebAuthn requires rp.id to be an exact match or a registrable suffix of the
-         current origin's effective domain. Using the full hostname is the safest option
-         because it always matches the current origin. Extracting just the last 2 parts
-         (e.g. "devinapps.com" from "app-xyz.devinapps.com") can fail if the browser
-         doesn't consider it a valid registrable domain for the current origin. */
-      const hostname = window.location.hostname;
-      const rpConfig: { name: string; id?: string } = { name: "ImmoControl" };
-      if (hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.startsWith("192.168.")) {
-        rpConfig.id = hostname;
-      }
+      /* FIX: Omit rp.id entirely — when absent the browser defaults to the current
+         origin's effective domain, which is always valid. Manually setting rp.id to
+         the hostname can fail on subdomains (e.g. "app-xyz.devinapps.com") if the
+         browser rejects it as not a registrable domain suffix of the origin. */
       const excludeCredentials = passkeys.map(pk => ({
         id: Uint8Array.from(atob(pk.id.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)),
         type: "public-key" as const,
@@ -57,7 +50,7 @@ export function PasskeySettings({ sectionRef, displayName }: PasskeySettingsProp
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
-          rp: rpConfig,
+          rp: { name: "ImmoControl" },
           user: {
             id: userId,
             name: user.email || "user",

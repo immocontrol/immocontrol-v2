@@ -191,26 +191,58 @@ const Settings = () => {
 
   return (
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
-      {/* Settings sidebar navigation */}
+      {/* Settings sidebar navigation with progress lines */}
       <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
-        <nav className="space-y-0.5 w-full">
-          {SETTINGS_SECTIONS.map(section => {
+        <nav className="w-full relative" aria-label="Einstellungen-Navigation">
+          {SETTINGS_SECTIONS.map((section, idx) => {
             const SectionIcon = section.icon;
+            const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
+            const isPast = idx < activeIdx;
             const isActive = activeSection === section.id;
+            const isLast = idx === SETTINGS_SECTIONS.length - 1;
             return (
-              <button
-                key={section.id}
-                data-settings-nav={section.id}
-                onClick={() => scrollToSection(section.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 text-left ${
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                }`}
-              >
-                <SectionIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{section.label}</span>
-              </button>
+              <div key={section.id} className="relative">
+                {/* Connecting line between items */}
+                {!isLast && (
+                  <div className="absolute left-[17px] top-[32px] w-[2px] h-[calc(100%-16px)] z-0">
+                    <div
+                      className={`w-full h-full rounded-full transition-all duration-500 ${
+                        isPast
+                          ? "bg-primary"
+                          : idx === activeIdx
+                            ? "bg-gradient-to-b from-primary to-border"
+                            : "bg-border"
+                      }`}
+                    />
+                  </div>
+                )}
+                <button
+                  data-settings-nav={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`relative z-10 w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 text-left ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : isPast
+                        ? "text-primary/70 hover:bg-primary/5"
+                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  {/* Progress dot/icon */}
+                  <div className={`relative flex items-center justify-center h-[18px] w-[18px] shrink-0 rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/30 scale-110"
+                      : isPast
+                        ? "bg-primary/20 text-primary"
+                        : "bg-secondary text-muted-foreground"
+                  }`}>
+                    <SectionIcon className="h-2.5 w-2.5" />
+                  </div>
+                  <span className="truncate">{section.label}</span>
+                  {isActive && (
+                    <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  )}
+                </button>
+              </div>
             );
           })}
         </nav>
