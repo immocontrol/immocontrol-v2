@@ -48,6 +48,12 @@ export interface ParsedExposeData {
   keller: boolean;
   /** Energy certificate value kWh/(m²*a) */
   energiekennwert: number;
+  /** Energy efficiency class (A+ to H) */
+  energieeffizienzklasse: string;
+  /** Commission/Provision percentage or amount */
+  provision: string;
+  /** Nebenkosten quote (ratio of ancillary costs) */
+  nebenkostenquote: number;
   /** Raw extracted text for reference */
   rawText: string;
   /** Confidence score 0-100 */
@@ -288,8 +294,38 @@ export function parseExposeText(rawText: string): ParsedExposeData {
     /Endenergiebedarf\s*[:.]?\s*([\d.,]+)\s*kWh/i,
     /([\d.,]+)\s*kWh\s*\/\s*\(?\s*m²/i,
     /Energieverbrauch\s*[:.]?\s*([\d.,]+)/i,
+    /Energiebedarfskennwert\s*[:.]?\s*([\d.,]+)/i,
+    /Primärenergiebedarf\s*[:.]?\s*([\d.,]+)/i,
   ]);
   if (energiekennwert > 0) extractedFields.push("energiekennwert");
+
+  // Energieeffizienzklasse (A+ to H)
+  let energieeffizienzklasse = "";
+  const effMatch = text.match(/Energieeffizienzklasse\s*[:.]?\s*([A-H]\+?)/i)
+    || text.match(/Effizienzklasse\s*[:.]?\s*([A-H]\+?)/i)
+    || text.match(/Klasse\s*[:.]?\s*([A-H]\+?)\s*(?:nach|gem|lt)/i);
+  if (effMatch) {
+    energieeffizienzklasse = effMatch[1].toUpperCase();
+    extractedFields.push("energieeffizienzklasse");
+  }
+
+  // Provision / Courtage
+  let provision = "";
+  const provMatch = text.match(/(?:Provision|Courtage|Maklerprovision|Käuferprovision)\s*[:.]?\s*([^\n]{3,60})/i);
+  if (provMatch) {
+    provision = provMatch[1].trim().replace(/\s+/g, " ").slice(0, 80);
+    extractedFields.push("provision");
+  }
+
+  // Nebenkostenquote (Hausgeld / Nebenkosten per month)
+  const nebenkosten = extractNumber(text, [
+    /(?:Hausgeld|Nebenkosten|Betriebskosten|Wohngeld)\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /(?:NK|HG)\s*[:.]?\s*([\d.,]+)\s*(?:€|EUR)/i,
+    /monatl\.?\s*(?:Nebenkosten|NK)\s*[:.]?\s*([\d.,]+)/i,
+  ]);
+  // nebenkostenquote = nebenkosten / kaltmiete (if both available)
+  const nebenkostenquote = kaltmiete > 0 && nebenkosten > 0 ? Math.round((nebenkosten / kaltmiete) * 100) : 0;
+  if (nebenkostenquote > 0) extractedFields.push("nebenkostenquote");
 
   // Build full address
   const addressParts = [addr.strasse, addr.plz && addr.ort ? `${addr.plz} ${addr.ort}` : addr.ort].filter(Boolean);
@@ -297,7 +333,7 @@ export function parseExposeText(rawText: string): ParsedExposeData {
   if (address) extractedFields.push("address");
 
   // Confidence score based on how many fields we extracted
-  const maxFields = 15;
+  const maxFields = 18;
   const confidence = Math.min(100, Math.round((extractedFields.length / maxFields) * 100));
 
   return {
@@ -323,13 +359,16 @@ export function parseExposeText(rawText: string): ParsedExposeData {
     aufzug,
     keller,
     energiekennwert,
+    energieeffizienzklasse,
+    provision,
+    nebenkostenquote,
     rawText,
     confidence,
     extractedFields,
   };
 }
 
-/** Extract text from a PDF file using pdfjs-dist */
+/** Extract text from a PDF file using pdfjs-dist with layout-aware reconstruction */
 export async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
   // Use local worker file copied to public/ (CDN does not carry version 5.4.624)
@@ -342,10 +381,46 @@ export async function extractPdfText(file: File): Promise<string> {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const text = content.items
-      .map((item: { str?: string }) => item.str || "")
-      .join(" ");
-    pages.push(text.trim());
+
+    // Layout-aware text reconstruction:
+    // Sort items by y-position (top-to-bottom), then x-position (left-to-right).
+    // Insert line breaks when y-position changes significantly.
+    interface TextItem {
+      str?: string;
+      transform?: number[];
+      width?: number;
+      height?: number;
+    }
+    const items = (content.items as TextItem[])
+      .filter(item => item.str && item.str.trim())
+      .map(item => ({
+        str: item.str || "",
+        x: item.transform ? item.transform[4] : 0,
+        y: item.transform ? item.transform[5] : 0,
+      }))
+      .sort((a, b) => {
+        // Sort by y descending (PDF y-axis is bottom-up), then x ascending
+        const yDiff = b.y - a.y;
+        if (Math.abs(yDiff) > 3) return yDiff;
+        return a.x - b.x;
+      });
+
+    const lines: string[] = [];
+    let currentLine = "";
+    let lastY = items.length > 0 ? items[0].y : 0;
+
+    for (const item of items) {
+      // If y-position changed more than ~3 units, start a new line
+      if (Math.abs(item.y - lastY) > 3 && currentLine) {
+        lines.push(currentLine.trim());
+        currentLine = "";
+      }
+      currentLine += (currentLine ? " " : "") + item.str;
+      lastY = item.y;
+    }
+    if (currentLine.trim()) lines.push(currentLine.trim());
+
+    pages.push(lines.join("\n"));
   }
 
   return pages.filter(Boolean).join("\n\n");

@@ -122,6 +122,9 @@ export function generateBewertungsPdf(
   if (features.length > 0) addKeyValue("Merkmale", features.join(", "));
 
   if (data.energiekennwert > 0) addKeyValue("Energiekennwert", `${data.energiekennwert} kWh/(m\u00B2*a)`, true);
+  if (data.energieeffizienzklasse) addKeyValue("Energieeffizienzklasse", data.energieeffizienzklasse);
+  if (data.provision) addKeyValue("Provision/Courtage", data.provision, true);
+  if (data.nebenkostenquote > 0) addKeyValue("Nebenkostenquote", `${data.nebenkostenquote}%`);
 
   y += 5;
 
