@@ -88,8 +88,8 @@ export const MobileContextualHelp = memo(function MobileContextualHelp({
       if (el) {
         const rect = el.getBoundingClientRect();
         setTargetRect({
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
+          top: rect.top,
+          left: rect.left,
           width: rect.width,
           height: rect.height,
         });
