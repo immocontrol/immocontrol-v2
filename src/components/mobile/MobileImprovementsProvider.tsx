@@ -92,8 +92,8 @@ function injectMobileCSS() {
       }
     }
 
-    /* MOB-IMPROVE-18: Dark Mode OLED Optimization */
-    @media (prefers-color-scheme: dark) {
+    /* MOB-IMPROVE-18: Dark Mode OLED Optimization — mobile only */
+    @media (prefers-color-scheme: dark) and (max-width: 768px) {
       .dark {
         /* Pure black background for OLED screens — saves battery */
         --background: 0 0% 0%;

@@ -620,7 +620,13 @@ const ContactManagement = () => {
               <MobileSwipeToAction
                 key={c.id}
                 leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(c) }]}
-                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => deleteMutation.mutate(c.id) }]}
+                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => {
+                  toast(`„${c.name}" löschen?`, {
+                    action: { label: "Löschen", onClick: () => deleteMutation.mutate(c.id) },
+                    cancel: { label: "Abbrechen", onClick: () => {} },
+                    duration: 5000,
+                  });
+                } }]}
               >
                 {contactCard}
               </MobileSwipeToAction>

@@ -901,7 +901,13 @@ const Loans = () => {
               <MobileSwipeToAction
                 key={l.id}
                 leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(l) }]}
-                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => deleteMutation.mutate(l.id) }]}
+                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => {
+                  toast(`Darlehen löschen?`, {
+                    action: { label: "Löschen", onClick: () => deleteMutation.mutate(l.id) },
+                    cancel: { label: "Abbrechen", onClick: () => {} },
+                    duration: 5000,
+                  });
+                } }]}
               >
                 {loanCard}
               </MobileSwipeToAction>
