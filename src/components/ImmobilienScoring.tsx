@@ -72,7 +72,7 @@ const ImmobilienScoring = memo(() => {
         const months = (new Date(l.fixed_interest_end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30);
         return months > 0 && months < min ? months : min;
       }, 999);
-      const mieterhöhungsPotenzial = rendite < 5 ? 8 : rendite < 4 ? 10 : 5;
+      const mieterhöhungsPotenzial = rendite < 4 ? 10 : rendite < 5 ? 8 : 5;
 
       const criteria: CriterionScore[] = [
         scoreCriterion("Rendite", rendite, [3, 5]),

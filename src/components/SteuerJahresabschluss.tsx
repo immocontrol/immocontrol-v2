@@ -81,7 +81,7 @@ const SteuerJahresabschluss = memo(() => {
       const instandhaltung = annualExpenses * 0.4;
       const verwaltung = annualExpenses * 0.2;
 
-      const werbungskosten = annualInterest + afa + instandhaltung + verwaltung + annualExpenses * 0.4;
+      const werbungskosten = annualInterest + afa + instandhaltung + verwaltung;
       const zuVersteuern = Math.max(0, annualRent - werbungskosten);
       const steuerersparnis = werbungskosten > annualRent ? (werbungskosten - annualRent) * (taxRate / 100) : 0;
 
