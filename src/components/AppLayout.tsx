@@ -751,11 +751,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <BackToTop />
       <ImmoAIBubble />
 
-      {/* UX-7: Enhanced offline indicator with reconnection feedback */}
-      <OfflineIndicator />
-
-      {/* MOB-11: Enhanced offline queue with action sync */}
+      {/* MOB-11: Enhanced offline queue with action sync — replaces basic OfflineIndicator on mobile */}
       <MobileOfflineQueue />
+      {/* UX-7: Desktop offline indicator (hidden on mobile where MobileOfflineQueue handles it) */}
+      <div className="hidden md:block"><OfflineIndicator /></div>
 
       {/* MOB-15: Mobile search overlay */}
       <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
@@ -806,7 +805,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             );
           })()}
         {/* MOBILE-FIX-2: Bottom tab bar — evenly spaced with proper sizing */}
+        {/* MOB-15: Mobile search trigger button in bottom nav */}
         <div ref={mobileNavRef} className="flex items-center justify-around py-1 relative">
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 text-muted-foreground"
+            aria-label="Suche öffnen"
+          >
+            <Search className="h-4 w-4" />
+            <span className="truncate max-w-[52px] leading-tight">Suche</span>
+          </button>
           {navEntries.map((entry) => {
             if (isGroup(entry)) {
               const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
