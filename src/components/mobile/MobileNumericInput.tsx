@@ -47,7 +47,7 @@ export const MobileNumericInput = memo(function MobileNumericInput({
   }, [min, max]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^0-9.,\-]/g, "").replace(",", ".");
+    const raw = e.target.value.replace(/[^0-9.,\-]/g, "").replace(/\./g, "").replace(",", ".");
     const parsed = parseFloat(raw);
     if (!isNaN(parsed)) {
       onChange(clamp(parsed));
