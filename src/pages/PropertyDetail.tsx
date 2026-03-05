@@ -475,7 +475,7 @@ const PropertyDetail = () => {
       </div>
 
       {/* Maintenance Planner */}
-      <MaintenancePlanner propertyId={property.id} />
+      {!isMobile && <MaintenancePlanner propertyId={property.id} />}
 
       {/* Insurance Tracker */}
       <InsuranceTracker propertyId={property.id} />
@@ -487,7 +487,7 @@ const PropertyDetail = () => {
       <ContractManagement propertyId={property.id} />
 
       {/* Service Contracts */}
-      <ServiceContracts propertyId={property.id} />
+      {!isMobile && <ServiceContracts propertyId={property.id} />}
 
       {/* NOI & Cap Rate */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in">
@@ -514,10 +514,10 @@ const PropertyDetail = () => {
       </div>
 
       {/* Meter Management */}
-      <MeterManagement propertyId={property.id} />
+      {!isMobile && <MeterManagement propertyId={property.id} />}
 
       {/* Document Expiry Tracker */}
-      <DocumentExpiryTracker propertyId={property.id} />
+      {!isMobile && <DocumentExpiryTracker propertyId={property.id} />}
 
       {/* MOB-IMPROVE-2: Mobile Tab Navigation for sections below */}
       {isMobile ? (
