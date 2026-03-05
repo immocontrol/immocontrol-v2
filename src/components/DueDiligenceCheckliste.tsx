@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
+import { ManusDueDiligence } from "@/components/manus/ManusDueDiligence";
 
 interface DDItem {
   id: string;
@@ -206,6 +207,11 @@ const DueDiligenceCheckliste = memo(() => {
               <div className={`h-full rounded-full transition-all ${progress.percent === 100 ? "bg-profit" : "bg-primary"}`}
                 style={{ width: `${progress.percent}%` }} />
             </div>
+          </div>
+
+          {/* Manus AI: Report */}
+          <div className="mb-3">
+            <ManusDueDiligence defaultAddress={currentChecklist.objectName} />
           </div>
 
           {/* Items by category */}

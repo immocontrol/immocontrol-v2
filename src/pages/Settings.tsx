@@ -30,6 +30,7 @@ import { BackupSettings } from "@/components/settings/BackupSettings";
 import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { SystemInfoSettings } from "@/components/settings/SystemInfoSettings";
 import { ShortcutSettings } from "@/components/settings/ShortcutSettings";
+import { ManusSettings } from "@/components/settings/ManusSettings";
 
 /* Settings sidebar sections for navigation */
 const SETTINGS_SECTIONS = [
@@ -46,6 +47,7 @@ const SETTINGS_SECTIONS = [
   { id: "backup", label: "Daten-Backup", icon: Database },
   { id: "tastenkombinationen", label: "Tasten", icon: Keyboard },
   { id: "telegram", label: "Telegram", icon: MessageSquare },
+  { id: "manus-ai", label: "Manus AI", icon: Bot },
   { id: "team", label: "Team", icon: Users },
   { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
   { id: "system-info", label: "System-Info", icon: Database },
@@ -365,6 +367,7 @@ const Settings = () => {
         <BackupSettings sectionRef={refFor("backup")} />
         <ShortcutSettings sectionRef={refFor("tastenkombinationen")} />
         <TelegramSettings sectionRef={refFor("telegram")} />
+        <ManusSettings sectionRef={refFor("manus-ai")} />
 
         <ErrorScanner />
 

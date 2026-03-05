@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { GERMAN_BANKS } from "@/data/germanBanks";
 import { Download } from "lucide-react";
+import { ManusFinanzierung } from "@/components/manus/ManusFinanzierung";
 
 interface Loan {
   id: string;
@@ -742,6 +743,19 @@ const Loans = () => {
 
       {/* Fixed interest expiry alerts */}
       <LoanFixedInterestAlerts loans={filteredLoans} />
+
+      {/* Manus AI: Finanzierungs-Optimierung */}
+      {filteredLoans.length > 0 && (
+        <ManusFinanzierung
+          loans={filteredLoans.map((l) => ({
+            bank: l.bank_name,
+            restschuld: l.remaining_balance,
+            zinssatz: l.interest_rate,
+            zinsbindung_bis: l.fixed_interest_until || l.end_date || "",
+            tilgung: l.repayment_rate,
+          }))}
+        />
+      )}
 
       {/* KPI Cards — UI-2: card-stagger-enter */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">

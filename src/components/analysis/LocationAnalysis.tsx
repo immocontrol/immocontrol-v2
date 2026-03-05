@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { ManusMarktanalyse } from "@/components/manus/ManusMarktanalyse";
 
 interface NominatimResult {
   lat: string;
@@ -336,6 +337,17 @@ const LocationAnalysis = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Manus AI: Deep Research / Marktanalyse */}
+          <div className="rounded-lg border border-border bg-card/50 p-4 space-y-2">
+            <h3 className="text-xs font-semibold flex items-center gap-1.5">
+              <TrendingUp className="h-3 w-3 text-primary" /> Manus AI: Marktanalyse
+            </h3>
+            <p className="text-[10px] text-muted-foreground">
+              Ergänzt die freie Mikro/Makrolage-Analyse um Marktpreise, Renditen und Prognosen (Manus Deep Research).
+            </p>
+            <ManusMarktanalyse defaultCity={locationData.makrolage.city} defaultDistrict="" />
           </div>
 
           {/* Map link */}

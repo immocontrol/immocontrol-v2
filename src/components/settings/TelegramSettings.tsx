@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { ManusTelegramEnhancement } from "@/components/manus/ManusTelegramEnhancement";
 
 interface TelegramSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -81,6 +82,11 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
             <li>Füge den Bot zu deinem Deal-Channel hinzu</li>
             <li>Gehe zur <span className="font-medium text-foreground">Deals</span>-Seite und nutze den "Telegram Import" Button</li>
           </ol>
+        </div>
+
+        {/* Manus AI Enhancement */}
+        <div className="pt-3 border-t border-border">
+          <ManusTelegramEnhancement />
         </div>
       </div>
     </div>
