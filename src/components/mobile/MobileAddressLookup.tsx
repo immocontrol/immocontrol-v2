@@ -79,6 +79,7 @@ export const MobileAddressLookup = memo(function MobileAddressLookup({
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync external value
@@ -89,11 +90,22 @@ export const MobileAddressLookup = memo(function MobileAddressLookup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const searchAddress = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 3) {
       setResults([]);
       return;
     }
+
+    // Abort any previous in-flight request
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
 
     setIsSearching(true);
     setError(null);
@@ -113,6 +125,7 @@ export const MobileAddressLookup = memo(function MobileAddressLookup({
           headers: {
             "Accept-Language": "de",
           },
+          signal: abortRef.current.signal,
         }
       );
 
@@ -134,6 +147,8 @@ export const MobileAddressLookup = memo(function MobileAddressLookup({
       setResults(addresses);
       setShowResults(addresses.length > 0);
     } catch (err) {
+      // Ignore aborted requests
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Fehler bei der Suche");
       setResults([]);
     } finally {

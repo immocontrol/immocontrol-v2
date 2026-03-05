@@ -3,7 +3,7 @@
  * Swipe-to-confirm for dangerous actions (delete, cancel contract, etc.).
  * Replaces confirmation dialogs with a more intentional physical gesture.
  */
-import { useState, useRef, useCallback, memo } from "react";
+import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronRight, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,9 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
   const startXRef = useRef(0);
   const trackWidthRef = useRef(0);
   const dragXRef = useRef(0);
+  const [isMouseDragging, setIsMouseDragging] = useState(false);
+  const mouseMoveRef = useRef<((ev: MouseEvent) => void) | null>(null);
+  const mouseUpRef = useRef<(() => void) | null>(null);
 
   const THUMB_SIZE = 48;
   const CONFIRM_THRESHOLD = 0.85; // 85% of track width
@@ -112,13 +115,18 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
     }
   }, [disabled, isConfirming, isConfirmed, onConfirm]);
 
-  // Mouse events for desktop
+  // Mouse events for desktop — useEffect pattern for proper cleanup
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (disabled || isConfirming || isConfirmed) return;
     startXRef.current = e.clientX;
     if (trackRef.current) {
       trackWidthRef.current = trackRef.current.offsetWidth - THUMB_SIZE;
     }
+    setIsMouseDragging(true);
+  }, [disabled, isConfirming, isConfirmed]);
+
+  useEffect(() => {
+    if (!isMouseDragging) return;
 
     const handleMouseMove = (ev: MouseEvent) => {
       const delta = ev.clientX - startXRef.current;
@@ -128,8 +136,7 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
     };
 
     const handleMouseUp = async () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      setIsMouseDragging(false);
 
       const progress = dragXRef.current / trackWidthRef.current;
       if (progress >= CONFIRM_THRESHOLD) {
@@ -148,9 +155,17 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
       }
     };
 
+    mouseMoveRef.current = handleMouseMove;
+    mouseUpRef.current = handleMouseUp;
+
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [disabled, isConfirming, isConfirmed, onConfirm]);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isMouseDragging, onConfirm]);
 
   const progress = trackWidthRef.current > 0 ? dragX / trackWidthRef.current : 0;
 
