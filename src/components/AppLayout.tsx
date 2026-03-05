@@ -751,8 +751,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <BackToTop />
       <ImmoAIBubble />
 
-      {/* MOB-11: Enhanced offline queue with action sync — replaces basic OfflineIndicator on mobile */}
-      <MobileOfflineQueue />
+      {/* MOB-11: Enhanced offline queue with action sync — mobile only */}
+      <div className="md:hidden"><MobileOfflineQueue /></div>
       {/* UX-7: Desktop offline indicator (hidden on mobile where MobileOfflineQueue handles it) */}
       <div className="hidden md:block"><OfflineIndicator /></div>
 
