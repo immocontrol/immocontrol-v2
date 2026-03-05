@@ -152,7 +152,7 @@ export const MobilePDFViewer = memo(function MobilePDFViewer({
 
         <iframe
           ref={iframeRef}
-          src={`${src}#zoom=${zoom}&toolbar=0&navpanes=0`}
+          src={`${src}#toolbar=0&navpanes=0`}
           className={cn(
             "w-full h-full border-0",
             loading && "invisible"
