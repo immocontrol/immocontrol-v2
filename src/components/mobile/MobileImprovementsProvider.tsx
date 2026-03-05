@@ -83,14 +83,17 @@ function injectMobileCSS() {
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
       }
-      /* Fixed bottom elements need safe area */
-      .fixed.bottom-0, [class*="fixed"][class*="bottom-"] {
-        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-      }
-      /* Main content area */
-      main, [role="main"] {
-        padding-left: max(0px, env(safe-area-inset-left));
-        padding-right: max(0px, env(safe-area-inset-right));
+    }
+    /* Fixed bottom + main safe area — mobile only to avoid desktop side effects */
+    @supports (padding: env(safe-area-inset-top)) {
+      @media (max-width: 768px) {
+        .fixed.bottom-0, [class*="fixed"][class*="bottom-"] {
+          padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+        }
+        main, [role="main"] {
+          padding-left: max(0px, env(safe-area-inset-left));
+          padding-right: max(0px, env(safe-area-inset-right));
+        }
       }
     }
 

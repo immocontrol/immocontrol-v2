@@ -147,7 +147,7 @@ function categoriseNews(title: string, description: string): NewsCategory {
 }
 
 /* ─── Filter out non-economic/crime news ─── */
-const CRIME_BLACKLIST = /polizei|straftat|überfall|raub|mord|totschlag|messer|festnahme|verhaftet|tatverdächtig|kriminalität|wohnungseinbruch|einbruchdiebstahl|diebstahl|brandstiftung|drogenhandel|schüsse|schießerei|leiche|verkehrsunfall|messerattacke|schlägerei|vergewaltigung|körperverletzung/i;
+const CRIME_BLACKLIST = /polizei|straftat|überfall|raub|\bmord\b|totschlag|\bmesser\b|festnahme|verhaftet|tatverdächtig|kriminalität|wohnungseinbruch|einbruchdiebstahl|diebstahl|brandstiftung|drogenhandel|schüsse|schießerei|leiche|verkehrsunfall|messerattacke|schlägerei|vergewaltigung|körperverletzung/i;
 
 function isEconomicallyRelevant(title: string, description: string): boolean {
   const text = `${title} ${description}`.toLowerCase();
