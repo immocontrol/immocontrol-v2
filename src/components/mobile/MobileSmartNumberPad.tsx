@@ -3,7 +3,7 @@
  * Dedicated number pad for financial inputs with quick-value buttons.
  * Buttons for +100, +1k, +10k, +100k and common rental amounts.
  */
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import { Euro, Delete, Check } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
@@ -70,6 +70,13 @@ export const MobileSmartNumberPad = memo(function MobileSmartNumberPad({
   const isMobile = useIsMobile();
   const haptic = useHaptic();
   const [display, setDisplay] = useState(initialValue > 0 ? String(initialValue) : "");
+
+  // Reset display when pad is re-opened or initialValue changes
+  useEffect(() => {
+    if (open) {
+      setDisplay(initialValue > 0 ? String(initialValue) : "");
+    }
+  }, [open, initialValue]);
 
   const numericValue = parseFloat(display) || 0;
 

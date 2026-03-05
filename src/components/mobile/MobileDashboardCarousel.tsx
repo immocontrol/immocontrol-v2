@@ -31,9 +31,17 @@ export const MobileDashboardCarousel = memo(function MobileDashboardCarousel({
 
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
-    const { scrollLeft, clientWidth } = scrollRef.current;
-    const index = Math.round(scrollLeft / clientWidth);
-    setActiveIndex(Math.max(0, Math.min(index, sections.length - 1)));
+    const el = scrollRef.current;
+    const children = Array.from(el.children) as HTMLElement[];
+    if (children.length === 0) return;
+    // Find the child whose offsetLeft is closest to the current scrollLeft
+    let closestIdx = 0;
+    let closestDist = Infinity;
+    for (let i = 0; i < children.length; i++) {
+      const dist = Math.abs(children[i].offsetLeft - el.offsetLeft - el.scrollLeft);
+      if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+    }
+    setActiveIndex(Math.max(0, Math.min(closestIdx, sections.length - 1)));
   }, [sections.length]);
 
   useEffect(() => {
@@ -47,10 +55,10 @@ export const MobileDashboardCarousel = memo(function MobileDashboardCarousel({
     if (!scrollRef.current) return;
     const clamped = Math.max(0, Math.min(index, sections.length - 1));
     haptic.tap();
-    scrollRef.current.scrollTo({
-      left: clamped * scrollRef.current.clientWidth,
-      behavior: "smooth",
-    });
+    const children = scrollRef.current.children;
+    if (children[clamped]) {
+      (children[clamped] as HTMLElement).scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    }
     setActiveIndex(clamped);
   }, [sections.length, haptic]);
 
