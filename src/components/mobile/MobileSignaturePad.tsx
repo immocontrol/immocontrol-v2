@@ -63,6 +63,17 @@ export const MobileSignaturePad = memo(function MobileSignaturePad({
       ctx.lineJoin = "round";
       ctx.strokeStyle = penColor;
       ctx.lineWidth = penWidth;
+
+      // Redraw existing paths after canvas reset
+      for (const path of pathsRef.current) {
+        if (path.length < 2) continue;
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) {
+          ctx.lineTo(path[i].x, path[i].y);
+        }
+        ctx.stroke();
+      }
     }
   }, [penColor, penWidth]);
 

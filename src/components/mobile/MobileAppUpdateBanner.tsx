@@ -3,7 +3,7 @@
  * Shows update notification when a new app version is available via Service Worker.
  * Includes "Update now" button and dismissible banner with auto-recheck.
  */
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RefreshCw, X, ArrowUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,16 +25,31 @@ interface MobileAppUpdateBannerProps {
 function useServiceWorkerUpdate(checkInterval: number) {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const listenerAttachedRef = useRef(false);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
     let interval: ReturnType<typeof setInterval> | null = null;
+    let currentReg: ServiceWorkerRegistration | null = null;
+
+    const onUpdateFound = () => {
+      if (!currentReg) return;
+      const newWorker = currentReg.installing;
+      if (newWorker) {
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            setUpdateAvailable(true);
+          }
+        });
+      }
+    };
 
     const checkForUpdates = async () => {
       try {
         const reg = await navigator.serviceWorker.getRegistration();
         if (reg) {
+          currentReg = reg;
           setRegistration(reg);
 
           // Check for waiting worker
@@ -42,17 +57,11 @@ function useServiceWorkerUpdate(checkInterval: number) {
             setUpdateAvailable(true);
           }
 
-          // Listen for new updates
-          reg.addEventListener("updatefound", () => {
-            const newWorker = reg.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  setUpdateAvailable(true);
-                }
-              });
-            }
-          });
+          // Attach updatefound listener only once
+          if (!listenerAttachedRef.current) {
+            reg.addEventListener("updatefound", onUpdateFound);
+            listenerAttachedRef.current = true;
+          }
 
           // Trigger update check
           await reg.update();
@@ -71,6 +80,10 @@ function useServiceWorkerUpdate(checkInterval: number) {
 
     return () => {
       if (interval) clearInterval(interval);
+      if (currentReg && listenerAttachedRef.current) {
+        currentReg.removeEventListener("updatefound", onUpdateFound);
+        listenerAttachedRef.current = false;
+      }
     };
   }, [checkInterval]);
 
@@ -95,6 +108,14 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
   const { updateAvailable, applyUpdate } = useServiceWorkerUpdate(checkInterval);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up dismiss timer on unmount
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+    };
+  }, []);
 
   const handleUpdate = useCallback(async () => {
     setIsUpdating(true);
@@ -107,8 +128,10 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
 
   const handleDismiss = useCallback(() => {
     setIsDismissed(true);
+    // Clear any existing timer before setting a new one
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
     // Re-show after 1 hour if still not updated
-    setTimeout(() => setIsDismissed(false), 60 * 60 * 1000);
+    dismissTimerRef.current = setTimeout(() => setIsDismissed(false), 60 * 60 * 1000);
   }, []);
 
   if (!updateAvailable || isDismissed) return null;
