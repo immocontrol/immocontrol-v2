@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
-import { TableSkeleton } from "@/components/mobile/MobileSkeletonScreen";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3 } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
@@ -57,7 +56,6 @@ const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [mobileTab, setMobileTab] = useState("overview");
   const { getProperty, deleteProperty, duplicateProperty } = useProperties();
   const property = getProperty(id || "");
   const [tenantVersion, setTenantVersion] = useState(0);
