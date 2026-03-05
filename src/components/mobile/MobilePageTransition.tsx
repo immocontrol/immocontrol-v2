@@ -98,6 +98,7 @@ export const MobilePageTransition = memo(function MobilePageTransition({
         clearTimeout(enterTimerRef.current);
         enterTimerRef.current = null;
       }
+      isAnimating.current = false;
     };
   }, [children, location.pathname, isMobile, duration, type]);
 
