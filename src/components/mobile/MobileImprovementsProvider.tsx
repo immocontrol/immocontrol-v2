@@ -56,16 +56,18 @@ function injectMobileCSS() {
   const style = document.createElement("style");
   style.id = id;
   style.textContent = `
-    /* MOB-IMPROVE-10: Touch Targets — ensure 48px minimum on mobile */
+    /* MOB-IMPROVE-10: Touch Targets — opt-in 48px minimum on mobile */
     @media (max-width: 768px) {
-      button, a, [role="button"], [role="tab"], [role="menuitem"] {
+      /* Opt-in: apply .touch-target to elements that need 48px minimum */
+      .touch-target {
         min-height: 48px;
         min-width: 48px;
       }
-      /* Except inline text links and icon-only buttons with explicit small size */
-      .inline-link, .touch-target-sm {
-        min-height: auto;
-        min-width: auto;
+      /* Primary action buttons and nav items get larger touch targets */
+      .mobile-nav-item,
+      [data-mobile-tab] {
+        min-height: 48px;
+        min-width: 48px;
       }
     }
 
@@ -92,8 +94,8 @@ function injectMobileCSS() {
       }
     }
 
-    /* MOB-IMPROVE-18: Dark Mode OLED Optimization — mobile only */
-    @media (prefers-color-scheme: dark) and (max-width: 768px) {
+    /* MOB-IMPROVE-18: Dark Mode OLED Optimization — mobile only, class-based */
+    @media (max-width: 768px) {
       .dark {
         /* Pure black background for OLED screens — saves battery */
         --background: 0 0% 0%;
