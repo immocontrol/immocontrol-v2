@@ -3,7 +3,7 @@
  * Photo → Auto-Crop → OCR-Preview → Category → Upload workflow.
  * Step-by-step fullscreen scanner experience on mobile.
  */
-import { memo, useState, useCallback, useRef } from "react";
+import { memo, useState, useCallback, useRef, useEffect } from "react";
 import { Camera, Crop, FileText, Tag, Upload, X, RotateCcw, Check, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
@@ -60,6 +60,17 @@ export const MobileDocumentScanner = memo(function MobileDocumentScanner({
   const [selectedCategory, setSelectedCategory] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset state when scanner is opened
+  useEffect(() => {
+    if (open) {
+      setStep("capture");
+      setImageData("");
+      setOcrText("");
+      setSelectedCategory("");
+      setUploading(false);
+    }
+  }, [open]);
 
   const reset = useCallback(() => {
     setStep("capture");
