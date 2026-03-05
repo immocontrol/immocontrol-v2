@@ -41,6 +41,7 @@ export const MobilePageTransition = memo(function MobilePageTransition({
   const [animationClass, setAnimationClass] = useState("");
   const prevPath = useRef(location.pathname);
   const isAnimating = useRef(false);
+  const enterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isMobile || isAnimating.current) {
@@ -83,17 +84,21 @@ export const MobilePageTransition = memo(function MobilePageTransition({
       setDisplayChildren(children);
       setAnimationClass(enterClass);
 
-      const enterTimer = setTimeout(() => {
+      enterTimerRef.current = setTimeout(() => {
         setAnimationClass("");
         isAnimating.current = false;
       }, duration);
-
-      return () => clearTimeout(enterTimer);
     }, duration);
 
     prevPath.current = currentPath;
 
-    return () => clearTimeout(exitTimer);
+    return () => {
+      clearTimeout(exitTimer);
+      if (enterTimerRef.current) {
+        clearTimeout(enterTimerRef.current);
+        enterTimerRef.current = null;
+      }
+    };
   }, [children, location.pathname, isMobile, duration, type]);
 
   if (!isMobile) {

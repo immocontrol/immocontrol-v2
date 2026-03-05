@@ -126,11 +126,11 @@ export const MobileAccessibilityToolbar = memo(function MobileAccessibilityToolb
   const { settings, updateSetting, resetAll } = useAccessibilitySettings();
 
   const increaseFontSize = useCallback(() => {
-    updateSetting("fontScale", Math.min(settings.fontScale + 0.1, 1.5));
+    updateSetting("fontScale", Math.min(Math.round((settings.fontScale + 0.1) * 10) / 10, 1.5));
   }, [settings.fontScale, updateSetting]);
 
   const decreaseFontSize = useCallback(() => {
-    updateSetting("fontScale", Math.max(settings.fontScale - 0.1, 0.8));
+    updateSetting("fontScale", Math.max(Math.round((settings.fontScale - 0.1) * 10) / 10, 0.8));
   }, [settings.fontScale, updateSetting]);
 
   const fontSizePercent = Math.round(settings.fontScale * 100);
