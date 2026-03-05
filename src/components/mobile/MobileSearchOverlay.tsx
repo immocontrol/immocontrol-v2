@@ -63,13 +63,17 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
   const [recentSearches, setRecentSearches] = useState<string[]>(loadRecent);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Focus input when opened
+  // Focus input when opened; stop voice recognition when closed
   useEffect(() => {
     if (open) {
       setQuery("");
       setSelectedCategory(null);
       setRecentSearches(loadRecent());
       setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      // Stop voice recognition when overlay closes
+      recognitionRef.current?.stop();
+      setVoiceListening(false);
     }
   }, [open]);
 
