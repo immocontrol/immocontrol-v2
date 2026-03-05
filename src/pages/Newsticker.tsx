@@ -147,7 +147,7 @@ function categoriseNews(title: string, description: string): NewsCategory {
 }
 
 /* ─── Filter out non-economic/crime news ─── */
-const CRIME_BLACKLIST = /polizei|straftat|überfall|raub|mord|totschlag|messer|angriff|festnahme|verhaftet|tatverdächtig|kriminalität|einbruch|diebstahl|brand.*gelegt|brandstiftung|drogenhandel|schüsse|schießerei|leiche|unfall|verkehrsunfall|messerattacke|schlägerei|vergewaltigung|körperverletzung/;
+const CRIME_BLACKLIST = /polizei|straftat|überfall|raub|mord|totschlag|messer|festnahme|verhaftet|tatverdächtig|kriminalität|wohnungseinbruch|einbruchdiebstahl|diebstahl|brandstiftung|drogenhandel|schüsse|schießerei|leiche|verkehrsunfall|messerattacke|schlägerei|vergewaltigung|körperverletzung/i;
 
 function isEconomicallyRelevant(title: string, description: string): boolean {
   const text = `${title} ${description}`.toLowerCase();
@@ -372,9 +372,9 @@ const Newsticker = () => {
       const deduped = allItems.filter(item => {
         const key = item.title.toLowerCase().replace(/[^a-z\u00e4\u00f6\u00fc0-9]/g, "").slice(0, 60);
         if (seen.has(key)) return false;
-        seen.add(key);
         // Filter out non-economic news (crime, accidents, etc.)
         if (!isEconomicallyRelevant(item.title, item.description)) return false;
+        seen.add(key);
         return true;
       });
       deduped.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
