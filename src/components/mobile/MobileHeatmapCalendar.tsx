@@ -275,12 +275,15 @@ export const MobileHeatmapCalendar = memo(function MobileHeatmapCalendar({
       {selectedDate && (
         <div className="mt-3 p-2.5 rounded-lg bg-muted/50 border">
           <p className="text-xs font-medium">
-            {new Date(selectedDate).toLocaleDateString("de-DE", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
+            {(() => {
+              const [y, m, d] = selectedDate.split("-").map(Number);
+              return new Date(y, m - 1, d).toLocaleDateString("de-DE", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              });
+            })()}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
             {selectedData?.count || 0} {countSuffix}

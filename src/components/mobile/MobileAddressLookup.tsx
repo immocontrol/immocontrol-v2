@@ -90,10 +90,11 @@ export const MobileAddressLookup = memo(function MobileAddressLookup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  // Cleanup abort controller on unmount
+  // Cleanup abort controller and debounce timer on unmount
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
