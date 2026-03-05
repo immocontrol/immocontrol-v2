@@ -30,6 +30,8 @@ import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnima
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { DealToPropertyConverter } from "@/components/DealToPropertyConverter";
+import { MobileSwipeableDealCard } from "@/components/mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -168,6 +170,7 @@ const Deals = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const haptic = useHaptic();
+  const isMobile = useIsMobile();
   const { visible: successVisible, trigger: triggerSuccess } = useSuccessAnimation();
   const [addOpen, setAddOpen] = useState(false);
   const [editDeal, setEditDeal] = useState<DealRecord | null>(null);
@@ -670,21 +673,31 @@ const Deals = () => {
                 </div>
                 <div className="space-y-2">
                   {stageDeals.map((deal) => (
-                    <DealCard
+                    /* MOB2-2: Wrap DealCard with MobileSwipeableDealCard on mobile for swipe-between-stages */
+                    <MobileSwipeableDealCard
                       key={deal.id}
-                      deal={deal}
-                      onClick={() => openEdit(deal)}
-                      draggable
-                      onDragStart={(e) => {
-                        setDraggedDeal(deal);
-                        e.dataTransfer.setData("text/plain", deal.id);
-                        e.dataTransfer.effectAllowed = "move";
+                      currentStage={deal.stage}
+                      stages={STAGES.map(s => ({ key: s.key, label: s.label, color: s.color }))}
+                      onStageChange={(newStage) => {
+                        moveDeal.mutate({ id: deal.id, stage: newStage });
+                        toast.success(`Verschoben: ${stageMap[newStage]?.label || newStage}`);
                       }}
-                      onDragEnd={() => {
-                        setDraggedDeal(null);
-                        setDragOverStage(null);
-                      }}
-                    />
+                    >
+                      <DealCard
+                        deal={deal}
+                        onClick={() => openEdit(deal)}
+                        draggable={!isMobile}
+                        onDragStart={(e) => {
+                          setDraggedDeal(deal);
+                          e.dataTransfer.setData("text/plain", deal.id);
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragEnd={() => {
+                          setDraggedDeal(null);
+                          setDragOverStage(null);
+                        }}
+                      />
+                    </MobileSwipeableDealCard>
                   ))}
                   {stageDeals.length === 0 && (
                     <div className="py-4 text-center text-xs text-muted-foreground/50 border border-dashed rounded-lg">
