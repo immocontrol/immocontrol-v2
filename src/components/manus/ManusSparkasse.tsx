@@ -84,7 +84,7 @@ export const ManusSparkasse = ({ data, onResult }: ManusSparkasseProps) => {
     }
   };
 
-  const formatEuro = (n?: number) => n ? `${n.toLocaleString("de-DE")} €` : "–";
+  const formatEuro = (n?: number) => n != null ? `${n.toLocaleString("de-DE")} €` : "–";
 
   return (
     <div className="space-y-3">

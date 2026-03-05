@@ -107,7 +107,7 @@ export const ManusDueDiligence = ({ defaultAddress, defaultPlz, defaultOrt, kauf
     }
   };
 
-  const formatEuro = (n?: number) => n ? `${n.toLocaleString("de-DE")} €` : "–";
+  const formatEuro = (n?: number) => n != null ? `${n.toLocaleString("de-DE")} €` : "–";
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-card/50 p-4">
