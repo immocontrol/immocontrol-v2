@@ -258,7 +258,7 @@ export const MobileQuickCalculator = memo(function MobileQuickCalculator({
             </div>
           </div>
 
-          {showDetails && (
+          {showDetails ? (
             <div className="space-y-1 text-[10px] bg-muted/30 rounded-lg p-2">
               <div className="flex justify-between"><span>davon Zinsen / Monat:</span><span className="font-medium">{formatEuro(annuitaetResult.monthlyInterest)}</span></div>
               <div className="flex justify-between"><span>davon Tilgung / Monat:</span><span className="font-medium">{formatEuro(annuitaetResult.monthlyRepayment)}</span></div>

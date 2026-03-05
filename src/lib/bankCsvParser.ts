@@ -25,7 +25,8 @@ export const parseMT940 = (text: string, userId: string, accountId: string | nul
       const amountMatch = line1.match(/([CD])(\d+[,.]\d*)/);
       if (!amountMatch) continue;
       const isCredit = amountMatch[1] === "C";
-      const amount = parseFloat(amountMatch[2].replace(",", ".")) * (isCredit ? 1 : -1);
+      /* FIX-1: Use global /,/g to replace ALL commas */
+      const amount = parseFloat(amountMatch[2].replace(/,/g, ".")) * (isCredit ? 1 : -1);
       const refLine = lines.find(l => l.startsWith(":86:"));
       const reference = refLine ? refLine.slice(4).trim() : null;
       rows.push({ user_id: userId, booking_date: bookingDate, amount, account_id: accountId, reference, booking_text: "MT940" });

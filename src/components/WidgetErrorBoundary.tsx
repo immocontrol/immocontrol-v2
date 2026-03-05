@@ -26,8 +26,10 @@ export class WidgetErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.warn(`[WidgetErrorBoundary] ${this.props.name || "Widget"} crashed:`, error.message, info.componentStack);
+  /* FIX-11: Removed console.warn — errors are displayed in the fallback UI.
+   * In production, error reporting should go to a service like Sentry. */
+  componentDidCatch(_error: Error, _info: React.ErrorInfo) {
+    // Intentionally empty — error is stored in state and shown in fallback UI
   }
 
   handleRetry = () => {

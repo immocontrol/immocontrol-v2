@@ -246,7 +246,8 @@ const Dokumente = () => {
     a.href = url;
     a.download = doc.file_name;
     a.click();
-    URL.revokeObjectURL(url);
+    /* FIX-3: Delay revoke — immediate revoke can race with download on slow devices */
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     /* IMPROVE-6: Show success toast after download */
     toast.success(`"${doc.file_name}" heruntergeladen`);
   };

@@ -7,6 +7,7 @@
 import { memo, useState, useEffect, useCallback } from "react";
 import { WifiOff, RefreshCw, CloudOff, Check } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useTimeoutFn } from "@/hooks/useTimeout";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -27,6 +28,8 @@ export const MobileOfflineBanner = memo(function MobileOfflineBanner({
   );
   const [syncing, setSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
+  /* FIX-18: Use useTimeoutFn for auto-cleanup on unmount */
+  const syncResetTimer = useTimeoutFn();
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -56,7 +59,8 @@ export const MobileOfflineBanner = memo(function MobileOfflineBanner({
       haptic.success();
       setJustSynced(true);
       toast.success("Offline-Daten synchronisiert");
-      setTimeout(() => setJustSynced(false), 3000);
+      /* FIX-18: Timer auto-clears on unmount via useTimeoutFn */
+      syncResetTimer.set(() => setJustSynced(false), 3000);
     } catch {
       haptic.error();
       toast.error("Synchronisierung fehlgeschlagen");

@@ -11,6 +11,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export type ExportFormat = "pdf" | "csv" | "excel";
 
@@ -138,8 +139,9 @@ export const MobileDataExportSheet = memo(function MobileDataExportSheet({
 
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 3000);
-    } catch (err) {
-      console.error("Export failed:", err);
+    } catch {
+      /* FIX-11: Removed console.error — export failure is visible via UI state */
+      toast.error("Export fehlgeschlagen");
     } finally {
       setIsExporting(false);
     }

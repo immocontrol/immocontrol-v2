@@ -45,7 +45,8 @@ function formatCents(cents: number): string {
 
 function parseCurrencyString(str: string): number {
   // Handle German format: 1.234,56
-  const cleaned = str.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  /* FIX-1: Use global /,/g to replace ALL commas */
+  const cleaned = str.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(/,/g, ".");
   const num = parseFloat(cleaned);
   return isNaN(num) ? 0 : Math.round(num * 100);
 }

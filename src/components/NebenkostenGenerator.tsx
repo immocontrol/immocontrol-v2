@@ -215,7 +215,8 @@ export function NebenkostenGenerator({
   }, [tenantShares, costs, costItemsData, totalCosts, year, propertyName, propertyAddress, exportFormat]);
 
   const updateCost = (key: keyof NebenkostenCosts, value: string) => {
-    setCosts((prev) => ({ ...prev, [key]: parseFloat(value.replace(",", ".")) || 0 }));
+    /* FIX-1: Use global /,/g to replace ALL commas */
+    setCosts((prev) => ({ ...prev, [key]: parseFloat(value.replace(/,/g, ".")) || 0 }));
   };
 
   const costFields: Array<{ key: keyof NebenkostenCosts; label: string }> = [

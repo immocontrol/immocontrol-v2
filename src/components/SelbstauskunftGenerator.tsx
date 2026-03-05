@@ -75,7 +75,8 @@ const validateSelbstauskunftField = (field: string, value: string): string | nul
   if (!value.trim()) return null;
   if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Ungültige E-Mail";
   if (field === "telefon" && !/^[+\d\s()-]{6,}$/.test(value)) return "Ungültige Telefonnummer";
-  if (CURRENCY_FIELDS.includes(field) && isNaN(Number(value.replace(/\./g, "").replace(",", ".")))) return "Ungültige Zahl";
+  /* FIX-1: Use global /,/g to replace ALL commas */
+  if (CURRENCY_FIELDS.includes(field) && isNaN(Number(value.replace(/\./g, "").replace(/,/g, ".")))) return "Ungültige Zahl";
   return null;
 };
 

@@ -7,7 +7,7 @@
  * - No external services or paid APIs needed
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ScanText, Upload, FileText, Copy, Download, Loader2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -78,6 +78,18 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+  const prevUrlRef = useRef<string | null>(null);
+
+  /* FIX-4: Revoke previous Object URL when a new one is set, and on unmount */
+  useEffect(() => {
+    if (prevUrlRef.current && prevUrlRef.current !== previewUrl) {
+      URL.revokeObjectURL(prevUrlRef.current);
+    }
+    prevUrlRef.current = previewUrl;
+    return () => {
+      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
+    };
+  }, [previewUrl]);
 
   const handleFile = useCallback(async (file: File) => {
     setLoading(true);

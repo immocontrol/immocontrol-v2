@@ -324,7 +324,8 @@ const ContactManagement = () => {
               a.href = url;
               a.download = "immocontrol-kontakte.vcf";
               a.click();
-              URL.revokeObjectURL(url);
+              /* FIX-3: Delay revoke — immediate revoke can race with download on slow devices */
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
               toast.success("Kontakte als vCard exportiert!");
             }}>
               <Download className="h-3.5 w-3.5" /> vCard

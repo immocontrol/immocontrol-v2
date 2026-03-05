@@ -37,7 +37,8 @@ function parseBundesbankCsv(csv: string): { date: string; rate: number }[] {
   return dataLines.map(line => {
     const parts = line.split(";");
     const date = parts[0]?.trim() || "";
-    const rateStr = parts[1]?.trim().replace(",", ".") || "0";
+    /* FIX-1: Use global /,/g to replace ALL commas */
+    const rateStr = parts[1]?.trim().replace(/,/g, ".") || "0";
     const rate = parseFloat(rateStr);
     if (!date || isNaN(rate)) return null;
     return { date, rate };

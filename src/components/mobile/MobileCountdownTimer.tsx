@@ -85,10 +85,18 @@ export const MobileCountdownTimer = memo(function MobileCountdownTimer({
   const isMobile = useIsMobile();
   const [now, setNow] = useState(Date.now());
 
-  // Update every minute
+  /* FIX-17: Drift-free timer — aligns to the next full minute boundary
+   * instead of blindly waiting 60 000 ms (which drifts over time). */
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(interval);
+    let timerId: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      setNow(Date.now());
+      const msToNextMinute = 60_000 - (Date.now() % 60_000);
+      timerId = setTimeout(tick, msToNextMinute);
+    };
+    const msToNextMinute = 60_000 - (Date.now() % 60_000);
+    timerId = setTimeout(tick, msToNextMinute);
+    return () => clearTimeout(timerId);
   }, []);
 
   // Sort by urgency (soonest first, completed last)
