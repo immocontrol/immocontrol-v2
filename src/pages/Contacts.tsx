@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
@@ -57,6 +59,7 @@ const TRASH_RETENTION_DAYS = 30;
 
 const ContactManagement = () => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const qc = useQueryClient();
   const haptic = useHaptic();
   const { visible: successVisible, trigger: triggerSuccess } = useSuccessAnimation();
@@ -479,7 +482,8 @@ const ContactManagement = () => {
           <div className="grid gap-3 md:grid-cols-2 list-stagger">
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
-            return (
+            /* MOB-IMPROVE-6: Contact card with swipe-to-delete on mobile */
+            const contactCard = (
               <div key={c.id} className={`gradient-card rounded-xl border p-4 group hover:border-primary/20 transition-all duration-200 hover:shadow-sm hover-lift ${possibleDuplicates.includes(c.id) ? "border-gold/30" : "border-border"}`}>
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -611,6 +615,16 @@ const ContactManagement = () => {
                 </div>
               </div>
             );
+            /* MOB-IMPROVE-6: Wrap with swipe actions on mobile */
+            return isMobile && !showTrash ? (
+              <MobileSwipeToAction
+                key={c.id}
+                leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(c) }]}
+                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => deleteMutation.mutate(c.id) }]}
+              >
+                {contactCard}
+              </MobileSwipeToAction>
+            ) : contactCard;
           })}
           </div>
         </>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ const SETTINGS_SECTIONS = [
 const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -191,6 +193,30 @@ const Settings = () => {
 
   return (
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
+      {/* MOB-IMPROVE-3: Mobile horizontal scrollable section tabs */}
+      {isMobile && (
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border -mx-4 px-4 py-2 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 min-w-max">
+            {SETTINGS_SECTIONS.map((section) => {
+              const SectionIcon = section.icon;
+              const isActive = activeSection === section.id;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                    isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
+                  }`}
+                >
+                  <SectionIcon className="h-3 w-3" />
+                  {section.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Settings sidebar navigation with progress lines */}
       <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
         <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">

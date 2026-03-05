@@ -107,29 +107,36 @@ const SENTIMENT_CONFIG = {
   neutral: { icon: Minus, label: "Neutral", color: "text-gray-400", bg: "bg-gray-500/10" },
 } as const;
 
-/* ─── RSS Feed Sources (14 sources) ─── */
+/* ─── RSS Feed Sources (18 sources — expanded for faster/broader coverage) ─── */
 const RSS_FEEDS = [
-  { url: "https://news.google.com/rss/search?q=immobilien+berlin+OR+brandenburg+wohnung+OR+miete+OR+neubau&hl=de&gl=DE&ceid=DE:de", source: "Google News", icon: "\uD83D\uDD0D" },
+  /* Core search feeds — wirtschaftlich fokussiert */
+  { url: "https://news.google.com/rss/search?q=immobilien+markt+berlin+OR+brandenburg+investition+OR+rendite+OR+preis+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "Google News", icon: "\uD83D\uDD0D" },
   { url: "https://www.tagesspiegel.de/wirtschaft/immobilien/rss", source: "Tagesspiegel", icon: "\uD83D\uDCF0" },
   { url: "https://www.morgenpost.de/berlin/feed.rss", source: "Berliner Morgenpost", icon: "\uD83D\uDCF0" },
   { url: "https://www.rbb24.de/wirtschaft/index.xml/feed=rss.xml", source: "rbb24", icon: "\uD83D\uDCFA" },
+  /* Fachmedien — via Google News Site-Search */
   { url: "https://news.google.com/rss/search?q=site:iz.de+berlin+OR+brandenburg&hl=de&gl=DE&ceid=DE:de", source: "IZ (via Google)", icon: "\uD83C\uDFE2" },
-  { url: "https://news.google.com/rss/search?q=site:haufe.de+immobilien+berlin&hl=de&gl=DE&ceid=DE:de", source: "Haufe (via Google)", icon: "\uD83D\uDCCA" },
-  { url: "https://news.google.com/rss/search?q=site:handelsblatt.com+immobilien+berlin+OR+wohnen&hl=de&gl=DE&ceid=DE:de", source: "Handelsblatt", icon: "\uD83D\uDCBC" },
-  { url: "https://news.google.com/rss/search?q=site:capital.de+immobilien+berlin+OR+brandenburg&hl=de&gl=DE&ceid=DE:de", source: "Capital", icon: "\uD83D\uDCB0" },
-  { url: "https://news.google.com/rss/search?q=site:bz-berlin.de+immobilien+OR+wohnung+OR+miete&hl=de&gl=DE&ceid=DE:de", source: "BZ Berlin", icon: "\uD83D\uDDDE\uFE0F" },
-  { url: "https://news.google.com/rss/search?q=site:berliner-zeitung.de+immobilien+OR+wohnen+OR+miete&hl=de&gl=DE&ceid=DE:de", source: "Berliner Zeitung", icon: "\uD83D\uDCF0" },
-  { url: "https://news.google.com/rss/search?q=site:wiwo.de+immobilien+berlin+OR+wohnen&hl=de&gl=DE&ceid=DE:de", source: "WirtschaftsWoche", icon: "\uD83D\uDCC8" },
+  { url: "https://news.google.com/rss/search?q=site:haufe.de+immobilien+berlin+OR+markt+OR+statistik&hl=de&gl=DE&ceid=DE:de", source: "Haufe (via Google)", icon: "\uD83D\uDCCA" },
+  { url: "https://news.google.com/rss/search?q=site:handelsblatt.com+immobilien+berlin+OR+investition+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "Handelsblatt", icon: "\uD83D\uDCBC" },
+  { url: "https://news.google.com/rss/search?q=site:capital.de+immobilien+berlin+OR+brandenburg+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "Capital", icon: "\uD83D\uDCB0" },
+  { url: "https://news.google.com/rss/search?q=site:bz-berlin.de+immobilien+OR+wohnungsmarkt+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "BZ Berlin", icon: "\uD83D\uDDDE\uFE0F" },
+  { url: "https://news.google.com/rss/search?q=site:berliner-zeitung.de+immobilien+OR+wohnungsmarkt+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "Berliner Zeitung", icon: "\uD83D\uDCF0" },
+  { url: "https://news.google.com/rss/search?q=site:wiwo.de+immobilien+berlin+OR+investition+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "WirtschaftsWoche", icon: "\uD83D\uDCC8" },
+  /* Neue Quellen — Fachpresse & Statistik */
+  { url: "https://news.google.com/rss/search?q=site:iwkoeln.de+immobilien+OR+wohnungsmarkt&hl=de&gl=DE&ceid=DE:de", source: "IW Köln", icon: "\uD83D\uDCCA" },
+  { url: "https://news.google.com/rss/search?q=site:destatis.de+immobilienpreisindex+OR+baugenehmigungen&hl=de&gl=DE&ceid=DE:de", source: "Destatis", icon: "\uD83D\uDCC8" },
+  { url: "https://news.google.com/rss/search?q=site:manager-magazin.de+immobilien+berlin+OR+investment&hl=de&gl=DE&ceid=DE:de", source: "Manager Magazin", icon: "\uD83D\uDCBC" },
+  { url: "https://news.google.com/rss/search?q=site:faz.net+immobilien+berlin+OR+wohnungsmarkt+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "FAZ", icon: "\uD83D\uDCF0" },
   /* Brandenburg-Städte-Feeds */
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+bernau+OR+eberswalde+OR+oranienburg+OR+luckenwalde+OR+barnim&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg Nord", icon: "\uD83C\uDFE1" },
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+strausberg+OR+f%C3%BCrstenwalde+OR+neuruppin+OR+wittenberge+OR+rathenow&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg West/Ost", icon: "\uD83C\uDFE1" },
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnung+OR+miete+%22brandenburg+havel%22+OR+werder+OR+teltow+OR+kleinmachnow+OR+stahnsdorf+OR+blankenfelde&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg S\u00fcd", icon: "\uD83C\uDFE1" },
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnungsmarkt+OR+mietspiegel+bernau+OR+eberswalde+OR+oranienburg+OR+luckenwalde+OR+barnim&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg Nord", icon: "\uD83C\uDFE1" },
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnungsmarkt+OR+mietspiegel+strausberg+OR+f%C3%BCrstenwalde+OR+neuruppin+OR+wittenberge+OR+rathenow&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg West/Ost", icon: "\uD83C\uDFE1" },
+  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnungsmarkt+OR+mietspiegel+%22brandenburg+havel%22+OR+werder+OR+teltow+OR+kleinmachnow+OR+stahnsdorf+OR+blankenfelde&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg S\u00fcd", icon: "\uD83C\uDFE1" },
 ];
 
 /* ─── Categorise news by keywords ─── */
 function categoriseNews(title: string, description: string): NewsCategory {
   const text = `${title} ${description}`.toLowerCase();
-  if (/marktbericht|preisentwicklung|immobilienpreise|quadratmeterpreis|mietpreisspiegel|preisindex|statistik/.test(text)) return "markt";
+  if (/marktbericht|preisentwicklung|immobilienpreise|quadratmeterpreis|mietpreisspiegel|preisindex|statistik|kaufpreise|angebotspreise/.test(text)) return "markt";
   if (/neubau|bauprojekt|bauvorhaben|richtfest|grundsteinlegung|baugenehmigung|wohnungsbau/.test(text)) return "neubau";
   if (/mietendeckel|mietpreisbremse|regulierung|verordnung|gesetz|senat|bezirksamt|politik|koalition/.test(text)) return "politik";
   if (/gewerbe|b\u00fcro|office|einzelhandel|logistik|gewerbefl\u00e4che/.test(text)) return "gewerbe";
@@ -137,6 +144,16 @@ function categoriseNews(title: string, description: string): NewsCategory {
   if (/stadtentwicklung|quartier|infrastruktur|verkehr|bahn|flughafen|ber\b/.test(text)) return "stadtentwicklung";
   if (/wohnung|miete|eigentum|wohnraum|mietwohnung|eigentumswohnung|wohnen/.test(text)) return "wohnen";
   return "sonstiges";
+}
+
+/* ─── Filter out non-economic/crime news ─── */
+const CRIME_BLACKLIST = /polizei|straftat|überfall|raub|mord|totschlag|messer|angriff|festnahme|verhaftet|tatverdächtig|kriminalität|einbruch|diebstahl|brand.*gelegt|brandstiftung|drogenhandel|schüsse|schießerei|leiche|unfall|verkehrsunfall|messerattacke|schlägerei|vergewaltigung|körperverletzung/;
+
+function isEconomicallyRelevant(title: string, description: string): boolean {
+  const text = `${title} ${description}`.toLowerCase();
+  // Filter out crime/police reports that are not relevant to real estate market
+  if (CRIME_BLACKLIST.test(text)) return false;
+  return true;
 }
 
 /* ─── Sentiment analysis via keyword matching ─── */
@@ -226,15 +243,16 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
 
 /* ─── Fetch RSS via CORS proxy ─── */
 const CORS_PROXIES = [
-  (url: string) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
   (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url: string) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
 ];
 
 async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
   for (const buildProxyUrl of CORS_PROXIES) {
     try {
-      const resp = await fetch(buildProxyUrl(feedUrl), { signal: AbortSignal.timeout(10000) });
+      /* Reduced timeout from 10s to 6s for faster failover between proxies */
+      const resp = await fetch(buildProxyUrl(feedUrl), { signal: AbortSignal.timeout(6000) });
       if (!resp.ok) continue;
       const text = await resp.text();
       const items = parseRSSItems(text, source, icon);
@@ -355,6 +373,8 @@ const Newsticker = () => {
         const key = item.title.toLowerCase().replace(/[^a-z\u00e4\u00f6\u00fc0-9]/g, "").slice(0, 60);
         if (seen.has(key)) return false;
         seen.add(key);
+        // Filter out non-economic news (crime, accidents, etc.)
+        if (!isEconomicallyRelevant(item.title, item.description)) return false;
         return true;
       });
       deduped.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());

@@ -22,6 +22,7 @@ import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
 import { initErrorTracking } from "@/lib/errorTracking";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
 
 /* OPT-40: Route path constants */
 const ROUTES = {
@@ -326,6 +327,8 @@ const App = () => {
           <PropertyProvider>
             <AccessibilityProvider>
             <PrivacyProvider>
+            {/* MOB-IMPROVE: Global mobile improvements provider */}
+            <MobileImprovementsProvider>
             {/* UI-UPDATE-1: 1s tooltip delay on all action icons */}
             <TooltipProvider delayDuration={1000}>
               <Toaster />
@@ -347,6 +350,7 @@ const App = () => {
                 </ErrorBoundary>
               </BrowserRouter>
             </TooltipProvider>
+            </MobileImprovementsProvider>
             </PrivacyProvider>
             </AccessibilityProvider>
           </PropertyProvider>
