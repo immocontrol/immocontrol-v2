@@ -36,6 +36,7 @@ export const MobileComparisonSlider = memo(function MobileComparisonSlider({
   const isMobile = useIsMobile();
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = useCallback((clientX: number) => {
@@ -67,6 +68,19 @@ export const MobileComparisonSlider = memo(function MobileComparisonSlider({
     setIsDragging(true);
     updatePosition(e.clientX);
   }, [updatePosition]);
+
+  // Track container width reactively
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateWidth = () => setContainerWidth(el.offsetWidth);
+    updateWidth();
+
+    const observer = new ResizeObserver(() => updateWidth());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -120,8 +134,8 @@ export const MobileComparisonSlider = memo(function MobileComparisonSlider({
           <img
             src={beforeSrc}
             alt={beforeLabel}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ width: containerRef.current?.offsetWidth || "100%" }}
+            className="absolute inset-0 h-full object-cover"
+            style={{ width: containerWidth || "100%", minWidth: containerWidth || "100%" }}
             draggable={false}
           />
         </div>

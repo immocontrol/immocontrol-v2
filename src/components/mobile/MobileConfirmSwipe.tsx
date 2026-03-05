@@ -38,6 +38,7 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
   const trackRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const trackWidthRef = useRef(0);
+  const dragXRef = useRef(0);
 
   const THUMB_SIZE = 48;
   const CONFIRM_THRESHOLD = 0.85; // 85% of track width
@@ -80,13 +81,14 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
     if (disabled || isConfirming || isConfirmed) return;
     const delta = e.touches[0].clientX - startXRef.current;
     const clamped = Math.max(0, Math.min(delta, trackWidthRef.current));
+    dragXRef.current = clamped;
     setDragX(clamped);
   }, [disabled, isConfirming, isConfirmed]);
 
   const handleTouchEnd = useCallback(async () => {
     if (disabled || isConfirming || isConfirmed) return;
 
-    const progress = dragX / trackWidthRef.current;
+    const progress = dragXRef.current / trackWidthRef.current;
 
     if (progress >= CONFIRM_THRESHOLD) {
       // Confirmed!
@@ -108,7 +110,7 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
       // Spring back
       setDragX(0);
     }
-  }, [dragX, disabled, isConfirming, isConfirmed, onConfirm]);
+  }, [disabled, isConfirming, isConfirmed, onConfirm]);
 
   // Mouse events for desktop
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -121,6 +123,7 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
     const handleMouseMove = (ev: MouseEvent) => {
       const delta = ev.clientX - startXRef.current;
       const clamped = Math.max(0, Math.min(delta, trackWidthRef.current));
+      dragXRef.current = clamped;
       setDragX(clamped);
     };
 
@@ -128,7 +131,7 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      const progress = dragX / trackWidthRef.current;
+      const progress = dragXRef.current / trackWidthRef.current;
       if (progress >= CONFIRM_THRESHOLD) {
         setDragX(trackWidthRef.current);
         setIsConfirming(true);
@@ -147,7 +150,7 @@ export const MobileConfirmSwipe = memo(function MobileConfirmSwipe({
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [disabled, isConfirming, isConfirmed, dragX, onConfirm]);
+  }, [disabled, isConfirming, isConfirmed, onConfirm]);
 
   const progress = trackWidthRef.current > 0 ? dragX / trackWidthRef.current : 0;
 

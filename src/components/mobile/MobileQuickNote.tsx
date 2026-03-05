@@ -44,20 +44,21 @@ function saveNotes(notes: QuickNote[]) {
 export function useQuickNotes() {
   const [notes, setNotes] = useState<QuickNote[]>(loadNotes);
 
-  const addNote = useCallback((text: string, entity?: { type: QuickNote["entityType"]; id: string; name: string }) => {
+  const addNote = useCallback((text: string, entity?: { type: QuickNote["entityType"]; id: string; name: string }): QuickNote => {
+    const note: QuickNote = {
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text,
+      createdAt: Date.now(),
+      entityType: entity?.type,
+      entityId: entity?.id,
+      entityName: entity?.name,
+    };
     setNotes(prev => {
-      const note: QuickNote = {
-        id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        text,
-        createdAt: Date.now(),
-        entityType: entity?.type,
-        entityId: entity?.id,
-        entityName: entity?.name,
-      };
       const updated = [note, ...prev];
       saveNotes(updated);
       return updated;
     });
+    return note;
   }, []);
 
   const deleteNote = useCallback((id: string) => {
@@ -115,19 +116,11 @@ export const MobileQuickNote = memo(function MobileQuickNote({
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    addNote(trimmed, entity);
+    const note = addNote(trimmed, entity);
     setText("");
     setIsOpen(false);
 
     if (onNoteSaved) {
-      const note: QuickNote = {
-        id: `note-${Date.now()}`,
-        text: trimmed,
-        createdAt: Date.now(),
-        entityType: entity?.type,
-        entityId: entity?.id,
-        entityName: entity?.name,
-      };
       onNoteSaved(note);
     }
   }, [text, entity, addNote, onNoteSaved]);
