@@ -15,8 +15,11 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* IMP-17: Incremental strict-mode improvements */
+    /* FUND-1: Progressive strict mode — strictNullChecks enabled, noImplicitAny next milestone */
     "strict": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitAny": false,
