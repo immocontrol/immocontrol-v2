@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { ManusSteuerOptimierung } from "@/components/manus/ManusSteuerOptimierung";
 
 const AnlageVExport = lazy(() => import("@/components/AnlageVExport").then(m => ({ default: m.AnlageVExport })));
 const TaxYearOverview = lazy(() => import("@/components/TaxYearOverview").then(m => ({ default: m.TaxYearOverview })));
@@ -17,7 +18,7 @@ const AfACalculator = lazy(() => import("@/components/AfACalculator").then(m => 
 const SteuerCockpit = memo(() => {
   const { properties, stats } = useProperties();
   const [expanded, setExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "anlageV" | "afa">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "anlageV" | "afa" | "manus">("overview");
 
   const taxProjection = useMemo(() => {
     if (properties.length === 0) return null;
@@ -50,6 +51,21 @@ const SteuerCockpit = memo(() => {
       tips,
     };
   }, [properties, stats]);
+
+  const manusOwnership = useMemo(() => {
+    const first = properties[0]?.ownership;
+    if (!first) return "privat";
+    return properties.every((p) => p.ownership === first) ? first : "gemischt";
+  }, [properties]);
+
+  const manusProperties = useMemo(() => properties.map((p) => ({
+    name: p.name,
+    kaufpreis: p.purchasePrice,
+    baujahr: p.yearBuilt,
+    kaufdatum: p.purchaseDate,
+    jahresmiete: (p.monthlyRent || 0) * 12,
+    wohnflaeche: p.sqm || 0,
+  })), [properties]);
 
   if (properties.length === 0) return null;
 
@@ -106,7 +122,7 @@ const SteuerCockpit = memo(() => {
       {expanded && (
         <div className="mt-3 border-t border-border pt-3">
           <div className="flex gap-1 mb-3">
-            {(["overview", "anlageV", "afa"] as const).map(tab => (
+            {(["overview", "anlageV", "afa", "manus"] as const).map(tab => (
               <Button
                 key={tab}
                 variant={activeTab === tab ? "default" : "ghost"}
@@ -114,7 +130,7 @@ const SteuerCockpit = memo(() => {
                 className="text-[10px] h-6 px-2"
                 onClick={() => setActiveTab(tab)}
               >
-                {tab === "overview" ? "Übersicht" : tab === "anlageV" ? "Anlage V" : "AfA-Rechner"}
+                {tab === "overview" ? "Übersicht" : tab === "anlageV" ? "Anlage V" : tab === "afa" ? "AfA-Rechner" : "Manus AI"}
               </Button>
             ))}
           </div>
@@ -122,6 +138,9 @@ const SteuerCockpit = memo(() => {
             {activeTab === "overview" && <TaxYearOverview />}
             {activeTab === "anlageV" && <AnlageVExport />}
             {activeTab === "afa" && <AfACalculator />}
+            {activeTab === "manus" && (
+              <ManusSteuerOptimierung properties={manusProperties} ownership={manusOwnership} />
+            )}
           </Suspense>
         </div>
       )}

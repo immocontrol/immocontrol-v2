@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
+import { ManusNewstickerIntelligence } from "@/components/manus/ManusNewstickerIntelligence";
 
 /* ─── Types ─── */
 interface NewsItem {
@@ -1016,6 +1017,14 @@ const Newsticker = () => {
             Weitere {Math.min(20, filteredNews.length - displayCount)} laden
           </Button>
         </div>
+      )}
+
+      {/* Manus AI: Markt-Briefing */}
+      {news.length > 0 && (
+        <ManusNewstickerIntelligence
+          recentHeadlines={news.slice(0, 30).map(n => n.title)}
+          portfolioCities={["Berlin", "Brandenburg"]}
+        />
       )}
 
       {/* Footer */}

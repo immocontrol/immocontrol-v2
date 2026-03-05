@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { extractPdfText, parseExposeText, type ParsedExposeData } from "@/lib/exposeParser";
 import { generateBewertungsPdf, type ValuationResults } from "@/lib/bewertungPdfReport";
 import { useDebounce } from "@/hooks/useDebounce";
+import { ManusSparkasse } from "@/components/manus/ManusSparkasse";
+import { ManusExposeAnalyse } from "@/components/manus/ManusExposeAnalyse";
 
 /** Nominatim address suggestion */
 interface AddressSuggestion {
@@ -791,6 +793,28 @@ const ImmobilienBewertung = () => {
             )}
           </div>
 
+          {/* Manus AI: Exposé-Analyse & Deal-Scoring */}
+          <div className="gradient-card rounded-xl border border-border p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold">Manus AI: Exposé-Analyse & Deal-Scoring</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Automatische Markt-Recherche, Deal-Score und Pro/Contra-Analyse basierend auf den Exposé-Daten.
+            </p>
+            <ManusExposeAnalyse
+              data={{
+                address: parsedData.address || "",
+                kaufpreis: parsedData.kaufpreis || 0,
+                wohnflaeche: parsedData.wohnflaeche || 0,
+                baujahr: parsedData.baujahr || 0,
+                zimmer: parsedData.zimmer || 0,
+                kaltmiete: parsedData.kaltmiete || 0,
+                immobilientyp: String(parsedData.immobilientyp || "Sonstige"),
+              }}
+            />
+          </div>
+
           {/* Multi-Valuation Providers */}
           <div className="gradient-card rounded-xl border border-border p-5 space-y-4">
             <div className="flex items-center gap-2">
@@ -845,7 +869,31 @@ const ImmobilienBewertung = () => {
 
             {/* Sparkasse E-Mail section */}
             <div className="border-t border-border pt-3 space-y-2">
-              <p className="text-xs font-medium">Sparkasse S-ImmoPreisfinder — E-Mail-Bericht</p>
+              <p className="text-xs font-medium">Sparkasse S-ImmoPreisfinder</p>
+
+              <div className="space-y-2">
+                <p className="text-[10px] text-muted-foreground">
+                  Option 1: <strong>Automatisiert</strong> via Manus Cloud Browser (Formular wird ausgefüllt, Ergebnis extrahiert).
+                </p>
+                <ManusSparkasse
+                  data={{
+                    address: parsedData.address || "",
+                    plz: parsedData.plz || "",
+                    ort: parsedData.ort || "",
+                    wohnflaeche: parsedData.wohnflaeche || 0,
+                    grundstueckFlaeche: parsedData.grundstueckFlaeche || 0,
+                    baujahr: parsedData.baujahr || 0,
+                    zimmer: parsedData.zimmer || 0,
+                    immobilientyp: String(parsedData.immobilientyp || "Sonstige"),
+                    zustand: String((parsedData as { zustand?: string }).zustand || "unbekannt"),
+                    ausstattung: String((parsedData as { ausstattung?: string }).ausstattung || "standard"),
+                  }}
+                />
+
+                <p className="text-[10px] text-muted-foreground">
+                  Option 2: <strong>Manuell</strong> (E-Mail-Bericht, öffnet den S-ImmoPreisfinder in neuem Tab).
+                </p>
+              </div>
               {sparkasseRequested ? (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-profit/5 border border-profit/20">
                   <CheckCircle2 className="h-5 w-5 text-profit shrink-0" />
