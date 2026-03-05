@@ -1,13 +1,17 @@
 /**
  * ManusSettings — Settings component for Manus AI API key configuration
+ *
+ * Supports two modes:
+ *  1. Server-side proxy (Supabase Edge Function) — API key stays on server
+ *  2. Local key fallback (localStorage) — for dev / if proxy not deployed
  */
 import { useState, useEffect } from "react";
-import { Bot, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ExternalLink } from "lucide-react";
+import { Bot, Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ExternalLink, Shield, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getManusApiKey, setManusApiKey, hasManusApiKey, getTask } from "@/lib/manusAgent";
+import { getManusApiKey, setManusApiKey, hasManusApiKey, getTask, isProxyConfigured, resetProxyCache } from "@/lib/manusAgent";
 
 interface ManusSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -18,6 +22,8 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
+  const [proxyAvailable, setProxyAvailable] = useState<boolean | null>(null);
+  const [checkingProxy, setCheckingProxy] = useState(true);
 
   useEffect(() => {
     const existing = getManusApiKey();
@@ -25,6 +31,14 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
       setApiKeyState(existing);
       setIsConfigured(true);
     }
+
+    // Check if server-side proxy is available
+    resetProxyCache();
+    isProxyConfigured().then((available) => {
+      setProxyAvailable(available);
+      setCheckingProxy(false);
+      if (available) setIsConfigured(true);
+    });
   }, []);
 
   const handleSave = () => {
@@ -94,7 +108,7 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
 
       <p className="text-xs text-muted-foreground leading-relaxed">
         Manus AI ermöglicht automatisierte Immobilien-Recherche, Marktanalyse, Exposé-Bewertung,
-        Due Diligence und mehr. Hinterlege deinen API Key von{" "}
+        Due Diligence und mehr. API Key von{" "}
         <a
           href="https://manus.im"
           target="_blank"
@@ -105,8 +119,41 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
         </a>
       </p>
 
+      {/* ── Server-side Proxy Status ── */}
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+        {checkingProxy ? (
+          <>
+            <Loader2 className="h-4 w-4 mt-0.5 shrink-0 animate-spin text-muted-foreground" />
+            <div className="text-xs text-muted-foreground">Server-Proxy wird geprüft…</div>
+          </>
+        ) : proxyAvailable ? (
+          <>
+            <Shield className="h-4 w-4 mt-0.5 shrink-0 text-emerald-500" />
+            <div className="text-xs leading-relaxed">
+              <strong className="text-emerald-600 dark:text-emerald-400">Server-Proxy aktiv</strong>{" "}
+              <span className="text-muted-foreground">
+                — API Key liegt sicher auf dem Server. Kein lokaler Key nötig.
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+            <div className="text-xs leading-relaxed">
+              <strong className="text-amber-600 dark:text-amber-400">Server-Proxy nicht verfügbar</strong>{" "}
+              <span className="text-muted-foreground">
+                — Bitte lokalen API Key hinterlegen (wird im Browser gespeichert).
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Local API Key (always shown, but marked as optional when proxy is active) ── */}
       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">API Key</Label>
+        <Label className="text-xs text-muted-foreground">
+          Lokaler API Key {proxyAvailable ? "(optional — überschreibt Server-Proxy)" : "(erforderlich)"}
+        </Label>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Input
@@ -135,7 +182,7 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
           {testing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
           Testen
         </Button>
-        {isConfigured && (
+        {apiKey && (
           <Button size="sm" variant="ghost" onClick={handleRemove} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
             Entfernen
           </Button>
@@ -146,8 +193,8 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
         <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
           <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
           <div className="text-xs leading-relaxed">
-            <strong>Nicht konfiguriert.</strong> Manus AI Features wie S-ImmoPreisfinder,
-            Marktanalyse, Deal-Scoring und Due Diligence benötigen einen gültigen API Key.
+            <strong>Nicht konfiguriert.</strong> Manus AI Features benötigen entweder den
+            Server-Proxy (MANUS_API_KEY als Supabase Secret) oder einen lokalen API Key.
           </div>
         </div>
       )}

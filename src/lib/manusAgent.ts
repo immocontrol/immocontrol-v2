@@ -4,6 +4,11 @@
  * Handles task creation, polling, file upload, and result retrieval.
  * API docs: https://open.manus.im/
  * 
+ * Architecture (Tier 2 Security):
+ * - PRIMARY: Supabase Edge Function "manus-proxy" — API key stays server-side
+ * - FALLBACK: Direct Manus API calls if a local key is set in localStorage
+ *   (for development / offline testing only)
+ * 
  * Features using this service:
  * - MANUS-1: S-ImmoPreisfinder Browser Automation
  * - MANUS-2: Deep Research / Marktanalyse
@@ -14,6 +19,8 @@
  * - MANUS-7: Finanzierungs-Optimierung
  * - MANUS-8: Telegram Bot Enhancement
  */
+
+import { supabase } from "@/integrations/supabase/client";
 
 const MANUS_API_BASE = "https://api.manus.im/v1";
 
@@ -55,11 +62,37 @@ export interface ManusTaskResult {
 
 const MANUS_KEY_STORAGE = "immocontrol_manus_api_key";
 
+/** Whether the server-side proxy is configured (cached after first check) */
+let _proxyConfigured: boolean | null = null;
+
+/** Check if the Supabase Edge Function proxy has MANUS_API_KEY configured */
+export async function isProxyConfigured(): Promise<boolean> {
+  if (_proxyConfigured !== null) return _proxyConfigured;
+  try {
+    const { data, error } = await supabase.functions.invoke("manus-proxy", {
+      body: { action: "ping" },
+    });
+    _proxyConfigured = !error && data?.configured === true;
+  } catch {
+    _proxyConfigured = false;
+  }
+  return _proxyConfigured;
+}
+
+/** Reset the cached proxy status (e.g. after config changes) */
+export function resetProxyCache(): void {
+  _proxyConfigured = null;
+}
+
+/**
+ * Get the local Manus API key (localStorage / env var).
+ * Only used as fallback when the server-side proxy is NOT configured.
+ */
 export function getManusApiKey(): string {
-  // 1. Check environment variable
+  // 1. Check environment variable (dev only)
   const envKey = import.meta.env.VITE_MANUS_API_KEY;
   if (envKey) return envKey;
-  // 2. Check localStorage
+  // 2. Check localStorage (fallback)
   return localStorage.getItem(MANUS_KEY_STORAGE) || "";
 }
 
@@ -67,11 +100,32 @@ export function setManusApiKey(key: string): void {
   localStorage.setItem(MANUS_KEY_STORAGE, key);
 }
 
+/**
+ * Returns true if Manus is available — either via server proxy or local key.
+ * For synchronous checks (UI rendering), this checks the local key only.
+ * Use `isManusAvailable()` for async check that includes proxy.
+ */
 export function hasManusApiKey(): boolean {
+  // If proxy was confirmed configured, always true
+  if (_proxyConfigured === true) return true;
   return getManusApiKey().length > 0;
 }
 
+/** Async check: proxy OR local key available */
+export async function isManusAvailable(): Promise<boolean> {
+  if (getManusApiKey().length > 0) return true;
+  return isProxyConfigured();
+}
+
 /* ─── API Helpers ─── */
+
+/** Whether to route through the proxy for the current request */
+function shouldProxy(): boolean {
+  // If no local key, must use proxy
+  if (!getManusApiKey()) return true;
+  // If local key exists, use direct (faster, no round-trip via Supabase)
+  return false;
+}
 
 function getHeaders(): Record<string, string> {
   const key = getManusApiKey();
@@ -82,7 +136,8 @@ function getHeaders(): Record<string, string> {
   };
 }
 
-async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
+/** Direct Manus API request (uses local key) */
+async function directApiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${MANUS_API_BASE}${path}`, {
     ...options,
     headers: { ...getHeaders(), ...options?.headers },
@@ -94,10 +149,34 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+/** Proxy API request via Supabase Edge Function (key stays server-side) */
+async function proxyApiRequest<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke("manus-proxy", {
+    body,
+  });
+  if (error) {
+    throw new Error(`Manus Proxy Fehler: ${error.message}`);
+  }
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+  return data as T;
+}
+
 /* ─── Core API Methods ─── */
 
 /** Create a new Manus task */
 export async function createTask(options: ManusTaskOptions): Promise<ManusTask> {
+  if (shouldProxy()) {
+    return proxyApiRequest<ManusTask>({
+      action: "createTask",
+      prompt: options.prompt,
+      taskMode: options.taskMode || "agent",
+      agentProfile: options.agentProfile || "quality",
+      fileIds: options.fileIds,
+      connectorIds: options.connectorIds,
+    });
+  }
   const body: Record<string, unknown> = {
     prompt: options.prompt,
     task_mode: options.taskMode || "agent",
@@ -109,7 +188,7 @@ export async function createTask(options: ManusTaskOptions): Promise<ManusTask> 
   if (options.connectorIds?.length) {
     body.connector_ids = options.connectorIds;
   }
-  return apiRequest<ManusTask>("/tasks", {
+  return directApiRequest<ManusTask>("/tasks", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -117,27 +196,40 @@ export async function createTask(options: ManusTaskOptions): Promise<ManusTask> 
 
 /** Get task status and output */
 export async function getTask(taskId: string): Promise<ManusTask> {
-  return apiRequest<ManusTask>(`/tasks/${taskId}`);
+  if (shouldProxy()) {
+    return proxyApiRequest<ManusTask>({ action: "getTask", taskId });
+  }
+  return directApiRequest<ManusTask>(`/tasks/${taskId}`);
 }
 
 /** List output files for a task */
 export async function listTaskFiles(taskId: string): Promise<ManusFile[]> {
-  const data = await apiRequest<{ files: ManusFile[] }>(`/tasks/${taskId}/files`);
+  if (shouldProxy()) {
+    const data = await proxyApiRequest<{ files: ManusFile[] }>({ action: "listFiles", taskId });
+    return data.files || [];
+  }
+  const data = await directApiRequest<{ files: ManusFile[] }>(`/tasks/${taskId}/files`);
   return data.files || [];
 }
 
 /** Upload a file and get a file_id */
 export async function uploadFile(file: File): Promise<ManusFile> {
-  const key = getManusApiKey();
-  if (!key) throw new Error("Manus API Key nicht konfiguriert.");
-
   // Step 1: Get presigned upload URL
-  const presigned = await apiRequest<{ upload_url: string; file_id: string }>("/files", {
-    method: "POST",
-    body: JSON.stringify({ filename: file.name, content_type: file.type || "application/octet-stream" }),
-  });
+  let presigned: { upload_url: string; file_id: string };
+  if (shouldProxy()) {
+    presigned = await proxyApiRequest<{ upload_url: string; file_id: string }>({
+      action: "uploadFile",
+      filename: file.name,
+      contentType: file.type || "application/octet-stream",
+    });
+  } else {
+    presigned = await directApiRequest<{ upload_url: string; file_id: string }>("/files", {
+      method: "POST",
+      body: JSON.stringify({ filename: file.name, content_type: file.type || "application/octet-stream" }),
+    });
+  }
 
-  // Step 2: Upload file to presigned URL
+  // Step 2: Upload file to presigned URL (direct to storage, no key needed)
   await fetch(presigned.upload_url, {
     method: "PUT",
     body: file,
