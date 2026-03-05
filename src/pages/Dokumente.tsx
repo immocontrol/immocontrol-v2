@@ -15,6 +15,7 @@ import { formatFileSize, formatDate } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import FileImportPicker from "@/components/FileImportPicker";
 import DocumentOCR from "@/components/DocumentOCR";
+import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
 
 interface DocEntry {
   id: string;
@@ -368,9 +369,19 @@ const Dokumente = () => {
         </Select>
       </div>
 
+      {/* MOB-13: Mobile Document Camera — quick capture button */}
+      <div className="md:hidden">
+        <MobileDocumentCamera
+          onCapture={(file) => uploadFile(file)}
+          variant="button"
+          label="Beleg fotografieren"
+          className="w-full"
+        />
+      </div>
+
       {/* Document List */}
       {isLoading ? (
-        <div className="text-sm text-muted-foreground text-center py-12 animate-pulse">Dokumente werden geladen...</div>
+        <TableSkeleton rows={5} />
       ) : filteredDocs.length === 0 ? (
         <div className="text-center py-12">
           <FolderOpen className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />

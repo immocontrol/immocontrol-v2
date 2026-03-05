@@ -27,6 +27,7 @@ import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
+import { MobileOfflineQueue, MobileSearchOverlay } from "@/components/mobile";
 // NotificationCenter import removed — duplicate bell icon with NotificationBell (Devin Review fix)
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
@@ -238,6 +239,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  /* MOB-15: Mobile search overlay state */
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   /* Mobile grouped nav: which group is expanded (shows sub-items above bottom bar) */
   const [mobileActiveGroup, setMobileActiveGroup] = useState<string | null>(null);
 
@@ -750,6 +753,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* UX-7: Enhanced offline indicator with reconnection feedback */}
       <OfflineIndicator />
+
+      {/* MOB-11: Enhanced offline queue with action sync */}
+      <MobileOfflineQueue />
+
+      {/* MOB-15: Mobile search overlay */}
+      <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
 
       {/* Mobile nav — 5 grouped tabs with expandable sub-items */}
       {/* MOBILE-FIX-3: Added menu tab animation when switching between tabs */}

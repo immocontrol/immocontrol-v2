@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
+import { DashboardSkeleton, MobileKPIHeader } from "@/components/mobile";
 /* TECH-8: Dynamic imports for heavy dashboard components — reduces initial bundle size */
 const MonthOverMonthComparison = lazy(() => import("@/components/MonthOverMonthComparison").then(m => ({ default: m.MonthOverMonthComparison })));
 const MieteingangsTracker = lazy(() => import("@/components/MieteingangsTracker").then(m => ({ default: m.MieteingangsTracker })));
@@ -246,36 +247,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     { key: "privat", label: "Privat" },
   ];
 
-  // Feature 6: Loading skeleton
+  // Feature 6: Loading skeleton — MOB-10: Enhanced skeleton screens
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            {/* UI-4: skeleton-wave for loading */}
-            <div className="h-8 w-48 skeleton-wave rounded-lg" />
-            <div className="h-4 w-32 skeleton-wave rounded-lg mt-2" />
-          </div>
-          <div className="h-9 w-36 skeleton-wave rounded-lg" />
-        </div>
-        {/* UI-2: card-stagger-enter for stagger animation */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="gradient-card rounded-xl border border-border p-4 space-y-3">
-              <div className="h-3 w-20 skeleton-wave rounded" />
-              <div className="h-7 w-28 skeleton-wave rounded" />
-              <div className="h-3 w-24 skeleton-wave rounded" />
-            </div>
-          ))}
-        </div>
-        <div className="h-20 skeleton-wave rounded-xl" />
-        <div className="grid md:grid-cols-2 gap-3">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-56 skeleton-wave rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Feature 3: Empty state
@@ -412,6 +386,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           </div>
         </div>
       )}
+
+      {/* MOB-6: Mobile KPI Dashboard Header — scrollable KPI badges on mobile */}
+      <MobileKPIHeader
+        totalValue={stats.totalValue}
+        totalCashflow={stats.totalCashflow}
+        totalRent={stats.totalRent}
+        yieldPercent={stats.avgRendite}
+        propertyCount={stats.propertyCount}
+        occupancyRate={totalUnitsFromProps > 0 ? ((occupiedUnits / totalUnitsFromProps) * 100) : undefined}
+      />
 
       {/* Favorites bar — quick access to favorite pages */}
       <FavoritesBar />
