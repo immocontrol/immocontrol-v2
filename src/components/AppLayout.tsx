@@ -27,6 +27,7 @@ import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
+import { MobileOfflineQueue, MobileSearchOverlay } from "@/components/mobile";
 // NotificationCenter import removed — duplicate bell icon with NotificationBell (Devin Review fix)
 
 /* Grouped navigation: primary items shown directly, grouped items in dropdowns */
@@ -238,6 +239,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  /* MOB-15: Mobile search overlay state */
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   /* Mobile grouped nav: which group is expanded (shows sub-items above bottom bar) */
   const [mobileActiveGroup, setMobileActiveGroup] = useState<string | null>(null);
 
@@ -748,8 +751,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <BackToTop />
       <ImmoAIBubble />
 
-      {/* UX-7: Enhanced offline indicator with reconnection feedback */}
-      <OfflineIndicator />
+      {/* MOB-11: Enhanced offline queue with action sync — mobile only */}
+      <div className="md:hidden"><MobileOfflineQueue /></div>
+      {/* UX-7: Desktop offline indicator (hidden on mobile where MobileOfflineQueue handles it) */}
+      <div className="hidden md:block"><OfflineIndicator /></div>
+
+      {/* MOB-15: Mobile search overlay */}
+      <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
 
       {/* Mobile nav — 5 grouped tabs with expandable sub-items */}
       {/* MOBILE-FIX-3: Added menu tab animation when switching between tabs */}
@@ -797,7 +805,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             );
           })()}
         {/* MOBILE-FIX-2: Bottom tab bar — evenly spaced with proper sizing */}
+        {/* MOB-15: Mobile search trigger button in bottom nav */}
         <div ref={mobileNavRef} className="flex items-center justify-around py-1 relative">
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 text-muted-foreground"
+            aria-label="Suche öffnen"
+          >
+            <Search className="h-4 w-4" />
+            <span className="truncate max-w-[52px] leading-tight">Suche</span>
+          </button>
           {navEntries.map((entry) => {
             if (isGroup(entry)) {
               const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
