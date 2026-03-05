@@ -43,8 +43,9 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
   onRowClick,
   emptyMessage = "Keine Einträge vorhanden",
   className,
+  breakpoint,
 }: ResponsiveTableProps<T>) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useMediaQuery(`(max-width: ${breakpoint ?? 768}px)`);
 
   if (data.length === 0) {
     return (

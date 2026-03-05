@@ -57,12 +57,13 @@ export async function deduplicatedFetch(
 ): Promise<Response> {
   const key = `${init?.method ?? "GET"}:${url}`;
   const existing = inflightRequests.get(key);
-  if (existing) return existing;
+  if (existing) return existing.then((r) => r.clone());
 
   const promise = fetch(url, init).finally(() => {
     inflightRequests.delete(key);
   });
 
   inflightRequests.set(key, promise);
-  return promise;
+  // Return a clone so the cached original can be cloned again for future callers
+  return promise.then((r) => r.clone());
 }

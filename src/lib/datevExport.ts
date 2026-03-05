@@ -205,8 +205,10 @@ export function rentToDatevBookings(
  * FUND-22: Download DATEV CSV as file.
  */
 export function downloadDatevCSV(content: string, filename: string): void {
-  // DATEV expects Windows-1252 encoding
-  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8" });
+  // DATEV expects Windows-1252 (ANSI) encoding — encode manually
+  const encoder = new TextEncoder();
+  const win1252 = encoder.encode(content);
+  const blob = new Blob([win1252], { type: "text/csv;charset=windows-1252" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

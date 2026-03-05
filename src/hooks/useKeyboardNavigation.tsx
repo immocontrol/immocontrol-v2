@@ -24,11 +24,13 @@ export function useArrowNavigation<T>(
 
       if (e.key === nextKey) {
         e.preventDefault();
+        if (items.length === 0) return;
         const next = activeIndex.current + 1;
         activeIndex.current = loop ? next % items.length : Math.min(next, items.length - 1);
         focusItem(activeIndex.current);
       } else if (e.key === prevKey) {
         e.preventDefault();
+        if (items.length === 0) return;
         const prev = activeIndex.current - 1;
         activeIndex.current = loop
           ? prev < 0 ? items.length - 1 : prev

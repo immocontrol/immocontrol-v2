@@ -20,9 +20,9 @@ CREATE INDEX IF NOT EXISTS idx_loans_property_id ON public.loans(property_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_user_id ON public.contacts(user_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_name ON public.contacts(name);
 
--- Deals: user_id for filtering, status for pipeline views
+-- Deals: user_id for filtering, stage for pipeline views
 CREATE INDEX IF NOT EXISTS idx_deals_user_id ON public.deals(user_id);
-CREATE INDEX IF NOT EXISTS idx_deals_status ON public.deals(status);
+CREATE INDEX IF NOT EXISTS idx_deals_stage ON public.deals(stage);
 
 -- Todos: user_id and status for filtering
 CREATE INDEX IF NOT EXISTS idx_todos_user_id ON public.todos(user_id);
