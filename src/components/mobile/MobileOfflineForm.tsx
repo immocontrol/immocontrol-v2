@@ -98,7 +98,10 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
   // Auto-sync offline submissions when back online
   useEffect(() => {
     if (!isOnline) return;
-    const submissions = loadOfflineSubmissions();
+    const allSubmissions = loadOfflineSubmissions();
+    // Only sync submissions belonging to THIS form
+    const submissions = allSubmissions.filter(s => s.formId === formId);
+    const otherFormSubmissions = allSubmissions.filter(s => s.formId !== formId);
     if (submissions.length === 0) return;
 
     const syncAll = async () => {
@@ -110,8 +113,8 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
           synced++;
         } catch { failed.push(sub); }
       }
-      // Only remove successfully synced submissions; keep failed ones for retry
-      localStorage.setItem(OFFLINE_SUBMIT_KEY, JSON.stringify(failed));
+      // Preserve other forms' submissions, only update this form's entries
+      localStorage.setItem(OFFLINE_SUBMIT_KEY, JSON.stringify([...otherFormSubmissions, ...failed]));
       if (synced > 0) {
         toast.success(`${synced} Offline-${synced === 1 ? "Formular" : "Formulare"} synchronisiert`);
         haptic.success();
@@ -121,7 +124,7 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
       }
     };
     syncAll();
-  }, [isOnline, haptic]);
+  }, [isOnline, formId, haptic]);
 
   const setField = useCallback((key: string, value: unknown) => {
     setData(prev => {
