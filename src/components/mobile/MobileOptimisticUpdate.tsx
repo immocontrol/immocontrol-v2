@@ -38,10 +38,12 @@ interface OptimisticOptions<T> {
 export function useOptimisticUpdate() {
   const queryClient = useQueryClient();
   const haptic = useHaptic();
-  const rollbackRef = useRef<(() => void) | null>(null);
+  // Map of rollback functions keyed by serialized queryKey for concurrent safety
+  const rollbackMapRef = useRef<Map<string, () => void>>(new Map());
 
   const execute = useCallback(async <T,>(options: OptimisticOptions<T>) => {
     const { queryKey, updater, mutationFn, successMessage, errorMessage } = options;
+    const key = JSON.stringify(queryKey);
 
     // Snapshot previous data
     const previousData = queryClient.getQueryData<T>(queryKey);
@@ -50,32 +52,34 @@ export function useOptimisticUpdate() {
     queryClient.setQueryData<T>(queryKey, updater);
     haptic.tap();
 
-    // Store rollback function
-    rollbackRef.current = () => {
-      queryClient.setQueryData(queryKey, previousData);
-    };
+    // Store rollback function scoped to this queryKey
+    const doRollback = () => queryClient.setQueryData(queryKey, previousData);
+    rollbackMapRef.current.set(key, doRollback);
 
     try {
       await mutationFn();
       haptic.success();
       if (successMessage) toast.success(successMessage);
-      rollbackRef.current = null;
+      rollbackMapRef.current.delete(key);
     } catch (error) {
-      // Rollback on error
-      if (rollbackRef.current) {
-        rollbackRef.current();
-        rollbackRef.current = null;
-      }
+      // Rollback on error — uses the closure-scoped rollback, not a shared ref
+      doRollback();
+      rollbackMapRef.current.delete(key);
       haptic.error();
       toast.error(errorMessage ?? "Fehler — Änderung rückgängig gemacht");
       throw error;
     }
   }, [queryClient, haptic]);
 
-  const rollback = useCallback(() => {
-    if (rollbackRef.current) {
-      rollbackRef.current();
-      rollbackRef.current = null;
+  const rollback = useCallback((queryKey?: string[]) => {
+    if (queryKey) {
+      const key = JSON.stringify(queryKey);
+      const fn = rollbackMapRef.current.get(key);
+      if (fn) { fn(); rollbackMapRef.current.delete(key); }
+    } else {
+      // Rollback all pending optimistic updates
+      rollbackMapRef.current.forEach(fn => fn());
+      rollbackMapRef.current.clear();
     }
   }, []);
 

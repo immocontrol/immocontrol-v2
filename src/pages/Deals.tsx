@@ -677,7 +677,7 @@ const Deals = () => {
                     <MobileSwipeableDealCard
                       key={deal.id}
                       currentStage={deal.stage}
-                      stages={STAGES.map(s => ({ key: s.key, label: s.label }))}
+                      stages={STAGES.map(s => ({ key: s.key, label: s.label, color: s.color }))}
                       onStageChange={(newStage) => {
                         moveDeal.mutate({ id: deal.id, stage: newStage });
                         toast.success(`Verschoben: ${stageMap[newStage]?.label || newStage}`);

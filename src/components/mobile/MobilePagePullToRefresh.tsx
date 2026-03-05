@@ -31,6 +31,7 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef(0);
   const pulling = useRef(false);
+  const hapticFired = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
@@ -40,6 +41,7 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
     if (scrollTop > 5) return;
     startY.current = e.touches[0].clientY;
     pulling.current = true;
+    hapticFired.current = false;
   }, [disabled, refreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -48,12 +50,18 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
     if (diff < 0) { pulling.current = false; setPullDistance(0); return; }
     const distance = Math.min(diff * 0.5, MAX_PULL);
     setPullDistance(distance);
-    if (distance >= PULL_THRESHOLD) haptic.tap();
+    if (distance >= PULL_THRESHOLD && !hapticFired.current) {
+      haptic.tap();
+      hapticFired.current = true;
+    } else if (distance < PULL_THRESHOLD) {
+      hapticFired.current = false;
+    }
   }, [disabled, refreshing, haptic]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!pulling.current) return;
     pulling.current = false;
+    hapticFired.current = false;
     if (pullDistance >= PULL_THRESHOLD && !refreshing) {
       setRefreshing(true);
       haptic.medium();

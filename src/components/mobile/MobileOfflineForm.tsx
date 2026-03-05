@@ -103,16 +103,21 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
 
     const syncAll = async () => {
       let synced = 0;
+      const failed: OfflineSubmission[] = [];
       for (const sub of submissions) {
         try {
           await onSubmitRef.current(sub.data);
           synced++;
-        } catch { /* skip failed */ }
+        } catch { failed.push(sub); }
       }
+      // Only remove successfully synced submissions; keep failed ones for retry
+      localStorage.setItem(OFFLINE_SUBMIT_KEY, JSON.stringify(failed));
       if (synced > 0) {
-        localStorage.setItem(OFFLINE_SUBMIT_KEY, JSON.stringify([]));
         toast.success(`${synced} Offline-${synced === 1 ? "Formular" : "Formulare"} synchronisiert`);
         haptic.success();
+      }
+      if (failed.length > 0) {
+        toast.error(`${failed.length} ${failed.length === 1 ? "Formular" : "Formulare"} konnte nicht synchronisiert werden`);
       }
     };
     syncAll();
