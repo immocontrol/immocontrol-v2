@@ -126,7 +126,7 @@ export const MobileCurrencyInput = memo(function MobileCurrencyInput({
   const handleCalcEval = useCallback(() => {
     try {
       // Safe eval — only allow numbers and operators
-      const sanitized = calcExpression.replace(/[^0-9+\-*/.,()]/g, "").replace(",", ".");
+      const sanitized = calcExpression.replace(/[^0-9+\-*/.,()]/g, "").replace(/,/g, ".");
       if (!sanitized) return;
       const result = Function(`"use strict"; return (${sanitized})`)() as number;
       if (typeof result === "number" && isFinite(result)) {

@@ -3,7 +3,7 @@
  * Batch upload with progress, thumbnail preview, drag-to-reorder and auto-categorization.
  * Optimized for mobile with touch-friendly controls.
  */
-import { useState, useCallback, useRef, memo } from "react";
+import { useState, useCallback, useRef, useEffect, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Upload, X, FileText, Image, File, Check, Loader2,
@@ -92,6 +92,14 @@ export const MobileMultiStepUpload = memo(function MobileMultiStepUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectUrlsRef = useRef<string[]>([]);
+
+  // Cleanup object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   const addFiles = useCallback((newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles);
@@ -101,6 +109,7 @@ export const MobileMultiStepUpload = memo(function MobileMultiStepUpload({
     const uploadFiles: UploadFile[] = toAdd.map(file => {
       const id = `file-${++nextId}`;
       const preview = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
+      if (preview) objectUrlsRef.current.push(preview);
       const category = guessCategory(file.name, categories);
 
       return {

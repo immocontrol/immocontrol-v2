@@ -50,6 +50,8 @@ export const MobileSmartBackButton = memo(function MobileSmartBackButton({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
+  const isEdgeSwipingRef = useRef(false);
+  const edgeSwipeProgressRef = useRef(0);
 
   const previousPage = history.length > 1 ? history[history.length - 2] : null;
 
@@ -94,30 +96,36 @@ export const MobileSmartBackButton = memo(function MobileSmartBackButton({
       if (touchX <= edgeSwipeWidth) {
         startXRef.current = touchX;
         startYRef.current = touchY;
+        isEdgeSwipingRef.current = true;
         setIsEdgeSwiping(true);
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isEdgeSwiping) return;
+      if (!isEdgeSwipingRef.current) return;
       const deltaX = e.touches[0].clientX - startXRef.current;
       const deltaY = Math.abs(e.touches[0].clientY - startYRef.current);
       
       // Cancel if vertical movement is dominant
       if (deltaY > deltaX) {
+        isEdgeSwipingRef.current = false;
+        edgeSwipeProgressRef.current = 0;
         setIsEdgeSwiping(false);
         setEdgeSwipeProgress(0);
         return;
       }
 
       const progress = Math.min(1, Math.max(0, deltaX / 200));
+      edgeSwipeProgressRef.current = progress;
       setEdgeSwipeProgress(progress);
     };
 
     const handleTouchEnd = () => {
-      if (isEdgeSwiping && edgeSwipeProgress > 0.5) {
+      if (isEdgeSwipingRef.current && edgeSwipeProgressRef.current > 0.5) {
         handleBack();
       }
+      isEdgeSwipingRef.current = false;
+      edgeSwipeProgressRef.current = 0;
       setIsEdgeSwiping(false);
       setEdgeSwipeProgress(0);
     };
@@ -131,7 +139,7 @@ export const MobileSmartBackButton = memo(function MobileSmartBackButton({
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [enableEdgeSwipe, isMobile, isEdgeSwiping, edgeSwipeProgress, edgeSwipeWidth, handleBack]);
+  }, [enableEdgeSwipe, isMobile, edgeSwipeWidth, handleBack]);
 
   if (!previousPage && history.length < 2) return null;
 
