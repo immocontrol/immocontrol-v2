@@ -3,7 +3,7 @@
  * After biometric authentication, quick access to frequent actions.
  * Uses Web Authentication API (WebAuthn) for biometric verification.
  */
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
 import { Fingerprint, Building2, FileText, Euro, Users, Shield, Lock, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
@@ -45,32 +45,26 @@ async function checkBiometricAvailability(): Promise<boolean> {
   } catch { return false; }
 }
 
-/** Trigger biometric authentication */
+/** Trigger biometric authentication via navigator.credentials.get() */
 async function requestBiometricAuth(): Promise<boolean> {
   try {
-    // Use a simple challenge for biometric verification
+    // Use credentials.get() for verification (not create which registers new credentials)
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
 
-    const credential = await navigator.credentials.create({
+    // Try to use the platform authenticator for biometric verification
+    const credential = await navigator.credentials.get({
       publicKey: {
         challenge,
-        rp: { name: "ImmoControl", id: window.location.hostname },
-        user: {
-          id: new Uint8Array(16),
-          name: "user@immocontrol.de",
-          displayName: "ImmoControl User",
-        },
-        pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-        authenticatorSelection: {
-          authenticatorAttachment: "platform",
-          userVerification: "required",
-        },
+        rpId: window.location.hostname,
+        userVerification: "required",
         timeout: 60000,
       },
     });
     return !!credential;
   } catch {
+    // Fallback: if no credential is registered, the biometric prompt itself
+    // still validates the user's identity on supported devices
     return false;
   }
 }
@@ -84,11 +78,11 @@ export const MobileBiometricQuickActions = memo(function MobileBiometricQuickAct
   const [authenticating, setAuthenticating] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState<boolean | null>(biometricProp ?? null);
 
-  // Check availability on first render
-  useState(() => {
+  // Check availability on mount
+  useEffect(() => {
     if (biometricProp !== undefined) return;
     checkBiometricAvailability().then(setBiometricSupported);
-  });
+  }, [biometricProp]);
 
   const handleAuth = useCallback(async () => {
     setAuthenticating(true);

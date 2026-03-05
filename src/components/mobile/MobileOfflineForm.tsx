@@ -79,6 +79,9 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
   const [submitting, setSubmitting] = useState(false);
   const hasDraft = loadDraft(formId) !== null;
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>();
+  // Use ref to always have latest onSubmit callback for offline sync
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
 
   // Track online status
   useEffect(() => {
@@ -102,7 +105,7 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
       let synced = 0;
       for (const sub of submissions) {
         try {
-          await onSubmit(sub.data);
+          await onSubmitRef.current(sub.data);
           synced++;
         } catch { /* skip failed */ }
       }
@@ -113,7 +116,7 @@ export const MobileOfflineForm = memo(function MobileOfflineForm({
       }
     };
     syncAll();
-  }, [isOnline, onSubmit, haptic]);
+  }, [isOnline, haptic]);
 
   const setField = useCallback((key: string, value: unknown) => {
     setData(prev => {

@@ -3,7 +3,7 @@
  * Microphone button that can be added to any textarea/notes field.
  * Wraps MobileVoiceInput with a notes-specific UI (append mode, recording indicator).
  */
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useRef } from "react";
 import { Mic, MicOff, Type } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
@@ -37,6 +37,7 @@ export const MobileVoiceNotes = memo(function MobileVoiceNotes({
   const haptic = useHaptic();
   const [listening, setListening] = useState(false);
   const [supported] = useState(() => getSpeechRecognition() !== null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const startListening = useCallback(() => {
     const SpeechRecognitionClass = getSpeechRecognition();
@@ -64,14 +65,14 @@ export const MobileVoiceNotes = memo(function MobileVoiceNotes({
 
     try { recognition.start(); } catch { setListening(false); }
 
-    // Store ref to stop later
-    (window as unknown as Record<string, unknown>).__voiceRecognition = recognition;
+    // Store recognition instance in ref to stop later
+    recognitionRef.current = recognition;
   }, [value, onChange, haptic]);
 
   const stopListening = useCallback(() => {
     haptic.tap();
-    const rec = (window as unknown as Record<string, unknown>).__voiceRecognition as SpeechRecognition | undefined;
-    rec?.stop();
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
     setListening(false);
   }, [haptic]);
 
