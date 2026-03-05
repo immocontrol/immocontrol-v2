@@ -69,7 +69,26 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
       setQuery("");
       setSelectedCategory(null);
       setRecentSearches(loadRecent());
-      setTimeout(() => inputRef.current?.focus(), 100);
+      /* FIX: Use longer delay + click() to force virtual keyboard open on mobile.
+         On iOS/Android, focus() alone may not open the keyboard unless it's
+         triggered within a user-gesture context. We use a two-stage approach:
+         1. Short delay to let animation complete
+         2. Click + focus + setSelectionRange to ensure keyboard opens */
+      const timer1 = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.click();
+          // setSelectionRange forces cursor position which triggers keyboard on some devices
+          try { inputRef.current.setSelectionRange(0, 0); } catch { /* noop */ }
+        }
+      }, 200);
+      // Second attempt for stubborn devices
+      const timer2 = setTimeout(() => {
+        if (inputRef.current && document.activeElement !== inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 500);
+      return () => { clearTimeout(timer1); clearTimeout(timer2); };
     } else {
       // Stop voice recognition when overlay closes
       recognitionRef.current?.stop();
@@ -151,6 +170,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
 
   /* Voice input — inline implementation to avoid broken component */
   const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceDenied, setVoiceDenied] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const getSpeechRecognition = useCallback((): (new () => SpeechRecognition) | null => {
@@ -191,6 +211,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
       haptic.error();
       setVoiceListening(false);
       if (e.error === "not-allowed") {
+        setVoiceDenied(true);
         toast.error("Mikrofon-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.");
       }
     };
@@ -199,6 +220,8 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
     recognitionRef.current = recognition;
     try {
       recognition.start();
+      // Reset denied state on successful start attempt
+      setVoiceDenied(false);
     } catch {
       setVoiceListening(false);
       toast.error("Spracheingabe konnte nicht gestartet werden");
@@ -231,7 +254,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-[260] bg-black/40 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
+      className="fixed inset-0 z-[260] bg-black/50 backdrop-blur-md flex flex-col justify-end animate-fade-in"
       onClick={handleBackdropClick}
     >
       {/* Content panel — slides up from bottom */}
@@ -353,7 +376,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
                 spellCheck={false}
               />
             </div>
-            {/* Voice input button — always visible, shows toast if unsupported */}
+            {/* Voice input button — always clickable, re-prompts permission after denial */}
             <button
               type="button"
               onClick={toggleVoice}
@@ -361,9 +384,11 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
                 "h-10 w-10 rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0",
                 voiceListening
                   ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                  : voiceDenied
+                    ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
               )}
-              aria-label={voiceListening ? "Spracheingabe stoppen" : "Spracheingabe starten"}
+              aria-label={voiceListening ? "Spracheingabe stoppen" : voiceDenied ? "Mikrofon erneut anfragen" : "Spracheingabe starten"}
             >
               {voiceListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </button>

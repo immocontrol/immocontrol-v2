@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3 } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
@@ -53,6 +55,7 @@ import { formatCurrency } from "@/lib/formatters";
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { getProperty, deleteProperty, duplicateProperty } = useProperties();
   const property = getProperty(id || "");
   const [tenantVersion, setTenantVersion] = useState(0);
@@ -472,7 +475,7 @@ const PropertyDetail = () => {
       </div>
 
       {/* Maintenance Planner */}
-      <MaintenancePlanner propertyId={property.id} />
+      {!isMobile && <MaintenancePlanner propertyId={property.id} />}
 
       {/* Insurance Tracker */}
       <InsuranceTracker propertyId={property.id} />
@@ -484,7 +487,7 @@ const PropertyDetail = () => {
       <ContractManagement propertyId={property.id} />
 
       {/* Service Contracts */}
-      <ServiceContracts propertyId={property.id} />
+      {!isMobile && <ServiceContracts propertyId={property.id} />}
 
       {/* NOI & Cap Rate */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in">
@@ -511,41 +514,92 @@ const PropertyDetail = () => {
       </div>
 
       {/* Meter Management */}
-      <MeterManagement propertyId={property.id} />
+      {!isMobile && <MeterManagement propertyId={property.id} />}
 
       {/* Document Expiry Tracker */}
-      <DocumentExpiryTracker propertyId={property.id} />
+      {!isMobile && <DocumentExpiryTracker propertyId={property.id} />}
 
-      {/* Activity Timeline */}
-      <ActivityTimeline propertyId={property.id} />
+      {/* MOB-IMPROVE-2: Mobile Tab Navigation for sections below */}
+      {isMobile ? (
+        <MobilePropertyDetailTabs
+          tabContent={{
+            overview: (
+              <div className="space-y-4">
+                <ActivityTimeline propertyId={property.id} />
+                <MeterManagement propertyId={property.id} />
+                <DocumentExpiryTracker propertyId={property.id} />
+              </div>
+            ),
+            tenants: (
+              <div className="space-y-4">
+                <TenantManagement propertyId={property.id} propertyName={property.name} propertyAddress={property.address} onTenantsChanged={() => setTenantVersion(v => v + 1)} />
+                <div ref={el => { sectionRefs.current["messages"] = el; }}>
+                  <MessageCenter propertyId={property.id} key={`msg-${tenantVersion}`} />
+                </div>
+                <div ref={el => { sectionRefs.current["payments"] = el; }}>
+                  <LandlordPayments propertyId={property.id} />
+                </div>
+              </div>
+            ),
+            documents: (
+              <div className="space-y-4">
+                <div ref={el => { sectionRefs.current["documents"] = el; }}>
+                  <PropertyDocuments propertyId={property.id} />
+                </div>
+                <div ref={el => { sectionRefs.current["notes"] = el; }}>
+                  <PropertyNotes propertyId={property.id} />
+                </div>
+              </div>
+            ),
+            maintenance: (
+              <div className="space-y-4">
+                <div ref={el => { sectionRefs.current["tickets"] = el; }}>
+                  <LandlordTickets propertyId={property.id} />
+                </div>
+                <MaintenancePlanner propertyId={property.id} />
+                <ServiceContracts propertyId={property.id} />
+              </div>
+            ),
+          }}
+          badges={{
+            tenants: synergy.activeTenants,
+            maintenance: synergy.openTickets,
+          }}
+        />
+      ) : (
+        <>
+          {/* Activity Timeline */}
+          <ActivityTimeline propertyId={property.id} />
 
-      {/* Tenants */}
-      <TenantManagement propertyId={property.id} propertyName={property.name} propertyAddress={property.address} onTenantsChanged={() => setTenantVersion(v => v + 1)} />
+          {/* Tenants */}
+          <TenantManagement propertyId={property.id} propertyName={property.name} propertyAddress={property.address} onTenantsChanged={() => setTenantVersion(v => v + 1)} />
 
-      {/* Messages */}
-      <div ref={el => { sectionRefs.current["messages"] = el; }}>
-        <MessageCenter propertyId={property.id} key={`msg-${tenantVersion}`} />
-      </div>
+          {/* Messages */}
+          <div ref={el => { sectionRefs.current["messages"] = el; }}>
+            <MessageCenter propertyId={property.id} key={`msg-${tenantVersion}`} />
+          </div>
 
-      {/* Tickets */}
-      <div ref={el => { sectionRefs.current["tickets"] = el; }}>
-        <LandlordTickets propertyId={property.id} />
-      </div>
+          {/* Tickets */}
+          <div ref={el => { sectionRefs.current["tickets"] = el; }}>
+            <LandlordTickets propertyId={property.id} />
+          </div>
 
-      {/* Payments */}
-      <div ref={el => { sectionRefs.current["payments"] = el; }}>
-        <LandlordPayments propertyId={property.id} />
-      </div>
+          {/* Payments */}
+          <div ref={el => { sectionRefs.current["payments"] = el; }}>
+            <LandlordPayments propertyId={property.id} />
+          </div>
 
-      {/* Notes */}
-      <div ref={el => { sectionRefs.current["notes"] = el; }}>
-        <PropertyNotes propertyId={property.id} />
-      </div>
+          {/* Notes */}
+          <div ref={el => { sectionRefs.current["notes"] = el; }}>
+            <PropertyNotes propertyId={property.id} />
+          </div>
 
-      {/* Documents */}
-      <div ref={el => { sectionRefs.current["documents"] = el; }}>
-        <PropertyDocuments propertyId={property.id} />
-      </div>
+          {/* Documents */}
+          <div ref={el => { sectionRefs.current["documents"] = el; }}>
+            <PropertyDocuments propertyId={property.id} />
+          </div>
+        </>
+      )}
     </div>
   );
 };

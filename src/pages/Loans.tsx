@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
 import { Landmark, Building2, Calendar, AlertTriangle, Edit2, Trash2, Search, X, Plus } from "lucide-react";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
@@ -51,7 +53,7 @@ const loanTypeLabels: Record<string, string> = {
 
 const Loans = () => {
   const { user } = useAuth();
-
+  const isMobile = useIsMobile();
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -843,7 +845,8 @@ const Loans = () => {
             const monthsLeft = l.fixed_interest_until
               ? Math.max(0, (new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30))
               : null;
-            return (
+            /* MOB-IMPROVE-1 + MOB-IMPROVE-6: Mobile card layout with swipe-to-delete */
+            const loanCard = (
               <div key={l.id} className="gradient-card rounded-xl border border-border p-4 flex items-center gap-4 group property-card-hover">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Landmark className="h-5 w-5 text-primary" />
@@ -893,6 +896,22 @@ const Loans = () => {
                 </div>
               </div>
             );
+            /* MOB-IMPROVE-6: Wrap with swipe-to-delete on mobile */
+            return isMobile ? (
+              <MobileSwipeToAction
+                key={l.id}
+                leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(l) }]}
+                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => {
+                  toast(`Darlehen löschen?`, {
+                    action: { label: "Löschen", onClick: () => deleteMutation.mutate(l.id) },
+                    cancel: { label: "Abbrechen", onClick: () => {} },
+                    duration: 5000,
+                  });
+                } }]}
+              >
+                {loanCard}
+              </MobileSwipeToAction>
+            ) : loanCard;
           })}
         </div>
       )}
