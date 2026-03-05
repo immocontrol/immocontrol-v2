@@ -60,7 +60,7 @@ export function useDeepLinkRouter(routes: DeepLinkRoute[], onUnmatched?: (url: s
     let path = url;
     try {
       const parsed = new URL(url);
-      path = parsed.pathname + parsed.search;
+      path = parsed.pathname;
     } catch {
       // Already a path
     }

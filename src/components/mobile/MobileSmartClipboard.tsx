@@ -46,7 +46,7 @@ function detectClipboardContent(text: string): ClipboardDetection | null {
 
   // Amount detection
   if (AMOUNT_REGEX.test(trimmed)) {
-    const cleaned = trimmed.replace(/[€$\s]/g, "").replace(",", ".");
+    const cleaned = trimmed.replace(/[€$\s]/g, "").replace(/\./g, "").replace(",", ".");
     const num = parseFloat(cleaned);
     if (!isNaN(num)) {
       return {
