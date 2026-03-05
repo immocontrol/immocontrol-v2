@@ -72,6 +72,28 @@ import { DatenGesundheitscheck } from "@/components/DatenGesundheitscheck";
 import { WartungskostenPrognose } from "@/components/WartungskostenPrognose";
 import { PortfolioStresstest } from "@/components/PortfolioStresstest";
 
+/* INHALT-1 to INHALT-20: 20 große inhaltliche Verbesserungen */
+import { VermoegensuebersichtV2 } from "@/components/VermoegensuebersichtV2";
+import { SteuerJahresabschluss } from "@/components/SteuerJahresabschluss";
+import { FinanzierungsVergleich } from "@/components/FinanzierungsVergleich";
+import { ImmobilienScoring } from "@/components/ImmobilienScoring";
+import { ExitStrategiePlaner } from "@/components/ExitStrategiePlaner";
+import { IntelligentNKAbrechnung } from "@/components/IntelligentNKAbrechnung";
+import { MieterKommunikation } from "@/components/MieterKommunikation";
+import { KautionsManagement } from "@/components/KautionsManagement";
+import { LeerstandskostenAnalyse } from "@/components/LeerstandskostenAnalyse";
+import { MietpreisCheck } from "@/components/MietpreisCheck";
+import { CashflowWasserfall } from "@/components/CashflowWasserfall";
+import { PortfolioBenchmark } from "@/components/PortfolioBenchmark";
+import { SzenarioSimulation } from "@/components/SzenarioSimulation";
+import { MonatsabschlussWorkflow } from "@/components/MonatsabschlussWorkflow";
+import { SteuerOptimierung } from "@/components/SteuerOptimierung";
+import { DealBewertungsScorecard } from "@/components/DealBewertungsScorecard";
+import { DueDiligenceCheckliste } from "@/components/DueDiligenceCheckliste";
+import { AngebotsGenerator } from "@/components/AngebotsGenerator";
+import { InstandhaltungsRuecklagePlaner } from "@/components/InstandhaltungsRuecklagePlaner";
+import { HandwerkerAusschreibung } from "@/components/HandwerkerAusschreibung";
+
 export type WidgetId =
   | "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals"
   | "forecast" | "rendite" | "wasserfall" | "diversifikation" | "tilgung"
@@ -85,7 +107,15 @@ export type WidgetId =
   | "chart_cashflow" | "chart_monthly" | "chart_portfolio" | "chart_map"
   | "steuerCockpit" | "monatsabschluss" | "cashflowKalender" | "mahnungen"
   | "indexMiete" | "autoTodos" | "crmFollowUp" | "datenCheck"
-  | "wartungsprognose" | "portfolioStress";
+  | "wartungsprognose" | "portfolioStress"
+  /* INHALT-1 to INHALT-20 */
+  | "vermoegenV2" | "steuerJahresabschluss" | "finanzierungsVergleich"
+  | "immobilienScoring" | "exitStrategie" | "nkAbrechnung"
+  | "mieterKommunikation" | "kautionsManagement" | "leerstandskosten"
+  | "mietpreisCheck" | "cashflowWasserfall" | "portfolioBenchmark"
+  | "szenarioSimulation" | "monatsabschlussWorkflow" | "steuerOptimierung"
+  | "dealScorecard" | "dueDiligence" | "angebotsGenerator"
+  | "instandhaltungsRuecklage" | "handwerkerAusschreibung";
 
 export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   "chart_cashflow", "chart_monthly", "chart_portfolio", "chart_map",
@@ -101,6 +131,14 @@ export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   "steuerCockpit", "monatsabschluss", "cashflowKalender", "mahnungen",
   "indexMiete", "autoTodos", "crmFollowUp", "datenCheck",
   "wartungsprognose", "portfolioStress",
+  /* INHALT-1 to INHALT-20 */
+  "vermoegenV2", "steuerJahresabschluss", "finanzierungsVergleich",
+  "immobilienScoring", "exitStrategie", "nkAbrechnung",
+  "mieterKommunikation", "kautionsManagement", "leerstandskosten",
+  "mietpreisCheck", "cashflowWasserfall", "portfolioBenchmark",
+  "szenarioSimulation", "monatsabschlussWorkflow", "steuerOptimierung",
+  "dealScorecard", "dueDiligence", "angebotsGenerator",
+  "instandhaltungsRuecklage", "handwerkerAusschreibung",
 ];
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
@@ -126,6 +164,17 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   indexMiete: "Index-Mietanpassung", autoTodos: "Auto-Todos",
   crmFollowUp: "CRM Follow-Up", datenCheck: "Daten-Check",
   wartungsprognose: "Wartungsprognose", portfolioStress: "Portfolio-Stresstest",
+  /* INHALT-1 to INHALT-20 */
+  vermoegenV2: "Vermögensübersicht 2.0", steuerJahresabschluss: "Steuer-Jahresabschluss",
+  finanzierungsVergleich: "Finanzierungsvergleich", immobilienScoring: "Immobilien-Scoring",
+  exitStrategie: "Exit-Strategie-Planer", nkAbrechnung: "NK-Abrechnung",
+  mieterKommunikation: "Mieter-Kommunikation", kautionsManagement: "Kautions-Management",
+  leerstandskosten: "Leerstandskosten", mietpreisCheck: "Mietpreis-Check",
+  cashflowWasserfall: "Cashflow-Wasserfall", portfolioBenchmark: "Portfolio-Benchmark",
+  szenarioSimulation: "Szenario-Simulation", monatsabschlussWorkflow: "Monatsabschluss-Workflow",
+  steuerOptimierung: "Steuer-Optimierung", dealScorecard: "Deal-Scorecard",
+  dueDiligence: "Due Diligence", angebotsGenerator: "Angebots-Generator",
+  instandhaltungsRuecklage: "Instandhaltungs-Rücklage", handwerkerAusschreibung: "Handwerker-Ausschreibung",
 };
 
 const FULL_WIDTH_WIDGETS = new Set<WidgetId>([
@@ -219,6 +268,27 @@ function renderWidgetContent({
     case "datenCheck": return <DatenGesundheitscheck />;
     case "wartungsprognose": return <WartungskostenPrognose />;
     case "portfolioStress": return <PortfolioStresstest />;
+    /* INHALT-1 to INHALT-20 */
+    case "vermoegenV2": return <VermoegensuebersichtV2 />;
+    case "steuerJahresabschluss": return <SteuerJahresabschluss />;
+    case "finanzierungsVergleich": return <FinanzierungsVergleich />;
+    case "immobilienScoring": return <ImmobilienScoring />;
+    case "exitStrategie": return <ExitStrategiePlaner />;
+    case "nkAbrechnung": return <IntelligentNKAbrechnung />;
+    case "mieterKommunikation": return <MieterKommunikation />;
+    case "kautionsManagement": return <KautionsManagement />;
+    case "leerstandskosten": return <LeerstandskostenAnalyse />;
+    case "mietpreisCheck": return <MietpreisCheck />;
+    case "cashflowWasserfall": return <CashflowWasserfall />;
+    case "portfolioBenchmark": return <PortfolioBenchmark />;
+    case "szenarioSimulation": return <SzenarioSimulation />;
+    case "monatsabschlussWorkflow": return <MonatsabschlussWorkflow />;
+    case "steuerOptimierung": return <SteuerOptimierung />;
+    case "dealScorecard": return <DealBewertungsScorecard />;
+    case "dueDiligence": return <DueDiligenceCheckliste />;
+    case "angebotsGenerator": return <AngebotsGenerator />;
+    case "instandhaltungsRuecklage": return <InstandhaltungsRuecklagePlaner />;
+    case "handwerkerAusschreibung": return <HandwerkerAusschreibung />;
     default: return <QuickNoteWidget />;
   }
 }
