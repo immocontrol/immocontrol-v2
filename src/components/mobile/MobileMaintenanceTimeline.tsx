@@ -7,8 +7,8 @@ import { useState, useCallback, useMemo, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Wrench, Camera, Euro, Calendar, ChevronDown, ChevronUp,
-  Image, Clock, CheckCircle2, AlertCircle, Timer,
-  Plus, Filter, ArrowUpDown,
+  Clock, CheckCircle2, AlertCircle, Timer,
+  Plus, ArrowUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

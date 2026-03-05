@@ -7,7 +7,7 @@ import { useState, useCallback, useMemo, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Download, FileText, Table, FileSpreadsheet, Check,
-  Loader2, Calendar, Columns3, Filter, Eye, X,
+  Loader2, Calendar, Columns3, Eye,
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

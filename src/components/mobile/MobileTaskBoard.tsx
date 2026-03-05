@@ -6,9 +6,8 @@
 import { useState, useCallback, useRef, useMemo, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
-  Plus, MoreVertical, GripVertical, CheckCircle2, Clock,
-  AlertCircle, ChevronLeft, ChevronRight, User, Calendar,
-  Tag, X,
+  Plus, MoreVertical, ChevronLeft, ChevronRight, User, Calendar,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

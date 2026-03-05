@@ -78,7 +78,8 @@ function detectDevice(): DeviceInfo {
   }
 
   // Detect foldable (experimental API)
-  if ("windowSegments" in window || "getWindowSegments" in visualViewport!) {
+  const vv = window.visualViewport;
+  if ("windowSegments" in window || (vv && "getWindowSegments" in vv)) {
     type = "foldable";
   }
 

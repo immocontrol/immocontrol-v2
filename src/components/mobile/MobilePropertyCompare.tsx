@@ -7,7 +7,7 @@ import { useState, useCallback, useMemo, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ArrowLeftRight, X, Plus, ChevronLeft, ChevronRight,
-  TrendingUp, TrendingDown, Minus, Home, MapPin, Euro,
+  TrendingUp, Home, MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

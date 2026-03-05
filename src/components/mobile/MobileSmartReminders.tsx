@@ -3,12 +3,12 @@
  * Location and time-based reminders for property visits and tasks.
  * Uses Geolocation API for proximity alerts and scheduled notifications.
  */
-import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Bell, MapPin, Clock, Plus, Trash2, Check, Edit2,
-  Navigation, AlertCircle, X, ChevronDown, ChevronUp,
-  CalendarDays, Repeat,
+  Navigation, X, ChevronDown, ChevronUp,
+  Repeat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
