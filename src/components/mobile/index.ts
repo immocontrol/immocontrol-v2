@@ -1,5 +1,5 @@
 /**
- * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20 + MOB4-1 to MOB4-20: Mobile Experience Improvements
+ * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20 + MOB4-1 to MOB4-20 + MOB5-1 to MOB5-20: Mobile Experience Improvements
  * Barrel export for all mobile-specific components.
  */
 
@@ -103,3 +103,37 @@ export type { BatchAction } from "./MobileBatchActions";
 export { MobileConnectionIndicator, useConnectionSpeed } from "./MobileConnectionIndicator";
 export { MobileAccessibilityToolbar, useAccessibilitySettings } from "./MobileAccessibilityToolbar";
 export { MobileQuickPropertySwitcher } from "./MobileQuickPropertySwitcher";
+
+// === MOB5-1 to MOB5-20 (Phase 5) ===
+export { MobileTimelineView } from "./MobileTimelineView";
+export type { TimelineEvent } from "./MobileTimelineView";
+export { MobileRecentlyViewed, useRecentlyViewed } from "./MobileRecentlyViewed";
+export type { RecentItem } from "./MobileRecentlyViewed";
+export { MobileBreadcrumbNav } from "./MobileBreadcrumbNav";
+export type { BreadcrumbItem } from "./MobileBreadcrumbNav";
+export { MobileTabSwitcher } from "./MobileTabSwitcher";
+export type { TabItem } from "./MobileTabSwitcher";
+export { MobileGroupedList } from "./MobileGroupedList";
+export type { GroupedListItem } from "./MobileGroupedList";
+export { MobileInfiniteScroll, useInfiniteScroll } from "./MobileInfiniteScroll";
+export { MobileMapPreview } from "./MobileMapPreview";
+export { MobileCompactCalendar } from "./MobileCompactCalendar";
+export type { CalendarEvent } from "./MobileCompactCalendar";
+export { MobileSignaturePad } from "./MobileSignaturePad";
+export { MobileQuickNote, useQuickNotes } from "./MobileQuickNote";
+export type { QuickNote } from "./MobileQuickNote";
+export { MobileColorPicker } from "./MobileColorPicker";
+export { MobileAddressLookup } from "./MobileAddressLookup";
+export type { AddressResult } from "./MobileAddressLookup";
+export { MobileProgressTracker } from "./MobileProgressTracker";
+export type { ProgressStage } from "./MobileProgressTracker";
+export { MobileCountdownTimer } from "./MobileCountdownTimer";
+export type { Deadline } from "./MobileCountdownTimer";
+export { MobileConfirmSwipe } from "./MobileConfirmSwipe";
+export { MobileAvatarGroup } from "./MobileAvatarGroup";
+export type { AvatarPerson } from "./MobileAvatarGroup";
+export { MobileHeatmapCalendar } from "./MobileHeatmapCalendar";
+export type { HeatmapDataPoint } from "./MobileHeatmapCalendar";
+export { MobileComparisonSlider } from "./MobileComparisonSlider";
+export { MobileImageLazyLoad, generateColorPlaceholder } from "./MobileImageLazyLoad";
+export { MobileAppUpdateBanner } from "./MobileAppUpdateBanner";
