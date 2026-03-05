@@ -57,6 +57,11 @@ export function showBrowserNotification(
  */
 export function storeNotification(notification: Omit<AppNotification, "id" | "read" | "createdAt">): AppNotification {
   const stored = getStoredNotifications();
+  // Deduplicate by tag — if a notification with the same tag exists, don't create a new one
+  if (notification.tag) {
+    const existing = stored.find((n) => n.tag === notification.tag);
+    if (existing) return existing;
+  }
   const newNotification: AppNotification = {
     ...notification,
     id: crypto.randomUUID(),
