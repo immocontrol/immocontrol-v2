@@ -40,7 +40,8 @@ export function InlineEdit({
   const handleSave = useCallback(async () => {
     if (saving) return;
     const newValue = type === "number" || type === "currency"
-      ? parseFloat(editValue.replace(",", ".")) || 0
+      /* FIX-1: Use global /,/g to replace ALL commas */
+      ? parseFloat(editValue.replace(/,/g, ".")) || 0
       : editValue.trim();
 
     if (newValue === value) {

@@ -68,7 +68,8 @@ function extractNumber(text: string, patterns: RegExp[]): number {
     const match = text.match(pattern);
     if (match) {
       // Handle German number format: 1.234,56 → 1234.56
-      const raw = match[1].replace(/\./g, "").replace(",", ".");
+      /* FIX-1: Use global /,/g to replace ALL commas */
+      const raw = match[1].replace(/\./g, "").replace(/,/g, ".");
       const num = parseFloat(raw);
       if (!isNaN(num) && isFinite(num)) return num;
     }

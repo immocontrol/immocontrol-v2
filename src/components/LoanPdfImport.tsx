@@ -45,7 +45,8 @@ function parseGermanNumber(str: string): number {
   let clean = str.replace(/[€\s]/g, "").trim();
   // German format: 150.000,00 → remove dots, replace comma with dot
   if (clean.includes(",")) {
-    clean = clean.replace(/\./g, "").replace(",", ".");
+    /* FIX-1: Use global /,/g to replace ALL commas */
+    clean = clean.replace(/\./g, "").replace(/,/g, ".");
   }
   const num = parseFloat(clean);
   return isNaN(num) ? 0 : num;
@@ -55,7 +56,8 @@ function parseGermanNumber(str: string): number {
 function parsePercent(str: string): number {
   let clean = str.replace(/%/g, "").trim();
   if (clean.includes(",")) {
-    clean = clean.replace(",", ".");
+    /* FIX-1: Use global /,/g to replace ALL commas */
+    clean = clean.replace(/,/g, ".");
   }
   const num = parseFloat(clean);
   return isNaN(num) ? 0 : num;

@@ -7,8 +7,9 @@ interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   decimals?: boolean;
 }
 
+/* FIX-1: Use global /,/g to replace ALL commas, not just the first one */
 const parseGerman = (str: string): number => {
-  const cleaned = str.replace(/\./g, "").replace(",", ".");
+  const cleaned = str.replace(/\./g, "").replace(/,/g, ".");
   const n = parseFloat(cleaned);
   return isNaN(n) ? 0 : n;
 };

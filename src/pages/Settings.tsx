@@ -134,13 +134,13 @@ const Settings = () => {
         .eq("user_id", user.id);
       if (error) {
         toast.error("Fehler beim Speichern");
-        console.error("[Settings] Profile update failed:", error.message);
+        /* FIX-11: Removed console.error — errors are shown to user via toast */
       } else {
         toast.success("Profil aktualisiert!");
       }
-    } catch (err) {
+    } catch {
       toast.error("Unerwarteter Fehler beim Speichern");
-      console.error("[Settings] Unexpected profile update error:", err);
+      /* FIX-11: Removed console.error — errors are shown to user via toast */
     } finally {
       setLoading(false);
     }

@@ -67,7 +67,8 @@ const TenantDocuments = ({ propertyId }: { propertyId: string }) => {
     a.href = url;
     a.download = doc.file_name;
     a.click();
-    URL.revokeObjectURL(url);
+    /* FIX-3: Delay revoke — immediate revoke can race with download on slow devices */
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const getIcon = (fileType: string | null, fileName: string) => {

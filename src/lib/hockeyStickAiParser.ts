@@ -31,7 +31,8 @@ export interface AiParseResult {
 }
 
 /** Parse a German-style number (supports both , and . as decimal separator) */
-const parseNum = (s: string) => parseFloat(s.replace(",", "."));
+/* FIX-1: Use global /,/g to replace ALL commas */
+const parseNum = (s: string) => parseFloat(s.replace(/,/g, "."));
 
 /** Normalize text: remove thousand-separator dots, keep decimal dots */
 function normalizeText(input: string): string {

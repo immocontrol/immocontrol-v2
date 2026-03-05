@@ -119,7 +119,8 @@ function parseSingleDeal(block: string, searchProfile: string, isNew: boolean, i
     /* Market value diff: "-44,2 % Marktwert" */
     const mvMatch = line.match(/(-?[\d.,]+)\s*%\s*Marktwert/);
     if (mvMatch) {
-      marketValueDiff = mvMatch[1].replace(",", ".") + "%";
+      /* FIX-1: Use global /,/g to replace ALL commas */
+      marketValueDiff = mvMatch[1].replace(/,/g, ".") + "%";
       continue;
     }
 
@@ -164,11 +165,13 @@ function parseGermanNumber(str: string): number | null {
   const cleaned = str.replace(/\s/g, "");
   /* If there's both dot and comma, dot is thousand separator */
   if (cleaned.includes(",") && cleaned.includes(".")) {
-    return parseFloat(cleaned.replace(/\./g, "").replace(",", "."));
+    /* FIX-1: Use global /,/g to replace ALL commas */
+    return parseFloat(cleaned.replace(/\./g, "").replace(/,/g, "."));
   }
   /* If only comma, it's a decimal separator */
   if (cleaned.includes(",")) {
-    return parseFloat(cleaned.replace(",", "."));
+    /* FIX-1: Use global /,/g to replace ALL commas */
+    return parseFloat(cleaned.replace(/,/g, "."));
   }
   /* If only dots: check if it's a thousand separator or decimal */
   /* "750.000" → 750000 (thousand sep), "785.0" → 785 (decimal) */

@@ -90,16 +90,31 @@ export const formatCurrencyCompact = (value: number): string => {
 
 /** Format a number with German thousand separators (1.000, 10.000 etc.) */
 export const formatNumberDE = (value: number | string): string => {
-  const num = typeof value === "string" ? parseFloat(value.replace(/\./g, "").replace(",", ".")) : value;
+  const num = typeof value === "string" ? parseFloat(value.replace(/\./g, "").replace(/,/g, ".")) : value;
   if (isNaN(num)) return "";
   return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(num);
 };
 
-/** Parse a German-formatted number string back to a number */
+/** Parse a German-formatted number string back to a number.
+ *  FIX-13: Centralized German number parser — use this instead of inline .replace() chains.
+ *  FIX-1: Uses global /,/g to replace ALL commas (not just the first one). */
 export const parseNumberDE = (value: string): number => {
   if (!value) return 0;
-  const cleaned = value.replace(/\./g, "").replace(",", ".");
+  const cleaned = value.replace(/\./g, "").replace(/,/g, ".");
   const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
+/** Parse a German-formatted number string (with optional currency symbols).
+ *  FIX-13: Centralized parser for currency strings like "1.234,56 €" or "$1,234.56". */
+export const parseGermanNumber = (str: string): number => {
+  if (!str) return 0;
+  let clean = str.replace(/[€$%\s]/g, "").trim();
+  // German format: 150.000,00 → remove dots, replace commas with dot
+  if (clean.includes(",")) {
+    clean = clean.replace(/\./g, "").replace(/,/g, ".");
+  }
+  const num = parseFloat(clean);
   return isNaN(num) ? 0 : num;
 };
 
@@ -434,6 +449,28 @@ export const formatRelativeDaysDE = (dateStr: string): string => {
 export const isValidPhoneDE = (phone: string): boolean => {
   const cleaned = phone.replace(/[\s\-()]/g, "");
   return /^(\+49|0)\d{8,12}$/.test(cleaned);
+};
+
+/* FIX-9: Safe clipboard write — feature-detects navigator.clipboard before use.
+ * Falls back to legacy execCommand for older browsers / insecure contexts. */
+export const safeClipboardWrite = async (text: string): Promise<boolean> => {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    // Fallback for insecure contexts / older browsers
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;left:-9999px;top:-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 };
 
 /* IMP-41-7: Parse German natural language date strings for quick-add ("heute", "morgen", "übermorgen", "nächste woche") */
