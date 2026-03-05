@@ -106,8 +106,7 @@ function injectMobileCSS() {
         --sidebar-background: 0 0% 2%;
       }
       /* OLED-safe borders — slightly visible on pure black */
-      .dark .gradient-card,
-      .dark .border {
+      .dark .gradient-card {
         border-color: hsl(0 0% 12%);
       }
     }
