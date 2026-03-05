@@ -30,7 +30,7 @@ import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnima
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { DealToPropertyConverter } from "@/components/DealToPropertyConverter";
-import { MobileSwipeableDealCard, DealsSkeleton } from "@/components/mobile";
+import { MobileSwipeableDealCard } from "@/components/mobile";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /* UPD-9: Centralised deal record type */

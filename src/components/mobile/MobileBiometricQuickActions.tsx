@@ -84,7 +84,7 @@ export const MobileBiometricQuickActions = memo(function MobileBiometricQuickAct
     checkBiometricAvailability().then(setBiometricSupported);
   }, [biometricProp]);
 
-  const handleAuth = useCallback(async () => {
+  const handleAuth = useCallback(async (): Promise<boolean> => {
     setAuthenticating(true);
     haptic.medium();
 
@@ -98,14 +98,15 @@ export const MobileBiometricQuickActions = memo(function MobileBiometricQuickAct
       haptic.error();
     }
     setAuthenticating(false);
+    return success;
   }, [haptic, onAuthenticated]);
 
-  const handleAction = useCallback((action: QuickActionItem) => {
+  const handleAction = useCallback(async (action: QuickActionItem) => {
     if (action.requiresAuth && !authenticated) {
-      handleAuth().then(() => {
-        haptic.tap();
-        action.onClick();
-      });
+      const success = await handleAuth();
+      if (!success) return; // Don't execute action if auth failed
+      haptic.tap();
+      action.onClick();
     } else {
       haptic.tap();
       action.onClick();
