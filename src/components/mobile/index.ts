@@ -1,5 +1,5 @@
 /**
- * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20: Mobile Experience Improvements
+ * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20 + MOB4-1 to MOB4-20: Mobile Experience Improvements
  * Barrel export for all mobile-specific components.
  */
 
@@ -76,3 +76,30 @@ export type { CallLog } from "./MobileCRMCallAction";
 export { MobileDashboardWidgetRearrange } from "./MobileDashboardWidgetRearrange";
 export type { Widget } from "./MobileDashboardWidgetRearrange";
 export { MobileOfflineBanner } from "./MobileOfflineBanner";
+
+// === MOB4-1 to MOB4-20 (Phase 4) ===
+export { MobileChartOptimizer } from "./MobileChartOptimizer";
+export { MobilePageTransition } from "./MobilePageTransition";
+export { MobilePhotoGallery, MobilePhotoThumbnails } from "./MobilePhotoGallery";
+export { MobileSmartDatePicker } from "./MobileSmartDatePicker";
+export { MobileBottomNavContext } from "./MobileBottomNavContext";
+export type { NavContextAction } from "./MobileBottomNavContext";
+export { MobileCardTable } from "./MobileCardTable";
+export type { CardTableColumn } from "./MobileCardTable";
+export { MobileShareSheet, useShare } from "./MobileShareSheet";
+export type { ShareData } from "./MobileShareSheet";
+export { MobileFloatingLabelInput, MobileFloatingLabelTextarea } from "./MobileFloatingLabelInput";
+export { MobileScrollToTop } from "./MobileScrollToTop";
+export { MobileInlineEdit } from "./MobileInlineEdit";
+export { MobileGestureNavigation } from "./MobileGestureNavigation";
+export { MobileAdaptiveFontScaling, useMobileAdaptiveFonts } from "./MobileAdaptiveFontScaling";
+export { MobileDarkModeToggle, useMobileDarkMode } from "./MobileDarkMode";
+export { MobileQuickStats } from "./MobileQuickStats";
+export type { QuickStat } from "./MobileQuickStats";
+export { MobilePDFViewer, MobilePDFPreview } from "./MobilePDFViewer";
+export { MobileKeyboardAwareScroll, useKeyboardAwareScroll } from "./MobileKeyboardAwareScroll";
+export { MobileBatchActions } from "./MobileBatchActions";
+export type { BatchAction } from "./MobileBatchActions";
+export { MobileConnectionIndicator, useConnectionSpeed } from "./MobileConnectionIndicator";
+export { MobileAccessibilityToolbar, useAccessibilitySettings } from "./MobileAccessibilityToolbar";
+export { MobileQuickPropertySwitcher } from "./MobileQuickPropertySwitcher";
