@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="robots" content="index, follow" />
+    <!-- FUND-13: Content Security Policy — mitigates XSS attacks -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://nominatim.openstreetmap.org https://data-api.ecb.europa.eu https://api.allorigins.win https://*.bundesbank.de https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self'; object-src 'none'; base-uri 'self';" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
