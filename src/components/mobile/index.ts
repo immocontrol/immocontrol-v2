@@ -1,5 +1,5 @@
 /**
- * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20 + MOB4-1 to MOB4-20 + MOB5-1 to MOB5-20: Mobile Experience Improvements
+ * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20 + MOB4-1 to MOB4-20 + MOB5-1 to MOB5-20 + MOB6-1 to MOB6-20: Mobile Experience Improvements
  * Barrel export for all mobile-specific components.
  */
 
@@ -137,3 +137,41 @@ export type { HeatmapDataPoint } from "./MobileHeatmapCalendar";
 export { MobileComparisonSlider } from "./MobileComparisonSlider";
 export { MobileImageLazyLoad, generateColorPlaceholder } from "./MobileImageLazyLoad";
 export { MobileAppUpdateBanner } from "./MobileAppUpdateBanner";
+
+// === MOB6-1 to MOB6-20 (Phase 6) ===
+export { MobileSmartBackButton } from "./MobileSmartBackButton";
+export type { NavigationHistoryItem } from "./MobileSmartBackButton";
+export { MobileDeepLinkHandler, useDeepLinkRouter } from "./MobileDeepLinkHandler";
+export type { DeepLinkRoute } from "./MobileDeepLinkHandler";
+export { MobileSplitView } from "./MobileSplitView";
+export { MobileSmartClipboard, detectClipboardContent } from "./MobileSmartClipboard";
+export type { ClipboardDetection } from "./MobileSmartClipboard";
+export { MobileScanToFill } from "./MobileScanToFill";
+export type { ScanResult } from "./MobileScanToFill";
+export { MobileMultiStepUpload } from "./MobileMultiStepUpload";
+export type { UploadFile } from "./MobileMultiStepUpload";
+export { MobileCurrencyInput } from "./MobileCurrencyInput";
+export { MobileInAppNotificationCenter } from "./MobileInAppNotificationCenter";
+export type { AppNotification } from "./MobileInAppNotificationCenter";
+export { MobileContextualHelp } from "./MobileContextualHelp";
+export type { CoachMark } from "./MobileContextualHelp";
+export { MobileSmartErrorRecovery } from "./MobileSmartErrorRecovery";
+export type { RecoverableError } from "./MobileSmartErrorRecovery";
+export { MobilePrefetchManager, usePrefetch } from "./MobilePrefetchManager";
+export type { PrefetchRoute } from "./MobilePrefetchManager";
+export { MobileAnimatedTransitions, SharedElement, PageTransition, useSharedTransition } from "./MobileAnimatedTransitions";
+export { MobileAdaptiveLayout, ShowInLayout, useAdaptiveLayout } from "./MobileAdaptiveLayout";
+export type { DeviceInfo } from "./MobileAdaptiveLayout";
+export { MobileRoomPlanner } from "./MobileRoomPlanner";
+export type { Room } from "./MobileRoomPlanner";
+export { MobilePropertyCompare } from "./MobilePropertyCompare";
+export type { CompareProperty } from "./MobilePropertyCompare";
+export { MobileMaintenanceTimeline } from "./MobileMaintenanceTimeline";
+export type { MaintenanceEntry } from "./MobileMaintenanceTimeline";
+export { MobileQuickCalculator } from "./MobileQuickCalculator";
+export { MobileTaskBoard } from "./MobileTaskBoard";
+export type { TaskItem, TaskColumn } from "./MobileTaskBoard";
+export { MobileSmartReminders } from "./MobileSmartReminders";
+export type { SmartReminder } from "./MobileSmartReminders";
+export { MobileDataExportSheet } from "./MobileDataExportSheet";
+export type { ExportFormat, ExportColumn, ExportConfig } from "./MobileDataExportSheet";
