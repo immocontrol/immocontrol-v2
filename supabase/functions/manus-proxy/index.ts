@@ -26,6 +26,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+/** Validate taskId to prevent path traversal */
+function isValidTaskId(id: string): boolean {
+  return /^[a-zA-Z0-9_-]+$/.test(id);
+}
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -124,6 +129,7 @@ serve(async (req) => {
       case "getTask": {
         const { taskId } = body as { taskId: string };
         if (!taskId) return json({ error: "taskId ist erforderlich" }, 400);
+        if (!isValidTaskId(taskId)) return json({ error: "Ungültige taskId" }, 400);
         return manusRequest(`/tasks/${taskId}`, MANUS_API_KEY);
       }
 
@@ -131,6 +137,7 @@ serve(async (req) => {
       case "listFiles": {
         const { taskId } = body as { taskId: string };
         if (!taskId) return json({ error: "taskId ist erforderlich" }, 400);
+        if (!isValidTaskId(taskId)) return json({ error: "Ungültige taskId" }, 400);
         return manusRequest(`/tasks/${taskId}/files`, MANUS_API_KEY);
       }
 

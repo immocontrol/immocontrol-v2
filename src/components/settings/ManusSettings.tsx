@@ -86,8 +86,11 @@ export const ManusSettings = ({ sectionRef }: ManusSettingsProps) => {
   const handleRemove = () => {
     setManusApiKey("");
     setApiKeyState("");
-    setIsConfigured(false);
-    toast.success("Manus API Key entfernt");
+    // Only mark as unconfigured if proxy is also not available
+    if (!proxyAvailable) {
+      setIsConfigured(false);
+    }
+    toast.success("Lokaler API Key entfernt");
   };
 
   return (
