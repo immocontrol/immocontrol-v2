@@ -67,6 +67,40 @@ const REGION_LABELS: Record<string, string> = {
   both: "Berlin & Brandenburg",
 };
 
+/* ─── Individual city filters (MOB3 extension) ─── */
+const BERLIN_DISTRICTS = [
+  "Charlottenburg", "Friedrichshain", "Kreuzberg", "Lichtenberg", "Marzahn",
+  "Mitte", "Neukölln", "Pankow", "Prenzlauer Berg", "Reinickendorf",
+  "Spandau", "Steglitz", "Tempelhof", "Treptow", "Wedding",
+] as const;
+
+const BRANDENBURG_CITIES = [
+  "Potsdam", "Cottbus", "Frankfurt/Oder", "Oranienburg", "Bernau",
+  "Falkensee", "Eberswalde", "Ludwigsfelde", "Königs Wusterhausen", "Wildau",
+  "Schönefeld", "Luckenwalde", "Strausberg", "Fürstenwalde", "Neuruppin",
+  "Wittenberge", "Rathenow", "Senftenberg", "Spremberg", "Guben",
+  "Forst", "Eisenhüttenstadt", "Schwedt", "Prenzlau", "Templin",
+  "Angermünde", "Bad Freienwalde", "Seelow", "Beeskow", "Lübben",
+  "Lübbenau", "Herzberg", "Finsterwalde", "Elsterwerda", "Bad Belzig",
+  "Brandenburg/Havel", "Werder", "Teltow", "Kleinmachnow", "Stahnsdorf",
+  "Blankenfelde", "Mahlow", "Rangsdorf", "Zossen", "Nauen",
+  "Henningsdorf", "Velten", "Hohen Neuendorf", "Birkenwerder", "Wandlitz",
+] as const;
+
+/** Detect which specific city/district is mentioned in a news item */
+function detectCity(title: string, description: string): string | null {
+  const text = `${title} ${description}`.toLowerCase();
+  for (const d of BERLIN_DISTRICTS) {
+    if (text.includes(d.toLowerCase())) return d;
+  }
+  for (const c of BRANDENBURG_CITIES) {
+    // Handle slash-names like "Frankfurt/Oder" and "Brandenburg/Havel"
+    const searchTerm = c.includes("/") ? c.split("/")[0].toLowerCase() : c.toLowerCase();
+    if (text.includes(searchTerm)) return c;
+  }
+  return null;
+}
+
 const SENTIMENT_CONFIG = {
   positive: { icon: ThumbsUp, label: "Positiv", color: "text-emerald-500", bg: "bg-emerald-500/10" },
   negative: { icon: ThumbsDown, label: "Negativ", color: "text-red-500", bg: "bg-red-500/10" },
@@ -293,6 +327,7 @@ const Newsticker = () => {
   const debouncedSearch = useDebounce(search, 300);
   const [selectedCategories, setSelectedCategories] = useState<Set<NewsCategory>>(new Set());
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
+  const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedSentiment, setSelectedSentiment] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [displayCount, setDisplayCount] = useState(20);
@@ -391,9 +426,15 @@ const Newsticker = () => {
     }
     if (selectedCategories.size > 0) result = result.filter(n => selectedCategories.has(n.category));
     if (selectedRegion !== "all") result = result.filter(n => n.region === selectedRegion || n.region === "both");
+    if (selectedCity !== "all") {
+      result = result.filter(n => {
+        const city = detectCity(n.title, n.description);
+        return city !== null && city === selectedCity;
+      });
+    }
     if (selectedSentiment !== "all") result = result.filter(n => n.sentiment === selectedSentiment);
     return result;
-  }, [news, debouncedSearch, selectedCategories, selectedRegion, selectedSentiment, showBookmarksOnly, bookmarks]);
+  }, [news, debouncedSearch, selectedCategories, selectedRegion, selectedCity, selectedSentiment, showBookmarksOnly, bookmarks]);
 
   const displayedNews = useMemo(() => filteredNews.slice(0, displayCount), [filteredNews, displayCount]);
 
@@ -662,13 +703,13 @@ const Newsticker = () => {
             <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" /> Region
             </p>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap">
               {["all", "berlin", "brandenburg"].map(r => (
                 <button
                   key={r}
-                  onClick={() => { setSelectedRegion(r); setDisplayCount(20); }}
+                  onClick={() => { setSelectedRegion(r); setSelectedCity("all"); setDisplayCount(20); }}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
-                    selectedRegion === r
+                    selectedRegion === r && selectedCity === "all"
                       ? "bg-primary/10 text-primary ring-1 ring-primary/30"
                       : "bg-secondary text-muted-foreground hover:text-foreground"
                   }`}
@@ -676,6 +717,61 @@ const Newsticker = () => {
                   {r === "all" ? "Alle" : REGION_LABELS[r]}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* City filter (MOB3 extension) */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" /> Stadtteil / Stadt
+            </p>
+            <div className="flex gap-1.5 flex-wrap max-h-32 overflow-y-auto" style={{ WebkitOverflowScrolling: "touch" as unknown as string }}>
+              <button
+                onClick={() => { setSelectedCity("all"); setDisplayCount(20); }}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-all ${
+                  selectedCity === "all"
+                    ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Alle
+              </button>
+              {(selectedRegion === "all" || selectedRegion === "berlin") && (
+                <>
+                  <span className="text-[9px] text-muted-foreground self-center px-1">Berlin:</span>
+                  {BERLIN_DISTRICTS.map(d => (
+                    <button
+                      key={d}
+                      onClick={() => { setSelectedCity(d); setSelectedRegion("berlin"); setDisplayCount(20); }}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-all ${
+                        selectedCity === d
+                          ? "bg-blue-500/15 text-blue-600 ring-1 ring-blue-500/30"
+                          : "bg-secondary text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </>
+              )}
+              {(selectedRegion === "all" || selectedRegion === "brandenburg") && (
+                <>
+                  <span className="text-[9px] text-muted-foreground self-center px-1">Brandenburg:</span>
+                  {BRANDENBURG_CITIES.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => { setSelectedCity(c); setSelectedRegion("brandenburg"); setDisplayCount(20); }}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-all ${
+                        selectedCity === c
+                          ? "bg-emerald-500/15 text-emerald-600 ring-1 ring-emerald-500/30"
+                          : "bg-secondary text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
           </div>
 
@@ -721,12 +817,12 @@ const Newsticker = () => {
           </div>
 
           {/* Reset filters */}
-          {(selectedCategories.size > 0 || selectedSentiment !== "all" || selectedRegion !== "all") && (
+          {(selectedCategories.size > 0 || selectedSentiment !== "all" || selectedRegion !== "all" || selectedCity !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               className="text-xs"
-              onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedRegion("all"); }}
+              onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedRegion("all"); setSelectedCity("all"); }}
             >
               Alle Filter zur&#252;cksetzen
             </Button>
@@ -735,7 +831,7 @@ const Newsticker = () => {
       )}
 
       {/* Results count */}
-      {(debouncedSearch || selectedCategories.size > 0 || selectedRegion !== "all" || selectedSentiment !== "all" || showBookmarksOnly) && (
+      {(debouncedSearch || selectedCategories.size > 0 || selectedRegion !== "all" || selectedCity !== "all" || selectedSentiment !== "all" || showBookmarksOnly) && (
         <p className="text-xs text-muted-foreground">
           {filteredNews.length} von {news.length} Nachrichten
           {showBookmarksOnly && " (nur Lesezeichen)"}

@@ -1,5 +1,5 @@
 /**
- * MOB-1 to MOB-15 + MOB2-1 to MOB2-15: Mobile Experience Improvements
+ * MOB-1 to MOB-15 + MOB2-1 to MOB2-15 + MOB3-1 to MOB3-20: Mobile Experience Improvements
  * Barrel export for all mobile-specific components.
  */
 
@@ -41,3 +41,38 @@ export { MobileChatInterface } from "./MobileChatInterface";
 export type { ChatMessage } from "./MobileChatInterface";
 export { MobileDocumentScanner } from "./MobileDocumentScanner";
 export { MobileBiometricQuickActions } from "./MobileBiometricQuickActions";
+
+// === MOB3-1 to MOB3-20 (Phase 3) ===
+export { MobileStickyActionBar } from "./MobileStickyActionBar";
+export type { StickyAction } from "./MobileStickyActionBar";
+export { MobileSectionNavigator } from "./MobileSectionNavigator";
+export type { SectionItem } from "./MobileSectionNavigator";
+export { MobileSwipeToAction } from "./MobileSwipeToAction";
+export type { SwipeAction } from "./MobileSwipeToAction";
+export { MobileQuickFilterChips } from "./MobileQuickFilterChips";
+export type { FilterChip } from "./MobileQuickFilterChips";
+export { MobileLongPressMenu } from "./MobileLongPressMenu";
+export type { ContextMenuItem } from "./MobileLongPressMenu";
+export { MobileDragHandle } from "./MobileDragHandle";
+export { MobilePinchZoom } from "./MobilePinchZoom";
+export { MobileDoubleTapEdit } from "./MobileDoubleTapEdit";
+export { MobileCollapsibleCard } from "./MobileCollapsibleCard";
+export { MobileKPIComparison } from "./MobileKPIComparison";
+export type { KPIPeriod } from "./MobileKPIComparison";
+export { MobileCondensedTable } from "./MobileCondensedTable";
+export type { TableField, TableRow } from "./MobileCondensedTable";
+export { MobileNotificationBadge, computeBadgeCounts } from "./MobileNotificationBadges";
+export type { BadgeCounts } from "./MobileNotificationBadges";
+export { CRMSkeleton, TodosSkeleton, BerichteSkeleton, WartungSkeleton, NewstickerSkeleton } from "./MobileAllPageSkeletons";
+export { MobileOptimisticToggle } from "./MobileOptimisticToggle";
+export { useHapticActions, WithHaptic } from "./MobileHapticSystem";
+export type { HapticActions } from "./MobileHapticSystem";
+export { MobileQuickAddSheet } from "./MobileQuickAddSheet";
+export type { QuickAddOption } from "./MobileQuickAddSheet";
+export { MobilePropertyDetailTabs } from "./MobilePropertyDetailTabs";
+export type { PropertyTab } from "./MobilePropertyDetailTabs";
+export { MobileCRMCallAction } from "./MobileCRMCallAction";
+export type { CallLog } from "./MobileCRMCallAction";
+export { MobileDashboardWidgetRearrange } from "./MobileDashboardWidgetRearrange";
+export type { Widget } from "./MobileDashboardWidgetRearrange";
+export { MobileOfflineBanner } from "./MobileOfflineBanner";
