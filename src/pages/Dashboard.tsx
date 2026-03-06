@@ -14,9 +14,11 @@ import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
+import { PropertyCsvImport } from "@/components/PropertyCsvImport";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useWidgetLayout } from "@/hooks/useWidgetLayout";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +76,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   /* Fix 3: Widget order/labels extracted to DashboardWidgetGrid component */
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
+  const { loadLayout, saveLayout } = useWidgetLayout(WIDGET_STORAGE_KEY);
+
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
       const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
@@ -90,9 +94,26 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     return DEFAULT_WIDGET_ORDER;
   });
 
+  /* Load layout from Supabase on mount — overrides localStorage if cloud version is newer */
+  useEffect(() => {
+    loadLayout().then(cloudOrder => {
+      if (!cloudOrder || cloudOrder.length === 0) return;
+      const valid = cloudOrder.filter(w => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)) as WidgetId[];
+      const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
+      const merged = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
+      setWidgetOrder(merged);
+      try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(merged)); } catch { /* */ }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const widgetDrag = useDragReorder(
     widgetOrder,
-    (next) => { setWidgetOrder(next); setIsWidgetDragOverview(false); },
+    (next) => {
+      setWidgetOrder(next);
+      setIsWidgetDragOverview(false);
+      saveLayout(next);
+    },
     WIDGET_STORAGE_KEY,
   );
 
@@ -371,6 +392,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           {/* MOBILE-FIX: Portfolio buttons compact + nebeneinander on mobile */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
             <AddPropertyDialog />
+            <PropertyCsvImport onImported={() => qc.invalidateQueries({ queryKey: queryKeys.properties.all })} />
             <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={sharePortfolio}>
               <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">Teilen</span>
@@ -408,12 +430,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         widgetsCollapsed={false}
         onApply={({ widgetOrder: wo }) => {
           const typed = wo as typeof widgetOrder;
-          // Reconcile: remove stale IDs and add any missing widgets (e.g. chart_* from old presets)
           const valid = typed.filter(w => DEFAULT_WIDGET_ORDER.includes(w));
           const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
           const finalOrder = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
           setWidgetOrder(finalOrder);
           try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(finalOrder)); } catch { /* */ }
+          saveLayout(finalOrder);
         }}
       />
 

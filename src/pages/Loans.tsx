@@ -850,7 +850,8 @@ const Loans = () => {
             <Landmark className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-lg font-bold mb-2">Noch keine Darlehen</h2>
-          <p className="text-sm text-muted-foreground mb-4">Lege dein erstes Darlehen an, um Zinsbindungen und Risiken zu überwachen.</p>
+          <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">Lege dein erstes Darlehen an, um Zinsbindungen, Tilgungsfortschritt und Refinanzierungsrisiken zu überwachen.</p>
+          <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
         </div>
       ) : (
         <div className="space-y-2">

@@ -58,9 +58,16 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
     unit_label: "", move_in_date: "",
     kaltmiete: 0, nebenkosten: 0, monthly_rent: 0, deposit: 0,
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateEmail = (email: string) => {
+    if (!email) return "";
+    return isValidEmail(email) ? "" : "Ungültige E-Mail-Adresse";
+  };
 
   const resetForm = useCallback(() => {
     setForm({ first_name: "", last_name: "", email: "", phone: "", unit_label: "", move_in_date: "", kaltmiete: 0, nebenkosten: 0, monthly_rent: 0, deposit: 0 });
+    setFieldErrors({});
     setStep(0);
   }, []);
 
@@ -70,7 +77,7 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
   }, [resetForm]);
 
   const canGoNext = step === 0
-    ? !!form.first_name.trim() && !!form.last_name.trim()
+    ? !!form.first_name.trim() && !!form.last_name.trim() && !fieldErrors.email
     : step === 1
     ? form.monthly_rent > 0
     : true;
@@ -142,7 +149,17 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">E-Mail</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="h-9 text-sm" />
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setForm(f => ({ ...f, email: val }));
+                      setFieldErrors(prev => ({ ...prev, email: validateEmail(val) }));
+                    }}
+                    className={cn("h-9 text-sm", fieldErrors.email ? "border-destructive focus-visible:ring-destructive" : "")}
+                  />
+                  {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Telefon</Label>

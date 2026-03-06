@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight } from "lucide-react";
+import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -105,6 +105,8 @@ const Wartungsplaner = () => {
   const [open, setOpen] = useState(false);
   const [filterProperty, setFilterProperty] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [searchText, setSearchText] = useState("");
+  const [filterPriority, setFilterPriority] = useState("all");
   const [showCompleted, setShowCompleted] = useState(false);
   const [overdueOpen, setOverdueOpen] = useState(true);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
@@ -142,9 +144,19 @@ const Wartungsplaner = () => {
     let items = allItems;
     if (filterProperty !== "all") items = items.filter(i => i.property_id === filterProperty);
     if (filterCategory !== "all") items = items.filter(i => i.category === filterCategory);
+    if (filterPriority !== "all") items = items.filter(i => i.priority === filterPriority);
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      items = items.filter(i =>
+        i.title.toLowerCase().includes(q) ||
+        i.category.toLowerCase().includes(q) ||
+        (i.notes && i.notes.toLowerCase().includes(q)) ||
+        (propMap.get(i.property_id) || "").toLowerCase().includes(q)
+      );
+    }
     if (!showCompleted) items = items.filter(i => !i.completed || (i.recurring_interval && i.recurring_interval !== "none"));
     return items;
-  }, [allItems, filterProperty, filterCategory, showCompleted]);
+  }, [allItems, filterProperty, filterCategory, filterPriority, searchText, showCompleted, propMap]);
 
   const overdueItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "overdue"), [filteredItems]);
   const dueSoonItems = useMemo(() => filteredItems.filter(i => getDueStatus(i) === "due-soon"), [filteredItems]);
@@ -441,6 +453,15 @@ const Wartungsplaner = () => {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
+        <div className="relative">
+          <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Suchen..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="h-9 pl-8 w-[160px] text-sm"
+          />
+        </div>
         <Select value={filterProperty} onValueChange={setFilterProperty}>
           <SelectTrigger className="w-[160px] h-9 text-sm">
             <Building2 className="h-3.5 w-3.5 mr-1.5" />
@@ -461,18 +482,48 @@ const Wartungsplaner = () => {
             {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={filterPriority} onValueChange={setFilterPriority}>
+          <SelectTrigger className="w-[130px] h-9 text-sm">
+            <SelectValue placeholder="Priorität" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Prioritäten</SelectItem>
+            {PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Button variant={showCompleted ? "secondary" : "outline"} size="sm" onClick={() => setShowCompleted(!showCompleted)} className="h-9 text-xs gap-1.5">
           <Check className="h-3.5 w-3.5" /> Erledigte {showCompleted ? "ausblenden" : "anzeigen"}
         </Button>
+        {(searchText || filterProperty !== "all" || filterCategory !== "all" || filterPriority !== "all") && (
+          <Button variant="ghost" size="sm" className="h-9 text-xs gap-1" onClick={() => { setSearchText(""); setFilterProperty("all"); setFilterCategory("all"); setFilterPriority("all"); }}>
+            <X className="h-3 w-3" /> Zurücksetzen
+          </Button>
+        )}
       </div>
 
       {/* Maintenance Lists */}
       {isLoading ? (
-        <div className="text-sm text-muted-foreground text-center py-12 animate-pulse">Laden...</div>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-20 rounded-xl border border-border bg-muted/20 animate-pulse" />
+          ))}
+        </div>
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-12">
-          <Wrench className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">Keine Wartungseinträge vorhanden</p>
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 empty-state-float">
+            <Wrench className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-base font-semibold mb-1">
+            {allItems.length === 0 ? "Noch keine Wartungseinträge" : "Keine Ergebnisse"}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">
+            {allItems.length === 0 ? "Plane Wartungsarbeiten und behalte Fristen, Kosten und Pflichtprüfungen im Blick." : "Keine Einträge für diese Filterauswahl gefunden."}
+          </p>
+          {allItems.length === 0 && (
+            <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Ersten Eintrag anlegen
+            </Button>
+          )}
           <p className="text-xs text-muted-foreground mt-1">Nutze die Vorlagen oben oder erstelle eine eigene Wartung</p>
         </div>
       ) : (

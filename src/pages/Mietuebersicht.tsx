@@ -25,7 +25,7 @@ const Mietuebersicht = () => {
   const [propertyFilter, setPropertyFilter] = useState("alle");
   const [monthFilter, setMonthFilter] = useState("alle");
 
-  const { data: tenants = [] } = useQuery({
+  const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ["mietuebersicht_tenants"],
     queryFn: async () => {
       const { data } = await supabase.from("tenants").select("*").order("last_name");
@@ -34,14 +34,19 @@ const Mietuebersicht = () => {
     enabled: !!user,
   });
 
-  const { data: payments = [] } = useQuery({
+  const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ["mietuebersicht_payments"],
     queryFn: async () => {
-      const { data } = await supabase.from("rent_payments").select("*").order("due_date", { ascending: false });
+      const { data } = await supabase
+        .from("rent_payments")
+        .select("*, tenants(first_name, last_name, monthly_rent, is_active), properties(name, id)")
+        .order("due_date", { ascending: false });
       return data || [];
     },
     enabled: !!user,
   });
+
+  const isLoading = tenantsLoading || paymentsLoading;
 
   /* IMP-41-4: Dynamic document title with tenant count for browser tab clarity */
   useEffect(() => { document.title = `Mietübersicht (${tenants.filter(t => t.is_active).length}) – ImmoControl`; }, [tenants]);
@@ -187,6 +192,26 @@ const Mietuebersicht = () => {
       default: return "Offen";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6" role="main" aria-label="Mietübersicht">
+        <div>
+          <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-72 bg-muted rounded animate-pulse mt-2" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-xl border border-border p-4 animate-pulse bg-muted/30">
+              <div className="h-3 w-20 bg-muted rounded mb-2" />
+              <div className="h-7 w-28 bg-muted rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-border p-4 animate-pulse bg-muted/30 h-48" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" role="main" aria-label="Mietübersicht">

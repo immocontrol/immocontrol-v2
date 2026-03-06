@@ -17,14 +17,18 @@ import { toast } from "sonner";
 const WATCHED_TABLES = [
   { table: "properties", queryKey: queryKeys.properties.all, label: "Objekt" },
   { table: "tenants", queryKey: ["tenants"], label: "Mieter" },
-  { table: "loans", queryKey: ["loans"], label: "Darlehen" },
+  { table: "loans", queryKey: queryKeys.loans.all, label: "Darlehen" },
   { table: "todos", queryKey: ["todos"], label: "Aufgabe" },
   { table: "tickets", queryKey: ["tickets"], label: "Ticket" },
-  { table: "deals", queryKey: ["deals"], label: "Deal" },
-  { table: "contacts", queryKey: ["contacts"], label: "Kontakt" },
-  { table: "rent_payments", queryKey: ["rent_payments"], label: "Mietzahlung" },
+  { table: "deals", queryKey: queryKeys.deals.all, label: "Deal" },
+  { table: "contacts", queryKey: queryKeys.contacts.all, label: "Kontakt" },
+  { table: "rent_payments", queryKey: ["mietuebersicht_payments"], label: "Mietzahlung" },
   { table: "messages", queryKey: ["messages"], label: "Nachricht" },
   { table: "documents", queryKey: ["documents"], label: "Dokument" },
+  { table: "maintenance_items", queryKey: queryKeys.maintenance.all, label: "Wartung" },
+  { table: "contracts", queryKey: ["vertraege_stats"], label: "Vertrag" },
+  { table: "service_contracts", queryKey: queryKeys.serviceContracts.all, label: "Dienstleister" },
+  { table: "invoices", queryKey: queryKeys.invoices.all, label: "Rechnung" },
 ] as const;
 
 interface RealtimeEvent {
