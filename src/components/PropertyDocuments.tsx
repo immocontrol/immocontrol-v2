@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { formatFileSize } from "@/lib/formatters";
+import { formatFileSize, formatDate } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import FileImportPicker from "@/components/FileImportPicker";
@@ -218,15 +218,15 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{doc.file_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {doc.category} · {formatFileSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString("de-DE")}
+                    {doc.category} · {formatFileSize(doc.file_size)} · {formatDate(doc.created_at)}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(doc)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(doc)} aria-label="Dokument herunterladen">
                   <Download className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-loss" onClick={() => deleteMutation.mutate(doc)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-loss" onClick={() => deleteMutation.mutate(doc)} aria-label="Dokument löschen">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

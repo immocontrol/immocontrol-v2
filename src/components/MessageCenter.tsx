@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { formatDate, formatTime } from "@/lib/formatters";
 import { isDeepSeekConfigured, summarizeMessages } from "@/integrations/ai/extractors";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
@@ -263,8 +264,8 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                 ) : (
                   messages.map((msg, idx) => {
                     const isMine = msg.sender_id === user?.id;
-                    const msgDate = new Date(msg.created_at).toLocaleDateString("de-DE");
-                    const prevDate = idx > 0 ? new Date(messages[idx - 1].created_at).toLocaleDateString("de-DE") : null;
+                    const msgDate = formatDate(msg.created_at);
+                    const prevDate = idx > 0 ? formatDate(messages[idx - 1].created_at) : null;
                     const showDateSep = idx === 0 || msgDate !== prevDate;
 
                     return (
@@ -284,7 +285,7 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                           }`}>
                             <p>{msg.content}</p>
                             <span className={`text-[10px] mt-1 flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                              {new Date(msg.created_at).toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                              {formatTime(msg.created_at)}
                               {isMine && (
                                 msg.is_read
                                   ? <CheckCheck className="h-3 w-3 text-blue-400" />
@@ -311,7 +312,7 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                 {/* UI-UPDATE-42: Tooltip on send message action */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="icon" className="h-9 w-9 shrink-0" onClick={sendMessage} disabled={sending || !newMessage.trim()}>
+                    <Button size="icon" className="h-9 w-9 shrink-0" onClick={sendMessage} disabled={sending || !newMessage.trim()} aria-label="Nachricht senden">
                       <Send className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>

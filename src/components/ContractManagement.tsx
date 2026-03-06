@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { FileText, Loader2, Plus, AlertTriangle, CheckCircle, Clock, Trash2, Upload } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
 import { extractPdfText } from "@/lib/exposeParser";
@@ -275,8 +275,8 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
               {contracts.map((c: ContractRow) => (
                 <TableRow key={c.id}>
                   {!propertyId && <TableCell className="text-xs">{getPropertyName(c.property_id)}</TableCell>}
-                  <TableCell className="text-xs">{new Date(c.start_date).toLocaleDateString("de-DE")}</TableCell>
-                  <TableCell className="text-xs">{c.is_indefinite ? <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Unbefristet</span> : c.end_date ? new Date(c.end_date).toLocaleDateString("de-DE") : "–"}</TableCell>
+                  <TableCell className="text-xs">{formatDate(c.start_date)}</TableCell>
+                  <TableCell className="text-xs">{c.is_indefinite ? <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Unbefristet</span> : c.end_date ? formatDate(c.end_date) : "–"}</TableCell>
                   <TableCell className="text-xs font-medium">{formatCurrency(c.cold_rent)}</TableCell>
                   <TableCell className="text-xs font-medium">{formatCurrency(c.warm_rent)}</TableCell>
                   <TableCell className="text-xs capitalize">{c.rent_increase_index}</TableCell>

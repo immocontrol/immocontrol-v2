@@ -145,12 +145,13 @@ queryClient.setQueryDefaults(queryKeys.forecast.all, { staleTime: 5 * 60_000 });
 queryClient.setQueryDefaults(["todos"], { staleTime: 60_000 });
 queryClient.setQueryDefaults(queryKeys.maintenance.all, { staleTime: 5 * 60_000 });
 queryClient.setQueryDefaults(["documents"], { staleTime: 2 * 60_000 });
+queryClient.setQueryDefaults(["tickets"], { staleTime: 2 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-live="polite" aria-label="Laden">
         <div className="animate-pulse text-muted-foreground">Laden...</div>
       </div>
     );
@@ -225,7 +226,7 @@ const RoleRouter = () => {
 
   if (loading || roleLoading || onboardingDone === null) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-live="polite" aria-label="Laden">
         <div className="animate-pulse text-muted-foreground">Laden...</div>
       </div>
     );

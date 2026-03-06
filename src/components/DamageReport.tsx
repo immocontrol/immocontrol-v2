@@ -193,7 +193,7 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
               <div className="flex gap-2 flex-wrap">
                 {previews.map((src, i) => (
                   <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
-                    <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
                     <button
                       onClick={() => removePhoto(i)}
                       className="absolute top-0.5 right-0.5 bg-background/80 rounded-full p-0.5 hover:bg-background"

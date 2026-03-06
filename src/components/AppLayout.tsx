@@ -588,7 +588,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   {displayName}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-foreground h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-foreground h-8 w-8" aria-label="Abmelden">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>

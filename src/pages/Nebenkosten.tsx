@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
 import { AutoNebenkosten } from "@/components/AutoNebenkosten";
+import { EmptyState } from "@/components/EmptyState";
 
 const NK_CATEGORIES = [
   "Grundsteuer", "Wasserversorgung", "Entwässerung", "Heizkosten", "Warmwasser",
@@ -414,14 +415,11 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       ) : (
         /* Billing list */
         billings.length === 0 ? (
-          /* UPD-23: Better empty state animation */
-          <div className="text-center py-12 empty-state-bounce">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-8 w-8 text-primary" />
-            </div>
-            <h2 className="text-lg font-bold mb-1">Keine Abrechnungen</h2>
-            <p className="text-sm text-muted-foreground mb-4">Erstelle deine erste Nebenkostenabrechnung</p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="Keine Abrechnungen"
+            description="Erstelle deine erste Nebenkostenabrechnung"
+          />
         ) : (
           <div className="space-y-2 list-stagger">
             {billings.map(b => {

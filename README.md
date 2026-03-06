@@ -54,11 +54,20 @@ Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 
 ## Fundamentale Verbesserungen (Auswahl)
 
-- **UX**: Einheitliche Empty-State-Komponente (Nachrichten, Dokumente); Return-URL nach Login (Weiterleitung zur zuvor aufgerufenen Seite); 404 mit A11y (aria-live, Fokus) und ErrorBoundary; Lade-Anzeige mit role="status"/aria-live.
-- **Performance**: Route-Preload auf 3s verzögert; Service-Worker-Registration zentral in main.tsx; Document-Queries mit staleTime 2 Min.
-- **Sicherheit**: AI-Markdown mit rehype-sanitize (XSS-Schutz); CSP um api.deepseek.com erweitert; Form-Sanitization vor Supabase (Verträge); zentraler Mutation-Error-Handler (Vertrag anlegen).
-- **Barrierefreiheit**: PageLoader und 404-Countdown als Live-Region; Fokus-Ring für „Zurück zum Portfolio“.
-- **Daten-Feedback**: Indikator „Daten werden aktualisiert…“ im Layout bei laufendem Refetch; einheitliche Empty-State-Texte in i18n.
+**Batch 1**
+- **UX**: Einheitliche Empty-State-Komponente (Nachrichten, Dokumente); Return-URL nach Login; 404 mit A11y und ErrorBoundary; Lade-Anzeige mit role="status"/aria-live.
+- **Performance**: Route-Preload 3s; Service-Worker zentral; Document-Queries staleTime 2 Min.
+- **Sicherheit**: AI-Markdown rehype-sanitize; CSP api.deepseek.com; Form-Sanitization Verträge; zentraler Mutation-Error-Handler.
+- **Barrierefreiheit**: PageLoader/404 Live-Region; Fokus-Ring „Zurück zum Portfolio“.
+- **Daten-Feedback**: Indikator „Daten werden aktualisiert…“; Empty-State-Texte in i18n.
+
+**Batch 2**
+- **EmptyState**: ServiceContracts, InvoiceManagement, Nebenkosten, DocumentExpiryTracker; Lade-Fallbacks mit role="status" (App, ServiceContracts, InvoiceManagement).
+- **Mutation-Handler**: Loans, Contacts (löschen/wiederherstellen/endgültig), ServiceContracts, InvoiceManagement; LoadingButton bei Loans-Speichern.
+- **Formatierung**: formatDate/formatTime in ContractManagement, ServiceContracts, InvoiceManagement, MessageCenter, PropertyDocuments, DocumentExpiryTracker.
+- **A11y**: aria-label für Buttons (Dokument hochladen/löschen, Nachricht senden, Abmelden, Vertrag/Rechnung löschen, CashflowKalender Vorheriger/Nächster Monat).
+- **Sicherheit**: sanitizeFormData beim Deal-Speichern; Auth-Seite mit Safe-Area (pb safe-area-inset-bottom).
+- **Performance**: loading="lazy" für Bilder (DamageReport, MobileMaintenanceTimeline); Tickets-Queries staleTime 2 Min.
 
 ## Lizenz & Support
 

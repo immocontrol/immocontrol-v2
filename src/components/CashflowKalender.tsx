@@ -81,11 +81,11 @@ const CashflowKalender = memo(() => {
           <h3 className="text-sm font-semibold">Cashflow-Kalender</h3>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMonthOffset(p => p - 1)}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMonthOffset(p => p - 1)} aria-label="Vorheriger Monat">
             <ChevronLeft className="h-3 w-3" />
           </Button>
           <span className="text-xs font-medium min-w-[120px] text-center">{monthName}</span>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMonthOffset(p => p + 1)}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMonthOffset(p => p + 1)} aria-label="Nächster Monat">
             <ChevronRight className="h-3 w-3" />
           </Button>
         </div>

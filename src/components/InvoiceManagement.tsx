@@ -11,9 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
+import { EmptyState } from "@/components/EmptyState";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 
 interface InvoiceRow {
   id: string;
@@ -92,7 +94,7 @@ const InvoiceManagement = () => {
       setOpen(false);
       toast.success("Rechnung erfasst");
     },
-    onError: () => toast.error("Fehler"),
+    onError: createMutationErrorHandler("Rechnung erfassen", "Fehler beim Erfassen"),
   });
 
   const updateStatus = useMutation({
@@ -117,6 +119,7 @@ const InvoiceManagement = () => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       toast.success("Gelöscht");
     },
+    onError: createMutationErrorHandler("Rechnung löschen", "Fehler beim Löschen"),
   });
 
   const getStatusBadge = (status: string, dueDate: string | null) => {
@@ -211,9 +214,9 @@ const InvoiceManagement = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-muted-foreground animate-pulse">Laden...</div>
+        <div className="text-sm text-muted-foreground animate-pulse" role="status" aria-live="polite">Laden...</div>
       ) : invoices.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Keine Rechnungen vorhanden.</p>
+        <EmptyState icon={Receipt} title="Keine Rechnungen" description="Rechnungen erfassen für bessere Übersicht" />
       ) : (
         <div className="overflow-auto">
           <Table>
@@ -232,12 +235,12 @@ const InvoiceManagement = () => {
             <TableBody>
               {invoices.map((inv: InvoiceRow) => (
                 <TableRow key={inv.id}>
-                  <TableCell className="text-xs">{new Date(inv.invoice_date).toLocaleDateString("de-DE")}</TableCell>
+                  <TableCell className="text-xs">{formatDate(inv.invoice_date)}</TableCell>
                   <TableCell className="text-xs font-medium">{inv.vendor_name}</TableCell>
                   <TableCell className="text-xs">{getPropertyName(inv.property_id)}</TableCell>
                   <TableCell className="text-xs capitalize">{CATEGORIES.find(c => c.value === inv.category)?.label || inv.category}</TableCell>
                   <TableCell className="text-xs font-medium">{formatCurrency(inv.amount)}</TableCell>
-                  <TableCell className="text-xs">{inv.due_date ? new Date(inv.due_date).toLocaleDateString("de-DE") : "–"}</TableCell>
+                  <TableCell className="text-xs">{inv.due_date ? formatDate(inv.due_date) : "–"}</TableCell>
                   <TableCell>{getStatusBadge(inv.status, inv.due_date)}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
@@ -246,7 +249,7 @@ const InvoiceManagement = () => {
                           <Check className="h-3 w-3 mr-1" /> Bezahlt
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(inv.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(inv.id)} aria-label="Rechnung löschen">
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>

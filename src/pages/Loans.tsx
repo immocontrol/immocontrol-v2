@@ -27,6 +27,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
+import { LoadingButton } from "@/components/LoadingButton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { GERMAN_BANKS } from "@/data/germanBanks";
 import { Download } from "lucide-react";
@@ -247,7 +249,7 @@ const Loans = () => {
       setOpen(false);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
     },
-    onError: () => toast.error("Fehler beim Speichern"),
+    onError: createMutationErrorHandler("Darlehen speichern", "Fehler beim Speichern"),
   });
 
   const deleteMutation = useMutation({
@@ -260,7 +262,10 @@ const Loans = () => {
       setDeleteTargetLoan(null);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
     },
-    onError: () => setDeleteTargetLoan(null),
+    onError: (e) => {
+      createMutationErrorHandler("Darlehen löschen", "Fehler beim Löschen")(e);
+      setDeleteTargetLoan(null);
+    },
   });
 
   const openEdit = (l: Loan) => {
@@ -744,9 +749,9 @@ const Loans = () => {
                   <Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="h-9 text-sm" placeholder="Optional" />
                 </div>
               </div>
-              <Button onClick={() => saveMutation.mutate()} className="w-full mt-2" disabled={saveMutation.isPending}>
+              <LoadingButton onClick={() => saveMutation.mutate()} className="w-full mt-2" loading={saveMutation.isPending} disabled={!form.property_id || !form.bank_name?.trim()}>
                 {editLoan ? "Speichern" : "Darlehen anlegen"}
-              </Button>
+              </LoadingButton>
             </DialogContent>
           </Dialog>
         </div>

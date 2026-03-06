@@ -35,6 +35,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { extractPdfText } from "@/lib/exposeParser";
 import { extractDealFromExposeText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { sanitizeFormData } from "@/lib/sanitize";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -213,7 +214,7 @@ const Deals = () => {
       const yld = form.expected_rent && form.purchase_price && form.purchase_price > 0
         ? ((form.expected_rent * 12) / form.purchase_price) * 100
         : 0;
-      const payload = { ...form, user_id: user!.id, expected_yield: yld };
+      const payload = sanitizeFormData({ ...form, user_id: user!.id, expected_yield: yld } as Record<string, unknown>) as typeof form & { user_id: string; expected_yield: number };
       if (editDeal) {
         const { error } = await supabase.from("deals").update(payload).eq("id", editDeal.id);
         if (error) throw error;

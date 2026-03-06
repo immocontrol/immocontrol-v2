@@ -33,6 +33,7 @@ import { ListSkeleton } from "@/components/ListSkeleton";
 import { logAudit } from "@/lib/auditLog";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
 import { LoadingButton } from "@/components/LoadingButton";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -224,7 +225,7 @@ const ContactManagement = () => {
         duration: 15_000,
       });
     },
-    onError: () => toast.error("Fehler beim Löschen"),
+    onError: createMutationErrorHandler("Kontakt löschen", "Fehler beim Löschen"),
   });
 
   // Restore from trash
@@ -234,7 +235,7 @@ const ContactManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Kontakt wiederhergestellt"); invalidate(); },
-    onError: () => toast.error("Fehler beim Wiederherstellen"),
+    onError: createMutationErrorHandler("Kontakt wiederherstellen", "Fehler beim Wiederherstellen"),
   });
 
   // Permanently delete
@@ -244,7 +245,7 @@ const ContactManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Kontakt endg\u00fcltig gel\u00f6scht"); invalidate(); },
-    onError: () => toast.error("Fehler beim endg\u00fcltigen L\u00f6schen"),
+    onError: createMutationErrorHandler("Kontakt endgültig löschen", "Fehler beim endgültigen Löschen"),
   });
 
 

@@ -356,7 +356,7 @@ const Auth = () => {
   return (
     /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
     /* IMP-44-6: ARIA landmark for auth page */
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4" role="main" aria-label="Authentifizierung">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Authentifizierung">
       <div className="w-full max-w-sm space-y-6 animate-fade-in [animation-delay:100ms]">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">

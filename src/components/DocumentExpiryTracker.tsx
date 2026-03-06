@@ -5,6 +5,8 @@ import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
 import { FileWarning, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/EmptyState";
+import { formatDate } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -118,7 +120,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
       </div>
 
       {docs.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-4">Keine Dokumentenfristen eingetragen</p>
+        <EmptyState icon={FileWarning} title="Keine Dokumentenfristen" description="Fristen für Ausweise, Versicherungen usw. anlegen" />
       ) : (
         <div className="space-y-2">
           {docs.map(doc => {
@@ -131,7 +133,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{doc.name}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    bis {new Date(doc.expiry_date).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric" })}
+                    bis {formatDate(doc.expiry_date)}
                     {isExpired && <span className="ml-1.5 text-loss font-medium">abgelaufen</span>}
                     {isSoon && <span className="ml-1.5 text-gold font-medium">in {days} Tagen</span>}
                   </p>

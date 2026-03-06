@@ -341,7 +341,7 @@ export const MobileMaintenanceTimeline = memo(function MobileMaintenanceTimeline
                                   }}
                                   className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border hover:ring-2 hover:ring-primary transition-all"
                                 >
-                                  <img src={photo} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                                  <img src={photo} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
                                 </button>
                               ))}
                             </div>

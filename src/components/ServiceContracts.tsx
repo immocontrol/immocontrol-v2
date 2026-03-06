@@ -12,9 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Wrench, Plus, AlertTriangle, CheckCircle, RotateCw, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
+import { EmptyState } from "@/components/EmptyState";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 
 const SERVICE_TYPES = [
   { value: "wartung", label: "Wartung" },
@@ -102,7 +104,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
       setOpen(false);
       toast.success("Dienstleistervertrag angelegt");
     },
-    onError: () => toast.error("Fehler"),
+    onError: createMutationErrorHandler("Dienstleistervertrag anlegen", "Fehler beim Anlegen"),
   });
 
   const deleteMutation = useMutation({
@@ -114,6 +116,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
       qc.invalidateQueries({ queryKey: ["service_contracts"] });
       toast.success("Gelöscht");
     },
+    onError: createMutationErrorHandler("Dienstleistervertrag löschen", "Fehler beim Löschen"),
   });
 
   const totalAnnualCost = contracts.reduce((s: number, c: ServiceContractRow) => s + Number(c.annual_cost), 0);
@@ -188,9 +191,9 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-muted-foreground animate-pulse">Laden...</div>
+        <div className="text-sm text-muted-foreground animate-pulse" role="status" aria-live="polite">Laden...</div>
       ) : contracts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Keine Dienstleisterverträge vorhanden.</p>
+        <EmptyState icon={Wrench} title="Keine Dienstleisterverträge" description="Verträge für Wartung, Reinigung oder Hausverwaltung anlegen" />
       ) : (
         <div className="overflow-auto">
           <Table>
@@ -217,7 +220,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
                     <TableCell className="text-xs font-medium">{formatCurrency(c.annual_cost)}</TableCell>
                     <TableCell className="text-xs">
                       {endDate ? (
-                        <span>bis {endDate.toLocaleDateString("de-DE")}</span>
+                        <span>bis {formatDate(c.end_date!)}</span>
                       ) : c.is_auto_renew ? (
                         <span className="flex items-center gap-1"><RotateCw className="h-3 w-3" /> Automatisch</span>
                       ) : "Unbefristet"}
@@ -232,7 +235,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(c.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(c.id)} aria-label="Vertrag löschen">
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </TableCell>
