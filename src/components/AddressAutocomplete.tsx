@@ -133,11 +133,13 @@ const AddressAutocomplete = ({
       return;
     }
     setLoading(true);
+    let nominatimAttempted = false;
     try {
       /* Try Photon first (faster, better for autocomplete) */
       let results = await fetchPhoton(query);
       /* If Photon returns no results, fallback to Nominatim */
       if (results.length === 0) {
+        nominatimAttempted = true;
         results = await fetchNominatim(query);
       }
       /* Deduplicate by formatted address */
@@ -152,12 +154,16 @@ const AddressAutocomplete = ({
       setShowDropdown(unique.length > 0);
       setHighlightIndex(-1);
     } catch {
-      /* On Photon error, try Nominatim as fallback */
-      try {
-        const fallback = await fetchNominatim(query);
-        setSuggestions(fallback.slice(0, 5));
-        setShowDropdown(fallback.length > 0);
-      } catch {
+      /* On Photon error, try Nominatim as fallback (only if not already attempted) */
+      if (!nominatimAttempted) {
+        try {
+          const fallback = await fetchNominatim(query);
+          setSuggestions(fallback.slice(0, 5));
+          setShowDropdown(fallback.length > 0);
+        } catch {
+          setSuggestions([]);
+        }
+      } else {
         setSuggestions([]);
       }
     } finally {

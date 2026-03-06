@@ -535,7 +535,7 @@ export default function ImmoAIBubble() {
 
           {/* Input */}
           <div className="border-t border-border p-3">
-            <div className="flex gap-2">
+            <div className="flex gap-2 relative">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
