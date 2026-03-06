@@ -1,0 +1,19 @@
+---
+description: Text nicht abschneiden – Wrapping und sichtbare Inhalte
+alwaysApply: true
+---
+
+# Text und Elemente sichtbar halten
+
+- **Inhaltsbereiche** (Karten, Listen, Beschreibungen, Dialoge): Text **nicht** mit `truncate` oder `line-clamp` abschneiden, wenn der volle Inhalt wichtig ist. Stattdessen:
+  - Klasse **`text-wrap-safe`** verwenden (umbricht Text, nichts wird abgeschnitten), oder
+  - `overflow-wrap: break-word` / `word-break: break-word` und `min-width: 0` bei Flex-Kindern setzen.
+- **Truncate** nur dort nutzen, wo Platz strikt begrenzt ist (z. B. Nav-Labels, Tab-Chips) und **immer** `title={vollerText}` oder Tooltip für den vollen Text anbieten.
+- **Menüs / knapper Platz:** Umbrüche sauber halten:
+  - **`nav-label-responsive`** + **`nav-label-wrap`** für Menü-Labels (Schrift skaliert mit Viewport, max. 2 Zeilen, zentriert).
+  - Bei sehr schmalem Viewport (< 380px): Menü neu anordnen (z. B. `.mobile-nav-sub-grid` 2 Spalten statt 3), damit Labels nicht gequetscht wirken.
+  - Lange Begriffe: Schrift etwas kleiner (z. B. `clamp(9px, 2.4vw, 11px)`) statt hart abgeschnitten.
+- **Elemente** nicht außerhalb des Sichtbaren rendern:
+  - Keine festen `left`/`right`/`top`/`bottom`, die ins Negative oder über 100vw/100vh gehen.
+  - Dialoge/Dropdowns: `max-height: min(90vh, …)` und `overflow-y: auto`, Breite `max(100vw - 2rem)` auf kleinen Screens.
+  - In `#main-content`: horizontal kein Overflow durch Text – Container haben `min-width: 0`, Überschriften/Paragraphen `word-break: break-word`. Für Deutsch: `hyphens: auto` für sauberere Zeilenumbrüche.

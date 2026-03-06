@@ -8,10 +8,9 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/lib/logger";
 import { rateLimiters } from "@/lib/rateLimiter";
+import { streamImmoChat } from "@/integrations/ai/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
-
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/immo-ai-chat`;
 const STORAGE_KEY = "immo-ai-chat-history";
 
 const SUGGESTIONS = [
@@ -213,61 +212,20 @@ export default function ImmoAIBubble() {
     const allMessages = [...messages, userMsg];
 
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({ messages: allMessages }),
-      });
-
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || `Fehler ${resp.status}`);
-      }
-      if (!resp.body) throw new Error("Kein Stream erhalten");
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-              setMessages((prev) => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-                }
-                return [...prev, { role: "assistant", content: assistantSoFar }];
-              });
+      await streamImmoChat({
+        messages: allMessages,
+        onChunk: (content) => {
+          assistantSoFar += content;
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
             }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
-      }
+            return [...prev, { role: "assistant", content: assistantSoFar }];
+          });
+        },
+        getAccessToken: () => session?.access_token,
+      });
       rateLimiters.aiChat.recordSuccess();
     } catch (e: unknown) {
       logger.error("ImmoAI bubble request failed", "ImmoAI", e);
@@ -412,7 +370,7 @@ export default function ImmoAIBubble() {
           onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
           onClick={() => { if (!isDragging.current) setOpen(true); }}
           className="fixed z-[9999] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
-          style={bubblePos ? { right: "1rem", top: bubblePos.y } : { bottom: "5rem", right: "1rem" }}
+          style={bubblePos ? { right: "1rem", top: bubblePos.y } : { bottom: "max(5.5rem, calc(80px + env(safe-area-inset-bottom, 0px)))", right: "1rem" }}
           aria-label="Immo AI öffnen (Alt+I) — ziehen zum Verschieben"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
@@ -429,7 +387,7 @@ export default function ImmoAIBubble() {
         <div
           ref={chatElRef}
           className="fixed z-[9999] w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
-          style={bubblePos ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) } : { bottom: "5rem", right: "1rem" }}
+          style={bubblePos ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) } : { bottom: "max(5.5rem, calc(80px + env(safe-area-inset-bottom, 0px)))", right: "1rem" }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">

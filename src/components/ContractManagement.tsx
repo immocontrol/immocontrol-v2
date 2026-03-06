@@ -15,10 +15,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
-import { FileText, Plus, AlertTriangle, CheckCircle, Clock, Trash2 } from "lucide-react";
+import { FileText, Loader2, Plus, AlertTriangle, CheckCircle, Clock, Trash2, Upload } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
+import { extractPdfText } from "@/lib/exposeParser";
+import { extractContractFromText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 
 interface ContractRow {
   id: string;
@@ -48,6 +50,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
   const { properties } = useProperties();
   const [open, setOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [extractingFromPdf, setExtractingFromPdf] = useState(false);
   const [form, setForm] = useState({
     property_id: propertyId || "",
     contract_type: "mietvertrag",
@@ -127,6 +130,42 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
 
   const getPropertyName = (pid: string) => properties.find(p => p.id === pid)?.name || "–";
 
+  const handleImportFromPdf = async (file: File) => {
+    if (!file?.name?.toLowerCase().endsWith(".pdf")) {
+      toast.error("Bitte eine PDF-Datei wählen.");
+      return;
+    }
+    setExtractingFromPdf(true);
+    try {
+      const text = await extractPdfText(file);
+      if (!text || text.trim().length < 50) {
+        toast.error("In der PDF konnte kein lesbarer Text gefunden werden.");
+        setExtractingFromPdf(false);
+        return;
+      }
+      const extracted = await extractContractFromText(text);
+      setForm((prev) => {
+        const next = { ...prev };
+        if (extracted.start_date) next.start_date = extracted.start_date;
+        if (extracted.end_date != null) next.end_date = extracted.end_date;
+        if (extracted.is_indefinite !== undefined) next.is_indefinite = extracted.is_indefinite;
+        if (extracted.notice_period_months != null) next.notice_period_months = extracted.notice_period_months;
+        if (extracted.base_rent != null) next.base_rent = extracted.base_rent;
+        if (extracted.cold_rent != null) next.cold_rent = extracted.cold_rent;
+        if (extracted.warm_rent != null) next.warm_rent = extracted.warm_rent;
+        if (extracted.deposit_amount != null) next.deposit_amount = extracted.deposit_amount;
+        if (extracted.rent_increase_index) next.rent_increase_index = extracted.rent_increase_index;
+        if (extracted.notes) next.notes = extracted.notes;
+        return next;
+      });
+      toast.success("Felder aus Vertrag übernommen. Bitte prüfen und speichern.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Extraktion fehlgeschlagen.");
+    } finally {
+      setExtractingFromPdf(false);
+    }
+  };
+
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between mb-4">
@@ -139,6 +178,29 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Neuer Mietvertrag</DialogTitle></DialogHeader>
+            {isDeepSeekConfigured() && (
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  className="hidden"
+                  id="contract-pdf-import"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFromPdf(f); e.target.value = ""; }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={extractingFromPdf}
+                  onClick={() => document.getElementById("contract-pdf-import")?.click()}
+                  aria-label="Vertrag aus PDF übernehmen"
+                >
+                  {extractingFromPdf ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+                  Aus PDF übernehmen
+                </Button>
+                <span className="text-xs text-muted-foreground">KI extrahiert Fristen & Miete</span>
+              </div>
+            )}
             <div className="grid gap-3 mt-2">
               {!propertyId && (
                 <div>

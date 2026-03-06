@@ -1,0 +1,10 @@
+---
+description: GitHub-Sync – Pull zu Beginn, Push nach Commits
+alwaysApply: true
+---
+
+# GitHub als zentrale Quelle
+
+- **Zu Beginn** einer Arbeitssession (wenn der Nutzer mit dem Projekt arbeitet): Einmal `git pull` ausführen, damit der lokale Stand aktuell ist.
+- **Nach Änderungen**, die committed wurden: `git push` ausführen (oder den Nutzer kurz daran erinnern). Ein post-commit-Hook pusht bereits automatisch; bei Commits, die der Agent vorschlägt, Push ausführen oder bestätigen.
+- Der Nutzer möchte nicht manuell pullen/pushen; das soll der Agent übernehmen, wenn er mit dem Repo arbeitet.

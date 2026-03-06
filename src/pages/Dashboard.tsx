@@ -17,6 +17,7 @@ import AddPropertyDialog from "@/components/AddPropertyDialog";
 import EmptyState from "@/components/EmptyState";
 import { PropertyCsvImport } from "@/components/PropertyCsvImport";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
+import { AITipCard } from "@/components/AITipCard";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useWidgetLayout } from "@/hooks/useWidgetLayout";
@@ -474,6 +475,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* FUNC-1/2/3/5 + OPT-11: render memoized portfolio insights */}
       <div className="grid md:grid-cols-2 gap-3">
+        <AITipCard />
         <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Insights</h3>

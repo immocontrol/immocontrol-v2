@@ -41,7 +41,7 @@ export function PasskeySettings({ sectionRef, displayName }: PasskeySettingsProp
       const userId = new TextEncoder().encode(user.id);
       /* FIX: Omit rp.id entirely — when absent the browser defaults to the current
          origin's effective domain, which is always valid. Manually setting rp.id to
-         the hostname can fail on subdomains (e.g. "app-xyz.devinapps.com") if the
+         the hostname can fail on subdomains (e.g. custom app subdomains) if the
          browser rejects it as not a registrable domain suffix of the origin. */
       const excludeCredentials = passkeys.map(pk => ({
         id: Uint8Array.from(atob(pk.id.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)),

@@ -35,14 +35,18 @@ interface FileImportPickerProps {
   children?: React.ReactNode;
 }
 
-/* BUG-11: Cloud storage sources for mobile import — ordered by popularity on iOS/Android */
+/* BUG-11: Cloud storage sources for mobile import — all options visible so user can pick from Drive, OneDrive, Icedrive etc.
+ * Each option opens the system file picker; on mobile, user should choose "Durchsuchen" / "Browse" to see cloud apps. */
 const CLOUD_SOURCES = [
-  { id: "device", label: "Vom Gerät", description: "Fotos, Kamera & lokale Dateien", icon: Smartphone, color: "text-primary" },
-  { id: "icloud", label: "iCloud", description: "Apple iCloud Drive", icon: Cloud, color: "text-gray-500" },
-  { id: "gdrive", label: "Google Drive", description: "Google Drive Dateien", icon: Cloud, color: "text-green-500" },
+  { id: "browse", label: "Alle Quellen", description: "Durchsuchen → Drive, OneDrive, Icedrive …", icon: FolderOpen, color: "text-primary" },
+  { id: "device", label: "Vom Gerät", description: "Fotos, Kamera & lokale Dateien", icon: Smartphone, color: "text-muted-foreground" },
+  { id: "gdrive", label: "Google Drive", description: "Google Drive", icon: Cloud, color: "text-green-500" },
   { id: "onedrive", label: "OneDrive", description: "Microsoft OneDrive", icon: Cloud, color: "text-blue-500" },
-  { id: "dropbox", label: "Dropbox", description: "Dropbox Dateien", icon: Cloud, color: "text-blue-600" },
-  { id: "files", label: "Andere App", description: "Telegram, WhatsApp, E-Mail", icon: FolderOpen, color: "text-orange-500" },
+  { id: "icloud", label: "iCloud", description: "Apple iCloud Drive", icon: Cloud, color: "text-gray-500" },
+  { id: "dropbox", label: "Dropbox", description: "Dropbox", icon: Cloud, color: "text-blue-600" },
+  { id: "icedrive", label: "Icedrive", description: "Icedrive Cloud", icon: Cloud, color: "text-cyan-500" },
+  { id: "box", label: "Box", description: "Box Cloud", icon: Cloud, color: "text-slate-600" },
+  { id: "other", label: "Andere App", description: "Telegram, WhatsApp, E-Mail …", icon: FolderOpen, color: "text-orange-500" },
 ] as const;
 
 /** Detect if running on a mobile device */
@@ -159,9 +163,9 @@ export function FileImportPicker({
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground -mt-2">
-            Tippe auf eine Quelle — dein Gerät öffnet dann die passende App zum Auswählen:
+            Quelle wählen — im nächsten Dialog „Durchsuchen“ oder „Browse“ tippen, um alle Cloud-Apps zu sehen:
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[50vh] overflow-y-auto">
             {CLOUD_SOURCES.map((source) => (
               <button
                 key={source.id}
@@ -176,8 +180,8 @@ export function FileImportPicker({
           </div>
           <div className="bg-secondary/50 rounded-lg p-2.5 text-center">
             <p className="text-[10px] text-muted-foreground">
-              <strong>Tipp:</strong> Auf dem iPhone wähle "Durchsuchen" im Datei-Dialog,
-              um auf iCloud, Google Drive, OneDrive und Dropbox zuzugreifen.
+              <strong>Tipp:</strong> Im System-Dialog „Durchsuchen“ (iPhone) bzw. „Browse“ tippen – dann erscheinen
+              Google Drive, OneDrive, Icedrive, Dropbox, iCloud und weitere installierte Apps.
             </p>
           </div>
           <p className="text-[10px] text-muted-foreground text-center">

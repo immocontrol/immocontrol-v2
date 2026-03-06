@@ -1,0 +1,16 @@
+---
+description: Code tool-unabhängig halten (Wechsel zwischen IDEs/Vibe-Tools)
+alwaysApply: true
+---
+
+# Tool-unabhängig bauen
+
+Das Projekt wird in wechselnden Umgebungen bearbeitet (Cursor, Lovable, Replit, Bolt, Devin, VS Code, etc.). Code muss **unabhängig vom konkreten Tool** laufen und wartbar sein.
+
+## Regeln
+
+- **Keine direkten Imports** von tool- oder plattformspezifischen Modulen in App-Logik (Seiten, Hooks, Komponenten). Stattdessen über **Abstraktionen** in `src/integrations/` (z. B. `@/integrations/auth`).
+- **Keine hart kodierten** URLs oder Host-Namen einer einzelnen Plattform (z. B. lovable.app, replit.app) in Komponenten oder Hooks. URLs/Keys aus **Umgebungsvariablen** oder zentraler Config.
+- **Build und Skripte:** Nur Standard-NPM (`npm run dev`, `npm run build`). Optionale tool-spezifische Plugins (z. B. Tagging) so einbinden, dass der Build **ohne** sie funktioniert (optionales Laden in vite.config).
+- **Kommentare:** Keine dauerhaften Referenzen auf ein bestimmtes Tool (z. B. „Devin fix“, „Lovable-only“). Neutrale Formulierung (z. B. „Duplicate icon fix“, „Optional adapter“).
+- **Neue Features:** Plattform-spezifische Logik in `src/integrations/` kapseln und in der App nur die neutrale API nutzen. Siehe `docs/ARCHITECTURE.md`.

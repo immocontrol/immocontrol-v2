@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, Send, CheckCheck, Check } from "lucide-react";
+import { MessageCircle, Send, CheckCheck, Check, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { isDeepSeekConfigured, summarizeMessages } from "@/integrations/ai/extractors";
+import { toast } from "sonner";
 
 interface Tenant {
   id: string;
@@ -30,6 +33,9 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryText, setSummaryText] = useState("");
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
@@ -138,6 +144,28 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
 
   const unreadCount = messages.filter((m) => !m.is_read && m.sender_id !== user?.id).length;
 
+  const handleSummarize = async () => {
+    if (messages.length === 0) {
+      toast.info("Keine Nachrichten zum Zusammenfassen.");
+      return;
+    }
+    setSummaryLoading(true);
+    setSummaryOpen(true);
+    setSummaryText("");
+    try {
+      const summary = await summarizeMessages(
+        messages.map((m) => ({ content: m.content, sender_role: m.sender_role }))
+      );
+      setSummaryText(summary || "Keine Zusammenfassung möglich.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Zusammenfassung fehlgeschlagen.");
+      setSummaryText("");
+      setSummaryOpen(false);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   // Improvement 18: Last message preview per tenant
   const getLastMessage = (tenantId: string) => {
     if (tenantId !== selectedTenant) return null;
@@ -195,6 +223,35 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
 
           {selectedTenant && (
             <>
+              {isDeepSeekConfigured() && messages.length > 0 && (
+                <div className="flex justify-end mb-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={summaryLoading}
+                    onClick={handleSummarize}
+                    aria-label="Nachrichten mit KI zusammenfassen"
+                  >
+                    {summaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                    KI zusammenfassen
+                  </Button>
+                </div>
+              )}
+              <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Zusammenfassung der Nachrichten</DialogTitle>
+                  </DialogHeader>
+                  {summaryLoading ? (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" /> KI wertet aus…
+                    </p>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{summaryText}</p>
+                  )}
+                </DialogContent>
+              </Dialog>
               <div className="bg-secondary/30 rounded-lg p-3 h-64 overflow-y-auto space-y-2 mb-3">
                 {messages.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-8">

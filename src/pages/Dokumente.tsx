@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import FileImportPicker from "@/components/FileImportPicker";
 import DocumentOCR from "@/components/DocumentOCR";
 import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
+import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai/extractors";
 
 interface DocEntry {
   id: string;
@@ -155,7 +156,7 @@ const Dokumente = () => {
     }
 
     setUploading(true);
-    const detectedCategory = category === "Sonstiges" ? autoDetectCategory(file.name) : category;
+    let detectedCategory = category === "Sonstiges" ? autoDetectCategory(file.name) : category;
     const filePath = `${user.id}/documents/${Date.now()}_${file.name}`;
 
     // Extract text from PDF
@@ -164,6 +165,15 @@ const Dokumente = () => {
       setExtracting(true);
       ocrText = await extractPdfText(file);
       setExtracting(false);
+    }
+
+    // KI-Kategorisierung: bei ausreichend Text und DeepSeek-Konfiguration Kategorie vorschlagen
+    if (category === "Sonstiges" && isDeepSeekConfigured() && ocrText && ocrText.trim().length > 100) {
+      try {
+        detectedCategory = await suggestDocumentCategory(ocrText);
+      } catch {
+        /* Fehler ignorieren, behalte Dateinamen-Kategorie */
+      }
     }
 
     const { error: uploadError } = await supabase.storage

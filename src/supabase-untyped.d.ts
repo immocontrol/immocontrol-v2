@@ -1,13 +1,13 @@
 /**
  * IMP-5: Type augmentation for Supabase client.
  *
- * The generated Database types from Lovable Cloud are empty, so we need to
+ * The generated Database types from Supabase codegen can be empty, so we need to
  * relax the SupabaseClient generic parameters. The `any` here is intentional
  * and unavoidable — replacing them with `unknown` would break every
  * `.from("table")` call because the PostgrestQueryBuilder would lose its
  * fluent chain types (.select, .eq, .single, etc.).
  *
- * Once Lovable Cloud populates the Database types, this file can be removed
+ * Once Supabase types are generated (e.g. supabase gen types), this file can be removed
  * and all tables will automatically get proper types.
  *
  * The return types of from() / rpc() / storage are typed at the call-site

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { auth } from "@/integrations/auth";
 import { toast } from "sonner";
 
 type AuthMode = "login" | "register" | "forgot";
@@ -611,7 +611,7 @@ const Auth = () => {
                     disabled={loading}
                     onClick={async () => {
                       setLoading(true);
-                      const { error } = await lovable.auth.signInWithOAuth("google", {
+                      const { error } = await auth.signInWithOAuth("google", {
                         redirect_uri: window.location.origin,
                       });
                       if (error) {

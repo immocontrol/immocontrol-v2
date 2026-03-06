@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2 } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -32,6 +32,9 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { DealToPropertyConverter } from "@/components/DealToPropertyConverter";
 import { MobileSwipeableDealCard } from "@/components/mobile";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { extractPdfText } from "@/lib/exposeParser";
+import { extractDealFromExposeText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -184,6 +187,10 @@ const Deals = () => {
   const [sortAsc, setSortAsc] = useState(false);
   /* UPD-19: Delete confirmation dialog state */
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  /* Exposé-Analyse: Ladezustand + Deal-Score nach PDF-Import */
+  const [exposeAnalyzing, setExposeAnalyzing] = useState(false);
+  const [dealScore, setDealScore] = useState<number | null>(null);
+  const [scoreReason, setScoreReason] = useState<string | null>(null);
 
   /* FUNC-12: Kanban Drag & Drop between stages */
   const [draggedDeal, setDraggedDeal] = useState<DealRecord | null>(null);
@@ -264,6 +271,48 @@ const Deals = () => {
     /* UPD-23: Error handler for move mutation */
     onError: (e: Error) => toast.error(`Verschieben fehlgeschlagen: ${e.message}`),
   });
+
+  const handleExposePdf = async (file: File) => {
+    if (!file?.name?.toLowerCase().endsWith(".pdf")) {
+      toast.error("Bitte eine PDF-Datei wählen.");
+      return;
+    }
+    setExposeAnalyzing(true);
+    setDealScore(null);
+    setScoreReason(null);
+    try {
+      const text = await extractPdfText(file);
+      if (!text || text.trim().length < 80) {
+        toast.error("Im Exposé wurde zu wenig Text gefunden.");
+        setExposeAnalyzing(false);
+        return;
+      }
+      const extracted = await extractDealFromExposeText(text);
+      setForm((prev) => ({
+        ...prev,
+        ...(extracted.title != null && extracted.title !== "" && { title: extracted.title }),
+        ...(extracted.address != null && extracted.address !== "" && { address: extracted.address }),
+        ...(extracted.description != null && extracted.description !== "" && { description: extracted.description }),
+        ...(typeof extracted.purchase_price === "number" && { purchase_price: extracted.purchase_price }),
+        ...(typeof extracted.expected_rent === "number" && { expected_rent: extracted.expected_rent }),
+        ...(typeof extracted.sqm === "number" && extracted.sqm > 0 && { sqm: extracted.sqm }),
+        ...(typeof extracted.units === "number" && extracted.units > 0 && { units: extracted.units }),
+        ...(extracted.property_type && ["ETW", "MFH", "EFH", "Gewerbe", "Grundstück"].includes(extracted.property_type) && { property_type: extracted.property_type }),
+        ...(extracted.contact_name != null && { contact_name: extracted.contact_name ?? "" }),
+        ...(extracted.contact_phone != null && { contact_phone: extracted.contact_phone ?? "" }),
+        ...(extracted.contact_email != null && { contact_email: extracted.contact_email ?? "" }),
+        ...(extracted.source != null && { source: extracted.source ?? "" }),
+        ...(extracted.notes != null && { notes: extracted.notes ?? "" }),
+      }));
+      if (typeof extracted.deal_score === "number") setDealScore(extracted.deal_score);
+      if (extracted.score_reason) setScoreReason(extracted.score_reason);
+      toast.success("Exposé ausgewertet. Felder übernommen.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Exposé-Analyse fehlgeschlagen.");
+    } finally {
+      setExposeAnalyzing(false);
+    }
+  };
 
   /* UPD-24: Batch import mutation for Telegram deals */
   const batchImport = useMutation({
@@ -807,11 +856,41 @@ const Deals = () => {
 
       {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
       {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
-      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); } }} className="max-w-lg">
+      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); setDealScore(null); setScoreReason(null); } }} className="max-w-lg">
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           <div className="space-y-3">
+            {isDeepSeekConfigured() && !editDeal && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  className="hidden"
+                  id="deal-expose-pdf"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleExposePdf(f); e.target.value = ""; }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={exposeAnalyzing}
+                  onClick={() => document.getElementById("deal-expose-pdf")?.click()}
+                  aria-label="Exposé aus PDF auswerten"
+                >
+                  {exposeAnalyzing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileText className="h-4 w-4 mr-1" />}
+                  Exposé aus PDF
+                </Button>
+                <span className="text-xs text-muted-foreground">KI analysiert & bewertet</span>
+              </div>
+            )}
+            {dealScore != null && (
+              <Alert className="border-primary/30 bg-primary/5">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Deal-Score: {dealScore}/100</AlertTitle>
+                {scoreReason && <AlertDescription>{scoreReason}</AlertDescription>}
+              </Alert>
+            )}
             {/* UX-19: Auto-focus first field in dialogs */}
             <Input placeholder="Titel / Objektname *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} aria-label="Deal Titel" autoFocus />
             <Input placeholder="Adresse" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} aria-label="Adresse" />
