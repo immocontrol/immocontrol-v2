@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -43,6 +47,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
   const qc = useQueryClient();
   const { properties } = useProperties();
   const [open, setOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     property_id: propertyId || "",
     contract_type: "mietvertrag",
@@ -103,9 +108,11 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
+      setDeleteTargetId(null);
       qc.invalidateQueries({ queryKey: ["contracts"] });
       toast.success("Vertrag gelöscht");
     },
+    onError: () => setDeleteTargetId(null),
   });
 
   const getStatusBadge = (contract: ContractRow) => {
@@ -210,7 +217,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
                   <TableCell className="text-xs capitalize">{c.rent_increase_index}</TableCell>
                   <TableCell>{getStatusBadge(c)}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(c.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTargetId(c.id)} aria-label="Vertrag löschen">
                       <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
                   </TableCell>
@@ -220,6 +227,24 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Vertrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Der Vertrag wird unwiderruflich gelöscht.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

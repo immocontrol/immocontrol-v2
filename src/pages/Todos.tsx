@@ -19,6 +19,10 @@ import { toast } from "sonner";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { useSwipeAction } from "@/hooks/useSwipeAction";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -124,6 +128,7 @@ const Todos = () => {
   const [editForm, setEditForm] = useState(emptyForm);
   const [showCompleted, setShowCompleted] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const quickInputRef = useRef<HTMLInputElement>(null);
 
   /* FUND-12: Removed stray double blank line — consistent code formatting */
@@ -247,7 +252,7 @@ const Todos = () => {
     /* UX-4: Haptic + UX-15: Success animation on save */
     haptic.success();
     triggerSuccess();
-    toast.success("Gespeichert");
+    toast.success("Aufgabe gespeichert");
   }, [editTodo, editForm, updateMutation, haptic, triggerSuccess]);
 
   /* IMP-41-7: Smart quick-add with natural language date parsing
@@ -660,20 +665,20 @@ const Todos = () => {
                         </button>
                       )}
                       {isExpanded && items.map(todo => (
-                        <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => deleteMutation.mutate(id)} />
+                        <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => setDeleteTarget(id)} />
                       ))}
                     </div>
                   );
                 })
               : filtered.map(todo => (
-                  <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => deleteMutation.mutate(id)} />
+                  <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => setDeleteTarget(id)} />
                 ))
             }
 
             {view === "completed" && (
               <div className="space-y-1">
                 {completedTodos.map(todo => (
-                  <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => deleteMutation.mutate(id)} />
+                  <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => setDeleteTarget(id)} />
                 ))}
               </div>
             )}
@@ -694,11 +699,30 @@ const Todos = () => {
         {showCompleted && view === "inbox" && (
           <div className="space-y-1 opacity-60">
             {completedTodos.map(todo => (
-              <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => deleteMutation.mutate(id)} />
+              <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => setDeleteTarget(id)} />
             ))}
           </div>
         )}
       </main>
+
+      {/* UX: Bestätigung vor Löschen */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aufgabe löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die Aufgabe wird unwiderruflich gelöscht.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget); setDeleteTarget(null); } }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Fix 3c: Extracted to TodoEditDialog component */}
       <TodoEditDialog

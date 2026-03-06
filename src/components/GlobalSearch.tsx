@@ -278,21 +278,26 @@ export const GlobalSearch = () => {
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => { if (query.trim()) setOpen(true); }}
           onKeyDown={handleKeyDown}
-          placeholder="Suchen… (⌘K)"
-          className="h-8 w-48 lg:w-64 pl-8 pr-8 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
+          placeholder="Suchen…"
+          className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
           autoComplete="off"
           aria-label="Globale Suche"
           /* IMPROVE-11: aria-expanded for accessibility */
           aria-expanded={open && !!query.trim()}
           role="combobox"
         />
-        {query && (
+        {query ? (
           <button
             onClick={() => { setQuery(""); setResults([]); setOpen(false); }}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Suche leeren"
           >
             <X className="h-3.5 w-3.5" />
           </button>
+        ) : (
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden lg:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground">
+            ⌘K
+          </kbd>
         )}
       </div>
 

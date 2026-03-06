@@ -18,6 +18,10 @@ import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/NumberInput";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -76,6 +80,8 @@ const Loans = () => {
   // Bank delete confirmation state
   const [deletingBank, setDeletingBank] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  // Loan delete confirmation (UX: always confirm destructive action)
+  const [deleteTargetLoan, setDeleteTargetLoan] = useState<string | null>(null);
 
   useEffect(() => {
     if (form.loan_amount > 0 && (form.interest_rate > 0 || form.repayment_rate > 0)) {
@@ -249,7 +255,12 @@ const Loans = () => {
       const { error } = await supabase.from("loans").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Darlehen entfernt"); qc.invalidateQueries({ queryKey: queryKeys.loans.all }); },
+    onSuccess: () => {
+      toast.success("Darlehen gelöscht");
+      setDeleteTargetLoan(null);
+      qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+    },
+    onError: () => setDeleteTargetLoan(null),
   });
 
   const openEdit = (l: Loan) => {
@@ -907,7 +918,7 @@ const Loans = () => {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <LoanPayoffSimulator remainingBalance={l.remaining_balance} interestRate={l.interest_rate} monthlyPayment={l.monthly_payment} bankName={l.bank_name} />
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)} aria-label="Darlehen bearbeiten"><Edit2 className="h-3 w-3" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-loss" onClick={() => deleteMutation.mutate(l.id)} aria-label="Darlehen löschen"><Trash2 className="h-3 w-3" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-loss" onClick={() => setDeleteTargetLoan(l.id)} aria-label="Darlehen löschen"><Trash2 className="h-3 w-3" /></Button>
                 </div>
               </div>
             );
@@ -916,13 +927,7 @@ const Loans = () => {
               <MobileSwipeToAction
                 key={l.id}
                 leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(l) }]}
-                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => {
-                  toast(`Darlehen löschen?`, {
-                    action: { label: "Löschen", onClick: () => deleteMutation.mutate(l.id) },
-                    cancel: { label: "Abbrechen", onClick: () => {} },
-                    duration: 5000,
-                  });
-                } }]}
+                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => setDeleteTargetLoan(l.id) }]}
               >
                 {loanCard}
               </MobileSwipeToAction>
@@ -930,6 +935,25 @@ const Loans = () => {
           })}
         </div>
       )}
+
+      {/* UX: Bestätigung vor Löschen */}
+      <AlertDialog open={!!deleteTargetLoan} onOpenChange={(open) => { if (!open) setDeleteTargetLoan(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Darlehen löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Das Darlehen wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetLoan) deleteMutation.mutate(deleteTargetLoan); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

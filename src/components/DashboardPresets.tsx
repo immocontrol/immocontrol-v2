@@ -4,6 +4,10 @@
 import { useState, useCallback } from "react";
 import { LayoutGrid, Save, Trash2, Check, Plus } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DashboardPreset {
   id: string;
@@ -72,12 +76,15 @@ export function DashboardPresets({ currentWidgetOrder, currentChartOrder, charts
     toast.success(`Preset "${preset.name}" angewendet`);
   }, [onApply]);
 
+  const [deletePresetId, setDeletePresetId] = useState<string | null>(null);
+
   const handleDelete = useCallback((id: string) => {
     const next = presets.filter(p => p.id !== id);
     setPresets(next);
     savePresets(next);
     if (activePreset === id) setActivePreset(null);
     toast.success("Preset gelöscht");
+    setDeletePresetId(null);
   }, [presets, activePreset]);
 
   return (
@@ -97,7 +104,7 @@ export function DashboardPresets({ currentWidgetOrder, currentChartOrder, charts
             {p.name}
           </button>
           <button
-            onClick={() => handleDelete(p.id)}
+            onClick={() => setDeletePresetId(p.id)}
             className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-secondary transition-opacity"
             aria-label="Löschen"
           >
@@ -105,6 +112,24 @@ export function DashboardPresets({ currentWidgetOrder, currentChartOrder, charts
           </button>
         </div>
       ))}
+
+      <AlertDialog open={!!deletePresetId} onOpenChange={(open) => { if (!open) setDeletePresetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Preset löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Dieses Dashboard-Preset wird unwiderruflich gelöscht.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletePresetId && handleDelete(deletePresetId)}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {showSave ? (
         <div className="flex items-center gap-1">

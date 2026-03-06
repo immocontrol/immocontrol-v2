@@ -14,6 +14,7 @@ import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
+import EmptyState from "@/components/EmptyState";
 import { PropertyCsvImport } from "@/components/PropertyCsvImport";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useProperties } from "@/context/PropertyContext";
@@ -300,17 +301,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           ))}
         </div>
 
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          {/* UI-10: empty-state-float for floating animation */}
-          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 empty-state-float">
-            <Building2 className="h-10 w-10 text-primary" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">Noch keine Objekte</h2>
-          <p className="text-sm text-muted-foreground max-w-sm mb-6">
-            Füge dein erstes Investmentobjekt hinzu, um dein Portfolio zu tracken – Renditen, Cashflow und Wertentwicklung auf einen Blick.
-          </p>
-          <AddPropertyDialog />
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="Noch keine Objekte"
+          description="Füge dein erstes Investmentobjekt hinzu, um dein Portfolio zu tracken – Renditen, Cashflow und Wertentwicklung auf einen Blick."
+          action={<AddPropertyDialog />}
+        />
       </div>
     );
   }

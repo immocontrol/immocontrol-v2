@@ -27,6 +27,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useUndoToast } from "@/hooks/useUndoToast";
 import { ContactDuplicateDetector } from "@/components/ContactDuplicateDetector";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { logAudit } from "@/lib/auditLog";
@@ -35,6 +36,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import EmptyState from "@/components/EmptyState";
 
 interface ContactItem {
   id: string;
@@ -62,6 +64,7 @@ const ContactManagement = () => {
   const isMobile = useIsMobile();
   const qc = useQueryClient();
   const haptic = useHaptic();
+  const { showUndo } = useUndoToast();
   const { visible: successVisible, trigger: triggerSuccess } = useSuccessAnimation();
 
   const [search, setSearch] = useState("");
@@ -203,7 +206,7 @@ const ContactManagement = () => {
     onError: (e: Error) => toast.error(e.message || "Fehler"),
   });
 
-  // Soft delete: move to trash
+  // Soft delete: move to trash (with undo)
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).eq("id", id);
@@ -213,7 +216,13 @@ const ContactManagement = () => {
       const c = contacts.find(x => x.id === id);
       logAudit("delete", "contact", { entityId: id, entityName: c?.name, details: "In Papierkorb verschoben", userId: user?.id });
       haptic.medium();
-      toast.success("Kontakt in Papierkorb verschoben"); invalidate();
+      invalidate();
+      showUndo({
+        message: "Kontakt gelöscht",
+        onCommit: () => {},
+        onUndo: () => restoreMutation.mutate(id),
+        duration: 15_000,
+      });
     },
     onError: () => toast.error("Fehler beim Löschen"),
   });
@@ -453,26 +462,29 @@ const ContactManagement = () => {
       {/* Contact list */}
       {/* UPD-24: Better empty state animation for contacts */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 empty-state-bounce">
-          <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
-            <Contact className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <p className="text-sm font-medium mb-1">
-            {contacts.length === 0 ? "Noch keine Kontakte" : "Keine Ergebnisse"}
-          </p>
-          <p className="text-xs text-muted-foreground mb-4">
-            {contacts.length === 0 ? "Lege deinen ersten Kontakt an" : `Keine Kontakte gefunden für „${search}"`}
-          </p>
-          {contacts.length === 0 ? (
-            <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-              <Plus className="h-3.5 w-3.5" /> Ersten Kontakt anlegen
-            </Button>
-          ) : (
+        contacts.length === 0 ? (
+          <EmptyState
+            icon={Contact}
+            title="Noch keine Kontakte"
+            description="Lege deinen ersten Kontakt an – Handwerker, Hausverwaltung oder Partner."
+            action={
+              <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Ersten Kontakt anlegen
+              </Button>
+            }
+          />
+        ) : (
+          <div className="text-center py-12 empty-state-bounce">
+            <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
+              <Contact className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium mb-1">Keine Ergebnisse</p>
+            <p className="text-xs text-muted-foreground mb-4">Keine Kontakte gefunden für „{search}"</p>
             <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSearch(""); setCatFilter("alle"); }}>
               Filter zurücksetzen
             </Button>
-          )}
-        </div>
+          </div>
+        )
       ) : (
         <>
           <ContactStats contacts={contacts} />
