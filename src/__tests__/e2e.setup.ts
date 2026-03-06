@@ -27,7 +27,7 @@ export async function login(
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|portfolio)/);
+  await page.waitForURL((url: URL) => url.pathname === "/" || url.pathname === "/dashboard");
 }
 
 /**
@@ -115,16 +115,16 @@ export const VISUAL_REGRESSION_CONFIG = {
   diffDir: "tests/screenshots/diff",
   /** Maximum allowed pixel difference percentage */
   threshold: 0.1,
-  /** Pages to capture for visual regression */
+  /** Pages to capture for visual regression — paths aligned with App ROUTES */
   pages: [
     { name: "login", path: "/auth" },
     { name: "dashboard", path: "/dashboard", requiresAuth: true },
-    { name: "portfolio", path: "/portfolio", requiresAuth: true },
-    { name: "properties", path: "/immobilien", requiresAuth: true },
+    { name: "home", path: "/", requiresAuth: true },
+    { name: "properties", path: "/objekte", requiresAuth: true },
     { name: "loans", path: "/darlehen", requiresAuth: true },
     { name: "deals", path: "/deals", requiresAuth: true },
     { name: "contacts", path: "/kontakte", requiresAuth: true },
-    { name: "todos", path: "/todos", requiresAuth: true },
+    { name: "todos", path: "/aufgaben", requiresAuth: true },
     { name: "settings", path: "/einstellungen", requiresAuth: true },
   ],
   /** Viewports to test */

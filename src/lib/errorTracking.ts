@@ -2,7 +2,8 @@
  * #16: Error Tracking — Lightweight error tracking without external dependencies.
  * Captures unhandled errors, promise rejections, and manual error reports.
  * Stores errors in localStorage for debugging and exports to console/clipboard.
- * No paid service needed — fully self-contained.
+ * Sanitizes messages/stacks so no passwords, tokens, or PII are stored or sent.
+ * Optional: set VITE_SENTRY_DSN and assign globalThis.__immocontrol_reportError to send to Sentry.
  */
 
 interface ErrorEntry {
@@ -14,6 +15,26 @@ interface ErrorEntry {
   url: string;
   userAgent: string;
   componentStack?: string;
+}
+
+/** Redact sensitive patterns so they never end up in localStorage or external services. Export for use before sending to external services. */
+export function sanitizeForLog(text: string | undefined): string {
+  if (text == null || text === "") return "";
+  let out = text;
+  /* Passwords and secrets */
+  out = out.replace(/\b(password|passwd|secret|token|api[_-]?key|auth|bearer)\s*[:=]\s*["']?[^\s"']+["']?/gi, "$1=***");
+  out = out.replace(/\b[A-Za-z0-9_-]{20,}\b/g, (m) => (m.length > 32 ? "***" : m)); /* long tokens */
+  /* E‑mail (keep structure, redact local part) */
+  out = out.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/gi, "***@***.***");
+  /* Phone (DE-style) */
+  out = out.replace(/\b(\+49|0)[\s\d/-]{6,}\b/g, "***");
+  return out;
+}
+
+declare global {
+  interface Window {
+    __immocontrol_reportError?: (entry: ErrorEntry) => void;
+  }
 }
 
 const STORAGE_KEY = "immocontrol_error_tracking";
@@ -41,24 +62,37 @@ function saveErrors(errors: ErrorEntry[]) {
   }
 }
 
-/** Log an error to the tracking store */
+/** Log an error to the tracking store. Message and stack are sanitized (no PII/tokens). */
 export function trackError(error: Error | string, type: ErrorEntry["type"] = "manual", componentStack?: string) {
+  const rawMessage = typeof error === "string" ? error : error.message;
+  const rawStack = typeof error === "string" ? undefined : error.stack;
   const entry: ErrorEntry = {
     id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     timestamp: new Date().toISOString(),
-    message: typeof error === "string" ? error : error.message,
-    stack: typeof error === "string" ? undefined : error.stack,
+    message: sanitizeForLog(rawMessage),
+    stack: rawStack ? sanitizeForLog(rawStack) : undefined,
     type,
     url: window.location.href,
     userAgent: navigator.userAgent,
-    componentStack,
+    componentStack: componentStack ? sanitizeForLog(componentStack) : undefined,
   };
 
-  const errors = loadErrors();
-  errors.push(entry);
-  saveErrors(errors);
+  try {
+    const errors = loadErrors();
+    errors.push(entry);
+    saveErrors(errors);
+  } catch {
+    /* avoid throwing from tracking */
+  }
 
-  // Also log to console in development
+  if (typeof window !== "undefined" && window.__immocontrol_reportError && import.meta.env.VITE_SENTRY_DSN) {
+    try {
+      window.__immocontrol_reportError(entry);
+    } catch {
+      /* optional reporter must not break tracking */
+    }
+  }
+
   if (import.meta.env.DEV) {
     console.error(`[ErrorTracking] ${entry.type}: ${entry.message}`, entry);
   }

@@ -56,6 +56,27 @@ export const propertySchema = z.object({
 
 export type PropertyFormData = z.infer<typeof propertySchema>;
 
+/** Add-Property-Dialog (3 Schritte): alle Felder mit gleichen Regeln wie propertySchema + Objektdetails */
+export const addPropertyFormSchema = z.object({
+  name: requiredString,
+  address: z.string().min(5, "Adresse angeben"),
+  type: z.enum(["ETW", "MFH", "EFH", "DHH", "ZFH", "Gewerbe", "Grundstück", "Sonstige"]).default("ETW"),
+  units: z.coerce.number().int().min(1, "Mindestens 1"),
+  ownership: z.string().min(1, "Besitzverhältnis wählen"),
+  purchasePrice: z.coerce.number().min(1, "Kaufpreis angeben"),
+  purchaseDate: z.string().min(1, "Kaufdatum angeben"),
+  currentValue: z.coerce.number().min(1, "Wert angeben"),
+  monthlyRent: z.coerce.number().min(0),
+  monthlyExpenses: z.coerce.number().min(0),
+  monthlyCreditRate: z.coerce.number().min(0),
+  remainingDebt: z.coerce.number().min(0),
+  interestRate: z.coerce.number().min(0).max(20, "Zinssatz max 20%"),
+  sqm: z.coerce.number().min(1, "Wohnfläche angeben"),
+  yearBuilt: z.coerce.number().min(1800).max(2030, "Jahr 1800–2030"),
+});
+
+export type AddPropertyFormData = z.infer<typeof addPropertyFormSchema>;
+
 /* ── Contact form schema ────────────────────────────────── */
 
 export const contactSchema = z.object({

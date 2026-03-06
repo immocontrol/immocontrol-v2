@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, memo } from "react";
 import { useForm, UseFormRegister, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { addPropertyFormSchema, type AddPropertyFormData } from "@/lib/schemas";
 import { Plus, ChevronRight, ChevronLeft } from "lucide-react";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { Button } from "@/components/ui/button";
@@ -20,29 +20,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useProperties } from "@/context/PropertyContext";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { focusNextField } from "@/hooks/useEnterToNext";
 
-const fullSchema = z.object({
-  name: z.string().min(2, "Name zu kurz"),
-  address: z.string().min(5, "Adresse angeben"),
-  type: z.enum(["MFH", "ZFH", "ETW", "EFH", "Gewerbe"]),
-  units: z.coerce.number().min(1),
-  ownership: z.string().min(1, "Besitzverhältnis wählen"),
-  purchasePrice: z.coerce.number().min(1),
-  purchaseDate: z.string().min(1, "Kaufdatum angeben"),
-  currentValue: z.coerce.number().min(1),
-  monthlyRent: z.coerce.number().min(0),
-  monthlyExpenses: z.coerce.number().min(0),
-  monthlyCreditRate: z.coerce.number().min(0),
-  remainingDebt: z.coerce.number().min(0),
-  interestRate: z.coerce.number().min(0).max(20),
-  sqm: z.coerce.number().min(1),
-  yearBuilt: z.coerce.number().min(1800).max(2030),
-});
-
-type FormData = z.infer<typeof fullSchema>;
+type FormData = AddPropertyFormData;
 
 /* FIX: Move Field component outside AddPropertyDialog to prevent re-creation on every
    render. Previously defined as a closure inside the component, causing React to unmount/
@@ -114,31 +97,32 @@ const StepIndicator = ({ current, total }: { current: number; total: number }) =
 const FORM_DEFAULTS: FormData = {
   name: "",
   address: "",
-  type: "" as FormData["type"],
+  type: "ETW",
   ownership: "",
-  units: 0 as unknown as number,
-  purchasePrice: 0 as unknown as number,
+  units: 0,
+  purchasePrice: 0,
   purchaseDate: "",
-  currentValue: 0 as unknown as number,
+  currentValue: 0,
   monthlyRent: 0,
   monthlyExpenses: 0,
   monthlyCreditRate: 0,
   remainingDebt: 0,
   interestRate: 0,
-  sqm: 0 as unknown as number,
-  yearBuilt: 0 as unknown as number,
+  sqm: 0,
+  yearBuilt: 0,
 };
 
 const AddPropertyDialog = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const { addProperty } = useProperties();
+  const { addProperty, properties } = useProperties();
+  const { announce } = useAccessibility();
 
   /* #9: Form draft auto-recovery via sessionStorage */
   const { values: draftValues, setValues: setDraftValues, clearDraft, hasDraft } = useFormDraft<FormData>("add-property", FORM_DEFAULTS);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(fullSchema),
+    resolver: zodResolver(addPropertyFormSchema),
     defaultValues: hasDraft ? draftValues : FORM_DEFAULTS,
   });
   const {
@@ -194,9 +178,16 @@ const AddPropertyDialog = () => {
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
 
   const onSubmit = async (data: FormData) => {
+    const wasFirst = properties.length === 0;
     const monthlyCashflow = data.monthlyRent - data.monthlyExpenses - data.monthlyCreditRate;
     await addProperty({ ...data, monthlyCashflow, location: "" } as Omit<import("@/data/mockData").Property, "id">);
-    toast.success(`${data.name} wurde angelegt!`);
+    if (wasFirst) {
+      toast.success("Dein erstes Objekt ist angelegt – dein Portfolio startet hier.");
+      announce("Erstes Objekt angelegt. Portfolio startet hier.");
+    } else {
+      toast.success(`${data.name} wurde angelegt!`);
+      announce(`${data.name} wurde angelegt.`);
+    }
     reset(FORM_DEFAULTS);
     clearDraft();
     setStep(0);

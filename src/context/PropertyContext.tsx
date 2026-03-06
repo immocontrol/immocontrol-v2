@@ -2,7 +2,10 @@ import { createContext, useContext, useCallback, useMemo, ReactNode } from "reac
 import { Property } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { addPendingMutation } from "@/hooks/useOfflineCache";
 import { toast } from "sonner";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { propertyRowSchema, safeParseRows } from "@/lib/supabaseSchemas";
@@ -119,6 +122,7 @@ const fetchPropertiesFromDb = async () => {
 export const PropertyProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const isOnline = useOnlineStatus();
 
   const { data: properties = [], isLoading: loading } = useQuery({
     queryKey: queryKeys.properties.all,
@@ -192,9 +196,9 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       qc.setQueryData<Property[]>(queryKeys.properties.all, (old) => [optimistic, ...(old ?? [])]);
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
-      toast.error("Fehler beim Anlegen");
+      createMutationErrorHandler("Objekt anlegen", "Fehler beim Anlegen")(err);
     },
     onSettled: invalidate,
   });
@@ -215,9 +219,9 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       );
       return { previous };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
-      toast.error("Fehler beim Speichern");
+      createMutationErrorHandler("Objekt speichern", "Fehler beim Speichern")(err);
     },
     onSettled: invalidate,
   });
@@ -233,16 +237,45 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       qc.setQueryData<Property[]>(queryKeys.properties.all, (old) => old?.filter(p => p.id !== id) ?? []);
       return { previous };
     },
-    onError: (_err, _id, context) => {
+    onError: (err, _id, context) => {
       if (context?.previous) qc.setQueryData(queryKeys.properties.all, context.previous);
-      toast.error("Fehler beim Löschen");
+      createMutationErrorHandler("Objekt löschen", "Fehler beim Löschen")(err);
     },
     onSettled: invalidate,
   });
 
   const addProperty = useCallback(async (property: Omit<Property, "id">) => {
+    if (!isOnline && user) {
+      const dbFields = mapPropertyToDb(property);
+      const insertData: Record<string, unknown> = {
+        user_id: user.id,
+        name: dbFields.name ?? property.name,
+        location: dbFields.location ?? property.location,
+        address: dbFields.address ?? property.address,
+        type: dbFields.type ?? property.type,
+        units: dbFields.units ?? property.units,
+        purchase_price: dbFields.purchase_price ?? property.purchasePrice,
+        purchase_date: dbFields.purchase_date ?? property.purchaseDate,
+        current_value: dbFields.current_value ?? property.currentValue,
+        monthly_rent: dbFields.monthly_rent ?? property.monthlyRent,
+        monthly_expenses: dbFields.monthly_expenses ?? property.monthlyExpenses,
+        monthly_credit_rate: dbFields.monthly_credit_rate ?? property.monthlyCreditRate,
+        monthly_cashflow: dbFields.monthly_cashflow ?? property.monthlyCashflow,
+        remaining_debt: dbFields.remaining_debt ?? property.remainingDebt,
+        interest_rate: dbFields.interest_rate ?? property.interestRate,
+        sqm: dbFields.sqm ?? property.sqm,
+        year_built: dbFields.year_built ?? property.yearBuilt,
+        ownership: dbFields.ownership ?? property.ownership,
+      };
+      await addPendingMutation({ table: "properties", type: "insert", data: insertData });
+      await qc.cancelQueries({ queryKey: queryKeys.properties.all });
+      const optimistic: Property = { ...property, id: `temp-${Date.now()}` };
+      qc.setQueryData<Property[]>(queryKeys.properties.all, (old) => [optimistic, ...(old ?? [])]);
+      toast.info("Wird gespeichert, sobald du wieder online bist.");
+      return;
+    }
     await addMutation.mutateAsync(property);
-  }, [addMutation]);
+  }, [addMutation, isOnline, user, qc]);
 
   const updateProperty = useCallback(async (id: string, property: Partial<Omit<Property, "id">>) => {
     await updateMutation.mutateAsync({ id, property });

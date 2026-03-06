@@ -33,6 +33,16 @@ export const isValidDate = (val: unknown): boolean => {
   return !isNaN(d.getTime()) && val.length >= 8;
 };
 
+/** Zentrale Datumslogik: Enddatum muss nach Startdatum liegen (Vorschlag 8). Gibt Fehlermeldung oder null zurück. */
+export function validateDateRange(start: string, end: string): string | null {
+  if (!start || !end) return null;
+  const startTime = new Date(start).getTime();
+  const endTime = new Date(end).getTime();
+  if (isNaN(startTime) || isNaN(endTime)) return null;
+  if (endTime < startTime) return "Enddatum muss nach dem Startdatum liegen.";
+  return null;
+}
+
 /** IMP20-12: Validate German phone numbers — landline & mobile (+49, 0xxx) */
 export const isValidPhoneDE = (phone: string): boolean => {
   const cleaned = phone.replace(/[\s\-/().]/g, "");

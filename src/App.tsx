@@ -24,33 +24,7 @@ import { initErrorTracking } from "@/lib/errorTracking";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
 
-/* OPT-40: Route path constants */
-const ROUTES = {
-  HOME: "/",
-  PERSONAL_DASHBOARD: "/dashboard",
-  HOCKEY_STICK: "/hockey-stick",
-  AUTH: "/auth",
-  ONBOARDING: "/onboarding",
-  SETTINGS: "/einstellungen",
-  CONTACTS: "/kontakte",
-  TODOS: "/aufgaben",
-  LOANS: "/darlehen",
-  DEALS: "/deals",
-  CRM: "/crm",
-  REPORTS: "/berichte",
-  RENT: "/mietuebersicht",
-  CONTRACTS: "/vertraege",
-  FORECAST: "/forecast",
-  AI: "/immo-ai",
-  NK: "/nebenkosten",
-  ANALYSE: "/analyse",
-  PROPERTY: "/objekt",
-  INVITATION: "/einladung",
-  DOKUMENTE: "/dokumente",
-  WARTUNG: "/wartungsplaner",
-  NEWSTICKER: "/newsticker",
-  BEWERTUNG: "/bewertung",
-} as const;
+import { ROUTES } from "@/lib/routes";
 
 // Lazy imports with preloading
 const dashboardImport = () => import("@/pages/Dashboard");
@@ -79,6 +53,7 @@ const wartungsplanerImport = () => import("@/pages/Wartungsplaner");
 const hockeyStickImport = () => import("@/pages/HockeyStickPage");
 const newstickerImport = () => import("@/pages/Newsticker");
 const bewertungImport = () => import("@/pages/ImmobilienBewertung");
+const objekteListImport = () => import("@/pages/ObjekteList");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -106,6 +81,7 @@ const Wartungsplaner = lazy(wartungsplanerImport);
 const HockeyStickPage = lazy(hockeyStickImport);
 const Newsticker = lazy(newstickerImport);
 const ImmobilienBewertung = lazy(bewertungImport);
+const ObjekteList = lazy(objekteListImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -130,6 +106,7 @@ const preloadRoutes = () => {
   hockeyStickImport();
   newstickerImport();
   bewertungImport();
+  objekteListImport();
 };
 
 const PageLoader = () => (
@@ -251,19 +228,16 @@ const RoleRouter = () => {
 
   if (!user) return <Navigate to={ROUTES.AUTH} replace />;
 
-  // Show onboarding if not completed
   if (!onboardingDone) {
-    return <Onboarding />;
+    return <Navigate to={ROUTES.ONBOARDING} replace />;
   }
 
-  // Tenant portal
   if (role === "tenant") {
-    return <TenantPortal />;
+    return <Navigate to={ROUTES.TENANT_PORTAL} replace />;
   }
 
-  // Handworker portal
   if (role === "handworker") {
-    return <HandworkerPortal />;
+    return <Navigate to={ROUTES.HANDWORKER_PORTAL} replace />;
   }
 
   /* Default page redirect: if user has configured a default page and is on "/",
@@ -280,9 +254,12 @@ const RoleRouter = () => {
     <AppLayout>
       <PageTransition>
         <Routes>
-          {/* Improvement 6: ErrorBoundary per Page — each route wrapped individually */}
+          <Route path={ROUTES.ONBOARDING} element={<ErrorBoundary><Onboarding /></ErrorBoundary>} />
+          <Route path={`${ROUTES.TENANT_PORTAL}/*`} element={<ErrorBoundary><TenantPortal /></ErrorBoundary>} />
+          <Route path={`${ROUTES.HANDWORKER_PORTAL}/*`} element={<ErrorBoundary><HandworkerPortal /></ErrorBoundary>} />
           <Route path={ROUTES.HOME} element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
           <Route path={ROUTES.PERSONAL_DASHBOARD} element={<ErrorBoundary><Dashboard mode="personal" /></ErrorBoundary>} />
+          <Route path={ROUTES.OBJEKTE} element={<ErrorBoundary><ObjekteList /></ErrorBoundary>} />
           <Route path={`${ROUTES.PROPERTY}/:id`} element={<ErrorBoundary><PropertyDetail /></ErrorBoundary>} />
           <Route path={ROUTES.LOANS} element={<ErrorBoundary><Loans /></ErrorBoundary>} />
           <Route path={ROUTES.FORECAST} element={<ErrorBoundary><CashForecast /></ErrorBoundary>} />

@@ -1,9 +1,39 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(({ mode }) => ({
+const DEFAULT_APP_URL = "https://esgroup.lovable.app";
+const DEFAULT_OG_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/db2e2e03-c265-4536-b239-ac0d5f515748/id-preview-ed60820b--1133fd24-00e8-4f21-a81e-39aa4e95c894.lovable.app-1772005444008.png";
+
+/** Plugins: optional tool-specific taggers (e.g. lovable-tagger). Build works without them. */
+async function getPlugins(mode: string) {
+  const env = loadEnv(mode, process.cwd(), "");
+  const plugins: unknown[] = [
+    react(),
+    {
+      name: "html-env",
+      transformIndexHtml: {
+        order: "pre",
+        handler(html: string) {
+          const appUrl = env.VITE_APP_URL || DEFAULT_APP_URL;
+          const ogImage = env.VITE_APP_OG_IMAGE || DEFAULT_OG_IMAGE;
+          return html
+            .replace(/__VITE_APP_URL__/g, appUrl)
+            .replace(/__VITE_APP_OG_IMAGE__/g, ogImage);
+        },
+      },
+    },
+  ];
+  try {
+    const { componentTagger } = await import("lovable-tagger");
+    if (mode === "development" && componentTagger) plugins.push(componentTagger());
+  } catch {
+    /* optional: no tagger — run with any IDE/tool */
+  }
+  return plugins.filter(Boolean);
+}
+
+export default defineConfig(async ({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
@@ -11,7 +41,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: await getPlugins(mode),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

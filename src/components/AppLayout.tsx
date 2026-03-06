@@ -28,145 +28,22 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
 import { MobileOfflineQueue, MobileSearchOverlay } from "@/components/mobile";
-// NotificationCenter import removed — duplicate bell icon with NotificationBell (Devin Review fix)
+// NotificationCenter import removed — duplicate bell icon with NotificationBell
 
-/* Grouped navigation: primary items shown directly, grouped items in dropdowns */
-interface NavItem {
-  path: string;
-  label: string;
-  icon: typeof LayoutDashboard;
-  shortcut: string;
-}
-interface NavGroup {
-  label: string;
-  icon: typeof LayoutDashboard;
-  items: NavItem[];
-}
-type NavEntry = NavItem | NavGroup;
-const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
-
-/* Item 2: Menüpunkte umsortiert — Rechner, Nebenkosten & Cashflow-Prognose zu Finanzen hinzugefügt */
-const navEntries: NavEntry[] = [
-  { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
-  { path: "/dashboard", label: "Dashboard", icon: Sparkles, shortcut: "" },
-  {
-    label: "Finanzen", icon: Landmark,
-    items: [
-      { path: "/darlehen", label: "Darlehen", icon: Landmark, shortcut: "2" },
-      { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
-      { path: "/nebenkosten", label: "Nebenkosten", icon: Receipt, shortcut: "" },
-      { path: "/forecast", label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
-      { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
-      { path: "/analyse", label: "Rechner", icon: Calculator, shortcut: "" },
-      { path: "/hockey-stick", label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
-    ],
-  },
-  {
-    label: "Verwaltung", icon: FileText,
-    items: [
-      { path: "/vertraege", label: "Verträge", icon: FileText, shortcut: "4" },
-      { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
-      { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
-      { path: "/dokumente", label: "Dokumente", icon: FolderOpen, shortcut: "" },
-      { path: "/wartungsplaner", label: "Wartung", icon: Wrench, shortcut: "" },
-    ],
-  },
-  {
-    label: "Akquise", icon: Target,
-    items: [
-      { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
-      { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
-      { path: "/newsticker", label: "Newsticker", icon: Newspaper, shortcut: "" },
-      { path: "/bewertung", label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
-    ],
-  },
-  /* Settings moved to header icon bar — no longer a nav entry */
-];
-
-/* Flat list for keyboard shortcuts, mobile nav and dot indicator */
-const navItems: NavItem[] = navEntries.flatMap(e => isGroup(e) ? e.items : [e]);
-
-/* Desktop top-level entries for dot positioning: groups map to their trigger button index */
-const desktopTopLevelEntries = navEntries.map((entry, idx) => ({
-  idx,
-  isGroup: isGroup(entry),
-  paths: isGroup(entry) ? entry.items.map(i => i.path) : [(entry as NavItem).path],
-}));
+import {
+  navEntries,
+  navItems,
+  desktopTopLevelEntries,
+  isGroup,
+  isRouteActive,
+  buildShortcutMap,
+  ACTION_TO_PATH,
+  NAV_ITEM_COUNT,
+} from "@/components/appLayout/navConfig";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
-
-/* OPT-25: Default keyboard shortcut map for quick lookup */
-const DEFAULT_SHORTCUT_MAP: Record<string, string> = {};
-navItems.forEach(n => { if (n.shortcut) DEFAULT_SHORTCUT_MAP[`Alt+${n.shortcut}`] = n.path; });
-
-/* Map action labels to paths for custom shortcut resolution */
-const ACTION_TO_PATH: Record<string, string> = {
-  "Navigation: Portfolio": "/",
-  "Navigation: Dashboard": "/dashboard",
-  "Navigation: Darlehen": "/darlehen",
-  "Navigation: Mieten": "/mietuebersicht",
-  "Navigation: Verträge": "/vertraege",
-  "Navigation: Kontakte": "/kontakte",
-  "Navigation: Aufgaben": "/aufgaben",
-  "Navigation: Berichte": "/berichte",
-  "Navigation: CRM": "/crm",
-  "Navigation: Deals": "/deals",
-  "Navigation: Hockey Stick Simulator": "/hockey-stick",
-  "Navigation: Einstellungen": "/einstellungen",
-};
-
-/** Normalize a combo string to canonical modifier order: ctrl+alt+shift+key */
-function normalizeCombo(raw: string): string {
-  const parts = raw.toLowerCase().replace(/\s/g, "").split("+");
-  const modifiers: string[] = [];
-  const keys: string[] = [];
-  for (const p of parts) {
-    if (p === "ctrl" || p === "meta") { if (!modifiers.includes("ctrl")) modifiers.push("ctrl"); }
-    else if (p === "alt") { if (!modifiers.includes("alt")) modifiers.push("alt"); }
-    else if (p === "shift") { if (!modifiers.includes("shift")) modifiers.push("shift"); }
-    else keys.push(p);
-  }
-  /* Canonical order: ctrl → alt → shift → key */
-  const ordered: string[] = [];
-  if (modifiers.includes("ctrl")) ordered.push("ctrl");
-  if (modifiers.includes("alt")) ordered.push("alt");
-  if (modifiers.includes("shift")) ordered.push("shift");
-  return [...ordered, ...keys].join("+");
-}
-
-/** Load custom shortcuts from localStorage and build combo→path map */
-function buildShortcutMap(): Record<string, string> {
-  try {
-    const stored = localStorage.getItem("immocontrol_shortcuts");
-    if (stored) {
-      const custom = JSON.parse(stored) as Record<string, string>;
-      const map: Record<string, string> = {};
-      for (const [action, combo] of Object.entries(custom)) {
-        const path = ACTION_TO_PATH[action];
-        if (path && combo) {
-          map[normalizeCombo(combo)] = path;
-        }
-      }
-      if (Object.keys(map).length > 0) return map;
-    }
-  } catch { /* ignore corrupt localStorage */ }
-  /* Fallback to defaults */
-  const map: Record<string, string> = {};
-  for (const [combo, path] of Object.entries(DEFAULT_SHORTCUT_MAP)) {
-    map[normalizeCombo(combo)] = path;
-  }
-  return map;
-}
-
-/* UPD-46: Route matching helper with exact match for root path */
-const isRouteActive = (itemPath: string, currentPath: string): boolean =>
-  itemPath === "/" ? currentPath === "/" : currentPath.startsWith(itemPath);
-
-/* OPT-27: Navigation item count */
-const NAV_ITEM_COUNT = navItems.length;
-
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
@@ -729,7 +606,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
       <main
         id="main-content"
-        className="flex-1 container py-6 pb-24 md:pb-6"
+        className="flex-1 container py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-6 overflow-x-hidden min-w-0"
         onKeyDown={enterToNextHandler}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -776,7 +653,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             return (
               /* UPD-12: Use sub-nav-slide-in animation */
               <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in">
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
                     {group.items.map((item, idx) => {
                       const isActive = isRouteActive(item.path, location.pathname);
                       return (
@@ -784,19 +661,19 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                           key={item.path}
                           to={item.path}
                           onClick={() => setMobileActiveGroup(null)}
-                          className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-[10px] font-medium transition-all duration-200 ${
+                          className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl nav-label-responsive font-medium transition-all duration-200 ${
                             isActive
                               ? "bg-primary/12 text-primary shadow-sm border border-primary/20"
                               : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
                           }`}
                           style={{ animationDelay: `${idx * 30}ms` }}
                         >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
                             isActive ? "bg-primary/15 text-primary" : "bg-secondary/50 text-muted-foreground"
                           }`}>
                             <item.icon className="h-4 w-4" />
                           </div>
-                          <span className="truncate max-w-full leading-tight">{item.label}</span>
+                          <span className="nav-label-wrap max-w-[72px] leading-tight">{item.label}</span>
                         </Link>
                       );
                     })}
@@ -809,11 +686,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <div ref={mobileNavRef} className="flex items-center justify-around py-1 relative">
           <button
             onClick={() => setMobileSearchOpen(true)}
-            className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 text-muted-foreground"
+            className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg nav-label-responsive font-medium transition-all duration-200 relative active:scale-95 text-muted-foreground"
             aria-label="Suche öffnen"
           >
-            <Search className="h-4 w-4" />
-            <span className="truncate max-w-[52px] leading-tight">Suche</span>
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="nav-label-wrap max-w-[56px] leading-tight">Suche</span>
           </button>
           {navEntries.map((entry) => {
             if (isGroup(entry)) {
@@ -823,12 +700,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <button
                   key={entry.label}
                   onClick={() => setMobileActiveGroup(isExpanded ? null : entry.label)}
-                  className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 ${
+                  className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg nav-label-responsive font-medium transition-all duration-200 relative active:scale-95 ${
                     groupActive || isExpanded ? "text-primary scale-105" : "text-muted-foreground"
                   }`}
                 >
-                  <entry.icon className="h-4 w-4" />
-                  <span className="truncate max-w-[52px] leading-tight">{entry.label}</span>
+                  <entry.icon className="h-4 w-4 shrink-0" />
+                  <span className="nav-label-wrap max-w-[56px] leading-tight">{entry.label}</span>
                   {isExpanded && <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary animate-pulse" />}
                 </button>
               );
@@ -842,12 +719,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 data-nav-link
                 onClick={() => setMobileActiveGroup(null)}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg text-[10px] font-medium transition-all duration-200 relative active:scale-95 ${
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg nav-label-responsive font-medium transition-all duration-200 relative active:scale-95 ${
                   isActive ? "text-primary scale-105" : "text-muted-foreground"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
-                <span className="truncate max-w-[52px] leading-tight">{item.label}</span>
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="nav-label-wrap max-w-[56px] leading-tight">{item.label}</span>
               </Link>
             );
           })}

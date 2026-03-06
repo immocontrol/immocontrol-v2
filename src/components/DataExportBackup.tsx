@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/formatters";
  *
  * Exports all user data from Supabase tables into downloadable files.
  * Supports JSON (full backup) and CSV (Excel-compatible) formats.
+ * Column names match Supabase table definitions (see integrations/supabase/types.ts).
  */
 
 interface ExportTable {
@@ -31,7 +32,7 @@ const EXPORT_TABLES: ExportTable[] = [
   {
     name: "tenants",
     label: "Mieter",
-    columns: ["first_name", "last_name", "email", "phone", "rent_amount", "deposit_amount", "move_in_date", "move_out_date", "is_active", "unit_number"],
+    columns: ["first_name", "last_name", "email", "phone", "monthly_rent", "deposit", "move_in_date", "move_out_date", "is_active", "unit_label"],
   },
   {
     name: "loans",
@@ -46,7 +47,7 @@ const EXPORT_TABLES: ExportTable[] = [
   {
     name: "contacts",
     label: "Kontakte",
-    columns: ["name", "email", "phone", "company", "role", "category", "notes"],
+    columns: ["name", "email", "phone", "company", "category", "address", "notes"],
   },
   {
     name: "todos",
@@ -61,7 +62,7 @@ const EXPORT_TABLES: ExportTable[] = [
   {
     name: "rent_payments",
     label: "Mietzahlungen",
-    columns: ["tenant_id", "amount", "due_date", "paid_date", "status", "payment_method"],
+    columns: ["tenant_id", "property_id", "landlord_id", "amount", "due_date", "paid_date", "status", "note"],
   },
 ];
 

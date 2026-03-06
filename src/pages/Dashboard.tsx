@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { DashboardSkeleton, MobileKPIHeader } from "@/components/mobile";
 /* TECH-8: Dynamic imports for heavy dashboard components — reduces initial bundle size */
 const MonthOverMonthComparison = lazy(() => import("@/components/MonthOverMonthComparison").then(m => ({ default: m.MonthOverMonthComparison })));
@@ -197,60 +198,14 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     }, 600);
   }, [qc]);
 
-  /* FUNC-1: Portfolio summary metrics */
-  const portfolioMetrics = useMemo(() => {
-    /* OPT-8: safeDivide for stable calculations */
-    const totalRentPerSqm = safeDivide(stats.totalRent, stats.totalSqm, 0);
-    const avgValuePerUnit = safeDivide(stats.totalValue, stats.totalUnits, 0);
-    const debtToEquityRatio = safeDivide(stats.totalDebt, stats.equity, 0);
-    const annualCashflow = stats.totalCashflow * 12;
-    const cashOnCashReturn = safeDivide(annualCashflow * 100, stats.equity, 0);
-    return { totalRentPerSqm, avgValuePerUnit, debtToEquityRatio, annualCashflow, cashOnCashReturn };
-  }, [stats]);
-
-  /* FUNC-2: Property count by type */
-  const propertyTypeCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    properties.forEach(p => { counts[p.type] = (counts[p.type] || 0) + 1; });
-    return counts;
-  }, [properties]);
-
-  /* FUNC-3: Vacancy detection - properties with no active tenants */
-  const vacantProperties = useMemo(() => {
-    return properties.filter(p => {
-      const propTenants = allTenants.filter(t => t.property_id === p.id && t.is_active);
-      return propTenants.length === 0;
-    });
-  }, [properties, allTenants]);
-
-  /* OPT-11: Memoized total rent from tenants for accuracy */
-  const totalTenantRent = useMemo(() => {
-    return allTenants.filter(t => t.is_active).reduce((s, t) => s + (t.monthly_rent || 0), 0);
-  }, [allTenants]);
-
-  /* IMP20-3: Fix unsafe Record<string, unknown> cast — use typed Property.purchaseDate directly */
-  const avgHoldingPeriodMonths = useMemo(() => {
-    if (properties.length === 0) return 0;
-    const totalMonths = properties.reduce((s, p) => {
-      if (!p.purchaseDate) return s;
-      const months = Math.floor((Date.now() - new Date(p.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 30));
-      return s + months;
-    }, 0);
-    /* IMP-34-20: NaN guard — ensure finite result even with invalid dates */
-    const raw = totalMonths / properties.length;
-    return Number.isFinite(raw) ? Math.round(raw) : 0;
-  }, [properties]);
-
-  /* FUNC-5: Highest and lowest yield properties */
-  const yieldExtremes = useMemo(() => {
-    if (properties.length === 0) return { highest: null, lowest: null };
-    const withYield = properties.map(p => ({
-      ...p,
-      yieldPct: p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice * 100) : 0,
-    }));
-    const sorted = [...withYield].sort((a, b) => b.yieldPct - a.yieldPct);
-    return { highest: sorted[0], lowest: sorted[sorted.length - 1] };
-  }, [properties]);
+  const {
+    portfolioMetrics,
+    propertyTypeCounts,
+    vacantProperties,
+    totalTenantRent,
+    avgHoldingPeriodMonths,
+    yieldExtremes,
+  } = useDashboardMetrics(properties, stats, allTenants);
 
   /* BUG-FIX: Move greeting useMemo BEFORE early returns to satisfy React Rules of Hooks.
      Hooks must always be called in the same order — conditional returns must come after all hooks. */

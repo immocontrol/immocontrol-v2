@@ -1,73 +1,54 @@
-# Welcome to your Lovable project
+# ImmoControl
 
-## Project info
+Immobilien-Portfolio verwalten: Renditen, Cashflow und Wertentwicklung auf einen Blick.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech-Stack
 
-## How can I edit this code?
+- **Vite** – Build & Dev-Server
+- **React 18** + **TypeScript**
+- **Tailwind CSS** + **shadcn/ui** (Radix)
+- **Supabase** – Auth, DB, Storage
+- **React Query** – Server State
 
-There are several ways of editing your application.
+Das Projekt ist **tool-unabhängig**: Du kannst es in beliebigen IDEs und mit beliebigen Tools (Cursor, VS Code, Lovable, Replit, Bolt, GitHub Codespaces, etc.) bearbeiten. Der Code nutzt Standard-NPM-Skripte und keine plattformspezifischen Pfade.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Lokal starten
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone <REPO_URL>
+cd immocontrol-v2
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+- App: **http://localhost:8080**
+- Build: `npm run build`
+- Preview: `npm run preview`
+- Tests: `npm run test`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Umgebungsvariablen
 
-**Use GitHub Codespaces**
+Lege `.env` bzw. `.env.local` an (siehe `.env.example` falls vorhanden). Typisch:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `VITE_SUPABASE_URL` – Supabase Project URL
+- `VITE_SUPABASE_ANON_KEY` – Supabase anon key
+- `VITE_APP_URL` – (optional) Canonical- und OG-URL der App, z. B. `https://deine-app.de`. Beim Build werden `index.html`-Platzhalter ersetzt.
+- `VITE_APP_OG_IMAGE` – (optional) Voll-URL des OG/Twitter-Bildes. Fallback: Default-Image.
+- `VITE_SENTRY_DSN` – (optional) Wenn gesetzt, können Fehler per `window.__immocontrol_reportError` (z. B. an Sentry) gesendet werden. Fehlermeldungen werden vorher bereinigt (keine Passwörter/PII).
 
-## What technologies are used for this project?
+Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 
-This project is built with:
+## Deployment
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Beliebige Plattform**: `npm run build` → Ordner `dist/` auf einen Static-/SPA-Host (Vercel, Netlify, GitHub Pages, eigener Server) deployen.
+- **Canonical / OG**: Beim Build werden `__VITE_APP_URL__` und `__VITE_APP_OG_IMAGE__` in `index.html` durch die genannten Env-Variablen ersetzt.
 
-## How can I deploy this project?
+## Projektstruktur (wichtig für Tool-Wechsel)
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+- **`src/integrations/auth.ts`** – Einzige Auth-API, die die App nutzt. Implementierung (z. B. Lovable, Supabase direkt) liegt in `src/integrations/` und kann gewechselt werden, ohne den Rest der App anzufassen.
+- **`src/integrations/lovable/`** – Optional; nur wenn du den Lovable-Auth-Adapter nutzt. Beim Wechsel des Tools die Implementierung in `auth.ts` umstellen.
+- **Keine Pflicht zu tool-spezifischen Paketen**: Build läuft auch ohne z. B. `lovable-tagger` (wird in Vite nur optional geladen).
 
-## Can I connect a custom domain to my Lovable project?
+## Lizenz & Support
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Projekt-spezifisch. Bei Fragen: Repo-Issues oder Kontakt des Betreibers.

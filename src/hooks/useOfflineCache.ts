@@ -9,7 +9,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { queryKeys } from "@/lib/queryKeys";
 import { logger } from "@/lib/logger";
 
 const DB_NAME = "immocontrol-offline";
@@ -202,27 +204,28 @@ async function syncPendingToServer(): Promise<number> {
  */
 export function useBackgroundSync() {
   const isOnline = useOnlineStatus();
+  const qc = useQueryClient();
+
+  const runSync = useCallback(() => {
+    syncPendingToServer().then((count) => {
+      if (count > 0) {
+        logger.info(`${count} pending mutations synced`, "OfflineSync");
+        qc.invalidateQueries({ queryKey: queryKeys.properties.all });
+      }
+    });
+  }, [qc]);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.data?.type === "SYNC_PENDING_MUTATIONS" && isOnline) {
-        syncPendingToServer().then((count) => {
-          if (count > 0) logger.info(`${count} pending mutations synced`, "OfflineSync");
-        });
-      }
+      if (event.data?.type === "SYNC_PENDING_MUTATIONS" && isOnline) runSync();
     };
     navigator.serviceWorker?.addEventListener("message", handler);
     return () => navigator.serviceWorker?.removeEventListener("message", handler);
-  }, [isOnline]);
+  }, [isOnline, runSync]);
 
-  /* Auto-sync when coming back online */
   useEffect(() => {
-    if (isOnline) {
-      syncPendingToServer().then((count) => {
-        if (count > 0) logger.info(`${count} pending mutations synced on reconnect`, "OfflineSync");
-      });
-    }
-  }, [isOnline]);
+    if (isOnline) runSync();
+  }, [isOnline, runSync]);
 }
 
 export function useOfflineCache<T>(key: string, fetchFn: () => Promise<T>) {
