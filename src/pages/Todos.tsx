@@ -1,9 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
-import {
-  CheckSquare, Plus, Trash2, Circle, CheckCircle2, Flag, Calendar, Tag,
-  ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search,
-  LayoutList, CalendarDays, MoreHorizontal, Edit2, CheckCheck, Trash,
-} from "lucide-react";
+import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash } from "lucide-react";
 import TodoStats from "@/components/TodoStats";
 import TodoCalendarSync from "@/components/TodoCalendarSync";
 import { RecurringTodos } from "@/components/RecurringTodos";

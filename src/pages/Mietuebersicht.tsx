@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, Search, X, CheckCircle, Clock, AlertCircle, Filter, Download } from "lucide-react";
+import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";

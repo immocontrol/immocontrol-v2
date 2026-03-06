@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Landmark, Building2, Calendar, AlertTriangle, Edit2, Trash2, Search, X, Plus } from "lucide-react";
+import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus } from "lucide-react";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";

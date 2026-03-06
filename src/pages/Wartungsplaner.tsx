@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";

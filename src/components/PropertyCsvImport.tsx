@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { Upload, FileText, CheckCircle, AlertCircle, Download, X, Loader2 } from "lucide-react";
+import { Upload, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Download, X, Loader as Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
