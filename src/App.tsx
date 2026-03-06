@@ -12,6 +12,8 @@ import PageTransition from "@/components/PageTransition";
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ConfigErrorScreen } from "@/components/ConfigErrorScreen";
+import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorInterceptor } from "@/components/ErrorScanner";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
@@ -110,7 +112,7 @@ const preloadRoutes = () => {
 };
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
+  <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-live="polite" aria-label="Seite wird geladen">
     <div className="animate-pulse text-muted-foreground">Laden...</div>
   </div>
 );
@@ -142,6 +144,7 @@ queryClient.setQueryDefaults(queryKeys.forecast.all, { staleTime: 5 * 60_000 });
 /* FUND-14: Add missing query defaults for todos and maintenance — prevents over-fetching */
 queryClient.setQueryDefaults(["todos"], { staleTime: 60_000 });
 queryClient.setQueryDefaults(queryKeys.maintenance.all, { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(["documents"], { staleTime: 2 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -152,7 +155,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  if (!user) return <Navigate to={ROUTES.AUTH} replace />;
+  if (!user) {
+    try { sessionStorage.setItem("immocontrol_return_url", window.location.pathname + window.location.search); } catch { /* ignore */ }
+    return <Navigate to={ROUTES.AUTH} replace />;
+  }
   return <>{children}</>;
 };
 
@@ -211,10 +217,9 @@ const RoleRouter = () => {
     checkOnboarding();
   }, [user]);
 
-  /* BUG-6: Preload all routes eagerly after first render to prevent double-loading on tab switch */
-  /* FUND-19: Delay preloading by 2s so initial render isn't blocked by chunk downloads */
+  /* BUG-6: Preload routes on demand — delay 3s to prioritise initial paint, then preload likely next routes */
   useEffect(() => {
-    const timer = setTimeout(preloadRoutes, 2000);
+    const timer = setTimeout(preloadRoutes, 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -279,7 +284,7 @@ const RoleRouter = () => {
           <Route path={ROUTES.NEWSTICKER} element={<ErrorBoundary><Newsticker /></ErrorBoundary>} />
           <Route path={ROUTES.BEWERTUNG} element={<ErrorBoundary><ImmobilienBewertung /></ErrorBoundary>} />
           <Route path={ROUTES.SETTINGS} element={<ErrorBoundary><Settings /></ErrorBoundary>} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
         </Routes>
       </PageTransition>
     </AppLayout>
@@ -296,6 +301,14 @@ const App = () => {
   /* Unhandled rejection logging is handled by ErrorInterceptor (ErrorScanner.tsx)
    * which registers its own window.unhandledrejection listener. No duplicate
    * handler needed here — that would cause double-logging in the error store. */
+
+  if (!isSupabaseConfigured()) {
+    return (
+      <ThemeProvider defaultTheme="dark">
+        <ConfigErrorScreen />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider defaultTheme="dark">

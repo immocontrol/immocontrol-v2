@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { useProperties } from "@/context/PropertyContext";
 import { extractPdfText } from "@/lib/exposeParser";
 import { extractContractFromText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
+import { sanitizeFormData } from "@/lib/sanitize";
 
 interface ContractRow {
   id: string;
@@ -80,7 +82,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("contracts").insert({
+      const payload = sanitizeFormData({
         user_id: user!.id,
         property_id: form.property_id,
         contract_type: form.contract_type,
@@ -95,6 +97,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
         rent_increase_index: form.rent_increase_index,
         notes: form.notes || null,
       });
+      const { error } = await supabase.from("contracts").insert(payload as Record<string, unknown>);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -102,7 +105,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
       setOpen(false);
       toast.success("Vertrag angelegt");
     },
-    onError: () => toast.error("Fehler beim Anlegen"),
+    onError: createMutationErrorHandler("Vertrag anlegen", "Fehler beim Anlegen"),
   });
 
   const deleteMutation = useMutation({

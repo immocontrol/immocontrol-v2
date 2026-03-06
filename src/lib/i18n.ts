@@ -120,6 +120,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "msg.loading": "Laden...",
     "msg.noResults": "Keine Ergebnisse",
     "msg.confirmDelete": "Wirklich löschen?",
+
+    // Empty states (einheitliche Formulierungen)
+    "empty.messages": "Noch keine Nachrichten",
+    "empty.messages.desc": "Wähle einen Mieter und starte die Konversation",
+    "empty.contacts": "Noch keine Kontakte",
+    "empty.documents": "Noch keine Dokumente",
+    "empty.tasks": "Keine Aufgaben",
+    "empty.list": "Noch keine Einträge",
   },
 
   en: {

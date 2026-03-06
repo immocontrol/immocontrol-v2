@@ -39,6 +39,18 @@ const isLoginLocked = (): boolean => {
   return count >= MAX_ATTEMPTS;
 };
 
+/** Return URL nach Login: wenn Nutzer von geschützter Seite kam, dorthin zurück. */
+const getReturnUrl = (): string => {
+  try {
+    const url = sessionStorage.getItem("immocontrol_return_url");
+    if (url && url.startsWith("/") && url !== "/auth") {
+      sessionStorage.removeItem("immocontrol_return_url");
+      return url;
+    }
+  } catch { /* ignore */ }
+  return "/";
+};
+
 const Auth = () => {
   /* IMP-6: Document title for Auth page */
   useEffect(() => { document.title = "Anmelden – ImmoControl"; }, []);
@@ -115,7 +127,7 @@ const Auth = () => {
                 sessionStorage.removeItem("invitation_token");
                 navigate(`/einladung?token=${invitationToken}`, { replace: true });
               } else {
-                navigate("/", { replace: true });
+                navigate(getReturnUrl(), { replace: true });
               }
               return;
             }
@@ -139,7 +151,7 @@ const Auth = () => {
           sessionStorage.removeItem("invitation_token");
           navigate(`/einladung?token=${invitationToken}`, { replace: true });
         } else {
-          navigate("/", { replace: true });
+          navigate(getReturnUrl(), { replace: true });
         }
       };
       check2FA();
@@ -181,7 +193,7 @@ const Auth = () => {
         sessionStorage.removeItem("invitation_token");
         navigate(`/einladung?token=${invitationToken}`, { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate(getReturnUrl(), { replace: true });
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Ungültiger 2FA-Code");
@@ -234,7 +246,7 @@ const Auth = () => {
         sessionStorage.removeItem("invitation_token");
         navigate(`/einladung?token=${invitationToken}`, { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate(getReturnUrl(), { replace: true });
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Fehler bei der Backup-Code-Verifizierung");
@@ -287,7 +299,7 @@ const Auth = () => {
               sessionStorage.removeItem("invitation_token");
               navigate(`/einladung?token=${invitationToken}`, { replace: true });
             } else {
-              navigate("/", { replace: true });
+              navigate(getReturnUrl(), { replace: true });
             }
             return;
           }
@@ -308,7 +320,7 @@ const Auth = () => {
           sessionStorage.removeItem("invitation_token");
           navigate(`/einladung?token=${invitationToken}`, { replace: true });
         } else {
-          navigate("/");
+          navigate(getReturnUrl(), { replace: true });
         }
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -328,7 +340,7 @@ const Auth = () => {
             sessionStorage.removeItem("invitation_token");
             navigate(`/einladung?token=${invToken}`, { replace: true });
           } else {
-            navigate("/");
+            navigate(getReturnUrl(), { replace: true });
           }
         } else {
           toast.success("Konto erstellt! Bitte bestätige deine E-Mail-Adresse.");

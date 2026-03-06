@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Bot, Send, Trash2, Sparkles, X, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/lib/logger";
 import { rateLimiters } from "@/lib/rateLimiter";
@@ -466,7 +467,7 @@ export default function ImmoAIBubble() {
                   }`}>
                     {msg.role === "assistant" ? (
                       <div className="prose prose-xs dark:prose-invert max-w-none text-xs [&_p]:my-0.5 [&_ul]:my-0.5 [&_ol]:my-0.5 [&_li]:my-0 [&_h3]:mt-2 [&_h3]:mb-0.5 [&_h3]:text-sm [&_table]:text-[10px]">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{msg.content}</ReactMarkdown>
                       </div>
                     ) : (
                       <p className="text-xs whitespace-pre-wrap">{msg.content}</p>

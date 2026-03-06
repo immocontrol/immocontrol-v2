@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
@@ -67,6 +67,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
   const qc = useQueryClient();
+  const isFetching = useIsFetching();
   const { indicatorRef: pullIndicatorRef } = usePullToRefresh({
     onRefresh: async () => {
       await qc.invalidateQueries();
@@ -631,7 +632,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* MOB-11: Enhanced offline queue with action sync — mobile only */}
       <div className="md:hidden"><MobileOfflineQueue /></div>
       {/* UX-7: Desktop offline indicator (hidden on mobile where MobileOfflineQueue handles it) */}
-      <div className="hidden md:block"><OfflineIndicator /></div>
+      <div className="hidden md:flex md:items-center md:gap-2">
+        <OfflineIndicator />
+        {isFetching > 0 && (
+          <span className="text-[10px] text-muted-foreground animate-pulse" role="status" aria-live="polite">
+            Daten werden aktualisiert…
+          </span>
+        )}
+      </div>
 
       {/* MOB-15: Mobile search overlay */}
       <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />

@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, Trash2, Sparkles, User, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/lib/logger";
 import { rateLimiters } from "@/lib/rateLimiter";
@@ -231,7 +232,7 @@ export default function ImmoAI() {
                     {msg.role === "assistant" ? (
                       <div className="relative group">
                         <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h3]:mt-3 [&_h3]:mb-1 [&_table]:text-xs">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{msg.content}</ReactMarkdown>
                         </div>
                         {/* UI-UPDATE-47: Tooltip on copy AI message action */}
                         <Tooltip>

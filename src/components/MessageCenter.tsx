@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { isDeepSeekConfigured, summarizeMessages } from "@/integrations/ai/extractors";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Tenant {
   id: string;
@@ -254,9 +255,11 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
               </Dialog>
               <div className="bg-secondary/30 rounded-lg p-3 h-64 overflow-y-auto space-y-2 mb-3">
                 {messages.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">
-                    Noch keine Nachrichten
-                  </p>
+                  <EmptyState
+                    icon={MessageCircle}
+                    title="Noch keine Nachrichten"
+                    description="Wähle einen Mieter und starte die Konversation"
+                  />
                 ) : (
                   messages.map((msg, idx) => {
                     const isMine = msg.sender_id === user?.id;

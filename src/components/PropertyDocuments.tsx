@@ -9,6 +9,7 @@ import { formatFileSize } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import FileImportPicker from "@/components/FileImportPicker";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Document {
   id: string;
@@ -200,7 +201,11 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       {loading ? (
         <p className="text-xs text-muted-foreground">Laden...</p>
       ) : documents.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-4 text-center">Noch keine Dokumente hochgeladen</p>
+        <EmptyState
+          icon={FolderOpen}
+          title="Noch keine Dokumente"
+          description="Lade Verträge, Abrechnungen oder Fotos hoch"
+        />
       ) : (
         <div className="space-y-2">
           {documents.map((doc) => (

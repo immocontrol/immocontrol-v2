@@ -34,16 +34,8 @@ interface MobileImprovementsProviderProps {
 }
 
 /**
- * MOB-IMPROVE-14: Register service worker for cache strategy
- * Uses cache-first for static assets, network-first for API calls
+ * MOB-IMPROVE-14: Service worker is registered once in main.tsx via serviceWorkerRegistration.ts
  */
-function registerServiceWorker() {
-  if ("serviceWorker" in navigator && import.meta.env.PROD) {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      /* SW registration failed — app works without it */
-    });
-  }
-}
 
 /**
  * MOB-IMPROVE-17 + MOB-IMPROVE-18: Inject safe area + OLED CSS
@@ -235,11 +227,6 @@ export const MobileImprovementsProvider = memo(function MobileImprovementsProvid
   children,
 }: MobileImprovementsProviderProps) {
   const isMobile = useIsMobile();
-
-  // MOB-IMPROVE-14: Register service worker
-  useEffect(() => {
-    registerServiceWorker();
-  }, []);
 
   // MOB-IMPROVE-17 + MOB-IMPROVE-18 + MOB-IMPROVE-10: Inject mobile CSS
   useEffect(() => {

@@ -41,7 +41,9 @@ Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 
 ## Deployment
 
-- **Beliebige Plattform**: `npm run build` → Ordner `dist/` auf einen Static-/SPA-Host (Vercel, Netlify, GitHub Pages, eigener Server) deployen.
+- **Vercel**: Repo auf [vercel.com](https://vercel.com) importieren (Import Git Repository). `vercel.json` ist vorhanden – Build & Deploy laufen automatisch. Env-Variablen (Supabase, optional DeepSeek) im Vercel-Dashboard unter Settings → Environment Variables setzen.
+- **Netlify**: Repo auf [netlify.com](https://netlify.com) importieren. `netlify.toml` ist vorhanden – Build-Kommando und `publish`-Ordner sind gesetzt. **Wichtig:** `VITE_SUPABASE_URL` und `VITE_SUPABASE_PUBLISHABLE_KEY` unter Site configuration → Environment variables eintragen, Scope **Build** (oder **All**) wählen, danach „Clear cache and deploy site“. Ohne diese Variablen erscheint nach dem Deploy eine Konfigurations-Hinweisseite statt der App.
+- **Beliebige Plattform**: `npm run build` → Ordner `dist/` auf einen Static-/SPA-Host (GitHub Pages, eigener Server) deployen.
 - **Canonical / OG**: Beim Build werden `__VITE_APP_URL__` und `__VITE_APP_OG_IMAGE__` in `index.html` durch die genannten Env-Variablen ersetzt.
 
 ## Projektstruktur (wichtig für Tool-Wechsel)
@@ -49,6 +51,14 @@ Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 - **`src/integrations/auth.ts`** – Einzige Auth-API, die die App nutzt. Implementierung (z. B. Lovable, Supabase direkt) liegt in `src/integrations/` und kann gewechselt werden, ohne den Rest der App anzufassen.
 - **`src/integrations/lovable/`** – Optional; nur wenn du den Lovable-Auth-Adapter nutzt. Beim Wechsel des Tools die Implementierung in `auth.ts` umstellen.
 - **Keine Pflicht zu tool-spezifischen Paketen**: Build läuft auch ohne z. B. `lovable-tagger` (wird in Vite nur optional geladen).
+
+## Fundamentale Verbesserungen (Auswahl)
+
+- **UX**: Einheitliche Empty-State-Komponente (Nachrichten, Dokumente); Return-URL nach Login (Weiterleitung zur zuvor aufgerufenen Seite); 404 mit A11y (aria-live, Fokus) und ErrorBoundary; Lade-Anzeige mit role="status"/aria-live.
+- **Performance**: Route-Preload auf 3s verzögert; Service-Worker-Registration zentral in main.tsx; Document-Queries mit staleTime 2 Min.
+- **Sicherheit**: AI-Markdown mit rehype-sanitize (XSS-Schutz); CSP um api.deepseek.com erweitert; Form-Sanitization vor Supabase (Verträge); zentraler Mutation-Error-Handler (Vertrag anlegen).
+- **Barrierefreiheit**: PageLoader und 404-Countdown als Live-Region; Fokus-Ring für „Zurück zum Portfolio“.
+- **Daten-Feedback**: Indikator „Daten werden aktualisiert…“ im Layout bei laufendem Refetch; einheitliche Empty-State-Texte in i18n.
 
 ## Lizenz & Support
 
