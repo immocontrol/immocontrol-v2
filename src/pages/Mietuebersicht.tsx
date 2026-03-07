@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart } from "lucide-react";
+import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -240,6 +240,9 @@ const Mietuebersicht = () => {
           </Link>
           <Link to={ROUTES.REPORTS} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Zu Berichte">
             <FileBarChart className="h-3.5 w-3.5" /> Berichte
+          </Link>
+          <Link to={`${ROUTES.CRM}?tab=scout`} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Gewerbe finden">
+            <Store className="h-3.5 w-3.5" /> Gewerbe finden
           </Link>
         </div>
       </div>

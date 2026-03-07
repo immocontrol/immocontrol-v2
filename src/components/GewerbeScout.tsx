@@ -567,6 +567,26 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
 
         {results.length > 0 && (
           <div className="space-y-2">
+            {sortedResults.length === 0 && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 p-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-amber-800 dark:text-amber-200">Alle {results.length} Treffer wurden durch die Filter ausgeblendet.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-800"
+                  onClick={() => {
+                    setOnlyWithPhone(false);
+                    setOnlyWithWebsite(false);
+                    setOnlyWithEmail(false);
+                    setMinSize(0);
+                    setPoiTypeFilter("all");
+                  }}
+                  aria-label="Filter zurücksetzen"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Filter zurücksetzen
+                </Button>
+              </div>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-medium" id="scout-results-heading">
                 Gefundene Gewerbe {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}

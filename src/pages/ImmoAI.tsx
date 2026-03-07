@@ -38,6 +38,7 @@ const SUGGESTIONS = [
   "Welche Objekte haben den höchsten Cashflow?",
   "Zeige mir meine Objekte mit der besten Brutto-Rendite",
   "Gibt es überfällige Mietzahlungen oder offene Posten?",
+  "Welche Objekte haben den höchsten Verkehrswert?",
 ];
 
 export default function ImmoAI() {

@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Hinweis bei 0 Treffern durch Filter** — Wenn alle Treffer durch Filter ausgeblendet werden, erscheint ein Hinweis mit „Filter zurücksetzen“-Button (auffälliger Block).
+- **Synergien: Mietübersicht, Immo-AI** — Mietübersicht Kopfzeile: Link „Gewerbe finden“ (CRM Scout). Immo-AI: Vorschlagsfrage „Welche Objekte haben den höchsten Verkehrswert?“.
 - **Gewerbe-Scout: Filter zurücksetzen, Refactor** — Button „Filter zurücksetzen“ setzt alle Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail) zurück; nur sichtbar, wenn mindestens ein Filter aktiv. Refactor: gültige Umkreiswerte in VALID_RADIUS_VALUES ausgelagert.
 - **Synergien: Dashboard, CRM Leads → Gewerbe-Scout** — Dashboard Empty State (keine Objekte): Button „Gewerbe finden“. CRM Leads Empty State: Button „Gewerbe suchen“ wechselt zum Tab Gewerbe-Scout. Immo-AI: Vorschlagsfrage „Gibt es überfällige Mietzahlungen oder offene Posten?“.
 - **Gewerbe-Scout: 5 km, „Nur mit E-Mail“, Synergien** — Umkreis-Option 5 km; Filter „Nur mit E-Mail“ (persistiert in sessionStorage); Empty-State-Tipp erwähnt 3 km/5 km; Hinweistext bei >100 Treffern um „Nur mit E-Mail“ ergänzt.
