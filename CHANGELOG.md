@@ -8,6 +8,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Mietübersicht → Nebenkosten** — Link „Nebenkostenabrechnung“ in Kopfzeile
+- **PropertyDetail → Nebenkosten** — Link „Nebenkostenabrechnung“ in Finanz-Sektion
+- **DashboardActionCenter** — Kachel „X NK-Entwürfe“ wenn Draft-Nebenkosten vorhanden; verlinkt auf /nebenkosten
+- **Immo-Chat** — Vorgeschlagene Frage „Gibt es offene Nebenkostenabrechnungen oder Entwürfe?“; Kontext um utility_billings (Edge Function) erweitert
 - **MessageCenter: suggestReply** — KI-Button „Antwort vorschlagen“ für Vermieter-Nachrichten (DeepSeek)
 - **QuickActions** — Nebenkosten und Immo-AI als Schnellaktionen (9 und 0)
 - **Nebenkosten → Objekt** — Link „Zum Objekt“ bei Abrechnungsdetail

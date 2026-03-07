@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -372,9 +372,14 @@ const PropertyDetail = () => {
             <span>Getilgt</span>
             <span>{formatCurrency(property.purchasePrice - property.remainingDebt)}</span>
           </div>
-          <Link to={`/darlehen${property?.id ? `?property=${property.id}` : ""}`} className="text-xs text-primary hover:underline mt-2 inline-block">
-            Darlehen bearbeiten →
-          </Link>
+          <div className="flex flex-wrap gap-3 mt-2">
+            <Link to={`/darlehen${property?.id ? `?property=${property.id}` : ""}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
+              Darlehen bearbeiten →
+            </Link>
+            <Link to="/nebenkosten" className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
+              <Receipt className="h-3 w-3" /> Nebenkostenabrechnung
+            </Link>
+          </div>
         </div>
       </div>
 

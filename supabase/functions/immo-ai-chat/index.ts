@@ -104,7 +104,7 @@ serve(async (req) => {
     const { messages } = (await req.json()) as { messages: ChatMessage[] };
 
     // Fetch user's portfolio data for context
-    const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes, dealsRes, viewingsRes, contactsRes, rentPaymentsRes] = await Promise.all([
+    const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes, dealsRes, viewingsRes, contactsRes, rentPaymentsRes, utilityBillingsRes] = await Promise.all([
       supabase.from("properties").select("*").order("name"),
       supabase.from("tenants").select("*, properties(name, address)").order("last_name"),
       supabase.from("loans").select("*, properties(name)").order("created_at", { ascending: false }),
@@ -114,6 +114,7 @@ serve(async (req) => {
       supabase.from("property_viewings").select("id, title, address, rating, notes, pro_points, contra_points, visited_at").order("visited_at", { ascending: false, nullsFirst: false }).limit(15),
       supabase.from("contacts").select("id, name, company, category").is("deleted_at", null).order("name").limit(50),
       supabase.from("rent_payments").select("id, amount, status, due_date, tenant_id, property_id").in("status", ["pending", "overdue"]).order("due_date", { ascending: true }).limit(30),
+      supabase.from("utility_billings").select("id, property_id, status, billing_period_start, billing_period_end").order("created_at", { ascending: false }).limit(20),
     ]);
 
     const properties = (propertiesRes.data || []) as PropertyRow[];
@@ -125,6 +126,7 @@ serve(async (req) => {
     const viewings = (viewingsRes.data || []) as Array<{ title?: string; address?: string; rating?: number; notes?: string; pro_points?: string; contra_points?: string }>;
     const contacts = (contactsRes.data || []) as Array<{ name?: string; company?: string | null; category?: string }>;
     const rentPayments = (rentPaymentsRes.data || []) as Array<{ amount?: number; status?: string; due_date?: string; tenant_id?: string; property_id?: string }>;
+    const utilityBillings = (utilityBillingsRes.data || []) as Array<{ status?: string; property_id?: string; billing_period_start?: string; billing_period_end?: string }>;
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -196,6 +198,9 @@ ${contacts.map((c) => `- ${c.name ?? "k.A."} | ${c.company ?? ""} | ${c.category
 
 ## Offene/Überfällige Mietzahlungen (${rentPayments.length})
 ${rentPayments.map((p) => `- ${Number(p.amount ?? 0).toLocaleString("de-DE")} € | Fällig: ${p.due_date ?? "k.A."} | Status: ${p.status ?? "?"}`).join("\n")}
+
+## Nebenkostenabrechnungen (${utilityBillings.length})
+${utilityBillings.map((b) => `- Status: ${b.status ?? "k.A."} | Zeitraum: ${b.billing_period_start ?? "k.A."} – ${b.billing_period_end ?? "k.A."}`).join("\n")}
 `.trim();
 
     const systemPrompt = `Du bist "Immo AI", ein intelligenter Immobilien-Assistent für einen deutschen Immobilieninvestor. Du hast Zugriff auf das komplette Portfolio des Nutzers.

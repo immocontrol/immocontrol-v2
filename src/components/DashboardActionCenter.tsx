@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera } from "lucide-react";
+import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,7 +24,7 @@ const DashboardActionCenter = () => {
   const { data, isLoading: loading } = useQuery({
     queryKey: queryKeys.dashboard.actions(user?.id ?? ""),
     queryFn: async () => {
-      const [ticketsRes, paymentsRes, messagesRes, tenantsRes, contactsRes, dealsRes, viewingsRes] = await Promise.all([
+      const [ticketsRes, paymentsRes, messagesRes, tenantsRes, contactsRes, dealsRes, viewingsRes, draftBillingsRes] = await Promise.all([
         supabase.from("tickets").select("id, status, title, property_id, created_at, category, priority, assigned_to_contact_id, assigned_to_user_id, actual_cost, estimated_cost").eq("landlord_id", user!.id).in("status", ["open", "in_progress"]).order("created_at", { ascending: false }).limit(10),
         supabase.from("rent_payments").select("id, status, amount").eq("landlord_id", user!.id).eq("status", "overdue"),
         supabase.from("messages").select("id, is_read, sender_id").eq("is_read", false).neq("sender_id", user!.id).limit(100),
@@ -32,6 +32,7 @@ const DashboardActionCenter = () => {
         supabase.from("contacts").select("id").eq("category", "Handwerker"),
         supabase.from("deals").select("id").eq("user_id", user!.id).eq("stage", "besichtigung"),
         supabase.from("property_viewings").select("id").eq("user_id", user!.id).order("visited_at", { ascending: false }).limit(5),
+        supabase.from("utility_billings").select("id").eq("user_id", user!.id).eq("status", "draft"),
       ]);
       const tickets = ticketsRes.data || [];
       const assignedTickets = tickets.filter(t => t.assigned_to_contact_id || t.assigned_to_user_id);
@@ -42,11 +43,13 @@ const DashboardActionCenter = () => {
       // Synergy 2: Total overdue amount
       const overdueAmount = (paymentsRes.data || []).reduce((s, p) => s + Number(p.amount || 0), 0);
       
+      const draftBillingsCount = draftBillingsRes.data?.length || 0;
       return {
         recentTickets: tickets.slice(0, 5),
         overdueAmount,
         dealsInBesichtigung: dealsRes.data?.length || 0,
         recentViewings: viewingsRes.data || [],
+        draftBillings: draftBillingsCount,
         stats: {
           openTickets: tickets.filter(t => t.status === "open").length,
           inProgressTickets: tickets.filter(t => t.status === "in_progress").length,
@@ -74,6 +77,7 @@ const DashboardActionCenter = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => qc.invalidateQueries({ queryKey: queryKeys.dashboard.actions(user.id) }))
       .on("postgres_changes", { event: "*", schema: "public", table: "deals" }, () => qc.invalidateQueries({ queryKey: queryKeys.dashboard.actions(user.id) }))
       .on("postgres_changes", { event: "*", schema: "public", table: "property_viewings" }, () => qc.invalidateQueries({ queryKey: queryKeys.dashboard.actions(user.id) }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "utility_billings" }, () => qc.invalidateQueries({ queryKey: queryKeys.dashboard.actions(user.id) }))
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
@@ -82,6 +86,7 @@ const DashboardActionCenter = () => {
   const recentTickets = data?.recentTickets ?? [];
   const recentViewings = data?.recentViewings ?? [];
   const dealsInBesichtigung = data?.dealsInBesichtigung ?? 0;
+  const draftBillings = data?.draftBillings ?? 0;
   const overdueAmount = data?.overdueAmount ?? 0;
   const totalActions = stats.openTickets + stats.overduePayments + stats.unreadMessages;
 
@@ -96,7 +101,7 @@ const DashboardActionCenter = () => {
     );
   }
 
-  if (totalActions === 0 && recentTickets.length === 0 && dealsInBesichtigung === 0 && recentViewings.length === 0) return null;
+  if (totalActions === 0 && recentTickets.length === 0 && dealsInBesichtigung === 0 && recentViewings.length === 0 && draftBillings === 0) return null;
 
   const categoryIcons: Record<string, string> = {
     repair: "🔧", damage: "⚠️", maintenance: "🛠️", question: "❓", other: "📋",
@@ -190,8 +195,8 @@ const DashboardActionCenter = () => {
         </div>
       </div>
 
-      {/* Synergy: Deals in Besichtigung + Besichtigungen — verbindet Akquise mit Objektmanagement */}
-      {(dealsInBesichtigung > 0 || recentViewings.length > 0) && (
+      {/* Synergy: Deals in Besichtigung + Besichtigungen + Nebenkosten-Entwürfe */}
+      {(dealsInBesichtigung > 0 || recentViewings.length > 0 || draftBillings > 0) && (
         <div className="flex flex-wrap gap-2 mb-4">
           {dealsInBesichtigung > 0 && (
             <Link
@@ -211,6 +216,17 @@ const DashboardActionCenter = () => {
               <Camera className="h-4 w-4 text-muted-foreground" />
               <span>{recentViewings.length} Besichtigung{recentViewings.length !== 1 ? "en" : ""}</span>
               <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            </Link>
+          )}
+          {draftBillings > 0 && (
+            <Link
+              to="/nebenkosten"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gold/10 border border-gold/20 hover:bg-gold/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
+              aria-label="Entwürfe Nebenkostenabrechnung"
+            >
+              <Receipt className="h-4 w-4 text-gold" />
+              <span>{draftBillings} NK-Entwurf{draftBillings !== 1 ? "e" : ""}</span>
+              <ArrowRight className="h-3 w-3 text-gold" />
             </Link>
           )}
         </div>

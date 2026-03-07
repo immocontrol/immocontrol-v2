@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp } from "lucide-react";
+import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -233,6 +233,9 @@ const Mietuebersicht = () => {
           <RentIncreaseWizard />
           <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]">
             <TrendingUp className="h-3.5 w-3.5" /> Index-Mietanpassung prüfen
+          </Link>
+          <Link to="/nebenkosten" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline ml-2 touch-target min-h-[44px]">
+            <FileText className="h-3.5 w-3.5" /> Nebenkostenabrechnung
           </Link>
         </div>
       </div>

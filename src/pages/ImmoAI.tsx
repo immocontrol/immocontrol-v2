@@ -29,6 +29,7 @@ const SUGGESTIONS = [
   "Wie viele Deals habe ich in Besichtigung?",
   "Fasse meine letzten Besichtigungen kurz zusammen",
   "Wie viele offene Tickets habe ich?",
+  "Gibt es offene Nebenkostenabrechnungen oder Entwürfe?",
 ];
 
 export default function ImmoAI() {
