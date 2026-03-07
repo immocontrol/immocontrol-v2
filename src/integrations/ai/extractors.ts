@@ -38,6 +38,20 @@ export interface ExtractedDealData {
   score_reason?: string;
 }
 
+/** Extrahierte Darlehensfelder aus PDF/Text */
+export interface ExtractedLoanFields {
+  bank_name?: string;
+  loan_amount?: number;
+  remaining_balance?: number;
+  interest_rate?: number;
+  repayment_rate?: number;
+  monthly_payment?: number;
+  fixed_interest_until?: string; // YYYY-MM-DD
+  start_date?: string;
+  loan_type?: string;
+  notes?: string;
+}
+
 const SYSTEM_JSON = "Antworte ausschließlich mit gültigem JSON, ohne Code-Block oder Erklärung.";
 
 /**
@@ -102,6 +116,35 @@ ${text.slice(0, 14000)}
     { systemPrompt: SYSTEM_JSON, maxTokens: 1024 }
   );
   return parseJsonSafe<ExtractedDealData>(raw);
+}
+
+/**
+ * Darlehens-Text (z. B. aus Kreditvertrags-PDF) analysieren und strukturierte Felder extrahieren.
+ */
+export async function extractLoanFromText(text: string): Promise<ExtractedLoanFields> {
+  const prompt = `Analysiere den folgenden Darlehens-/Kreditvertragstext und extrahiere die genannten Felder.
+Antworte NUR mit einem JSON-Objekt mit genau diesen Keys (fehlende Werte weglassen oder null):
+- bank_name: Name der Bank (z. B. "Sparkasse XY")
+- loan_amount: Darlehensbetrag in Euro (Zahl)
+- remaining_balance: Restschuld in Euro (Zahl)
+- interest_rate: Zinssatz in % (Zahl)
+- repayment_rate: Tilgungssatz in % (Zahl)
+- monthly_payment: Monatliche Rate in Euro (Zahl)
+- fixed_interest_until: Ende der Zinsbindung im Format YYYY-MM-DD (String)
+- start_date: Vertragsbeginn/Auszahlung YYYY-MM-DD (String)
+- loan_type: "annuity" | "bullet" | "variable" | "kfw" falls erkennbar
+- notes: kurze Besonderheiten (1–2 Sätze) oder weglassen
+
+Text:
+---
+${text.slice(0, 12000)}
+---`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: SYSTEM_JSON, maxTokens: 512 }
+  );
+  return parseJsonSafe<ExtractedLoanFields>(raw);
 }
 
 const DOC_CATEGORIES = [

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
-import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash, Target } from "lucide-react";
 import TodoStats from "@/components/TodoStats";
 import TodoCalendarSync from "@/components/TodoCalendarSync";
 import { RecurringTodos } from "@/components/RecurringTodos";
@@ -108,6 +109,7 @@ const emptyForm = {
 };
 
 const Todos = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const qc = useQueryClient();
   const haptic = useHaptic();
@@ -635,16 +637,21 @@ const Todos = () => {
               {view === "today" ? "Heute nichts geplant — genieße den freien Tag!" : view === "upcoming" ? "Keine bevorstehenden Aufgaben" : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."}
             </p>
             {(view === "inbox" || view === "today") && (
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={() => {
-                  const input = document.querySelector<HTMLInputElement>("[data-todo-input]");
-                  input?.focus();
-                }}
-              >
-                <Plus className="h-3.5 w-3.5" /> Aufgabe hinzufügen
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  size="sm"
+                  className="gap-1.5 touch-target min-h-[44px]"
+                  onClick={() => {
+                    const input = document.querySelector<HTMLInputElement>("[data-todo-input]");
+                    input?.focus();
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" /> Aufgabe hinzufügen
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate("/crm")} className="gap-1.5 touch-target min-h-[44px]">
+                  <Target className="h-3.5 w-3.5" /> Zu CRM
+                </Button>
+              </div>
             )}
           </div>
         ) : (

@@ -28,6 +28,9 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 - **Dokumente-Kategorisierung:**  
   Beim Hochladen: KI schlägt Kategorie vor (Mietvertrag, Nebenkostenabrechnung, …) anhand des Inhalts.
 
+- **Darlehens-PDF mit DeepSeek:**  
+  ✅ Umgesetzt (LoanPdfImport). Wenn Regex nur wenige Felder findet, nutzt die App bei gesetztem VITE_DEEPSEEK_API_KEY `extractLoanFromText` zur AI-Extraktion von Bank, Betrag, Zinssatz, Tilgung, Zinsbindung etc.
+
 - **E-Mails / Nachrichten:**  
   (Falls du Mieter-Anfragen o. Ä. in der App abbildest) KI fasst Anfrage zusammen, schlägt Kategorie oder Standardantwort vor.
 

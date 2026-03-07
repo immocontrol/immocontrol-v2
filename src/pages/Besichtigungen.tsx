@@ -515,7 +515,9 @@ const Besichtigungen = () => {
             </p>
             <p className="text-xs text-muted-foreground mb-4">
               Tipp: Deals in Stage „Besichtigung“ erzeugen automatisch einen Besichtigungseintrag.{" "}
-              <Link to="/deals" className="text-primary hover:underline">Zu Deals →</Link>
+              <Link to="/deals" className="text-primary hover:underline">Zu Deals</Link>
+              <span className="text-muted-foreground mx-1">·</span>
+              <Link to="/dokumente" className="text-primary hover:underline">Dokumente</Link>
             </p>
             <Button onClick={() => openAdd(false)} className="touch-target min-h-[44px]">
               <Plus className="h-4 w-4 mr-2" />

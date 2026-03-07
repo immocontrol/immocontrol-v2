@@ -20,6 +20,9 @@
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge | Empty State: Link „Verträge verwalten“ |
 | **Darlehen** | Objekte, Deals | Empty State: Links „Objekt anlegen“, „Deals“ |
+| **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen |
+| **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
+| **Todos** | CRM | Empty State: Button „Zu CRM“ |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |

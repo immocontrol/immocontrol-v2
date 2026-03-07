@@ -13,30 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { extractPdfText } from "@/lib/exposeParser";
 
 interface DocumentOCRProps {
   onTextExtracted?: (text: string) => void;
-}
-
-/** Extract text from PDF using pdfjs-dist */
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items
-      .map((item: { str?: string }) => item.str || "")
-      .join(" ");
-    pages.push(text.trim());
-  }
-
-  return pages.filter(Boolean).join("\n\n--- Seite ---\n\n");
 }
 
 /** Preprocess image using Canvas for better readability, then return data URL */

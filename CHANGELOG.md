@@ -49,7 +49,13 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Dokumente** — Empty State mit EmptyState-Komponente; Link „Verträge verwalten“
 - **Darlehen** — Empty State: Links „Objekt anlegen“, „Deals“
 - **PropertyDetail** — Link „Darlehen bearbeiten“ in Finanzierungs-Sektion
-- **LoanPdfImport** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
+- **LoanPdfImport** — Refactoring: `extractPdfText` aus exposeParser; bei DeepSeek-Konfiguration AI-Extraktion (`extractLoanFromText`) wenn Regex wenig findet
+- **DocumentOCR** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
+- **Objekte** — Empty State: Links Deals, Besichtigungen (Synergien)
+- **Besichtigungen** — Empty State: Link Dokumente hochladen
+- **Todos** — Empty State: Button „Zu CRM"
+- **PWA** — Shortcuts um Objekte, Aufgaben, CRM erweitert
+- **KeyboardShortcutOverlay** — Shortcut Q für Schnellaktion dokumentiert
 
 ### Behoben
 

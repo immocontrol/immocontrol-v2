@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Plus, Search } from "lucide-react";
+import { Building2, Plus, Search, Briefcase, Camera } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
@@ -97,7 +97,19 @@ const ObjekteList = () => {
               ? "Suchbegriff anpassen oder Objekt anlegen."
               : "Lege dein erstes Objekt an, um zu starten."
           }
-          action={!search ? <AddPropertyDialog /> : undefined}
+          action={
+            !search ? (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <AddPropertyDialog />
+                <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="touch-target min-h-[44px] gap-2">
+                  <Briefcase className="h-4 w-4" /> Deals
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate("/besichtigungen")} className="touch-target min-h-[44px] gap-2">
+                  <Camera className="h-4 w-4" /> Besichtigungen
+                </Button>
+              </div>
+            ) : undefined
+          }
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">

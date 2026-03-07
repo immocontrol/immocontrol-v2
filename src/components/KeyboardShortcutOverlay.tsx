@@ -30,6 +30,7 @@ const SHORTCUT_GROUPS: { title: string; shortcuts: { keys: string; description: 
       { keys: "Ctrl+N", description: "Neues Objekt anlegen" },
       { keys: "n", description: "Neue Besichtigung (auf /besichtigungen)" },
       { keys: "Alt+I", description: "Immo AI öffnen" },
+      { keys: "Q", description: "Schnellaktion öffnen (Objekt-Detail)" },
       { keys: "?", description: "Tastenkürzel anzeigen" },
     ],
   },

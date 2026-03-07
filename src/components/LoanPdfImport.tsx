@@ -6,6 +6,26 @@ import { FileImportPicker } from "@/components/FileImportPicker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
 import { extractPdfText } from "@/lib/exposeParser";
+import { isDeepSeekConfigured, extractLoanFromText, type ExtractedLoanFields } from "@/integrations/ai/extractors";
+
+/** Merge AI-extracted fields into regex result (AI overwrites non-empty) */
+function mergeLoanFields(
+  regex: Partial<ParsedLoan>,
+  ai: ExtractedLoanFields
+): Partial<ParsedLoan> {
+  const out = { ...regex };
+  if (ai.bank_name) out.bank_name = ai.bank_name;
+  if (typeof ai.loan_amount === "number" && ai.loan_amount > 0) out.loan_amount = ai.loan_amount;
+  if (typeof ai.remaining_balance === "number") out.remaining_balance = ai.remaining_balance;
+  if (typeof ai.interest_rate === "number" && ai.interest_rate > 0) out.interest_rate = ai.interest_rate;
+  if (typeof ai.repayment_rate === "number" && ai.repayment_rate > 0) out.repayment_rate = ai.repayment_rate;
+  if (typeof ai.monthly_payment === "number" && ai.monthly_payment > 0) out.monthly_payment = ai.monthly_payment;
+  if (ai.fixed_interest_until) out.fixed_interest_until = ai.fixed_interest_until;
+  if (ai.start_date) out.start_date = ai.start_date;
+  if (ai.loan_type) out.loan_type = ai.loan_type;
+  if (ai.notes) out.notes = ai.notes;
+  return out;
+}
 
 interface ParsedLoan {
   bank_name: string;
@@ -246,7 +266,18 @@ export function LoanPdfImport({ onImport }: LoanPdfImportProps) {
         return;
       }
 
-      const result = parseLoanFromText(text);
+      let result = parseLoanFromText(text);
+      const regexFieldCount = Object.values(result).filter(v => v && v !== "annuity").length;
+
+      if (isDeepSeekConfigured() && regexFieldCount < 4 && text.trim().length > 200) {
+        try {
+          const aiExtracted = await extractLoanFromText(text);
+          result = mergeLoanFields(result, aiExtracted);
+        } catch {
+          /* Fallback: use regex-only result */
+        }
+      }
+
       const fieldCount = Object.values(result).filter(v => v && v !== "annuity").length;
 
       if (fieldCount < 2) {
