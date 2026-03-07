@@ -17,6 +17,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Teilen:** Button „Teilen“ neben der Trefferüberschrift – kopiert Link zur aktuellen Scout-Suche (`/crm?tab=scout&q=…`) in die Zwischenablage (z. B. zum Verschicken an Kollegen).
 - **Empty State:** Link „Deal anlegen“ (ROUTES.DEALS) ergänzt; Adresssuche nutzt ROUTES.CRM + `?tab=search`.
 - **KI „Warum interessant?“:** Pro Treffer (wenn DeepSeek konfiguriert) Button „Warum interessant?“ – Popover mit Kurzbegründung, warum das Gewerbe für Akquise interessant sein könnte (Lage, Größe, Nutzung). Implementierung: `suggestScoutInterest()` in extractors, `ScoutInterestPopover` in GewerbeScout.
+- **Tastatur:** Escape in der Ergebnisliste entfernt den Fokus und blur der Liste (bessere A11y).
 
 ## CRM
 
@@ -40,6 +41,10 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Nebenkosten:** Empty State um Link „Verträge“ (ROUTES.CONTRACTS) ergänzt.
 - **Dokumente:** Empty State um Button „Besichtigungen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
 - **Kontakte:** Empty State um Button „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
+- **Besichtigungen:** Empty State Link „WGH finden“ (ROUTES.CRM_SCOUT) ergänzt.
+- **ObjekteList:** Empty State Button „Verträge“ (ROUTES.CONTRACTS) ergänzt.
+- **Loans:** Empty State Button „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
+- **Berichte:** Empty State Button „Verträge“ (ROUTES.CONTRACTS) ergänzt.
 
 ## AI
 
@@ -58,6 +63,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Leerstands-Kosten-Rechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: Tage Leerstand, Monatsmiete (€). Ausgabe: entgangene Miete. Komponente: `LeerstandskostenRechner.tsx`. Synergie: Mietübersicht verlinkt „Verträge“ (Kündigungsfrist) in der Kopfzeile.
 - **Rendite-Schnellrechner:** Auf der Objektanalyse (Analyse-Seite). Eingabe: Kaufpreis (€), Monatsmiete (€). Ausgabe: Brutto-Mietrendite (%), Mietmultiplikator (Jahre). Komponente: `RenditeSchnellrechner.tsx`.
 - **Inflation-Mietrechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: aktuelle Monatsmiete (€), Jahre (1–30), Inflation (% p.a.). Ausgabe: geschätzte Miete in X Jahren. Komponente: `InflationMietrechner.tsx`. Relevant für Indexmiete und langfristige Planung.
+- **AfA-Schnellrechner:** Auf der Seite Verträge & Verwaltung. Eingabe: Kaufpreis (€), Gebäudeanteil (%), Nutzungsdauer (Jahre). Ausgabe: jährliche AfA (Absetzung für Abnutzung) in €. Komponente: `AfASchnellrechner.tsx`. Relevant für Steuerplanung (Anlage V).
 
 ## Technik
 

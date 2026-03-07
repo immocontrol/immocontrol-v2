@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Search, Briefcase, Camera, Store } from "lucide-react";
+import { Building2, Search, Briefcase, Camera, Store, FileText } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
@@ -114,6 +114,9 @@ const ObjekteList = () => {
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-2" aria-label="WGH-Scout">
                   <Store className="h-4 w-4" /> WGH-Scout
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Verträgen">
+                  <FileText className="h-4 w-4" /> Verträge
                 </Button>
               </div>
             ) : undefined

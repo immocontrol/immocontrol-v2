@@ -39,6 +39,10 @@
 | **Nebenkosten** | Verträge | Empty State: Link „Verträge“ (ROUTES.CONTRACTS) |
 | **Dokumente** | Besichtigungen | Empty State: Button „Besichtigungen“ (ROUTES.BESICHTIGUNGEN) |
 | **Kontakte** | Besichtigungen | Empty State: „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) |
+| **Besichtigungen** | WGH-Scout | Empty State: Link „WGH finden“ (ROUTES.CRM_SCOUT) |
+| **ObjekteList** | Verträge | Empty State: Button „Verträge“ (ROUTES.CONTRACTS) |
+| **Loans** | Besichtigungen | Empty State: „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) |
+| **Berichte** | Verträge | Empty State: Button „Verträge“ (ROUTES.CONTRACTS) |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |

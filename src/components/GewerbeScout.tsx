@@ -867,6 +867,12 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               tabIndex={0}
               ref={resultsListRef}
               onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setFocusedResultIndex(null);
+                  resultsListRef.current?.blur();
+                  return;
+                }
                 if (visibleResults.length === 0) return;
                 if (e.key === "ArrowDown") {
                   e.preventDefault();

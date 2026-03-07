@@ -537,6 +537,8 @@ const Besichtigungen = () => {
               <Link to={ROUTES.DEALS} className="text-primary hover:underline">Zu Deals</Link>
               <span className="text-muted-foreground mx-1">·</span>
               <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline">Dokumente</Link>
+              <span className="text-muted-foreground mx-1">·</span>
+              <Link to={ROUTES.CRM_SCOUT} className="text-primary hover:underline">WGH finden</Link>
             </p>
             <Button onClick={() => openAdd(false)} className="touch-target min-h-[44px]">
               <Plus className="h-4 w-4 mr-2" />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase, BarChart3, Store } from "lucide-react";
+import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase, BarChart3, Store, FileText } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -462,6 +462,9 @@ ${rows}
               </Button>
               <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
                 <Store className="h-3.5 w-3.5" /> WGH finden
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CONTRACTS)} aria-label="Zu Verträgen">
+                <FileText className="h-3.5 w-3.5" /> Verträge
               </Button>
             </div>
           }
