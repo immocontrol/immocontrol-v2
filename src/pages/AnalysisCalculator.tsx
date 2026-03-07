@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity, FileBarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AnalysisInputs from "@/components/analysis/AnalysisInputs";
@@ -18,8 +19,10 @@ import RenditeOptimizer from "@/components/RenditeOptimizer";
 import LocationAnalysis from "@/components/analysis/LocationAnalysis";
 import { useProperties } from "@/context/PropertyContext";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
+import { ROUTES } from "@/lib/routes";
 
 const AnalysisCalculator = () => {
+  const navigate = useNavigate();
   useEffect(() => { document.title = "Objektanalyse – ImmoControl"; }, []);
   /* BUG-3: Get portfolio stats for Portfolio Gesundheit integration */
   const { properties, stats } = useProperties();
@@ -151,8 +154,11 @@ th{background:#f5f5f5;font-weight:600}
           <Button variant="outline" size="sm" className="gap-1.5" onClick={exportPDF}>
             <BarChart3 className="h-3.5 w-3.5" /> PDF
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={resetInputs}>
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={resetInputs}>
             <RotateCcw className="h-3.5 w-3.5" /> Reset
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
+            <FileBarChart className="h-3.5 w-3.5" /> Berichte
           </Button>
         </div>
       </div>

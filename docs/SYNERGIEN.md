@@ -43,6 +43,8 @@
 | **Verträge** | Mietübersicht | Link „Mietübersicht“ in Kopfzeile |
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
 | **Berichte** | Objekte, Deals | Empty State (keine Objekte): Buttons „Objekte“, „Zu Deals“ |
+| **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile (Kennzahlen vertiefen) |
+| **Analyse** | Berichte | Button „Berichte“ in der Kopfzeile (Miet-, Objekt-, Steuerberichte) |
 
 ## Technische Details
 

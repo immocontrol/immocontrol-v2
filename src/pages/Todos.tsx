@@ -131,7 +131,13 @@ const Todos = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [visibleTodoCount, setVisibleTodoCount] = useState(50);
   const quickInputRef = useRef<HTMLInputElement>(null);
+
+  const TODOS_PAGE_SIZE = 50;
+  useEffect(() => {
+    setVisibleTodoCount(TODOS_PAGE_SIZE);
+  }, [view, search, priorityFilter]);
 
   /* FUND-12: Removed stray double blank line — consistent code formatting */
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
@@ -375,13 +381,17 @@ const Todos = () => {
   }, [projects, todos]);
 
 
+  const displayFiltered = useMemo(() => {
+    if (filtered.length <= TODOS_PAGE_SIZE) return filtered;
+    return filtered.slice(0, visibleTodoCount);
+  }, [filtered, visibleTodoCount]);
+
   const groupedByProject = useMemo(() => {
     if (view !== "inbox") return null;
-    /* OPT-50: groupBy utility */
-    const groups = groupBy(filtered, (t) => t.project || "");
+    const groups = groupBy(displayFiltered, (t) => t.project || "");
     if (!groups[""]) groups[""] = [];
     return groups;
-  }, [filtered, view]);
+  }, [displayFiltered, view]);
 
   /* #10: Skeleton loading state */
   if (isLoading) {
@@ -627,14 +637,16 @@ const Todos = () => {
           </div>
         )}
 
-        {filtered.length === 0 && view !== "completed" ? (
+        {filtered.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 empty-state-float">
               <CheckSquare className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-base font-semibold mb-1">Keine Aufgaben</h3>
+            <h3 className="text-base font-semibold mb-1">
+              {view === "completed" ? "Keine erledigten Aufgaben" : "Keine Aufgaben"}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {view === "today" ? "Heute nichts geplant — genieße den freien Tag!" : view === "upcoming" ? "Keine bevorstehenden Aufgaben" : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."}
+              {view === "today" ? "Heute nichts geplant — genieße den freien Tag!" : view === "upcoming" ? "Keine bevorstehenden Aufgaben" : view === "completed" ? "Erledigte Aufgaben erscheinen hier." : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."}
             </p>
             {(view === "inbox" || view === "today") && (
               <div className="flex flex-wrap items-center justify-center gap-2">
@@ -681,16 +693,16 @@ const Todos = () => {
                     </div>
                   );
                 })
-              : filtered.map(todo => (
+              : displayFiltered.map(todo => (
                   <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => setDeleteTarget(id)} />
                 ))
             }
 
-            {view === "completed" && (
-              <div className="space-y-1">
-                {completedTodos.map(todo => (
-                  <TodoRow key={todo.id} todo={todo} onToggle={toggleComplete} onEdit={openEdit} onDelete={id => setDeleteTarget(id)} />
-                ))}
+            {filtered.length > visibleTodoCount && (
+              <div className="flex justify-center pt-3">
+                <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => setVisibleTodoCount((n) => n + TODOS_PAGE_SIZE)}>
+                  {filtered.length - visibleTodoCount <= TODOS_PAGE_SIZE ? `Alle ${filtered.length} anzeigen` : `${TODOS_PAGE_SIZE} weitere anzeigen`}
+                </Button>
               </div>
             )}
           </div>

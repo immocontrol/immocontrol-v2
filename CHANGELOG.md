@@ -8,6 +8,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Fehler-Toast mit „Erneut versuchen“** — `toastErrorWithRetry()` in `toastMessages.ts`; Immo-AI nutzt es bei Chat-Fehlern (Retry + handleError für Fehleranalyse)
+- **Synergie Berichte ↔ Analyse** — Berichte: Link „Zur Analyse“; Analyse: Button „Berichte“ (Touch-Target, aria-label)
+- **Todos: Pagination** — Erst 50 Aufgaben anzeigen, dann „Mehr anzeigen“ (Performance); doppelter completed-Block entfernt
+- **Immo-AI** — Neue Vorschlagsfrage „Welche Objekte haben die höchste Rendite und warum?“; Fehler werden mit handleError getrackt
 - **Performance: VirtualList** — Objektliste nutzt VirtualList ab 25 Objekten (weniger DOM, flüssiger Scroll)
 - **Performance: Kontakte** — Erst 50 Kontakte anzeigen, dann „Mehr anzeigen“ (reduziert initiales Rendering)
 - **Sentry (optional)** — Bei gesetztem `VITE_SENTRY_DSN` und installiertem `@sentry/react`: Fehler werden an Sentry gesendet (`src/lib/sentryInit.ts`)
@@ -49,6 +53,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Immo-AI** — Bei Fehler: handleError (trackError) + toastErrorWithRetry („Erneut versuchen“); neue Vorschlagsfrage
+- **Berichte** — Link „Zur Analyse“ in Kopfzeile (Touch-Target)
+- **Analyse** — Button „Berichte“ + Touch-Target für Reset
+- **Todos** — displayFiltered/Pagination (50 pro Seite); visibleTodoCount bei View-/Filter-Wechsel zurückgesetzt
 - **ObjekteList** — VirtualList ab 25 Einträgen; PropertyCard-Höhe 220px
 - **Contacts** — Pagination „Mehr anzeigen“ ab 50 Einträgen; Filter-Reset setzt sichtbare Anzahl zurück
 - **errorTracking** — `ErrorEntry` exportiert für Sentry-Integration

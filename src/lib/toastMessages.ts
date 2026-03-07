@@ -15,6 +15,24 @@ export function toastError(message: string, duration = TOAST_DURATION_ERROR) {
   toast.error(message, { duration });
 }
 
+/**
+ * Fehler-Toast mit optionaler „Erneut versuchen“-Aktion.
+ * Hoher Impact: Nutzer können nach Fehlern sofort erneut versuchen.
+ */
+export function toastErrorWithRetry(
+  message: string,
+  onRetry: () => void,
+  duration = TOAST_DURATION_ERROR,
+) {
+  toast.error(message, {
+    duration,
+    action: {
+      label: "Erneut versuchen",
+      onClick: onRetry,
+    },
+  });
+}
+
 /** Kurze Bestätigung nach Speichern (z. B. "Objekt gespeichert", "Einstellung gespeichert") */
 export function toastSaved(label?: string) {
   toastSuccess(label ? `${label} gespeichert` : "Gespeichert");

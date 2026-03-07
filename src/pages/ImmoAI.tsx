@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, Trash2, Sparkles, User, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +28,7 @@ const SUGGESTIONS = [
   "Erstelle mir eine Übersicht meiner Restschulden",
   "Wie hoch ist mein monatlicher Gesamt-Cashflow?",
   "Welches Objekt hat die beste Rendite?",
+  "Welche Objekte haben die höchste Rendite und warum?",
   "Wie viele Deals habe ich in Besichtigung?",
   "Fasse meine letzten Besichtigungen kurz zusammen",
   "Wie viele offene Tickets habe ich?",
@@ -99,11 +102,12 @@ export default function ImmoAI() {
       rateLimiters.aiChat.recordSuccess();
     } catch (e: unknown) {
       rateLimiters.aiChat.recordFailure();
-      logger.error("ImmoAI request failed", "ImmoAI", e);
-      toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
+      handleError(e, { context: "general", showToast: false });
+      const errMsg = e instanceof Error ? e.message : "Fehler bei der AI-Anfrage";
+      toastErrorWithRetry(errMsg, () => send(text.trim()));
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "❌ Es ist ein Fehler aufgetreten. Bitte versuche es erneut." },
+        { role: "assistant", content: "❌ Es ist ein Fehler aufgetreten. Klicke auf „Erneut versuchen“ im Toast." },
       ]);
     } finally {
       setIsLoading(false);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase } from "lucide-react";
+import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase, BarChart3 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -472,11 +472,13 @@ ${rows}
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 page-header-enter">
           <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Berichte-Center
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           Miet-, Objekt- und Steuerberichte auf Knopfdruck
-          {/* IMP-41-14: Show last report generation timestamp */}
-          {lastReportGenerated && <span className="ml-2 text-[10px]">· Letzter Bericht: {lastReportGenerated}</span>}
-          {reportCount > 0 && <span className="ml-1 text-[10px]">({reportCount} erstellt)</span>}
+          {lastReportGenerated && <span className="text-[10px]">· Letzter Bericht: {lastReportGenerated}</span>}
+          {reportCount > 0 && <span className="text-[10px]">({reportCount} erstellt)</span>}
+          <Button variant="link" size="sm" className="h-auto p-0 text-primary touch-target min-h-[44px] gap-1" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
+            <BarChart3 className="h-3.5 w-3.5" /> Zur Analyse
+          </Button>
         </p>
       </div>
 
