@@ -18,6 +18,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { extractPdfText, parseExposeText, type ParsedExposeData } from "@/lib/exposeParser";
 import { generateBewertungsPdf, type ValuationResults } from "@/lib/bewertungPdfReport";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -151,12 +153,16 @@ const ImmobilienBewertung = () => {
     bodenrichtwert: 0,
   });
 
+  /** Last uploaded PDF for retry on failure */
+  const lastPdfRef = useRef<File | null>(null);
+
   /** Handle PDF upload */
   const handleFileUpload = useCallback(async (file: File) => {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       toast.error("Bitte eine PDF-Datei hochladen");
       return;
     }
+    lastPdfRef.current = file;
     setUploading(true);
     try {
       const text = await extractPdfText(file);
@@ -176,7 +182,12 @@ const ImmobilienBewertung = () => {
       toast.success(`Exposé analysiert: ${data.extractedFields.length} Felder erkannt (${data.confidence}% Konfidenz)`);
       setStep("review");
     } catch (err: unknown) {
-      toast.error(`Fehler: ${err instanceof Error ? err.message : "PDF konnte nicht gelesen werden"}`);
+      handleError(err, { context: "file", showToast: false });
+      const msg = err instanceof Error ? err.message : "PDF konnte nicht gelesen werden";
+      toastErrorWithRetry(`Fehler: ${msg}`, () => {
+        const f = lastPdfRef.current;
+        if (f) handleFileUpload(f);
+      });
     } finally {
       setUploading(false);
     }

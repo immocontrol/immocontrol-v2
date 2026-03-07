@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { formatDate } from "@/lib/formatters";
 
 /**
@@ -147,7 +149,8 @@ export const DataExportBackup = () => {
       localStorage.setItem("immocontrol_last_export_date", new Date().toISOString());
       toast.success("JSON-Backup heruntergeladen");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
+      handleError(err, { context: "export", showToast: false });
+      toastErrorWithRetry(err instanceof Error ? err.message : "Export fehlgeschlagen", () => exportJSON());
     } finally {
       setExporting(false);
     }
@@ -179,7 +182,8 @@ export const DataExportBackup = () => {
       localStorage.setItem("immocontrol_last_export_date", new Date().toISOString());
       toast.success("CSV-Dateien heruntergeladen");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
+      handleError(err, { context: "export", showToast: false });
+      toastErrorWithRetry(err instanceof Error ? err.message : "Export fehlgeschlagen", () => exportCSV());
     } finally {
       setExporting(false);
     }
@@ -199,7 +203,8 @@ export const DataExportBackup = () => {
       downloadFile(csv, `immocontrol-${table.name}-${date}.csv`, "text/csv;charset=utf-8");
       toast.success(`${table.label} exportiert (${data.length} Einträge)`);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Export fehlgeschlagen");
+      handleError(err, { context: "export", showToast: false });
+      toastErrorWithRetry(err instanceof Error ? err.message : "Export fehlgeschlagen", () => exportSingleCSV(table));
     }
   }, [user, fetchTableData]);
 

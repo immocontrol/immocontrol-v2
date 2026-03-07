@@ -20,7 +20,7 @@
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ |
-| **Darlehen** | Objekte, Deals | Empty State: Links „Objekt anlegen“, „Deals“ |
+| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte (ROUTES)
 | **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen |
 | **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
 | **Todos** | CRM, Deals | Empty State: Buttons „Zu CRM“, „Zu Deals“ |
@@ -40,7 +40,6 @@
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 | **Nebenkosten** | Mietübersicht, Objekte | Empty State: Buttons „Mietübersicht“, „Objekte“ |
-| **Darlehen** | Mietübersicht, Nebenkosten | Empty State: Buttons „Mietübersicht“, „Nebenkosten“ neben Objekt/Deals |
 | **Verträge** | Mietübersicht, Berichte, Dokumente | Links „Mietübersicht“, „Berichte“, „Dokumente hochladen“ in Kopfzeile (ROUTES, Touch-Target 44px) |
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio); Empty State: Button „Zur Analyse“ |

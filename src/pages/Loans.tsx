@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake, Receipt, BarChart3 } from "lucide-react";
+import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake, Receipt, BarChart3, FileBarChart } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";
@@ -437,7 +438,7 @@ const Loans = () => {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 heading-gradient">
             <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Darlehen
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
             {/* OPT-10: pluralDE for correct pluralization */}
             {pluralDE(loans.length, "Darlehen", "Darlehen")} · {formatCurrency(totalBalance)} Restschuld
             {highRateLoans.length > 0 && (
@@ -445,6 +446,9 @@ const Loans = () => {
                 <AlertTriangle className="h-3 w-3" /> {highRateLoans.length} über {MARKET_RATE_THRESHOLD}% Zins
               </span>
             )}
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
+              <FileBarChart className="h-3.5 w-3.5 mr-1" /> Berichte
+            </Button>
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -871,17 +875,20 @@ const Loans = () => {
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">Lege dein erstes Darlehen an, um Zinsbindungen und Tilgungsfortschritt zu überwachen.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
             <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
-            <Button variant="outline" size="sm" onClick={() => navigate("/objekte")} className="touch-target min-h-[44px] gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.OBJEKTE)} className="touch-target min-h-[44px] gap-2">
               <Building2 className="h-4 w-4" /> Objekt anlegen
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="touch-target min-h-[44px] gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2">
               <Handshake className="h-4 w-4" /> Deals
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/mietuebersicht")} className="touch-target min-h-[44px] gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.RENT)} className="touch-target min-h-[44px] gap-2">
               <BarChart3 className="h-4 w-4" /> Mietübersicht
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/nebenkosten")} className="touch-target min-h-[44px] gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.NK)} className="touch-target min-h-[44px] gap-2">
               <Receipt className="h-4 w-4" /> Nebenkosten
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Berichte">
+              <FileBarChart className="h-4 w-4" /> Berichte
             </Button>
           </div>
         </div>

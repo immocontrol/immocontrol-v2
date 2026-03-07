@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Bewertung-PDF, DataExport, Selbstauskunft)** — ImmobilienBewertung (PDF-Upload), DataExportBackup (JSON/CSV) und SelbstauskunftGenerator nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
+- **Synergie Darlehen → Berichte** — Link „Berichte“ in Darlehen-Kopfzeile; Empty State: Button „Berichte“; ROUTES für alle Navigationen
 - **Retry-Toast + Fehleranalyse (Objekt-CSV, BerichteInProsa, Pull-to-Refresh)** — PropertyCsvImport, BerichteInProsa (KI) und MobilePullToRefresh nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Synergie Verträge → Berichte** — Link „Berichte“ in Verträge-Kopfzeile; ROUTES für Dokumente/Mietübersicht; Touch-Target 44px
 - **Retry-Toast + Fehleranalyse (Onboarding, Bank-Import, Kontakt-Import)** — Onboarding-Speichern, BankMatching (MT940/CAMT/CSV) und ContactCsvImport nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Datenverlust, Fehler getrackt)
@@ -59,6 +61,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **ImmobilienBewertung** — Bei PDF-Upload-Fehler: handleError + toastErrorWithRetry (letzte Datei per Ref für Retry)
+- **DataExportBackup** — Bei JSON-/CSV-Export-Fehler: handleError + toastErrorWithRetry (Retry)
+- **SelbstauskunftGenerator** — Bei PDF-Erstellungsfehler: handleError + toastErrorWithRetry (Retry)
+- **Loans (Darlehen)** — Link „Berichte“ in Kopfzeile; ROUTES für Objekte, Deals, Mietübersicht, Nebenkosten, Berichte; Empty State Button „Berichte“
 - **PropertyCsvImport** — Bei Import-Fehler: handleError + toastErrorWithRetry (Retry)
 - **BerichteInProsa** — Bei KI-Fehler: handleError + toastErrorWithRetry (Retry mit gleichem Typ Monat/Jahr)
 - **MobilePullToRefresh** — Bei Aktualisierungsfehler: handleError + toastErrorWithRetry (Retry)

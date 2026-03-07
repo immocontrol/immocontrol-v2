@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 
 /* IMPROVE-14: Remove unused jsPDF import (smaller bundle, fewer dependencies) */
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
@@ -367,7 +369,8 @@ export const SelbstauskunftGenerator = () => {
       URL.revokeObjectURL(url);
       toast.success("Selbstauskunft als PDF heruntergeladen! (Felder sind editierbar)");
     } catch (err: unknown) {
-      toast.error("Fehler beim Erstellen: " + (err instanceof Error ? err.message : "Unbekannt"));
+      handleError(err, { context: "file", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen: " + (err instanceof Error ? err.message : "Unbekannt"), () => generatePDF());
     } finally {
       setGenerating(false);
     }
