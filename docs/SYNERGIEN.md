@@ -30,7 +30,7 @@
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
 | **Wartungsplaner** | Objekte, Berichte, Gewerbe-Scout | Empty State: Buttons Objekte, Berichte, Gewerbe finden (ROUTES, Touch-Target) |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
-| **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
+| **Nebenkosten** | Dokumente, Gewerbe-Scout | Links Dokumente, Gewerbe finden in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
 | **Nebenkosten** | Objekte | Link „Zum Objekt“ bei Abrechnungsdetail (zum PropertyDetail) |
 | **Kontakte** | Deals | Empty State: Button „Zu Deals“ für Synergie (Kontakte aus Deals übernehmen) |
 | **Mietübersicht** | Nebenkosten, Berichte, Gewerbe-Scout | Links NK-Abrechnung, Berichte, Gewerbe finden in Kopfzeile (ROUTES) |
@@ -42,7 +42,7 @@
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 | **Nebenkosten** | Mietübersicht, Objekte | Empty State: Buttons „Mietübersicht“, „Objekte“ |
-| **Verträge** | Mietübersicht, Berichte, Dokumente | Links „Mietübersicht“, „Berichte“, „Dokumente hochladen“ in Kopfzeile (ROUTES, Touch-Target 44px) |
+| **Verträge** | Mietübersicht, Berichte, Dokumente, Gewerbe-Scout | Links Mietübersicht, Berichte, Dokumente, Gewerbe finden in Kopfzeile (ROUTES, Touch-Target) |
 | **Dashboard** | Deals, Analyse, Gewerbe-Scout | Empty State (keine Objekte): Buttons Zu Deals, Zur Analyse, Gewerbe finden (ROUTES) |
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio) |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile; Empty State zusätzlich Button „Zur Analyse“ |

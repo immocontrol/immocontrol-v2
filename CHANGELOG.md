@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Umkreis 10 km** — Umkreis-Option 10 km für größere Suchgebiete; Empty-State-Tipp erwähnt 5 km/10 km.
+- **Synergien: Verträge, Nebenkosten → Gewerbe-Scout** — Verträge und Nebenkosten: Link „Gewerbe finden“ in der Kopfzeile (CRM Scout). Immo-AI: Vorschlagsfrage „Wann endet die Zinsbindung bei meinen Darlehen?“.
 - **Gewerbe-Scout: Hinweis bei 0 Treffern durch Filter** — Wenn alle Treffer durch Filter ausgeblendet werden, erscheint ein Hinweis mit „Filter zurücksetzen“-Button (auffälliger Block).
 - **Synergien: Mietübersicht, Immo-AI** — Mietübersicht Kopfzeile: Link „Gewerbe finden“ (CRM Scout). Immo-AI: Vorschlagsfrage „Welche Objekte haben den höchsten Verkehrswert?“.
 - **Gewerbe-Scout: Filter zurücksetzen, Refactor** — Button „Filter zurücksetzen“ setzt alle Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail) zurück; nur sichtbar, wenn mindestens ein Filter aktiv. Refactor: gültige Umkreiswerte in VALID_RADIUS_VALUES ausgelagert.

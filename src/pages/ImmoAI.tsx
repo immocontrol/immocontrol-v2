@@ -39,6 +39,7 @@ const SUGGESTIONS = [
   "Zeige mir meine Objekte mit der besten Brutto-Rendite",
   "Gibt es überfällige Mietzahlungen oder offene Posten?",
   "Welche Objekte haben den höchsten Verkehrswert?",
+  "Wann endet die Zinsbindung bei meinen Darlehen?",
 ];
 
 export default function ImmoAI() {

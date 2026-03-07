@@ -32,7 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 type SearchMode = "ort" | "umkreis";
 
-const VALID_RADIUS_VALUES = [200, 500, 1000, 2000, 3000, 5000] as const;
+const VALID_RADIUS_VALUES = [200, 500, 1000, 2000, 3000, 5000, 10000] as const;
 const RADIUS_OPTIONS = [
   { value: 200, label: "200 m" },
   { value: 500, label: "500 m" },
@@ -40,6 +40,7 @@ const RADIUS_OPTIONS = [
   { value: 2000, label: "2 km" },
   { value: 3000, label: "3 km" },
   { value: 5000, label: "5 km" },
+  { value: 10000, label: "10 km" },
 ];
 
 /** POI-Typ-Filter: OSM-Werte zu Kategorien. */
@@ -560,7 +561,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe">
               <p className="font-medium text-foreground">Keine Gewerbe gefunden</p>
-              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 3 km oder 5 km).</p>
+              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 5 km oder 10 km).</p>
             </div>
           </div>
         )}

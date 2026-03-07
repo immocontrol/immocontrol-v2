@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
-import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2, Building2, BarChart3 } from "lucide-react";
+import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2, Building2, BarChart3, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -356,8 +356,11 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                 {nkPerSqmFormatted && <span> · {nkPerSqmFormatted}</span>}
               </span>
             )}
-            <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs">
+            <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
               <FolderOpen className="h-3.5 w-3.5" /> Dokumente
+            </Link>
+            <Link to={`${ROUTES.CRM}?tab=scout`} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Gewerbe finden">
+              <Store className="h-3.5 w-3.5" /> Gewerbe finden
             </Link>
           </p>
         </div>

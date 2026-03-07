@@ -7,7 +7,7 @@ import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import { ContractTemplates } from "@/components/ContractTemplates";
-import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart, Store } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,6 +79,9 @@ const Vertraege = () => {
           </Link>
           <Link to={ROUTES.REPORTS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Zu Berichte">
             <FileBarChart className="h-3.5 w-3.5" /> Berichte
+          </Link>
+          <Link to={`${ROUTES.CRM}?tab=scout`} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Gewerbe finden">
+            <Store className="h-3.5 w-3.5" /> Gewerbe finden
           </Link>
         </p>
       </div>
