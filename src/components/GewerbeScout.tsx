@@ -4,7 +4,7 @@
  * Mit Ort-Autocomplete, Mindest-Gebäudefläche, Deduplizierung und klaren Lade-/Leer-Zuständen.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 type SearchMode = "ort" | "umkreis";
 
+const VALID_RADIUS_VALUES = [200, 500, 1000, 2000, 3000, 5000] as const;
 const RADIUS_OPTIONS = [
   { value: 200, label: "200 m" },
   { value: 500, label: "500 m" },
@@ -155,7 +156,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
       if (s) {
         const p = JSON.parse(s) as { radius?: number };
-        return [200, 500, 1000, 2000, 3000, 5000].includes(Number(p.radius)) ? Number(p.radius) : 500;
+        return VALID_RADIUS_VALUES.includes(Number(p.radius) as (typeof VALID_RADIUS_VALUES)[number]) ? Number(p.radius) : 500;
       }
     } catch { /* ignore */ }
     return 500;
@@ -643,6 +644,23 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" onClick={exportCsv} aria-label="Als CSV exportieren">
                   <Download className="h-3.5 w-3.5" /> CSV
                 </Button>
+                {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || minSize > 0 || poiTypeFilter !== "all") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setOnlyWithPhone(false);
+                      setOnlyWithWebsite(false);
+                      setOnlyWithEmail(false);
+                      setMinSize(0);
+                      setPoiTypeFilter("all");
+                    }}
+                    aria-label="Filter zurücksetzen"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Filter zurücksetzen
+                  </Button>
+                )}
               </div>
             </div>
             {sortedResults.length > SCOUT_DISPLAY_CAP && (

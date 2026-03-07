@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Filter zurücksetzen, Refactor** — Button „Filter zurücksetzen“ setzt alle Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail) zurück; nur sichtbar, wenn mindestens ein Filter aktiv. Refactor: gültige Umkreiswerte in VALID_RADIUS_VALUES ausgelagert.
+- **Synergien: Dashboard, CRM Leads → Gewerbe-Scout** — Dashboard Empty State (keine Objekte): Button „Gewerbe finden“. CRM Leads Empty State: Button „Gewerbe suchen“ wechselt zum Tab Gewerbe-Scout. Immo-AI: Vorschlagsfrage „Gibt es überfällige Mietzahlungen oder offene Posten?“.
 - **Gewerbe-Scout: 5 km, „Nur mit E-Mail“, Synergien** — Umkreis-Option 5 km; Filter „Nur mit E-Mail“ (persistiert in sessionStorage); Empty-State-Tipp erwähnt 3 km/5 km; Hinweistext bei >100 Treffern um „Nur mit E-Mail“ ergänzt.
 - **Synergien: Todos, Wartungsplaner → Gewerbe-Scout** — Todos Empty State: Button „Gewerbe finden“. Wartungsplaner Empty State: Button „Gewerbe finden“ (Handwerker/Läden in der Nähe). Immo-AI: Vorschlagsfrage „Zeige mir meine Objekte mit der besten Brutto-Rendite“.
 - **Gewerbe-Scout: E-Mail-Button, Filter-Persistenz, Mobile** — Pro Treffer Button „E-Mail“ (mailto:) wenn von OSM vorhanden; Filter (Nur mit Telefon, Nur mit Web, Mindestfläche, Typ) werden in sessionStorage gespeichert und beim nächsten Besuch wiederhergestellt; Ergebnisliste mit safe-area-inset-bottom für bessere Mobile-Nutzung.

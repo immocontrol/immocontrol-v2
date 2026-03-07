@@ -755,9 +755,14 @@ const CRM = () => {
                   title="Keine Leads gefunden"
                   description="Suche nach Geschäften oder füge Leads manuell hinzu."
                   action={
-                    <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px]">
-                      <CalendarCheck className="h-4 w-4 mr-2" /> Zu Besichtigungen
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setSearchParams({ tab: "scout" })} className="touch-target min-h-[44px] gap-1.5" aria-label="Zum Gewerbe-Scout">
+                        <Store className="h-4 w-4" /> Gewerbe suchen
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-1.5">
+                        <CalendarCheck className="h-4 w-4" /> Zu Besichtigungen
+                      </Button>
+                    </div>
                   }
                 />
               ) : (

@@ -37,6 +37,7 @@ const SUGGESTIONS = [
   "Welche Darlehen haben die längste Zinsbindung?",
   "Welche Objekte haben den höchsten Cashflow?",
   "Zeige mir meine Objekte mit der besten Brutto-Rendite",
+  "Gibt es überfällige Mietzahlungen oder offene Posten?",
 ];
 
 export default function ImmoAI() {

@@ -7,6 +7,7 @@
 | Von | Zu | Verknüpfung |
 |-----|-----|-------------|
 | **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt |
+| **CRM (Leads)** | Gewerbe-Scout, Besichtigungen | Empty State: Buttons „Gewerbe suchen“ (Tab Scout), „Zu Besichtigungen“ |
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“; fromContact-Vorlage beim „Als Deal“-Button |
@@ -43,8 +44,8 @@
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 | **Nebenkosten** | Mietübersicht, Objekte | Empty State: Buttons „Mietübersicht“, „Objekte“ |
 | **Verträge** | Mietübersicht, Berichte, Dokumente | Links „Mietübersicht“, „Berichte“, „Dokumente hochladen“ in Kopfzeile (ROUTES, Touch-Target 44px) |
-| **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
-| **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio); Empty State: Button „Zur Analyse“ |
+| **Dashboard** | Deals, Analyse, Gewerbe-Scout | Empty State (keine Objekte): Buttons Zu Deals, Zur Analyse, Gewerbe finden (ROUTES) |
+| **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio) |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile; Empty State zusätzlich Button „Zur Analyse“ |
 | **Analyse** | Berichte, Gewerbe-Scout | Button „Berichte“ und „Gewerbe finden“ in der Kopfzeile (ROUTES) |
 | **Deals** | CRM, Gewerbe-Scout | Empty State: Links „Leads aus CRM übernehmen“, „Gewerbe finden“ (CRM?tab=scout) |
