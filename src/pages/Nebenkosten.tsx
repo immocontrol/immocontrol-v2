@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2, Building2, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -339,7 +340,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                 {nkPerSqmFormatted && <span> · {nkPerSqmFormatted}</span>}
               </span>
             )}
-            <Link to="/dokumente" className="text-primary hover:underline flex items-center gap-1 text-xs">
+            <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs">
               <FolderOpen className="h-3.5 w-3.5" /> Dokumente
             </Link>
           </p>
@@ -521,12 +522,12 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             description="Erstelle deine erste Nebenkostenabrechnung. Du brauchst Objekte und ggf. Mieter – verknüpft mit Mietübersicht."
             action={
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <Link to="/mietuebersicht" className="inline-flex">
+                <Link to={ROUTES.RENT} className="inline-flex">
                   <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]">
                     <BarChart3 className="h-3.5 w-3.5" /> Mietübersicht
                   </Button>
                 </Link>
-                <Link to="/objekte" className="inline-flex">
+                <Link to={ROUTES.OBJEKTE} className="inline-flex">
                   <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]">
                     <Building2 className="h-3.5 w-3.5" /> Objekte
                   </Button>

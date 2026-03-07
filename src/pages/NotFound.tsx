@@ -1,5 +1,6 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { ROUTES } from "@/lib/routes";
 import { Building2, ArrowLeft } from "lucide-react";
 import { logger } from "@/lib/logger";
 
@@ -23,7 +24,7 @@ const NotFound = () => {
   }, [countdown]);
 
   useEffect(() => {
-    if (countdown === 0) navigate("/");
+    if (countdown === 0) navigate(ROUTES.HOME);
   }, [countdown, navigate]);
 
   return (
@@ -37,7 +38,7 @@ const NotFound = () => {
         Automatische Weiterleitung in {countdown}s…
       </p>
       <Link
-        to="/"
+        to={ROUTES.HOME}
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Zurück zum Portfolio

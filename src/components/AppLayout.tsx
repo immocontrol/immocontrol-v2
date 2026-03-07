@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, memo, useMemo } from "react";
 import { useOnlineStatusNotifications } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown, TrendingUp, Newspaper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -192,7 +193,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       return (
         <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground breadcrumb-nav">
           <span>/</span>
-          <Link to="/" className="hover:text-foreground transition-colors">Portfolio</Link>
+          <Link to={ROUTES.HOME} className="hover:text-foreground transition-colors">Portfolio</Link>
           <span>/</span>
           <span className="text-foreground font-medium truncate max-w-[200px]">{propertyName}</span>
         </div>
@@ -475,7 +476,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <header className="sticky top-0 z-[150] border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header overflow-visible">
         <div className="container flex h-14 items-center justify-between overflow-visible">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="ImmoControl Home">
+            <Link to={ROUTES.HOME} className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="ImmoControl Home">
               <Building2 className="h-6 w-6 text-primary" />
               <span className="text-lg font-bold tracking-tight hidden sm:inline">ImmoControl</span>
               <span className="text-lg font-bold tracking-tight sm:hidden">IC</span>
@@ -573,7 +574,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               {/* UX-2: Notification Center with History — uses NotificationBell for real notifications, Center removed to avoid duplicate bell icons */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link to="/einstellungen" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Einstellungen">
+                  <Link to={ROUTES.SETTINGS} className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" aria-label="Einstellungen">
                     <Settings className="h-4 w-4" />
                   </Link>
                 </TooltipTrigger>

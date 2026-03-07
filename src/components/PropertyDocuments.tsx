@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatFileSize, formatDate } from "@/lib/formatters";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import FileImportPicker from "@/components/FileImportPicker";
@@ -88,7 +90,8 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       .upload(filePath, file);
 
     if (uploadError) {
-      toast.error("Upload fehlgeschlagen: " + uploadError.message);
+      handleError(uploadError, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Upload fehlgeschlagen: " + uploadError.message, () => uploadFile(file));
       setUploading(false);
       return;
     }
@@ -104,7 +107,8 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
     });
 
     if (dbError) {
-      toast.error("Metadaten konnten nicht gespeichert werden");
+      handleError(dbError, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Metadaten konnten nicht gespeichert werden", () => uploadFile(file));
     } else {
       toast.success(`„${file.name}" hochgeladen`);
       invalidate();
@@ -144,7 +148,10 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       toast.success(`„${doc.file_name}" gelöscht`);
       invalidate();
     },
-    onError: () => toast.error("Datei konnte nicht gelöscht werden"),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toast.error("Datei konnte nicht gelöscht werden");
+    },
   });
 
   const handleDownload = async (doc: Document) => {
@@ -153,7 +160,8 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       .download(doc.file_path);
 
     if (error || !data) {
-      toast.error("Download fehlgeschlagen");
+      handleError(error ?? new Error("Download fehlgeschlagen"), { context: "supabase", showToast: false });
+      toastErrorWithRetry("Download fehlgeschlagen", () => handleDownload(doc));
       return;
     }
 

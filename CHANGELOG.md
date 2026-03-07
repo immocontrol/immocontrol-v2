@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (PropertyDocuments, PropertyDescriptionGenerator, PdfImport)** — PropertyDocuments (Upload, Metadaten, Download pro Objekt), PropertyDescriptionGenerator (KI-Beschreibung), PdfImport Analyse (PDF-Extrakt) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
+- **ROUTES durchgängig** — AppLayout, Nebenkosten, Deals, ViewingCard, Einladung, NotFound nutzen ROUTES (Home, Einstellungen, Dokumente, Mietübersicht, Objekte, CRM, Besichtigungen, Deals)
 - **Retry-Toast + Fehleranalyse (Wartungsplaner, TicketSystem, ExposeImport)** — Wartungsplaner (Anlegen mit Retry; Aktualisieren/Löschen mit handleError), TicketSystem (KI-Beschreibungsvorschlag, Ticket erstellen mit Retry; Link Zu Kontakten über ROUTES), ExposeImport (URL-Extrakt mit Retry)
 - **ROUTES-Synergy PropertyDetail, Mietuebersicht** — PropertyDetail und Mietuebersicht nutzen ROUTES für Home, Nebenkosten, Besichtigungen
 - **Retry-Toast + Fehleranalyse (Loans, MessageCenter, ViewingAISummary)** — Darlehen (Benutzer-Banken hinzufügen/löschen), MessageCenter (KI-Zusammenfassung, Antwortvorschlag), ViewingAISummary (KI-Zusammenfassung Besichtigung) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
@@ -72,6 +74,14 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **PropertyDocuments** — Upload, Metadaten, Download: handleError + toastErrorWithRetry (Retry); Löschen: handleError + Toast
+- **PropertyDescriptionGenerator** — KI-Beschreibung: handleError + toastErrorWithRetry (Retry)
+- **PdfImport (Analyse)** — PDF-Extrakt: handleError + toastErrorWithRetry (Retry, lastFileRef)
+- **AppLayout** — Link Portfolio/Home, Einstellungen über ROUTES
+- **Nebenkosten** — Links Dokumente, Mietübersicht, Objekte über ROUTES
+- **Deals** — Links CRM, Besichtigungen über ROUTES
+- **ViewingCard** — Link Deals über ROUTES
+- **Einladung, NotFound** — navigate/Link Home über ROUTES
 - **Wartungsplaner** — Insert: handleError + toastErrorWithRetry (Retry); Toggle/Delete: handleError + Toast
 - **TicketSystem** — KI-Vorschlag + createTicket: handleError + toastErrorWithRetry (Retry); Link „Zu Kontakten“ über ROUTES
 - **ExposeImport (Analyse)** — handleExtract: handleError + toastErrorWithRetry (Retry)

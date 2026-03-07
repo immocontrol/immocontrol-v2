@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { FileImportPicker } from "@/components/FileImportPicker";
 import { toast } from "sonner";
 import type { AnalysisInputState } from "@/hooks/useAnalysisCalculations";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
 import { saveExposeHistoryEntry } from "./ExposeHistory";
 import { extractPdfText } from "@/lib/exposeParser";
@@ -46,8 +48,10 @@ const PdfImport = ({ onImport }: Props) => {
   const [result, setResult] = useState<{ data: Record<string, unknown>; imported: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastFileRef = useRef<File | null>(null);
 
   const handleFile = useCallback(async (file: File) => {
+    lastFileRef.current = file;
     if (!file.type.includes("pdf")) {
       toast.error("Bitte eine PDF-Datei auswählen");
       return;
@@ -89,8 +93,10 @@ const PdfImport = ({ onImport }: Props) => {
       const data = await resp.json();
 
       if (!resp.ok || !data.success) {
-        setError(data.error || "Fehler beim Extrahieren");
-        toast.error(data.error || "Fehler beim Extrahieren");
+        const errMsg = data.error || "Fehler beim Extrahieren";
+        setError(errMsg);
+        handleError(new Error(errMsg), { context: "network", showToast: false });
+        toastErrorWithRetry(errMsg, () => lastFileRef.current && handleFile(lastFileRef.current));
         return;
       }
 
@@ -107,7 +113,8 @@ const PdfImport = ({ onImport }: Props) => {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Netzwerkfehler";
       setError(msg);
-      toast.error(msg);
+      handleError(e, { context: "network", showToast: false });
+      toastErrorWithRetry(msg, () => lastFileRef.current && handleFile(lastFileRef.current));
     } finally {
       setLoading(false);
     }

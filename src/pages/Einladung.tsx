@@ -58,7 +58,7 @@ const Einladung = () => {
       setRedirectCount((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate("/");
+          navigate(ROUTES.HOME);
           return 0;
         }
         return prev - 1;
@@ -117,7 +117,7 @@ const Einladung = () => {
           <XCircle className="h-12 w-12 text-destructive mx-auto" />
           <h1 className="text-xl font-bold">Fehler</h1>
           <p className="text-muted-foreground">{message}</p>
-          <Button onClick={() => navigate("/")}>Zur Startseite</Button>
+          <Button onClick={() => navigate(ROUTES.HOME)}>Zur Startseite</Button>
         </div>
       </div>
     );
@@ -130,7 +130,7 @@ const Einladung = () => {
         <h1 className="text-xl font-bold">Willkommen!</h1>
         <p className="text-muted-foreground">{message}</p>
         <p className="text-xs text-muted-foreground">Weiterleitung in {redirectCount}s…</p>
-        <Button onClick={() => navigate("/")}>Zum Mieterportal</Button>
+        <Button onClick={() => navigate(ROUTES.HOME)}>Zum Mieterportal</Button>
       </div>
     </div>
   );

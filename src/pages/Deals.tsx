@@ -40,6 +40,7 @@ import { sanitizeFormData } from "@/lib/sanitize";
 import { useShare } from "@/components/mobile/MobileShareSheet";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { ROUTES } from "@/lib/routes";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -1051,7 +1052,7 @@ const Deals = () => {
                       <p className="text-xs mt-2">
                         Erstelle einen Deal mit dem Button oben oder importiere aus Telegram
                       </p>
-                      <Link to="/crm" className="text-xs text-primary hover:underline mt-2 inline-block">
+                      <Link to={ROUTES.CRM} className="text-xs text-primary hover:underline mt-2 inline-block">
                         Leads aus CRM übernehmen →
                       </Link>
                     </>
@@ -1242,7 +1243,7 @@ const Deals = () => {
                     <Camera className="h-4 w-4 text-amber-600" />
                     Besichtigung angelegt
                   </span>
-                  <Link to="/besichtigungen" className="text-sm text-primary hover:underline flex items-center gap-1" onClick={() => setAddOpen(false)}>
+                  <Link to={ROUTES.BESICHTIGUNGEN} className="text-sm text-primary hover:underline flex items-center gap-1" onClick={() => setAddOpen(false)}>
                     Zu Besichtigungen →
                   </Link>
                 </div>

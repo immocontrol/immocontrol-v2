@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Sparkles, Loader2, Copy, Check } from "lucide-react";
 import { completeDeepSeekChat, isDeepSeekConfigured } from "@/integrations/ai/deepseek";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface PropertyData {
   name?: string;
@@ -71,8 +73,9 @@ export function PropertyDescriptionGenerator({ property }: PropertyDescriptionGe
         }
       );
       setResult(answer.trim() || "Keine Beschreibung erhalten.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "KI-Fehler");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "KI-Fehler", run);
     } finally {
       setLoading(false);
     }
