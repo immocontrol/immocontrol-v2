@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
-import { isDeepSeekConfigured, suggestColdCallOpening } from "@/integrations/ai/extractors";
+import { isDeepSeekConfigured, suggestColdCallOpening, suggestScoutInterest } from "@/integrations/ai/extractors";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { Link } from "react-router-dom";
@@ -133,6 +133,49 @@ function ScoutAiCallPopover({ business }: { business: ScoutResult }) {
             </Button>
           </>
         )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function ScoutInterestPopover({ business }: { business: ScoutResult }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setText(null);
+    try {
+      const result = await suggestScoutInterest({
+        name: business.name,
+        type: business.type,
+        address: business.address,
+        estimatedGrossArea: business.estimatedGrossArea ?? null,
+      });
+      setText(result || "Kein Vorschlag erhalten.");
+    } catch {
+      setText("Fehler beim Generieren.");
+    } finally {
+      setLoading(false);
+    }
+  }, [business.name, business.type, business.address, business.estimatedGrossArea]);
+
+  useEffect(() => {
+    if (open && text === null && !loading) load();
+  }, [open, load, loading, text]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground" aria-label={`Warum interessant: ${business.name}`}>
+          <Sparkles className="h-3.5 w-3.5" /> Warum interessant?
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] max-w-[calc(100vw-2rem)] p-3" align="end">
+        <p className="text-xs font-medium mb-2">Für Akquise interessant</p>
+        {loading && <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Wird generiert…</p>}
+        {!loading && text && <p className="text-sm text-wrap-safe">{text}</p>}
       </PopoverContent>
     </Popover>
   );
@@ -653,9 +696,12 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
               <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 5 km oder 10 km).</p>
               <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <Link to="/crm?tab=search" className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
+                <Link to={`${ROUTES.CRM}?tab=search`} className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
                 <Link to={ROUTES.BESICHTIGUNGEN} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Besichtigung planen">
                   <CalendarCheck className="h-3 w-3" /> Besichtigung planen →
+                </Link>
+                <Link to={ROUTES.DEALS} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Deal anlegen">
+                  <Handshake className="h-3 w-3" /> Deal anlegen →
                 </Link>
               </p>
             </div>
@@ -927,7 +973,10 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       <Copy className="h-3.5 w-3.5" /> Kopieren
                     </Button>
                     {isDeepSeekConfigured() && (
-                      <ScoutAiCallPopover business={b} />
+                      <>
+                        <ScoutAiCallPopover business={b} />
+                        <ScoutInterestPopover business={b} />
+                      </>
                     )}
                     {onAddAsLead && (
                       <Button

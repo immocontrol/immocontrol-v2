@@ -551,6 +551,11 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                     <Building2 className="h-3.5 w-3.5" /> Objekte
                   </Button>
                 </Link>
+                <Link to={ROUTES.CONTRACTS} className="inline-flex">
+                  <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]">
+                    <FileText className="h-3.5 w-3.5" /> Verträge
+                  </Button>
+                </Link>
               </div>
             }
           />

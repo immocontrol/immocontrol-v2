@@ -33,7 +33,12 @@
 | **Dashboard** | Besichtigungen | Karte „Nächste Besichtigung“ (Titel, Datum) → ROUTES.BESICHTIGUNGEN |
 | **Mietübersicht** | Objektfilter per URL | ?property=id setzt Objektfilter; Synergie PropertyDetail → Mietübersicht |
 | **Todos** | Besichtigungen | Empty State: „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN |
-| **WGH-Scout** | Teilen | Button „Teilen“ kopiert Link zur Suche (/crm?tab=scout&q=…) |
+| **WGH-Scout** | Teilen, Deals, CRM Suche | Button „Teilen“ kopiert Link zur Suche; Empty State: „Deal anlegen“ (ROUTES.DEALS), „Adresssuche im CRM“ (ROUTES.CRM?tab=search) |
+| **WGH-Scout** | AI | Pro Treffer „Warum interessant?“ (suggestScoutInterest) – Kurzbegründung für Akquise |
+| **Wartungsplaner** | Besichtigungen | Empty State: „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) |
+| **Nebenkosten** | Verträge | Empty State: Link „Verträge“ (ROUTES.CONTRACTS) |
+| **Dokumente** | Besichtigungen | Empty State: Button „Besichtigungen“ (ROUTES.BESICHTIGUNGEN) |
+| **Kontakte** | Besichtigungen | Empty State: „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |

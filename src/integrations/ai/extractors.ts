@@ -359,6 +359,25 @@ Generiere genau einen kurzen Einstiegssatz (1 Satz) für den Anruf. Höflich, sa
 }
 
 /**
+ * Kurze Begründung, warum ein WGH-Scout-Treffer für Akquise interessant sein könnte (Lage, Größe, Nutzung).
+ * Ein Satz für Investoren.
+ */
+export async function suggestScoutInterest(business: { name: string; type?: string; address?: string | null; estimatedGrossArea?: number | null }): Promise<string> {
+  const parts = [
+    `Name: ${business.name}`,
+    business.type ? `Typ/Branche: ${business.type}` : "",
+    business.address ? `Adresse: ${business.address}` : "",
+    business.estimatedGrossArea != null && business.estimatedGrossArea > 0 ? `ca. ${business.estimatedGrossArea} m²` : "",
+  ].filter(Boolean);
+  const prompt = `Als Immobilieninvestor: Warum könnte dieses Gewerbe/Gebäude (WGH) für eine Akquise interessant sein? Gib genau einen kurzen Satz (max. 20 Wörter), z. B. Lage, Größe, Nutzungsmix. Auf Deutsch. Keine Anrede.\n\n${parts.join("\n")}`;
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Assistent für Immobilienakquise. Antworte nur mit dem einen Satz.", maxTokens: 100 }
+  );
+  return raw.trim();
+}
+
+/**
  * Gesprächstranskript für CRM zusammenfassen (Stichpunkte, Vereinbarungen, nächste Schritte).
  * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
  */

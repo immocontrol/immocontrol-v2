@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store } from "lucide-react";
+import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -517,6 +517,9 @@ const ContactManagement = () => {
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
                   <Store className="h-3.5 w-3.5" /> WGH finden
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} aria-label="Besichtigung planen">
+                  <CalendarCheck className="h-3.5 w-3.5" /> Besichtigung planen
                 </Button>
               </div>
             }

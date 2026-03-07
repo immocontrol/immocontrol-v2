@@ -15,6 +15,8 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Scroll nach Suche:** Wenn die Suche mit Treffern abgeschlossen ist, scrollt die Ergebnis-Sektion automatisch in den Blick (resultsSectionRef, smooth).
 - **Kopieren:** Pro Treffer Button „Kopieren“ – Name und Adresse (Zeilenumbruch) in die Zwischenablage; Toast „Kopiert“ / „Kopieren fehlgeschlagen“. A11y: Trefferanzahl-Überschrift mit `aria-live="polite"` für Screenreader.
 - **Teilen:** Button „Teilen“ neben der Trefferüberschrift – kopiert Link zur aktuellen Scout-Suche (`/crm?tab=scout&q=…`) in die Zwischenablage (z. B. zum Verschicken an Kollegen).
+- **Empty State:** Link „Deal anlegen“ (ROUTES.DEALS) ergänzt; Adresssuche nutzt ROUTES.CRM + `?tab=search`.
+- **KI „Warum interessant?“:** Pro Treffer (wenn DeepSeek konfiguriert) Button „Warum interessant?“ – Popover mit Kurzbegründung, warum das Gewerbe für Akquise interessant sein könnte (Lage, Größe, Nutzung). Implementierung: `suggestScoutInterest()` in extractors, `ScoutInterestPopover` in GewerbeScout.
 
 ## CRM
 
@@ -34,11 +36,16 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Mietübersicht:** URL-Parameter `?property=id` setzt den Objektfilter beim Laden; neue Komponente **Inflation-Mietrechner** im Tab Zahlungen (Miete heute, Jahre, Inflation % → Miete in X Jahren).
 - **Todos:** Empty State um Button „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
 - **Darlehen:** Bei Zinsbindung ≤ 12 Monate: Anzeige „Zinsbindung endet in X Tagen“ (statt nur „bald“), wenn Restlaufzeit ≤ 365 Tage.
+- **Wartungsplaner:** Empty State um Button „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
+- **Nebenkosten:** Empty State um Link „Verträge“ (ROUTES.CONTRACTS) ergänzt.
+- **Dokumente:** Empty State um Button „Besichtigungen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
+- **Kontakte:** Empty State um Button „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
 
 ## AI
 
 - **suggestLeadNextStep:** Neue Funktion in `extractors.ts` für CRM-Leads (Name, Firma, Status, Notizen) → ein Satz Vorschlag für den nächsten Schritt.
 - **suggestPropertySummary:** KI-Kurzbewertung für Objekte (Name, Adresse, Miete, Kaufpreis, m², Einheiten, Notizen) → 1–2 Sätze Bewertung. Button „KI Kurzbewertung“ (Sparkles) in PropertyDetail, nur wenn DeepSeek konfiguriert; Ergebnis im Toast (8 s).
+- **suggestScoutInterest:** Kurze Begründung, warum ein WGH-Scout-Treffer für Akquise interessant sein könnte (Lage, Größe, Nutzung). Pro Scout-Treffer Button „Warum interessant?“ (ScoutInterestPopover), nur wenn DeepSeek konfiguriert.
 
 ## Dokumentation
 
@@ -78,3 +85,6 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Dashboard:** useQuery „dashboard_next_viewing“ (property_viewings, visited_at >= heute), Link-Karte „Nächste Besichtigung“.
 - **Todos:** CalendarCheck, Button „Besichtigung planen“ im Empty State.
 - **Loans:** daysUntilFixedEnd, Anzeige „Zinsbindung endet in X Tagen“ wenn ≤ 365 Tage.
+- **GewerbeScout:** Empty State Link „Deal anlegen“ (ROUTES.DEALS); Adresssuche-Link über ROUTES.CRM + ?tab=search; suggestScoutInterest, ScoutInterestPopover.
+- **extractors.ts:** suggestScoutInterest(business) für WGH-Scout.
+- **Wartungsplaner:** CalendarCheck-Import; Empty-State-Button „Besichtigung planen“. **Nebenkosten:** Empty-State-Link „Verträge“. **Dokumente:** CalendarCheck-Import; Empty-State-Button „Besichtigungen“. **Contacts:** CalendarCheck-Import; Empty-State-Button „Besichtigung planen“.
