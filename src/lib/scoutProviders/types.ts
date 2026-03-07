@@ -33,6 +33,8 @@ export interface ScoutPOI {
   source: string;
   /** Geschätzte Bruttofläche in m², falls vom Provider/OSM-Gebäudedaten. */
   estimatedGrossArea?: number | null;
+  /** Amtliche Grundstücksfläche in m² (z. B. aus ALKIS Flurstück), falls verfügbar. */
+  parcelArea?: number | null;
 }
 
 export interface BuildingWithSize {
@@ -40,6 +42,8 @@ export interface BuildingWithSize {
   lon: number;
   estimatedGrossArea: number;
   footprintArea: number;
+  /** Amtliche Grundstücksfläche in m² (ALKIS Flurstück), falls verfügbar. */
+  parcelArea?: number | null;
 }
 
 /**

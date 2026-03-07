@@ -375,11 +375,67 @@ export interface BuildingWithSize {
   footprintArea: number;
 }
 
+type OverpassBuilding = {
+  type: string;
+  tags?: Record<string, string>;
+  geometry?: { lat: number; lon: number }[];
+  center?: { lat: number; lon: number };
+  lat?: number;
+  lon?: number;
+};
+
+/** Geschossanzahl aus OSM-Tags: building:levels + roof:levels, sonst building:height/3, sonst Fallback. */
+function effectiveLevelsFromTags(tags: Record<string, string> | undefined, fallback: number): number {
+  if (!tags) return fallback;
+  const bLevels = parseInt(tags["building:levels"], 10);
+  const roofLevels = parseInt(tags["roof:levels"], 10) || 0;
+  if (!Number.isNaN(bLevels) && bLevels >= 1) {
+    return Math.max(1, bLevels + roofLevels);
+  }
+  const heightStr = tags["building:height"];
+  if (heightStr != null && heightStr !== "") {
+    const heightM = parseFloat(heightStr.replace(/\s*m?\s*$/i, "").trim());
+    if (!Number.isNaN(heightM) && heightM > 0) {
+      return Math.max(1, Math.round(heightM / 3));
+    }
+  }
+  return fallback;
+}
+
+/** Footprint aus Geometrie oder building:area (m²). Liefert 0 wenn nicht ermittelbar. */
+function footprintFromElement(el: OverpassBuilding): number {
+  const tags = el.tags;
+  const areaTag = tags?.["building:area"];
+  if (areaTag != null && areaTag !== "") {
+    const area = parseFloat(areaTag.replace(/\s*m²?\s*$/i, "").trim());
+    if (!Number.isNaN(area) && area >= 20) return Math.round(area);
+  }
+  const geom = el.geometry;
+  const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+  if (coords.length < 3) return 0;
+  return Math.round(calculatePolygonArea(coords));
+}
+
+/** Zentroid aus Geometrie oder center/lat/lon. */
+function centroidFromElement(el: OverpassBuilding, coords: { lat: number; lon: number }[]): { lat: number; lon: number } | null {
+  if (coords.length >= 3) {
+    const sumLat = coords.reduce((s, c) => s + c.lat, 0);
+    const sumLon = coords.reduce((s, c) => s + c.lon, 0);
+    return { lat: sumLat / coords.length, lon: sumLon / coords.length };
+  }
+  if (el.center) return { lat: el.center.lat, lon: el.center.lon };
+  if (typeof el.lat === "number" && typeof el.lon === "number") return { lat: el.lat, lon: el.lon };
+  return null;
+}
+
 /** Fetch buildings in bbox with geometry; return centroid + estimated gross area. Optional signal to cancel. */
 export async function fetchBuildingsInBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<BuildingWithSize[]> {
   const { south, north, west, east } = bbox;
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
-way["building"](${south},${west},${north},${east});
+(
+  way["building"](${south},${west},${north},${east});
+  relation["building"](${south},${west},${north},${east});
+);
 out body geom;`;
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
@@ -390,20 +446,21 @@ out body geom;`;
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const ways = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) => e.type === "way" && e.tags?.building) || [];
+    const elements = (data.elements ?? []).filter(
+      (e: OverpassBuilding) => (e.type === "way" || e.type === "relation") && e.tags?.building
+    ) as OverpassBuilding[];
     const result: BuildingWithSize[] = [];
-    for (const way of ways) {
-      const geom = way.geometry as { lat: number; lon: number }[] | undefined;
-      const coords = geom && geom.length >= 3 ? geom.map((g: { lat: number; lon: number }) => ({ lat: g.lat, lon: g.lon })) : [];
-      if (coords.length < 3) continue;
-      const footprintArea = Math.round(calculatePolygonArea(coords));
+    for (const el of elements) {
+      const footprintArea = footprintFromElement(el);
       if (footprintArea < 20) continue;
-      const sumLat = coords.reduce((s, c) => s + c.lat, 0);
-      const sumLon = coords.reduce((s, c) => s + c.lon, 0);
-      const levels = parseInt(way.tags?.["building:levels"]) || 2;
+      const geom = el.geometry;
+      const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+      const cent = centroidFromElement(el, coords);
+      if (!cent) continue;
+      const levels = effectiveLevelsFromTags(el.tags, 2);
       result.push({
-        lat: sumLat / coords.length,
-        lon: sumLon / coords.length,
+        lat: cent.lat,
+        lon: cent.lon,
         estimatedGrossArea: footprintArea * levels,
         footprintArea,
       });
@@ -417,7 +474,10 @@ out body geom;`;
 /** Fetch buildings in radius (for Umkreis mode) with centroid + area. Optional signal to cancel. */
 export async function fetchBuildingsInRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<BuildingWithSize[]> {
   const query = `[out:json][timeout:20];
-way["building"](around:${radiusM},${lat},${lng});
+(
+  way["building"](around:${radiusM},${lat},${lng});
+  relation["building"](around:${radiusM},${lat},${lng});
+);
 out body geom;`;
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
@@ -428,20 +488,21 @@ out body geom;`;
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const ways = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) => e.type === "way" && e.tags?.building) || [];
+    const elements = (data.elements ?? []).filter(
+      (e: OverpassBuilding) => (e.type === "way" || e.type === "relation") && e.tags?.building
+    ) as OverpassBuilding[];
     const result: BuildingWithSize[] = [];
-    for (const way of ways) {
-      const geom = way.geometry as { lat: number; lon: number }[] | undefined;
-      const coords = geom || [];
-      if (coords.length < 3) continue;
-      const footprintArea = Math.round(calculatePolygonArea(coords));
+    for (const el of elements) {
+      const footprintArea = footprintFromElement(el);
       if (footprintArea < 20) continue;
-      const sumLat = coords.reduce((s, c) => s + c.lat, 0);
-      const sumLon = coords.reduce((s, c) => s + c.lon, 0);
-      const levels = parseInt(way.tags?.["building:levels"]) || 2;
+      const geom = el.geometry;
+      const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+      const cent = centroidFromElement(el, coords);
+      if (!cent) continue;
+      const levels = effectiveLevelsFromTags(el.tags, 2);
       result.push({
-        lat: sumLat / coords.length,
-        lon: sumLon / coords.length,
+        lat: cent.lat,
+        lon: cent.lon,
         estimatedGrossArea: footprintArea * levels,
         footprintArea,
       });
