@@ -33,7 +33,7 @@
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
-| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, WGH-Scout | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden (ROUTES.CRM_SCOUT) |
+| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, WGH-Scout, Verträge | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden, Verträge (ROUTES.CONTRACTS, ROUTES.CRM_SCOUT) |
 | **Objekte** | Deals, Besichtigungen, WGH-Scout | Empty State: Buttons Deals, Besichtigungen, WGH-Scout (ROUTES.CRM_SCOUT, aria-label) |
 | **Berichte** | Objekte, Deals, Analyse, WGH-Scout | Empty State: Buttons Objekte, Zu Deals, Zur Analyse, WGH finden (ROUTES) |
 | **Besichtigungen** | Deals, Dokumente | Empty State: Links „Zu Deals“, „Dokumente“ (ROUTES) |
@@ -58,7 +58,7 @@
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio) |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile; Empty State zusätzlich Button „Zur Analyse“ |
 | **Analyse** | Berichte, WGH-Scout | Button „Berichte“ und „WGH finden“ in der Kopfzeile (ROUTES) |
-| **Deals** | CRM, WGH-Scout | Empty State: Links „Leads aus CRM übernehmen“, „WGH finden“ (ROUTES.CRM_SCOUT) |
+| **Deals** | CRM, WGH-Scout, Besichtigungen | Empty State: Links „Leads aus CRM übernehmen“, „WGH finden“, „Besichtigung planen“ (ROUTES.CRM_SCOUT, ROUTES.BESICHTIGUNGEN) |
 | **Newsticker** | — | Fehler beim Laden: handleError + toastErrorWithRetry (Retry = Aktualisieren) |
 | **Dashboard** | Mietübersicht | StatCard „Mieteinnahmen“ verlinkt über ROUTES.RENT |
 | **OnboardingBanner** | Home, Analyse | Schritte „Objekt hinzufügen“, „Zum Rechner“ nutzen ROUTES.HOME, ROUTES.ANALYSE |

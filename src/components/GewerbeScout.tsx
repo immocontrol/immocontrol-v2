@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -686,7 +686,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               </div>
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-medium" id="scout-results-heading">
+              <h3 className="text-sm font-medium" id="scout-results-heading" aria-live="polite">
                 Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
               </h3>
               <div className="flex flex-wrap items-center gap-2">
@@ -898,6 +898,18 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       >
                         <ExternalLink className="h-3.5 w-3.5" /> Maps
                       </a>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
+                      onClick={() => {
+                        const text = [b.name, b.address].filter(Boolean).join("\n");
+                        navigator.clipboard.writeText(text).then(() => toast.success("Kopiert"), () => toast.error("Kopieren fehlgeschlagen"));
+                      }}
+                      aria-label={`Kopieren: ${b.name}`}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Kopieren
                     </Button>
                     {isDeepSeekConfigured() && (
                       <ScoutAiCallPopover business={b} />

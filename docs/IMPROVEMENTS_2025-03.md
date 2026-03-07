@@ -13,6 +13,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Empty State:** Zusätzlicher Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN (Synergie Scout ↔ Besichtigungen).
 - **Header:** Nach Suche wird „X Treffer“ im Kartentitel angezeigt.
 - **Scroll nach Suche:** Wenn die Suche mit Treffern abgeschlossen ist, scrollt die Ergebnis-Sektion automatisch in den Blick (resultsSectionRef, smooth).
+- **Kopieren:** Pro Treffer Button „Kopieren“ – Name und Adresse (Zeilenumbruch) in die Zwischenablage; Toast „Kopiert“ / „Kopieren fehlgeschlagen“. A11y: Trefferanzahl-Überschrift mit `aria-live="polite"` für Screenreader.
 
 ## CRM
 
@@ -24,7 +25,9 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 
 - **Scout → Deals:** Pro Scout-Treffer Button „Deal“; Deal-Formular wird mit Name/Adresse/Telefon/E-Mail und Quelle „WGH-Scout“ vorausgefüllt.
 - **Objekt → Deals:** In PropertyDetail neben „WGH in Umgebung“ neuer Link „Deal anlegen“ – Deal mit Objektname und Adresse (Quelle „Objekt“) vorausgefüllt.
-- **Deals:** State `fromScout` und `fromProperty` in der Vorlagen-Logik ergänzt; Toast-Meldungen angepasst.
+- **Deals:** State `fromScout` und `fromProperty` in der Vorlagen-Logik ergänzt; Toast-Meldungen angepasst. Empty State: zusätzlicher Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN (CalendarCheck).
+- **Loans:** Empty State um Button „Verträge“ (ROUTES.CONTRACTS, FileText) ergänzt.
+- **Verträge:** Widget „Nächste Kündigungsfristen“ – zeigt die nächsten 3 Kündigungsfristen (Daten aus View `mietvertraege`, Frist = Vertragsende − notice_period_months). „Alle Fristen“ scrollt smooth zum Fristen-Tab.
 
 ## AI
 
@@ -58,3 +61,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Dashboard:** Empty State (keine Objekte) um Button „Verträge“ (ROUTES.CONTRACTS, FileText) ergänzt.
 - **ViewingCard:** Bei Adresse Link „WGH in Umgebung“ → ROUTES.CRM_SCOUT mit ?q=Adresse (Synergie Besichtigungen ↔ Scout).
 - **Besichtigungen:** useLocation/useNavigate; useEffect bei location.state.fromScout → Form vorausgefüllt, setAddOpen(true), Toast, navigate replace (State leeren). CRM: onAddAsViewing an GewerbeScout übergeben.
+- **GewerbeScout:** Copy-Button (lucide Copy), Toast bei Kopieren; Ergebnis-Überschrift mit aria-live.
+- **Deals:** CalendarCheck-Import; Empty-State-Link „Besichtigung planen“.
+- **Loans:** FileText-Import; Empty-State-Button „Verträge“.
+- **Vertraege:** useRef(tabsRef), useQuery „vertraege_notice_deadlines“ (mietvertraege: id, tenant_name, unit_number, contract_end, notice_period_months, is_indefinite); formatDate, formatDaysUntil; Widget nur wenn noticeDeadlines.length > 0; „Alle Fristen“-Button scrollt zu tabsRef.

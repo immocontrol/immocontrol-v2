@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles, Store } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles, Store, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
@@ -1124,6 +1124,9 @@ const Deals = () => {
                         </Link>
                         <Link to={ROUTES.CRM_SCOUT} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="WGH-Scout">
                           <Store className="h-3 w-3" /> WGH finden
+                        </Link>
+                        <Link to={ROUTES.BESICHTIGUNGEN} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="Besichtigung planen">
+                          <CalendarCheck className="h-3 w-3" /> Besichtigung planen
                         </Link>
                       </div>
                     </>

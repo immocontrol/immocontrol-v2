@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ContractManagement from "@/components/ContractManagement";
@@ -13,7 +13,7 @@ import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatDate, formatDaysUntil } from "@/lib/formatters";
 
 const Vertraege = () => {
   const { user } = useAuth();
@@ -62,6 +62,32 @@ const Vertraege = () => {
   const totalMonthlyBurn = useMemo(() => {
     return (stats.totalServiceCost / 12) + (stats.openInvoiceAmount / 12);
   }, [stats.totalServiceCost, stats.openInvoiceAmount]);
+
+  /* Nächste Kündigungsfristen: next 3 notice deadlines from Mietverträge */
+  const { data: noticeDeadlines = [] } = useQuery({
+    queryKey: ["vertraege_notice_deadlines"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mietvertraege")
+        .select("id, tenant_name, unit_number, contract_end, notice_period_months, property_id, is_indefinite")
+        .not("contract_end", "is", null);
+      if (error) throw error;
+      const now = Date.now();
+      const withDeadline = (data || [])
+        .filter((c: { is_indefinite?: boolean; notice_period_months?: number }) => !c.is_indefinite && (c.notice_period_months ?? 0) > 0)
+        .map((c: { contract_end: string; notice_period_months: number; tenant_name?: string; unit_number?: string }) => {
+          const end = new Date(c.contract_end);
+          const deadline = new Date(end);
+          deadline.setMonth(deadline.getMonth() - (c.notice_period_months || 0));
+          return { ...c, noticeDeadline: deadline.toISOString() };
+        })
+        .filter((x: { noticeDeadline: string }) => new Date(x.noticeDeadline).getTime() > now)
+        .sort((a: { noticeDeadline: string }, b: { noticeDeadline: string }) => new Date(a.noticeDeadline).getTime() - new Date(b.noticeDeadline).getTime())
+        .slice(0, 3);
+      return withDeadline;
+    },
+    enabled: !!user,
+  });
 
   return (
     /* IMP-16: ARIA landmark for Verträge page */
@@ -164,8 +190,34 @@ const Vertraege = () => {
         </div>
       </div>
 
+      {/* Nächste Kündigungsfristen: compact widget with next 3 notice deadlines */}
+      {noticeDeadlines.length > 0 && (
+        <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium flex items-center gap-1.5">
+              <CalendarClock className="h-4 w-4 text-primary" />
+              Nächste Kündigungsfristen
+            </h3>
+            <button type="button" onClick={() => tabsRef.current?.scrollIntoView({ behavior: "smooth" })} className="text-xs text-primary hover:underline" aria-label="Zum Fristen-Tab scrollen">
+              Alle Fristen →
+            </button>
+          </div>
+          <ul className="space-y-1.5" aria-label="Kündigungsfristen">
+            {noticeDeadlines.map((item: { id: string; tenant_name?: string; unit_number?: string; noticeDeadline: string }) => (
+              <li key={item.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                <span className="font-medium text-foreground">{[item.tenant_name, item.unit_number].filter(Boolean).join(" · ") || "Vertrag"}</span>
+                <span className="text-muted-foreground">
+                  Kündigung bis {formatDate(item.noticeDeadline)} ({formatDaysUntil(item.noticeDeadline)})
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <KuendigungsfristRechner />
 
+      <div ref={tabsRef}>
       <Tabs defaultValue="mietvertraege" className="w-full">
         <TabsList className="flex w-full overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible">
           <TabsTrigger value="mietvertraege" className="flex items-center gap-1.5 text-xs">
@@ -190,6 +242,7 @@ const Vertraege = () => {
         <TabsContent value="dienstleister"><ServiceContracts /></TabsContent>
         <TabsContent value="lifecycle"><ContractLifecycleManager /></TabsContent>
       </Tabs>
+      </div>
 
       {/* Vertragsvorlagen — moved from Dashboard */}
       <ContractTemplates />
