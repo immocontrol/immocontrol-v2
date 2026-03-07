@@ -5,7 +5,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /* Supabase types in this repo may not include all tables; cast once here to avoid `as never` at call sites. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const supabaseAny = supabase as unknown as {
   from: (table: string) => ReturnType<typeof supabase.from>;
 };

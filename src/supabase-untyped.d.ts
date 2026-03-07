@@ -18,7 +18,7 @@
 import "@supabase/supabase-js";
 
 declare module "@supabase/supabase-js" {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   interface SupabaseClient<Database = any, SchemaName extends string & keyof Database = any, Schema = any> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from(relation: string): any;

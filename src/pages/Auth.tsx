@@ -73,6 +73,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -343,7 +344,7 @@ const Auth = () => {
             navigate(getReturnUrl(), { replace: true });
           }
         } else {
-          toast.success("Konto erstellt! Bitte bestätige deine E-Mail-Adresse.");
+          setEmailConfirmationPending(true);
         }
       }
     } catch (error: unknown) {
@@ -485,6 +486,25 @@ const Auth = () => {
                 onClick={() => { setResetSent(false); setMode("login"); }}
               >
                 Zurück zur Anmeldung
+              </Button>
+            </div>
+          ) : mode === "register" && emailConfirmationPending ? (
+            <div className="text-center py-4 space-y-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Mail className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Konto erstellt!</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Wir haben eine Bestätigungs-E-Mail an <strong>{email}</strong> gesendet. Bitte öffne den Link in der E-Mail, um dein Konto zu aktivieren. Danach kannst du dich hier anmelden.
+                </p>
+              </div>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => { setEmailConfirmationPending(false); setMode("login"); }}
+              >
+                Zur Anmeldung
               </Button>
             </div>
           ) : (
@@ -668,7 +688,7 @@ const Auth = () => {
         </form>
         )}
 
-        {mode !== "forgot" && !needs2FA && (
+        {mode !== "forgot" && !needs2FA && !emailConfirmationPending && (
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               {mode === "login" ? "Noch kein Konto?" : "Bereits registriert?"}{" "}

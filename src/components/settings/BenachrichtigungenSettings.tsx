@@ -8,14 +8,24 @@ import { Bell, MessageSquare, Monitor, Inbox, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { subscribeToWebPush, getWebPushStatus } from "@/lib/pushNotifications";
+import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
+import { Switch } from "@/components/ui/switch";
 
 interface BenachrichtigungenSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
 }
 
+const TOPICS: { key: "overdue" | "contract_expiry" | "tickets" | "loan_milestone"; label: string }[] = [
+  { key: "overdue", label: "Überfällige Mieten" },
+  { key: "contract_expiry", label: "Vertragsende" },
+  { key: "tickets", label: "Offene Tickets" },
+  { key: "loan_milestone", label: "Zinsbindung endet" },
+];
+
 export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSettingsProps) {
   const [pushStatus, setPushStatus] = useState(() => getWebPushStatus());
   const [pushLoading, setPushLoading] = useState(false);
+  const { prefs, setInApp } = useNotificationPreferences();
 
   useEffect(() => {
     setPushStatus(getWebPushStatus());
@@ -50,11 +60,24 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
         Verwalte die Benachrichtigungskanäle: In-App-Hinweise, Browser-Benachrichtigungen, Web-Push und Telegram.
       </p>
       <div className="space-y-3">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-          <Inbox className="h-5 w-5 text-primary shrink-0" />
-          <div>
-            <p className="text-xs font-medium">In-App</p>
-            <p className="text-[11px] text-muted-foreground">Hinweise im Dashboard (z. B. überfällige Mieten, Vertragsende, offene Tickets)</p>
+        <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="flex items-center gap-3">
+            <Inbox className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              <p className="text-xs font-medium">In-App</p>
+              <p className="text-[11px] text-muted-foreground">Hinweise im Dashboard pro Thema ein-/ausschaltbar</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 pl-8">
+            {TOPICS.map((t) => (
+              <label key={t.key} className="flex items-center gap-2 text-xs cursor-pointer">
+                <Switch
+                  checked={prefs.inApp[t.key]}
+                  onCheckedChange={(v) => setInApp(t.key, !!v)}
+                />
+                <span>{t.label}</span>
+              </label>
+            ))}
           </div>
         </div>
         <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
@@ -99,7 +122,7 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
         </div>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Eine zentrale Feinabstimmung pro Kanal und Thema ist vorgesehen. Details siehe{" "}
+        Einstellungen werden lokal gespeichert. Details siehe{" "}
         <code className="text-[10px] bg-secondary px-1 py-0.5 rounded">docs/BENACHRICHTIGUNGEN.md</code>.
       </p>
     </div>

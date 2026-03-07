@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
@@ -39,6 +39,10 @@ import { Download, Sparkles, Loader2 } from "lucide-react";
 import { ManusFinanzierung } from "@/components/manus/ManusFinanzierung";
 import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 import { TilgungsplanSchnellrechner } from "@/components/TilgungsplanSchnellrechner";
+import { VirtualList } from "@/components/VirtualList";
+
+const VIRTUAL_LIST_THRESHOLD = 25;
+const LOAN_ITEM_HEIGHT = 145;
 
 interface Loan {
   id: string;
@@ -427,6 +431,78 @@ const Loans = () => {
 
   /* OPT-48: hslVar helper for theme colors */
   const COLORS = [hslVar("primary"), hslVar("gold"), hslVar("chart-3")];
+
+  /* VirtualList: render loan card for 25+ items (IMP-6 pattern) */
+  const renderLoanItem = useCallback((l: Loan) => {
+    const now = new Date();
+    const prop = properties.find(p => p.id === l.property_id);
+    const monthsLeft = l.fixed_interest_until
+      ? Math.max(0, (new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30))
+      : null;
+    const daysUntilFixedEnd = l.fixed_interest_until
+      ? Math.ceil((new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+    const loanCard = (
+      <div className="gradient-card rounded-xl border border-border p-4 flex items-center gap-4 group property-card-hover h-full">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Landmark className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-none">{l.bank_name}</span>
+            <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
+            {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
+            {monthsLeft !== null && monthsLeft <= 12 && (
+              <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5" title={daysUntilFixedEnd != null && daysUntilFixedEnd <= 90 ? "Anschlussfinanzierung prüfen" : undefined}>
+                <AlertTriangle className="h-2.5 w-2.5" />
+                {daysUntilFixedEnd != null && daysUntilFixedEnd > 0 && daysUntilFixedEnd <= 365
+                  ? `Zinsbindung endet in ${daysUntilFixedEnd} Tag${daysUntilFixedEnd !== 1 ? "en" : ""}${daysUntilFixedEnd <= 90 ? " · Anschluss prüfen!" : ""}`
+                  : <><span className="hidden sm:inline">Zinsbindung endet</span> bald</>}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-muted-foreground mt-0.5 flex-wrap min-w-0">
+            <span>Restschuld: {formatCurrency(l.remaining_balance)}</span>
+            <span>{l.interest_rate}% Zins · {l.repayment_rate}% Tilgung</span>
+            <span className="hidden sm:inline">{formatCurrency(l.monthly_payment)}/M</span>
+            {l.fixed_interest_until && (
+              <span className="hidden sm:flex items-center gap-0.5">
+                <Calendar className="h-2.5 w-2.5" /> bis {new Date(l.fixed_interest_until).toLocaleDateString("de-DE", { month: "short", year: "numeric" })}
+              </span>
+            )}
+          </div>
+          {l.loan_amount > 0 && (
+            <div className="mt-1.5">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+                <span>Tilgung: {(l.loan_amount > 0 ? ((1 - l.remaining_balance / l.loan_amount) * 100) : 0).toFixed(0)}%</span>
+                <span>{formatCurrency(l.loan_amount - l.remaining_balance)} von {formatCurrency(l.loan_amount)}</span>
+              </div>
+              <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full progress-smooth" style={{ width: `${Math.max(1, l.loan_amount > 0 ? (1 - l.remaining_balance / l.loan_amount) * 100 : 0)}%` }} />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <LoanPayoffSimulator remainingBalance={l.remaining_balance} interestRate={l.interest_rate} monthlyPayment={l.monthly_payment} bankName={l.bank_name} />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)} aria-label="Darlehen bearbeiten"><Edit2 className="h-3 w-3" /></Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-loss" onClick={() => setDeleteTargetLoan(l.id)} aria-label="Darlehen löschen"><Trash2 className="h-3 w-3" /></Button>
+        </div>
+      </div>
+    );
+    return isMobile ? (
+      <div className="pb-2">
+        <MobileSwipeToAction
+          leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(l) }]}
+          rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => setDeleteTargetLoan(l.id) }]}
+        >
+          {loanCard}
+        </MobileSwipeToAction>
+      </div>
+    ) : (
+      <div className="pb-2">{loanCard}</div>
+    );
+  }, [properties, isMobile, openEdit, setDeleteTargetLoan]);
 
   if (isLoading) {
     return (
@@ -942,81 +1018,20 @@ const Loans = () => {
             </Button>
           </div>
         </div>
+      ) : filteredLoans.length >= VIRTUAL_LIST_THRESHOLD ? (
+        <VirtualList
+          items={filteredLoans}
+          itemHeight={LOAN_ITEM_HEIGHT}
+          maxHeight={typeof window !== "undefined" ? window.innerHeight - 280 : 500}
+          overscan={4}
+          getKey={(l) => l.id}
+          renderItem={renderLoanItem}
+        />
       ) : (
         <div className="space-y-2">
-          {filteredLoans.map(l => {
-            const prop = properties.find(p => p.id === l.property_id);
-            const monthsLeft = l.fixed_interest_until
-              ? Math.max(0, (new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30))
-              : null;
-            const daysUntilFixedEnd = l.fixed_interest_until
-              ? Math.ceil((new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-              : null;
-            /* MOB-IMPROVE-1 + MOB-IMPROVE-6: Mobile card layout with swipe-to-delete */
-            const loanCard = (
-              <div key={l.id} className="gradient-card rounded-xl border border-border p-4 flex items-center gap-4 group property-card-hover">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Landmark className="h-5 w-5 text-primary" />
-                </div>
-                  {/* IMP-26: Ensure loan card text never overflows on mobile */}
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-none">{l.bank_name}</span>
-                      <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
-                      {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
-                      {monthsLeft !== null && monthsLeft <= 12 && (
-                        <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5" title={daysUntilFixedEnd != null && daysUntilFixedEnd <= 90 ? "Anschlussfinanzierung prüfen" : undefined}>
-                          <AlertTriangle className="h-2.5 w-2.5" />
-                          {daysUntilFixedEnd != null && daysUntilFixedEnd > 0 && daysUntilFixedEnd <= 365
-                            ? `Zinsbindung endet in ${daysUntilFixedEnd} Tag${daysUntilFixedEnd !== 1 ? "en" : ""}${daysUntilFixedEnd <= 90 ? " · Anschluss prüfen!" : ""}`
-                            : <><span className="hidden sm:inline">Zinsbindung endet</span> bald</>}
-                        </span>
-                      )}
-                    </div>
-                    {/* IMP-27: Responsive loan details — wrap properly on small screens */}
-                    <div className="flex items-center gap-2 sm:gap-4 text-[11px] text-muted-foreground mt-0.5 flex-wrap min-w-0">
-                      <span>Restschuld: {formatCurrency(l.remaining_balance)}</span>
-                      <span>{l.interest_rate}% Zins · {l.repayment_rate}% Tilgung</span>
-                      <span className="hidden sm:inline">{formatCurrency(l.monthly_payment)}/M</span>
-                      {l.fixed_interest_until && (
-                        <span className="hidden sm:flex items-center gap-0.5">
-                          <Calendar className="h-2.5 w-2.5" /> bis {new Date(l.fixed_interest_until).toLocaleDateString("de-DE", { month: "short", year: "numeric" })}
-                        </span>
-                      )}
-                    </div>
-                    {/* Improvement 2: Loan payoff progress bar */}
-                    {l.loan_amount > 0 && (
-                      <div className="mt-1.5">
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
-                          {/* STRONG-6: NaN guard on progress bar percentage — prevents NaN display when loan_amount is 0 */}
-          <span>Tilgung: {(l.loan_amount > 0 ? ((1 - l.remaining_balance / l.loan_amount) * 100) : 0).toFixed(0)}%</span>
-                          <span>{formatCurrency(l.loan_amount - l.remaining_balance)} von {formatCurrency(l.loan_amount)}</span>
-                        </div>
-                        {/* UI-14: progress-smooth */}
-                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full progress-smooth" style={{ width: `${Math.max(1, l.loan_amount > 0 ? (1 - l.remaining_balance / l.loan_amount) * 100 : 0)}%` }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <LoanPayoffSimulator remainingBalance={l.remaining_balance} interestRate={l.interest_rate} monthlyPayment={l.monthly_payment} bankName={l.bank_name} />
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(l)} aria-label="Darlehen bearbeiten"><Edit2 className="h-3 w-3" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-loss" onClick={() => setDeleteTargetLoan(l.id)} aria-label="Darlehen löschen"><Trash2 className="h-3 w-3" /></Button>
-                </div>
-              </div>
-            );
-            /* MOB-IMPROVE-6: Wrap with swipe-to-delete on mobile */
-            return isMobile ? (
-              <MobileSwipeToAction
-                key={l.id}
-                leftActions={[{ id: "edit", label: "Bearbeiten", icon: <Edit2 className="h-4 w-4" />, color: "bg-primary", onAction: () => openEdit(l) }]}
-                rightActions={[{ id: "delete", label: "Löschen", icon: <Trash2 className="h-4 w-4" />, color: "bg-destructive", onAction: () => setDeleteTargetLoan(l.id) }]}
-              >
-                {loanCard}
-              </MobileSwipeToAction>
-            ) : loanCard;
-          })}
+          {filteredLoans.map(l => (
+            <Fragment key={l.id}>{renderLoanItem(l)}</Fragment>
+          ))}
         </div>
       )}
 

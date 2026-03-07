@@ -138,11 +138,11 @@ const PropertyMap = () => {
     if (!mapReady || !mapInstanceRef.current || geocoded.length === 0) return;
 
     /* FIX-34: Replace `as any` and `any[]` with proper types */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+     
     const L = (window as Record<string, unknown>).L as Record<string, (...args: unknown[]) => unknown> | undefined;
     if (!L) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+     
     const map = mapInstanceRef.current as Record<string, (...args: unknown[]) => unknown>;
     const markers: unknown[] = [];
 

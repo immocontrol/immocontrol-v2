@@ -136,31 +136,69 @@ function getHeaders(): Record<string, string> {
   };
 }
 
+/** Retry helper for transient failures (network, 5xx) */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+): Promise<T> {
+  let lastErr: Error | null = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+      const msg = lastErr.message;
+      const isRetryable =
+        msg.includes("Failed to fetch") ||
+        msg.includes("NetworkError") ||
+        msg.includes("Timeout") ||
+        msg.includes("ECONNRESET") ||
+        msg.includes("503") ||
+        msg.includes("502") ||
+        msg.includes("504") ||
+        msg.includes("Manus Proxy Fehler");
+      const isClientError = /40[0-9]/.test(msg) || msg.includes("401") || msg.includes("403");
+      if (!isRetryable || isClientError || attempt === maxAttempts) {
+        throw lastErr;
+      }
+      const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  throw lastErr ?? new Error("Manus Anfrage fehlgeschlagen");
+}
+
 /** Direct Manus API request (uses local key) */
 async function directApiRequest<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${MANUS_API_BASE}${path}`, {
-    ...options,
-    headers: { ...getHeaders(), ...options?.headers },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Manus API Fehler (${res.status}): ${body || res.statusText}`);
-  }
-  return res.json();
+  const fn = async () => {
+    const res = await fetch(`${MANUS_API_BASE}${path}`, {
+      ...options,
+      headers: { ...getHeaders(), ...options?.headers },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Manus API Fehler (${res.status}): ${body || res.statusText}`);
+    }
+    return res.json();
+  };
+  return withRetry(fn);
 }
 
 /** Proxy API request via Supabase Edge Function (key stays server-side) */
 async function proxyApiRequest<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("manus-proxy", {
-    body,
-  });
-  if (error) {
-    throw new Error(`Manus Proxy Fehler: ${error.message}`);
-  }
-  if (data?.error) {
-    throw new Error(data.error);
-  }
-  return data as T;
+  const fn = async () => {
+    const { data, error } = await supabase.functions.invoke("manus-proxy", {
+      body,
+    });
+    if (error) {
+      throw new Error(`Manus Proxy Fehler: ${error.message}`);
+    }
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+    return data as T;
+  };
+  return withRetry(fn);
 }
 
 /* ─── Core API Methods ─── */

@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
 import { AlertTriangle, X, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { Link } from "react-router-dom";
 
 const OverduePaymentBanner = () => {
   const { user } = useAuth();
+  const { isInAppEnabled } = useNotificationPreferences();
   const [dismissed, setDismissed] = useState(false);
 
   const { data: overdue = [] } = useQuery({
@@ -22,7 +24,7 @@ const OverduePaymentBanner = () => {
     enabled: !!user,
   });
 
-  if (overdue.length === 0 || dismissed) return null;
+  if (!isInAppEnabled("overdue") || overdue.length === 0 || dismissed) return null;
 
   const total = overdue.reduce((s, p) => s + Number(p.amount || 0), 0);
 

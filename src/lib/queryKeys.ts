@@ -44,6 +44,7 @@ export const queryKeys = {
   },
   todos: {
     all: (userId: string) => ["todos", userId] as const,
+    base: ["todos"] as const,
   },
   customCompanies: {
     all: ["custom_companies"] as const,
@@ -69,6 +70,7 @@ export const queryKeys = {
   /* IMP-81: Query keys for maintenance items */
   maintenance: {
     all: ["maintenance"] as const,
+    allList: ["all_maintenance"] as const,
     byProperty: (propertyId: string) => ["maintenance", propertyId] as const,
   },
   /* IMP-82: Query keys for service contracts */

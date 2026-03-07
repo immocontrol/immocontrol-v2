@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
+import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -29,6 +30,7 @@ interface LoanAlert {
 export function LoanFixedInterestCountdown() {
   const { user } = useAuth();
   const { properties } = useProperties();
+  const { isInAppEnabled } = useNotificationPreferences();
 
   const { data: loans = [] } = useQuery({
     queryKey: queryKeys.loans.all,
@@ -92,7 +94,7 @@ export function LoanFixedInterestCountdown() {
       .sort((a, b) => a.daysLeft - b.daysLeft);
   }, [loans, propMap]);
 
-  if (alerts.length === 0) return null;
+  if (!isInAppEnabled("loan_milestone") || alerts.length === 0) return null;
 
   const urgencyColors: Record<LoanAlert["urgency"], string> = {
     expired: "border-loss/40 bg-loss/5",

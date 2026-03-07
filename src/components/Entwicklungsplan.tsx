@@ -226,7 +226,7 @@ export function Entwicklungsplan({
         const descLines = doc.splitTextToSize(m.description, pageW - 2 * margin - 4);
         doc.text(descLines, margin + 2, y);
         y += descLines.length * 4.5 + 2;
-        let details: string[] = [];
+        const details: string[] = [];
         if (m.yearSuggested > 0) details.push(`Jahr ${m.yearSuggested}`);
         if (m.costOneTime != null && m.costOneTime > 0) details.push(`Kosten: ${formatCurrency(m.costOneTime)}`);
         if (m.revenueAnnual != null && m.revenueAnnual > 0) details.push(`+${formatCurrency(m.revenueAnnual)}/Jahr`);

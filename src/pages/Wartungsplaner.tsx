@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import MaintenanceCalendar from "@/components/MaintenanceCalendar";
 import { handleError } from "@/lib/handleError";
@@ -124,7 +125,7 @@ const Wartungsplaner = () => {
   });
 
   const { data: allItems = [], isLoading } = useQuery<MaintenanceItem[]>({
-    queryKey: ["all_maintenance"],
+    queryKey: queryKeys.maintenance.allList,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("maintenance_items")
@@ -198,7 +199,7 @@ const Wartungsplaner = () => {
       toast.success("Wartung geplant");
       setForm({ title: "", category: "Sonstiges", priority: "medium", estimated_cost: 0, planned_date: "", notes: "", property_id: "", recurring_interval: "none" });
       setOpen(false);
-      qc.invalidateQueries({ queryKey: ["all_maintenance"] });
+      qc.invalidateQueries({ queryKey: queryKeys.maintenance.allList });
     },
     onError: (err) => {
       handleError(err, { context: "supabase", showToast: false });
@@ -216,7 +217,7 @@ const Wartungsplaner = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["all_maintenance"] });
+      qc.invalidateQueries({ queryKey: queryKeys.maintenance.allList });
       toast.success("Status aktualisiert");
     },
     onError: (err, variables) => {
@@ -231,7 +232,7 @@ const Wartungsplaner = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["all_maintenance"] });
+      qc.invalidateQueries({ queryKey: queryKeys.maintenance.allList });
       toast.success("Gelöscht");
     },
     onError: (err, id) => {

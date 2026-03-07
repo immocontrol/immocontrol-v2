@@ -22,6 +22,7 @@ import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { NotificationPreferencesProvider } from "@/context/NotificationPreferencesContext";
 import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
 
 import { ROUTES } from "@/lib/routes";
@@ -147,8 +148,9 @@ queryClient.setQueryDefaults(queryKeys.contacts.all, { staleTime: 3 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.deals.all, { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.forecast.all, { staleTime: 5 * 60_000 });
 /* FUND-14: Add missing query defaults for todos and maintenance — prevents over-fetching */
-queryClient.setQueryDefaults(["todos"], { staleTime: 60_000 });
+queryClient.setQueryDefaults(queryKeys.todos.base, { staleTime: 60_000 });
 queryClient.setQueryDefaults(queryKeys.maintenance.all, { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.maintenance.allList, { staleTime: 5 * 60_000 });
 queryClient.setQueryDefaults(["documents"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(["tickets"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.viewings.all, { staleTime: 2 * 60_000 });
@@ -318,6 +320,7 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PropertyProvider>
+            <NotificationPreferencesProvider>
             <AccessibilityProvider>
             <PrivacyProvider>
             {/* MOB-IMPROVE: Global mobile improvements provider */}
@@ -345,6 +348,7 @@ const App = () => {
             </MobileImprovementsProvider>
             </PrivacyProvider>
             </AccessibilityProvider>
+            </NotificationPreferencesProvider>
           </PropertyProvider>
         </AuthProvider>
       </QueryClientProvider>

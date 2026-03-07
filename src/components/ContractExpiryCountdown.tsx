@@ -2,11 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useProperties } from "@/context/PropertyContext";
+import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 
 const ContractExpiryCountdown = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
+  const { isInAppEnabled } = useNotificationPreferences();
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["contract_expiry_countdown"],
@@ -29,7 +31,7 @@ const ContractExpiryCountdown = () => {
     return { ...c, daysLeft, propertyName: prop?.name || "–" };
   }).filter(c => c.daysLeft > 0 && c.daysLeft <= 180);
 
-  if (expiring.length === 0) return null;
+  if (!isInAppEnabled("contract_expiry") || expiring.length === 0) return null;
 
   return (
     <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in">

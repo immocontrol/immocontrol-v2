@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { Bell, AlertTriangle, Clock, MessageSquare, Wrench, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Bell, AlertTriangle, Clock, MessageSquare, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
 import { logger } from "@/lib/logger";
 
 interface Notification {
@@ -24,6 +25,7 @@ interface NotificationData {
 
 export const NotificationBell = () => {
   const { user } = useAuth();
+  const { isInAppEnabled } = useNotificationPreferences();
   const [data, setData] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -50,16 +52,25 @@ export const NotificationBell = () => {
     return () => clearInterval(interval);
   }, [user]);
 
-  const total = data?.total || 0;
   /* IMPROVE-38: Notifications sorted by severity — high-severity items (overdue payments, tickets) appear first */
-  const allNotifications = data
-    ? [
-        ...data.notifications.overdue_payments,
-        ...data.notifications.open_tickets,
-        ...data.notifications.upcoming_payments,
-        ...data.notifications.unread_messages,
-      ]
-    : [];
+  /* Filter by notification preferences (overdue, tickets) */
+  const allNotifications = useMemo(() => {
+    if (!data) return [];
+    const overdue = isInAppEnabled("overdue")
+      ? data.notifications.overdue_payments
+      : [];
+    const tickets = isInAppEnabled("tickets")
+      ? data.notifications.open_tickets
+      : [];
+    return [
+      ...overdue,
+      ...tickets,
+      ...data.notifications.upcoming_payments,
+      ...data.notifications.unread_messages,
+    ];
+  }, [data, isInAppEnabled]);
+
+  const total = allNotifications.length;
 
   const iconForType = (type: string) => {
     switch (type) {

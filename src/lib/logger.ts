@@ -52,15 +52,15 @@ function log(level: LogLevel, message: string, context?: string, data?: unknown)
   switch (level) {
     case "debug":
     case "info":
-      // eslint-disable-next-line no-console
+       
       console.log(formatted, data ?? "");
       break;
     case "warn":
-      // eslint-disable-next-line no-console
+       
       console.warn(formatted, data ?? "");
       break;
     case "error":
-      // eslint-disable-next-line no-console
+       
       console.error(formatted, data ?? "");
       break;
   }
