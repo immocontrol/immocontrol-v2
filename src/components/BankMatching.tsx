@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { Landmark, Upload, Link2, Unlink, CheckCircle, X, FileSpreadsheet, ArrowRight, Plus, Settings2, TrendingUp, Trash2, BarChart3, Percent, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import FileImportPicker from "@/components/FileImportPicker";
 /* IMP-2: Extracted parsing utilities to reduce component size */
 import {
@@ -89,6 +91,9 @@ const BankMatching = () => {
     setCsvMapping({});
     setCsvFileName("");
   };
+
+  /** Last file used for import — enables retry on failure */
+  const lastImportFileRef = useRef<File | null>(null);
 
   // ── Queries ──
   const { data: accounts = [] } = useQuery<BankAccount[]>({
@@ -399,6 +404,7 @@ const BankMatching = () => {
   // ── CSV Import ──
   const handleFileUpload = async (file: File) => {
     if (!user) return;
+    lastImportFileRef.current = file;
     setImporting(true);
     try {
       const text = await file.text();
@@ -444,7 +450,12 @@ const BankMatching = () => {
       toast.info("CSV erkannt – bitte Spalten zuordnen");
       return; /* keep dialog open */
     } catch (err: unknown) {
-      toast.error("Import fehlgeschlagen: " + (err instanceof Error ? err.message : "Fehler"));
+      handleError(err, { context: "supabase", showToast: false });
+      const msg = "Import fehlgeschlagen: " + (err instanceof Error ? err.message : "Fehler");
+      toastErrorWithRetry(msg, () => {
+        const f = lastImportFileRef.current;
+        if (f) handleFileUpload(f);
+      });
     } finally {
       setImporting(false);
     }
@@ -509,7 +520,8 @@ const BankMatching = () => {
       setImportOpen(false);
       resetCsvState();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Import fehlgeschlagen");
+      handleError(e, { context: "supabase", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Import fehlgeschlagen", () => handleCsvImport());
     } finally {
       setImporting(false);
     }

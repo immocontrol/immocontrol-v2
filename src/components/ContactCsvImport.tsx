@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { FileImportPicker } from "@/components/FileImportPicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -204,7 +206,8 @@ const ContactCsvImport = ({ open, onClose, onImported }: Props) => {
       onImported();
     /* FIX-43: Type catch variable as `unknown` for proper error handling */
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Import fehlgeschlagen");
+      handleError(e, { context: "supabase", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Import fehlgeschlagen", () => handleImport());
     } finally {
       setImporting(false);
     }

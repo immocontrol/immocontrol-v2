@@ -31,6 +31,7 @@
 | **Nebenkosten** | Objekte | Link „Zum Objekt“ bei Abrechnungsdetail (zum PropertyDetail) |
 | **Kontakte** | Deals | Empty State: Button „Zu Deals“ für Synergie (Kontakte aus Deals übernehmen) |
 | **Mietübersicht** | Nebenkosten | Link „Nebenkostenabrechnung“ in Kopfzeile |
+| **Mietübersicht** | Berichte | Link „Berichte“ in Kopfzeile (Mietbericht, Steuerberichte) |
 | **PropertyDetail** | Nebenkosten | Link „Nebenkostenabrechnung“ in Finanzierungs-Sektion |
 | **DashboardActionCenter** | Nebenkosten | Kachel „X NK-Entwürfe“ wenn status=draft; verlinkt auf /nebenkosten |
 | **GlobalSearch** | Kontakte, Deals, Besichtigungen, Nebenkosten, Dokumente | Suche und Navigation für alle Seiten; Deep-Links `?highlight=xxx`, `?id=xxx` |

@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Onboarding, Bank-Import, Kontakt-Import)** — Onboarding-Speichern, BankMatching (MT940/CAMT/CSV) und ContactCsvImport nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Datenverlust, Fehler getrackt)
+- **Synergie Mietübersicht → Berichte** — Link „Berichte“ in Mietübersicht-Kopfzeile (ROUTES.REPORTS, Touch-Target, aria-label)
 - **Retry-Toast + Fehleranalyse (Mobile, Analyse, AI-Bubble)** — Offline-Sync, Standortanalyse und Immo-AI-Bubble nutzen `toastErrorWithRetry` und `handleError` (Fehler werden getrackt, Nutzer können sofort erneut versuchen)
 - **Synergie Dashboard → Analyse** — „Zur Analyse“ in Dashboard-Kopfzeile (Personal + Portfolio) und im Empty State; ROUTES für Deals-Link
 - **Fehler-Toast mit „Erneut versuchen“** — `toastErrorWithRetry()` in `toastMessages.ts`; Immo-AI nutzt es bei Chat-Fehlern (Retry + handleError für Fehleranalyse)
@@ -55,6 +57,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Onboarding** — Bei Speicherfehler: handleError + toastErrorWithRetry (Retry ohne erneute Eingabe)
+- **BankMatching** — Bei Datei- und CSV-Import-Fehler: handleError + toastErrorWithRetry (letzte Datei per Ref für Retry)
+- **ContactCsvImport** — Bei Import-Fehler: handleError + toastErrorWithRetry (Retry mit gleicher Zuordnung)
+- **Mietuebersicht** — Link „Berichte“ in Kopfzeile (ROUTES.REPORTS)
 - **MobileOfflineQueue** — Bei Sync-Fehler: handleError + toastErrorWithRetry („Erneut versuchen“)
 - **LocationAnalysis** — Bei Standortanalyse-Fehler: handleError + toastErrorWithRetry (Retry)
 - **ImmoAIBubble** — Bei AI-Fehler: handleError + toastErrorWithRetry; Hinweistext auf Toast

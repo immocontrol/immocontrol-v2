@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 
 const INVESTOR_TYPES = [
   { value: "beginner", label: "Einsteiger", description: "Ich plane mein erstes Investment", icon: "🌱" },
@@ -81,7 +83,9 @@ const Onboarding = () => {
       // Full reload to reset RoleRouter state
       window.location.href = "/";
     } catch (error: unknown) {
-      toast.error("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannt"));
+      handleError(error, { context: "supabase", showToast: false });
+      const msg = "Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannt");
+      toastErrorWithRetry(msg, () => handleComplete());
       setSaving(false);
     }
   }, [user, saving, displayName, investorType, strategy]);
