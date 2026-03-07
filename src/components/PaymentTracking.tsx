@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 type PaymentStatus = "pending" | "confirmed" | "overdue" | "cancelled";
 
@@ -283,7 +285,8 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
       toast.success(data.message || `${data.created} Zahlungen erstellt`);
       fetchPayments();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Fehler bei automatischer Erstellung");
+      handleError(e, { context: "supabase", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler bei automatischer Erstellung", () => autoGenerate(month));
     } finally {
       setAutoGenerating(false);
     }
@@ -300,7 +303,8 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
       toast.success(data.message || `${data.marked} als überfällig markiert`);
       fetchPayments();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Fehler");
+      handleError(e, { context: "supabase", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler", () => markOverdue());
     } finally {
       setMarkingOverdue(false);
     }

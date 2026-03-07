@@ -2,7 +2,7 @@
  * PDF mit KI auswerten — Text aus PDF extrahieren und mit DeepSeek analysieren.
  * Nutzt VITE_DEEPSEEK_API_KEY. PDF-Text wird mit pdfjs (exposeParser) extrahiert.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { FileText, Sparkles, Loader2, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { extractPdfText } from "@/lib/exposeParser";
 import { completeDeepSeekChat, isDeepSeekConfigured } from "@/integrations/ai/deepseek";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 const MAX_TEXT_LENGTH = 12000; // Zeichen für API (ca. 3k Tokens Eingabe)
 
@@ -30,6 +32,7 @@ export function PdfWithAI() {
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const lastPromptRef = useRef("");
 
   const handleFile = useCallback(async (f: File) => {
     if (!f.type.includes("pdf") && !f.name.toLowerCase().endsWith(".pdf")) {
@@ -51,8 +54,9 @@ export function PdfWithAI() {
         : text;
       setExtractedText(truncated);
       if (!text.trim()) toast.error("Kein Text im PDF gefunden (evtl. Scan/Bild-PDF).");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "PDF konnte nicht gelesen werden.");
+    } catch (e: unknown) {
+      handleError(e, { context: "file", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "PDF konnte nicht gelesen werden.", () => handleFile(f));
       setExtractedText("");
     } finally {
       setExtracting(false);
@@ -68,6 +72,7 @@ export function PdfWithAI() {
       toast.error("DeepSeek API-Key (VITE_DEEPSEEK_API_KEY) ist nicht gesetzt.");
       return;
     }
+    lastPromptRef.current = promptText;
     setLoading(true);
     setResult("");
     try {
@@ -78,8 +83,9 @@ export function PdfWithAI() {
         { systemPrompt, maxTokens: 2048 }
       );
       setResult(answer.trim() || "Keine Antwort erhalten.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "KI-Auswertung fehlgeschlagen.");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "KI-Auswertung fehlgeschlagen.", () => runAnalysis(lastPromptRef.current));
       setResult("");
     } finally {
       setLoading(false);

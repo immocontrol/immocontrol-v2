@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Dokumente, PaymentTracking, PdfWithAI)** — Dokumente (Upload, Metadaten, Download), PaymentTracking (automatische Zahlungserstellung, Überfällig markieren), PdfWithAI (PDF extrahieren, KI-Auswertung) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (FinanceExport, Deals)** — FinanceExport (Steuer-Export, Jahresbericht), Deals (Exposé-Analyse, KI Verbessern, Nächster Schritt) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **ROUTES-Synergie** — ObjekteList, Contacts, CRM, Dokumente, Einladung, Settings nutzen `ROUTES` statt Hardcode-Pfade (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (Schadensmeldung, DataBackup, RentIncreaseLetter)** — DamageReport (Senden), DataBackup (Backup erstellen), RentIncreaseLetter (KI-Begründung/Verbessern) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
@@ -67,6 +68,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Dokumente** — Bei Upload-, Metadaten- und Download-Fehler: handleError + toastErrorWithRetry (Retry); Löschen: handleError + Toast
+- **PaymentTracking** — autoGenerate und markOverdue: handleError + toastErrorWithRetry (Retry)
+- **PdfWithAI** — PDF-Text extrahieren und KI-Auswertung: handleError + toastErrorWithRetry (Retry, lastPromptRef für KI)
 - **FinanceExport** — Bei Export- und Jahresbericht-Fehler: handleError + toastErrorWithRetry (Retry)
 - **Deals** — Exposé-PDF: handleError + toastErrorWithRetry (Ref für Datei-Retry); KI „Verbessern“ und „Nächster Schritt“: runImproveNotes/runNextStep mit Retry
 - **ObjekteList, Contacts, CRM, Dokumente, Einladung, Settings** — Navigation über ROUTES statt String-Pfade

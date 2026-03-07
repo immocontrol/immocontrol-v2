@@ -21,6 +21,8 @@ import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai
 import { extractPdfText } from "@/lib/exposeParser";
 import { EmptyState } from "@/components/EmptyState";
 import { ROUTES } from "@/lib/routes";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface DocEntry {
   id: string;
@@ -163,7 +165,8 @@ const Dokumente = () => {
       .upload(filePath, file);
 
     if (uploadError) {
-      toast.error("Upload fehlgeschlagen: " + uploadError.message);
+      handleError(uploadError, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Upload fehlgeschlagen: " + uploadError.message, () => uploadFile(file));
       setUploading(false);
       return;
     }
@@ -185,7 +188,8 @@ const Dokumente = () => {
     const { error: dbError } = await supabase.from("property_documents").insert(insertData as Record<string, unknown>);
 
     if (dbError) {
-      toast.error("Metadaten konnten nicht gespeichert werden");
+      handleError(dbError, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Metadaten konnten nicht gespeichert werden", () => uploadFile(file));
     } else {
       toast.success(`„${file.name}" hochgeladen${ocrText ? " (Text extrahiert)" : ""}`);
       qc.invalidateQueries({ queryKey: ["all_documents"] });
@@ -227,12 +231,19 @@ const Dokumente = () => {
       toast.success("Dokument gelöscht");
       qc.invalidateQueries({ queryKey: ["all_documents"] });
     },
-    onError: () => toast.error("Fehler beim Löschen"),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toast.error("Fehler beim Löschen");
+    },
   });
 
   const handleDownload = async (doc: DocEntry) => {
     const { data, error } = await supabase.storage.from("property-documents").download(doc.file_path);
-    if (error || !data) { toast.error("Download fehlgeschlagen"); return; }
+    if (error || !data) {
+      handleError(error ?? new Error("Download fehlgeschlagen"), { context: "supabase", showToast: false });
+      toastErrorWithRetry("Download fehlgeschlagen", () => handleDownload(doc));
+      return;
+    }
     const url = URL.createObjectURL(data);
     const a = document.createElement("a");
     a.href = url;
