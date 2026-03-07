@@ -47,6 +47,7 @@
 | **Berichte** | Objekte, Deals | Empty State (keine Objekte): Buttons „Objekte“, „Zu Deals“ |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile (Kennzahlen vertiefen) |
 | **Analyse** | Berichte | Button „Berichte“ in der Kopfzeile (Miet-, Objekt-, Steuerberichte) |
+| **Newsticker** | — | Fehler beim Laden: handleError + toastErrorWithRetry (Retry = Aktualisieren) |
 
 ## Technische Details
 

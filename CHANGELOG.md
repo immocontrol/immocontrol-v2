@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (AnlageVExport, Newsticker, AddLoanDialog)** — AnlageVExport (PDF-Erstellung), Newsticker (Nachrichten laden), AddLoanDialog (Darlehen speichern/anlegen) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (PropertyDocuments, PropertyDescriptionGenerator, PdfImport)** — PropertyDocuments (Upload, Metadaten, Download pro Objekt), PropertyDescriptionGenerator (KI-Beschreibung), PdfImport Analyse (PDF-Extrakt) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **ROUTES durchgängig** — AppLayout, Nebenkosten, Deals, ViewingCard, Einladung, NotFound nutzen ROUTES (Home, Einstellungen, Dokumente, Mietübersicht, Objekte, CRM, Besichtigungen, Deals)
 - **Retry-Toast + Fehleranalyse (Wartungsplaner, TicketSystem, ExposeImport)** — Wartungsplaner (Anlegen mit Retry; Aktualisieren/Löschen mit handleError), TicketSystem (KI-Beschreibungsvorschlag, Ticket erstellen mit Retry; Link Zu Kontakten über ROUTES), ExposeImport (URL-Extrakt mit Retry)
@@ -74,6 +75,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **AnlageVExport** — PDF-Erstellung: handleError + toastErrorWithRetry (Retry)
+- **Newsticker** — Nachrichten laden: handleError + toastErrorWithRetry (Retry = fetchAllNews(true))
+- **AddLoanDialog** — Speichern/Anlegen: handleError + toastErrorWithRetry (Retry handleSave)
 - **PropertyDocuments** — Upload, Metadaten, Download: handleError + toastErrorWithRetry (Retry); Löschen: handleError + Toast
 - **PropertyDescriptionGenerator** — KI-Beschreibung: handleError + toastErrorWithRetry (Retry)
 - **PdfImport (Analyse)** — PDF-Extrakt: handleError + toastErrorWithRetry (Retry, lastFileRef)

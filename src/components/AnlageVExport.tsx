@@ -13,6 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 /** Escape special XML characters */
 const escapeXml = (str: string): string =>
@@ -261,8 +263,9 @@ export const AnlageVExport = () => {
 
       doc.save(`Anlage_V_${year}.pdf`);
       toast.success(`Anlage V für ${year} heruntergeladen`);
-    } catch {
-      toast.error("Fehler beim Erstellen der Anlage V");
+    } catch (e: unknown) {
+      handleError(e, { context: "export", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen der Anlage V", generatePDF);
     } finally {
       setLoading(false);
     }

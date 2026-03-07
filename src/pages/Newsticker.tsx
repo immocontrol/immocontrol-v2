@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ManusNewstickerIntelligence } from "@/components/manus/ManusNewstickerIntelligence";
 
 /* ─── Types ─── */
@@ -382,8 +384,9 @@ const Newsticker = () => {
       setNews(deduped);
       setLastFetched(new Date());
       if (isRefresh) toast.success(`${deduped.length} Nachrichten aus ${RSS_FEEDS.length} Quellen aktualisiert`);
-    } catch {
-      toast.error("Fehler beim Laden der Nachrichten");
+    } catch (e: unknown) {
+      handleError(e, { context: "network", showToast: false });
+      toastErrorWithRetry("Fehler beim Laden der Nachrichten", () => fetchAllNews(true));
     } finally {
       setLoading(false);
       setRefreshing(false);

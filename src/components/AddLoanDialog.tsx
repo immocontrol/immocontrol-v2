@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -210,8 +212,8 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
         error = retry.error;
       }
       if (error) {
-        const msg = error.message || "Unbekannter Fehler";
-        toast.error(`Fehler beim Speichern: ${msg}`);
+        handleError(error, { context: "supabase", showToast: false });
+        toastErrorWithRetry(`Fehler beim Speichern: ${error.message || "Unbekannter Fehler"}`, handleSave);
         return;
       }
       toast.success("Darlehen angelegt");
@@ -219,8 +221,8 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
       onCreated?.();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Unbekannter Fehler";
-      toast.error(`Fehler beim Anlegen: ${msg}`);
+      handleError(e, { context: "supabase", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? `Fehler beim Anlegen: ${e.message}` : "Fehler beim Anlegen", handleSave);
     } finally {
       setSaving(false);
     }
