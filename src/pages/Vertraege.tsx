@@ -7,7 +7,8 @@ import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import { ContractTemplates } from "@/components/ContractTemplates";
-import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3 } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -70,11 +71,14 @@ const Vertraege = () => {
         <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
           {/* IMPROVE-14: Show total active items count */}
           {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
-          <Link to="/dokumente" className="text-primary hover:underline flex items-center gap-1 text-xs">
+          <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
             <FolderOpen className="h-3.5 w-3.5" /> Dokumente hochladen
           </Link>
-          <Link to="/mietuebersicht" className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[36px]">
+          <Link to={ROUTES.RENT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
             <BarChart3 className="h-3.5 w-3.5" /> Mietübersicht
+          </Link>
+          <Link to={ROUTES.REPORTS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Zu Berichte">
+            <FileBarChart className="h-3.5 w-3.5" /> Berichte
           </Link>
         </p>
       </div>

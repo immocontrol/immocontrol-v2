@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { cn } from "@/lib/utils";
 
 interface CsvRow {
@@ -181,8 +183,9 @@ export function PropertyCsvImport({ onImported }: { onImported?: () => void }) {
       if (count === parseResult.valid.length) {
         setTimeout(() => { setOpen(false); setParseResult(null); setImported(0); }, 1500);
       }
-    } catch {
-      toast.error("Fehler beim Import");
+    } catch (e: unknown) {
+      handleError(e, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Fehler beim Import", () => handleImport());
     } finally {
       setImporting(false);
     }

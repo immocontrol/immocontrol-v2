@@ -8,6 +8,8 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { cn } from "@/lib/utils";
 
 interface MobilePullToRefreshProps {
@@ -31,9 +33,10 @@ export const MobilePullToRefresh = memo(function MobilePullToRefresh({ queryKeys
       }
       haptic.success();
       toast.success("Daten aktualisiert");
-    } catch {
+    } catch (err: unknown) {
       haptic.error();
-      toast.error("Aktualisierung fehlgeschlagen");
+      handleError(err, { context: "network", showToast: false });
+      toastErrorWithRetry("Aktualisierung fehlgeschlagen", () => handleRefresh());
     } finally {
       setTimeout(() => setRefreshing(false), 500);
     }

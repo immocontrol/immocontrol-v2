@@ -41,7 +41,7 @@
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 | **Nebenkosten** | Mietübersicht, Objekte | Empty State: Buttons „Mietübersicht“, „Objekte“ |
 | **Darlehen** | Mietübersicht, Nebenkosten | Empty State: Buttons „Mietübersicht“, „Nebenkosten“ neben Objekt/Deals |
-| **Verträge** | Mietübersicht | Link „Mietübersicht“ in Kopfzeile |
+| **Verträge** | Mietübersicht, Berichte, Dokumente | Links „Mietübersicht“, „Berichte“, „Dokumente hochladen“ in Kopfzeile (ROUTES, Touch-Target 44px) |
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio); Empty State: Button „Zur Analyse“ |
 | **Berichte** | Objekte, Deals | Empty State (keine Objekte): Buttons „Objekte“, „Zu Deals“ |

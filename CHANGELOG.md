@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Objekt-CSV, BerichteInProsa, Pull-to-Refresh)** — PropertyCsvImport, BerichteInProsa (KI) und MobilePullToRefresh nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
+- **Synergie Verträge → Berichte** — Link „Berichte“ in Verträge-Kopfzeile; ROUTES für Dokumente/Mietübersicht; Touch-Target 44px
 - **Retry-Toast + Fehleranalyse (Onboarding, Bank-Import, Kontakt-Import)** — Onboarding-Speichern, BankMatching (MT940/CAMT/CSV) und ContactCsvImport nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Datenverlust, Fehler getrackt)
 - **Synergie Mietübersicht → Berichte** — Link „Berichte“ in Mietübersicht-Kopfzeile (ROUTES.REPORTS, Touch-Target, aria-label)
 - **Retry-Toast + Fehleranalyse (Mobile, Analyse, AI-Bubble)** — Offline-Sync, Standortanalyse und Immo-AI-Bubble nutzen `toastErrorWithRetry` und `handleError` (Fehler werden getrackt, Nutzer können sofort erneut versuchen)
@@ -57,6 +59,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **PropertyCsvImport** — Bei Import-Fehler: handleError + toastErrorWithRetry (Retry)
+- **BerichteInProsa** — Bei KI-Fehler: handleError + toastErrorWithRetry (Retry mit gleichem Typ Monat/Jahr)
+- **MobilePullToRefresh** — Bei Aktualisierungsfehler: handleError + toastErrorWithRetry (Retry)
+- **Vertraege** — Link „Berichte“; ROUTES für Dokumente, Mietübersicht; Touch-Target 44px für Kopfzeilen-Links
 - **Onboarding** — Bei Speicherfehler: handleError + toastErrorWithRetry (Retry ohne erneute Eingabe)
 - **BankMatching** — Bei Datei- und CSV-Import-Fehler: handleError + toastErrorWithRetry (letzte Datei per Ref für Retry)
 - **ContactCsvImport** — Bei Import-Fehler: handleError + toastErrorWithRetry (Retry mit gleicher Zuordnung)

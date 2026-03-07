@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Sparkles, Loader2, Copy, Check } from "lucide-react";
 import { completeDeepSeekChat, isDeepSeekConfigured } from "@/integrations/ai/deepseek";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { useProperties } from "@/context/PropertyContext";
 
 export function BerichteInProsa() {
@@ -52,8 +54,10 @@ export function BerichteInProsa() {
         }
       );
       setResult(answer.trim() || "Keine Antwort erhalten.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "KI-Fehler");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      const msg = e instanceof Error ? e.message : "KI-Fehler";
+      toastErrorWithRetry(msg, () => run(type));
     } finally {
       setLoading(false);
     }
