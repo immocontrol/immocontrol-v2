@@ -3,6 +3,8 @@ import { Link2, Sparkles, Loader2, ExternalLink, Check, AlertTriangle } from "lu
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { AnalysisInputState } from "@/hooks/useAnalysisCalculations";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
 import { saveExposeHistoryEntry } from "./ExposeHistory";
 
@@ -50,8 +52,10 @@ const ExposeImport = ({ onImport }: Props) => {
       const data = await resp.json();
 
       if (!resp.ok || !data.success) {
-        setError(data.error || "Fehler beim Extrahieren");
-        toast.error(data.error || "Fehler beim Extrahieren");
+        const errMsg = data.error || "Fehler beim Extrahieren";
+        setError(errMsg);
+        handleError(new Error(errMsg), { context: "network", showToast: false });
+        toastErrorWithRetry(errMsg, handleExtract);
         return;
       }
 
@@ -68,7 +72,8 @@ const ExposeImport = ({ onImport }: Props) => {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Netzwerkfehler";
       setError(msg);
-      toast.error(msg);
+      handleError(e, { context: "network", showToast: false });
+      toastErrorWithRetry(msg, handleExtract);
     } finally {
       setLoading(false);
     }

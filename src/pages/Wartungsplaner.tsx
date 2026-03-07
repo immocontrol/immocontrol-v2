@@ -18,6 +18,8 @@ import { useProperties } from "@/context/PropertyContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import MaintenanceCalendar from "@/components/MaintenanceCalendar";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface MaintenanceItem {
   id: string;
@@ -196,7 +198,10 @@ const Wartungsplaner = () => {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
     },
-    onError: () => toast.error("Fehler beim Anlegen"),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Fehler beim Anlegen", () => addMutation.mutate());
+    },
   });
 
   const toggleMutation = useMutation({
@@ -212,7 +217,10 @@ const Wartungsplaner = () => {
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
       toast.success("Status aktualisiert");
     },
-    onError: () => toast.error("Fehler beim Aktualisieren"),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toast.error("Fehler beim Aktualisieren");
+    },
   });
 
   const deleteMutation = useMutation({
@@ -224,7 +232,10 @@ const Wartungsplaner = () => {
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
       toast.success("Gelöscht");
     },
-    onError: () => toast.error("Fehler beim Löschen"),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toast.error("Fehler beim Löschen");
+    },
   });
 
   const addTemplate = useCallback((template: typeof MAINTENANCE_TEMPLATES[0]) => {

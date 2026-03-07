@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { isDeepSeekConfigured, suggestTicketDescription } from "@/integrations/ai/extractors";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { ROUTES } from "@/lib/routes";
 
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "urgent";
@@ -204,8 +207,9 @@ export const TenantTickets = ({ tenantId, propertyId, landlordId }: TenantTicket
       const desc = await suggestTicketDescription(form.title, categoryConfig[form.category]?.label ?? form.category);
       setForm(f => ({ ...f, description: desc }));
       toast.success("Beschreibung vorgeschlagen");
-    } catch {
-      toast.error("Vorschlag fehlgeschlagen");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry("Vorschlag fehlgeschlagen", suggestDescription);
     } finally {
       setSuggestLoading(false);
     }
@@ -249,7 +253,11 @@ export const TenantTickets = ({ tenantId, propertyId, landlordId }: TenantTicket
       category: form.category,
       priority: form.priority,
     });
-    if (error) { toast.error("Fehler beim Erstellen"); return; }
+    if (error) {
+      handleError(error, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen", createTicket);
+      return;
+    }
     toast.success("Ticket erstellt!");
     setForm({ title: "", description: "", category: "repair", priority: "medium" });
     setOpen(false);
@@ -626,7 +634,7 @@ export const LandlordTickets = ({ propertyId }: LandlordTicketsProps) => {
                       {handworkerContacts.length === 0 ? (
                         <p className="text-[10px] text-muted-foreground">
                           Keine Handwerker in Kontakten.{" "}
-                          <Link to="/kontakte" className="text-primary hover:underline">Zu Kontakten →</Link>
+                          <Link to={ROUTES.CONTACTS} className="text-primary hover:underline">Zu Kontakten →</Link>
                         </p>
                       ) : (
                         handworkerContacts.map(c => (

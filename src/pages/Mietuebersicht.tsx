@@ -232,10 +232,10 @@ const Mietuebersicht = () => {
             )}
           </p>
           <RentIncreaseWizard />
-          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]">
+          <Link to={ROUTES.HOME} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]">
             <TrendingUp className="h-3.5 w-3.5" /> Index-Mietanpassung prüfen
           </Link>
-          <Link to="/nebenkosten" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline ml-2 touch-target min-h-[44px]">
+          <Link to={ROUTES.NK} className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline ml-2 touch-target min-h-[44px]">
             <FileText className="h-3.5 w-3.5" /> Nebenkostenabrechnung
           </Link>
           <Link to={ROUTES.REPORTS} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Zu Berichte">

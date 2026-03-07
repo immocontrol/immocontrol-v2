@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
@@ -106,7 +107,7 @@ const PropertyDetail = () => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !e.altKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        navigate("/");
+        navigate(ROUTES.HOME);
         return;
       }
       if (!e.altKey || e.ctrlKey || e.metaKey) return;
@@ -152,7 +153,7 @@ const PropertyDetail = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted-foreground">Objekt nicht gefunden</p>
-        <Link to="/" className="text-primary text-sm mt-2 inline-block">← Zurück</Link>
+        <Link to={ROUTES.HOME} className="text-primary text-sm mt-2 inline-block">← Zurück</Link>
       </div>
     );
   }
@@ -170,7 +171,7 @@ const PropertyDetail = () => {
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label={`Objektdetail: ${property.name}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link to={ROUTES.HOME} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" /> Portfolio
           </Link>
           <PropertyQuickSwitcher currentPropertyId={property.id} />
@@ -232,7 +233,7 @@ const PropertyDetail = () => {
                   onClick={async () => {
                     await duplicateProperty(property.id);
                     toast.success(`${property.name} wurde dupliziert`);
-                    navigate("/");
+                    navigate(ROUTES.HOME);
                   }}
                 >
                   <Copy className="h-4 w-4" />
@@ -265,7 +266,7 @@ const PropertyDetail = () => {
                     onClick={async () => {
                       await deleteProperty(property.id);
                       toast.success(`${property.name} wurde gelöscht.`);
-                      navigate("/");
+                      navigate(ROUTES.HOME);
                     }}
                   >
                     Löschen
@@ -376,7 +377,7 @@ const PropertyDetail = () => {
             <Link to={`/darlehen${property?.id ? `?property=${property.id}` : ""}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
               Darlehen bearbeiten →
             </Link>
-            <Link to="/nebenkosten" className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
+            <Link to={ROUTES.NK} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
               <Receipt className="h-3 w-3" /> Nebenkostenabrechnung
             </Link>
           </div>
@@ -445,7 +446,7 @@ const PropertyDetail = () => {
               </div>
             ))}
           </div>
-          <Link to="/besichtigungen" className="text-xs text-primary hover:underline mt-2 inline-block">
+          <Link to={ROUTES.BESICHTIGUNGEN} className="text-xs text-primary hover:underline mt-2 inline-block">
             Alle Besichtigungen →
           </Link>
         </div>

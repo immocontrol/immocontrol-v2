@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Wartungsplaner, TicketSystem, ExposeImport)** — Wartungsplaner (Anlegen mit Retry; Aktualisieren/Löschen mit handleError), TicketSystem (KI-Beschreibungsvorschlag, Ticket erstellen mit Retry; Link Zu Kontakten über ROUTES), ExposeImport (URL-Extrakt mit Retry)
+- **ROUTES-Synergy PropertyDetail, Mietuebersicht** — PropertyDetail und Mietuebersicht nutzen ROUTES für Home, Nebenkosten, Besichtigungen
 - **Retry-Toast + Fehleranalyse (Loans, MessageCenter, ViewingAISummary)** — Darlehen (Benutzer-Banken hinzufügen/löschen), MessageCenter (KI-Zusammenfassung, Antwortvorschlag), ViewingAISummary (KI-Zusammenfassung Besichtigung) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Synergie Besichtigungen → ROUTES** — Links „Zu Deals“ und „Dokumente“ nutzen ROUTES (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (Dokumente, PaymentTracking, PdfWithAI)** — Dokumente (Upload, Metadaten, Download), PaymentTracking (automatische Zahlungserstellung, Überfällig markieren), PdfWithAI (PDF extrahieren, KI-Auswertung) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
@@ -70,6 +72,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Wartungsplaner** — Insert: handleError + toastErrorWithRetry (Retry); Toggle/Delete: handleError + Toast
+- **TicketSystem** — KI-Vorschlag + createTicket: handleError + toastErrorWithRetry (Retry); Link „Zu Kontakten“ über ROUTES
+- **ExposeImport (Analyse)** — handleExtract: handleError + toastErrorWithRetry (Retry)
+- **PropertyDetail** — navigate/Link zu Home, Nebenkosten, Besichtigungen über ROUTES
+- **Mietuebersicht** — Link Home, Nebenkosten über ROUTES
 - **Loans (Darlehen)** — addCustomBank/deleteCustomBank: handleError + toastErrorWithRetry (Retry)
 - **MessageCenter** — KI-Zusammenfassung und Antwortvorschlag: handleError + toastErrorWithRetry (Retry)
 - **ViewingAISummary** — KI-Zusammenfassung: handleError + toastErrorWithRetry (Retry)

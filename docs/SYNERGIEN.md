@@ -17,6 +17,7 @@
 | **Besichtigungen** | Todos | Button „Todo erstellen“ – Projekt „Besichtigungen“ |
 | **Besichtigungen** | Global | Deep-Link `?id=xxx`; Share-Button (native Share API + Fallback Kopieren) |
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
+| **PropertyDetail** | Home, Nebenkosten, Besichtigungen | Links/Navigation über ROUTES |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
