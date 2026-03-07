@@ -3,10 +3,12 @@
  * Annuitätendarlehen (Monatsrate konstant, Zins- und Tilgungsanteil ändern sich).
  */
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Landmark, TrendingDown } from "lucide-react";
+import { Landmark, TrendingDown, ExternalLink } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { formatCurrency } from "@/lib/formatters";
 
 function monthlyRate(principal: number, annualRatePct: number, years: number): number {
@@ -87,6 +89,13 @@ export function TilgungsplanSchnellrechner() {
             </div>
           </div>
         )}
+        <Link
+          to={ROUTES.ANALYSE}
+          className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px] sm:min-h-0 py-1 sm:py-0"
+          aria-label="Zur Objektanalyse (Tilgungsplan & Szenarien)"
+        >
+          Objektanalyse (Tilgungsplan & Szenarien) <ExternalLink className="h-3 w-3" />
+        </Link>
       </CardContent>
     </Card>
   );

@@ -177,7 +177,11 @@ const Nebenkosten = () => {
   /* IMP-17: Wrap finalizeBilling in useCallback for stable reference */
   const finalizeBilling = useCallback(async (id: string) => {
     const { error } = await supabase.from("utility_billings").update({ status: "final" }).eq("id", id);
-    if (error) { toast.error("Fehler beim Finalisieren"); return; }
+    if (error) {
+      handleError(error, { context: "supabase", details: "utility_billings.finalize", showToast: false });
+      toastErrorWithRetry("Fehler beim Finalisieren", () => finalizeBilling(id));
+      return;
+    }
     toast.success("Abrechnung finalisiert");
     qc.invalidateQueries({ queryKey: ["utility_billings"] });
   }, [qc]);
@@ -293,7 +297,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       qc.invalidateQueries({ queryKey: queryKeys.timeline.byProperty(selectedBillingData.property_id) });
       toast.success("Nebenkostenabrechnung als Dokument gespeichert");
     } catch (e: unknown) {
-      toast.error((e as Error).message || "Speichern fehlgeschlagen");
+      handleError(e, { context: "supabase", details: "saveBillingAsDocument", showToast: false });
+      toastErrorWithRetry("Speichern fehlgeschlagen", saveBillingAsDocument);
     } finally {
       setSavingAsDoc(false);
     }

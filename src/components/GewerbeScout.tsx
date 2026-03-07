@@ -852,7 +852,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
                             <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="size">Nach Gebäudegröße</SelectItem>
+                              <SelectItem value="size">Nach Gebäudegröße (größte zuerst)</SelectItem>
                               <SelectItem value="distance">Nach Entfernung</SelectItem>
                               <SelectItem value="name">Nach Name</SelectItem>
                               <SelectItem value="source">Nach Quelle</SelectItem>

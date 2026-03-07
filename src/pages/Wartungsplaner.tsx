@@ -217,9 +217,9 @@ const Wartungsplaner = () => {
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
       toast.success("Status aktualisiert");
     },
-    onError: (err) => {
-      handleError(err, { context: "supabase", showToast: false });
-      toast.error("Fehler beim Aktualisieren");
+    onError: (err, variables) => {
+      handleError(err, { context: "supabase", details: "maintenance_items.toggle", showToast: false });
+      toastErrorWithRetry("Fehler beim Aktualisieren", () => toggleMutation.mutate(variables));
     },
   });
 
@@ -232,9 +232,9 @@ const Wartungsplaner = () => {
       qc.invalidateQueries({ queryKey: ["all_maintenance"] });
       toast.success("Gelöscht");
     },
-    onError: (err) => {
-      handleError(err, { context: "supabase", showToast: false });
-      toast.error("Fehler beim Löschen");
+    onError: (err, id) => {
+      handleError(err, { context: "supabase", details: "maintenance_items.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => deleteMutation.mutate(id));
     },
   });
 
