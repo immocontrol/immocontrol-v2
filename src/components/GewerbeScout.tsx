@@ -4,7 +4,7 @@
  * Mit Ort-Autocomplete, Mindest-Gebäudefläche, Deduplizierung und klaren Lade-/Leer-Zuständen.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map } from "lucide-react";
+import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -222,12 +222,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
 
   const exportCsv = useCallback(() => {
     if (sortedResults.length === 0) return;
-    const headers = ["Name", "Typ", "Adresse", "Telefon", "ca. m²", "Entfernung (m)"];
+    const headers = ["Name", "Typ", "Adresse", "Telefon", "Website", "Öffnungszeiten", "ca. m²", "Entfernung (m)"];
     const rows = sortedResults.map((b) => [
       b.name,
       b.type,
       b.address ?? "",
       b.phone ?? "",
+      b.website ?? "",
+      b.opening_hours ?? "",
       b.estimatedGrossArea != null ? String(b.estimatedGrossArea) : "",
       b.distance > 0 ? String(b.distance) : "",
     ]);
@@ -555,6 +557,13 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                       </Button>
                     ) : (
                       <span className="text-[10px] text-muted-foreground px-2">Tel. in Maps prüfen</span>
+                    )}
+                    {b.website && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
+                        <a href={b.website.startsWith("http") ? b.website : `https://${b.website}`} target="_blank" rel="noreferrer noopener" aria-label={`Website: ${b.name}`}>
+                          <Globe className="h-3.5 w-3.5" /> Web
+                        </a>
+                      </Button>
                     )}
                     <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
                       <a

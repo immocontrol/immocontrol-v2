@@ -77,10 +77,10 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
-| **GewerbeScout** | CRM, Leads | Ort oder Umkreis (bis 2 km); Gebäudegröße aus OSM; Filter Typ/Mindestfläche/Nur mit Telefon; Deduplizierung, CSV-Export; max. 100 Treffer mit Filter-Hinweis; „Auf Karte anzeigen“ (OSM); Öffnungszeiten in Trefferzeile; sessionStorage, KI „Anruf-Einstieg“, initialQuery |
+| **GewerbeScout** | CRM, Leads | Ort oder Umkreis (bis 2 km); Gebäudegröße aus OSM; Filter Typ/Mindestfläche/Nur mit Telefon; Deduplizierung; CSV mit Website & Öffnungszeiten; pro Treffer Link „Web“ wenn Website; max. 100 Treffer, „Auf Karte anzeigen“ (OSM), Öffnungszeiten, sessionStorage, KI „Anruf-Einstieg“, initialQuery |
 | **CRM** | URL-Tab, Scout | `?tab=scout` öffnet Gewerbe-Scout; `?q=…` wird als initialQuery an GewerbeScout übergeben (Synergie Deals, Objekt, Besichtigung) |
 | **Deals** | CRM (Scout) | Bei Adresse: „Gewerbe in Umgebung“ / „Scout“; bei Kaufpreis + m²: Anzeige €/m² auf Karte |
-| **PropertyDetail** | CRM (Scout) | Bei Adresse: „Gewerbe in Umgebung“ → CRM?tab=scout&q=Adresse |
+| **PropertyDetail** | CRM (Scout), Analyse | Bei Adresse: „Gewerbe in Umgebung“ → Scout; in Renditekennzahlen: „Rendite berechnen & Szenarien“ → Rechner & Analyse |
 | **Besichtigungen** | CRM (Scout) | Im Bearbeitungs-Dialog: „Gewerbe in Umgebung“ → CRM?tab=scout&q=Titel, Adresse |
 | **Kontakte** | CRM (Scout) | Bei Kontakt mit Adresse: Link „Gewerbe in Umgebung“ → CRM?tab=scout&q=Adresse |
 | **DashboardActionCenter** | CRM (Scout) | Link „Gewerbe finden“ → CRM mit Tab Scout (Synergie Akquise) |

@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Website, CSV erweitert** — Pro Treffer Link „Web“ wenn Website von OSM vorhanden (öffnet in neuem Tab); CSV-Export um Spalten „Website“ und „Öffnungszeiten“ ergänzt.
+- **PropertyDetail → Analyse** — In der Sektion „Renditekennzahlen“ Link „Rendite berechnen & Szenarien“ → Rechner & Analyse (Synergie Objekt ↔ Kalkulation).
 - **Gewerbe-Scout: Karte, Öffnungszeiten, Begrenzung, Synergien** — „Auf Karte anzeigen“ öffnet Suchgebiet in OpenStreetMap (Bbox bei Ort, Zentrum bei Umkreis); Öffnungszeiten in der Trefferzeile (wenn von OSM vorhanden); Anzeige auf erste 100 Treffer begrenzt mit Hinweis „Bitte Filter nutzen“; Synergie Kontakte: bei Adresse Link „Gewerbe in Umgebung“ → Scout. Deals: Kaufpreis pro m² auf Karten (wenn Kaufpreis + m²).
 - **Gewerbe-Scout: Typ-Filter, 2 km Umkreis, UX** — Neuer Filter „Typ“ (Alle / Gastronomie / Laden / Büro / Handwerk / Sonstige); Umkreis-Option 2 km; Anzeige „X von Y“ wenn Filter die Liste reduzieren; Escape schließt Autocomplete; Empty-State-Tipp erwähnt 2 km; bessere A11y (aria-labelledby, aria-label für Ergebnisliste); Mobile Touch (min-h für Umkreis-Select).
 - **Synergie Objekt & Besichtigung → Gewerbe-Scout** — PropertyDetail: Link „Gewerbe in Umgebung“ bei Adresse → CRM?tab=scout&q=Adresse. Besichtigungen: Im Bearbeitungs-Dialog Link „Gewerbe in Umgebung“ (Titel/Adresse als Suchbegriff).

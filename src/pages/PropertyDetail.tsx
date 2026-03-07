@@ -352,6 +352,9 @@ const PropertyDetail = () => {
             </div>
           ))}
         </div>
+        <Link to={ROUTES.ANALYSE} className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-3 touch-target min-h-[36px] sm:min-h-0" aria-label="Zum Rechner und zur Analyse">
+          <BarChart3 className="h-3 w-3 shrink-0" /> Rendite berechnen &amp; Szenarien
+        </Link>
       </div>
 
       {/* Finanzierung */}
