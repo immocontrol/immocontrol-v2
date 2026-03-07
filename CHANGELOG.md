@@ -71,6 +71,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Kontakte** — Badge „X Deals“ pro Kontakt; Button „Als Deal“ (Briefcase) für Quick-Add Deal mit vorausgefüllten Kontaktdaten
 - **Besichtigungen** — Share-Button ersetzt „Link kopieren“ (native Share API + Fallback)
 - **IndexMietanpassung** — AI-Button „Begründung generieren“ (generateRentIncreaseJustification); Text wird in Zwischenablage kopiert
+- **RentIncreaseLetter** — AI-Button „KI-Begründung“ neben Begründungsfeld
+- **Kontakte** — Badge „X Deals“ klickbar: filtert Deals nach Kontakt (filterByContact)
+- **Deals** — Besichtigungs-Picker: „Besthende Besichtigung zuordnen“ bei Stage Besichtigung
+- **Deals** — Share-Icon auf Kanban-Karte (Share2)
+- **PropertyDocuments** — AI-Kategorisierung: PDF-Upload mit suggestDocumentCategory
 
 ### Behoben
 

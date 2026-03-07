@@ -10,6 +10,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import FileImportPicker from "@/components/FileImportPicker";
 import { EmptyState } from "@/components/EmptyState";
+import { extractPdfText } from "@/lib/exposeParser";
+import { suggestDocumentCategory, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 
 interface Document {
   id: string;
@@ -21,7 +23,7 @@ interface Document {
   created_at: string;
 }
 
-const CATEGORIES = ["Mietvertrag", "Grundbuchauszug", "Nebenkostenabrechnung", "Versicherung", "Gutachten", "Steuer", "Sonstiges"];
+const CATEGORIES = ["Mietvertrag", "Grundbuchauszug", "Nebenkostenabrechnung", "Versicherung", "Gutachten", "Steuer", "Rechnung", "Bescheid", "Protokoll", "Sonstiges"];
 
 const getFileIcon = (fileType: string | null, fileName: string) => {
   if (fileType?.startsWith("image/")) return <Image className="h-4 w-4 text-blue-400" />;
@@ -63,6 +65,22 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
     }
 
     setUploading(true);
+    let suggestedCategory = category;
+
+    /* SYNERGY: AI-Kategorisierung für PDFs bei DeepSeek-Konfiguration */
+    if (isDeepSeekConfigured() && (file.type?.includes("pdf") || file.name.toLowerCase().endsWith(".pdf"))) {
+      try {
+        const text = await extractPdfText(file);
+        if (text && text.trim().length >= 50) {
+          const ai = await suggestDocumentCategory(text);
+          suggestedCategory = CATEGORIES.includes(ai) ? ai : "Sonstiges";
+          setCategory(suggestedCategory);
+        }
+      } catch {
+        /* AI-Fehler ignorieren, Standard-Kategorie nutzen */
+      }
+    }
+
     const filePath = `${user.id}/${propertyId}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
@@ -82,7 +100,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       file_path: filePath,
       file_size: file.size,
       file_type: file.type || null,
-      category,
+      category: suggestedCategory,
     });
 
     if (dbError) {

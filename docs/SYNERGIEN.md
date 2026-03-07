@@ -10,8 +10,8 @@
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“; fromContact-Vorlage beim „Als Deal“-Button |
-| **Deals** | Besichtigungen | Bei Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt |
-| **Kontakte** | Deals | Button „Als Deal“ – Kontaktdaten als Deal-Vorlage; Badge „X Deals“ pro Kontakt |
+| **Deals** | Besichtigungen | Bei Stage „Besichtigung“: automatischer Besichtigungseintrag; Picker „Besthende Besichtigung zuordnen“ |
+| **Kontakte** | Deals | Button „Als Deal“ – Kontaktdaten als Deal-Vorlage; Badge „X Deals“ klickbar → filtert Deals nach Kontakt |
 | **Deals** | Besichtigungen | Link „Zu Besichtigungen“ bei Stage Besichtigung |
 | **Besichtigungen** | Deals | Deal-Badge verlinkt auf /deals; Empty State: Link „Zu Deals“ |
 | **Besichtigungen** | Todos | Button „Todo erstellen“ – Projekt „Besichtigungen“ |

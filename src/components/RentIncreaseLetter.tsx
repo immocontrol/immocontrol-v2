@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { FileText, Download, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { FileText, Download, AlertTriangle, CheckCircle2, Info, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,7 @@ const BALLUNGSRAEUME = [
 
 export function RentIncreaseLetter() {
   const [landlord, setLandlord] = useState({ name: "", address: "" });
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [tenantName, setTenantName] = useState("");
   const [tenantAddress, setTenantAddress] = useState("");
   const [currentRent, setCurrentRent] = useState(0);
@@ -285,8 +286,39 @@ export function RentIncreaseLetter() {
           )}
 
           <div className="space-y-1">
-            <Label className="text-xs">Begründung</Label>
-            <Textarea value={reason} onChange={e => setReason(e.target.value)} className="text-xs min-h-[60px]" />
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Begründung</Label>
+              {isDeepSeekConfigured() && currentRent > 0 && newRent > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  disabled={aiGenerating}
+                  onClick={async () => {
+                    setAiGenerating(true);
+                    try {
+                      const text = await generateRentIncreaseJustification({
+                        propertyName: tenantAddress || tenantName || "Mietsache",
+                        currentRent,
+                        newRent,
+                        increasePct: increase,
+                      });
+                      setReason(text);
+                      toast.success("Begründung generiert");
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Begründung konnte nicht generiert werden");
+                    } finally {
+                      setAiGenerating(false);
+                    }
+                  }}
+                >
+                  {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  KI-Begründung
+                </Button>
+              )}
+            </div>
+            <Textarea value={reason} onChange={e => setReason(e.target.value)} className="text-xs min-h-[60px]" placeholder="Anpassung an die ortsübliche Vergleichsmiete gemäß § 558 BGB" />
           </div>
 
           <div className="space-y-1">

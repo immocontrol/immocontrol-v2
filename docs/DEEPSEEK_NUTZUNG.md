@@ -16,7 +16,9 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 | **BerichteInProsa** | Immo-AI → Tab „PDF auswerten“ | Monatsbericht oder Jahresüberblick aus Portfolio-Kennzahlen (DeepSeek). |
 | **PropertyNotes** | Objekt-Detail → Notizen | Button „Zusammenfassen" – KI fasst alle Notizen zusammen. |
 | **TicketSystem** | Neue Anfrage (Mieter) | Button „Vorschlag" – KI generiert Beschreibung aus Titel + Kategorie. |
-| **IndexMietanpassung** | Mietübersicht / Verträge | Button „Begründung generieren" (Sparkles) – KI erstellt formelle Begründung für Mieterhöhung (VPI/Staffel); Text wird in Zwischenablage kopiert. |
+| **IndexMietanpassung** | Mietübersicht / Verträge | Button „Begründung generieren" (Sparkles) – KI erstellt formelle Begründung; Text wird in Zwischenablage kopiert. |
+| **RentIncreaseLetter** | Verträge (Mieterhöhungsschreiben) | Button „KI-Begründung" neben Begründungsfeld – nutzt `generateRentIncreaseJustification`. |
+| **PropertyDocuments** | Objekt-Dokumente | Beim PDF-Upload: KI schlägt Kategorie vor (suggestDocumentCategory) bei DeepSeek-Konfiguration. |
 
 ---
 

@@ -98,12 +98,14 @@ const fmt = (n: number) => formatCurrency(n);
 const DealCard = memo(({
   deal,
   onClick,
+  onShare,
   draggable,
   onDragStart,
   onDragEnd,
 }: {
   deal: DealRecord;
   onClick: () => void;
+  onShare?: (deal: DealRecord) => void;
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
@@ -131,7 +133,19 @@ const DealCard = memo(({
       <CardContent className="p-3 space-y-1.5">
         <div className="flex items-center justify-between gap-1">
           <p className="font-medium text-sm truncate flex-1">{deal.title}</p>
-          {isStale && <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />}
+          <div className="flex items-center gap-1 shrink-0">
+            {onShare && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onShare(deal); }}
+                className="p-1 rounded hover:bg-secondary transition-colors"
+                aria-label="Deal teilen"
+              >
+                <Share2 className="h-3 w-3 text-muted-foreground" />
+              </button>
+            )}
+            {isStale && <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />}
+          </div>
         </div>
         {deal.address && (
           <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
@@ -211,6 +225,35 @@ const Deals = () => {
       return (data || []) as { id: string; name: string; phone: string | null; email: string | null }[];
     },
     enabled: !!user && addOpen,
+  });
+
+  /* SYNERGY: Load viewings for Besichtigungs-Picker when stage besichtigung */
+  const { data: viewings = [] } = useQuery({
+    queryKey: [...queryKeys.viewings.all, "for-deal-picker", editDeal?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_viewings")
+        .select("id, title, address, deal_id, visited_at")
+        .or(editDeal ? `deal_id.is.null,deal_id.eq.${editDeal.id}` : "deal_id.is.null")
+        .order("visited_at", { ascending: false, nullsFirst: false })
+        .limit(30);
+      return (data || []) as { id: string; title: string; address: string | null; deal_id: string | null; visited_at: string | null }[];
+    },
+    enabled: !!user && addOpen && (form.stage === "besichtigung") && !!editDeal,
+  });
+
+  /* SYNERGY: Link viewing to deal mutation */
+  const linkViewingToDeal = useMutation({
+    mutationFn: async ({ viewingId }: { viewingId: string }) => {
+      if (!editDeal) throw new Error("Kein Deal ausgewählt");
+      const { error } = await supabase.from("property_viewings").update({ deal_id: editDeal.id }).eq("id", viewingId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.viewings.all });
+      toast.success("Besichtigung zugeordnet");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   /* UPD-20: Use centralised query keys */
@@ -581,6 +624,16 @@ const Deals = () => {
     toast.success("Deals als CSV exportiert");
   }, [deals]);
 
+  /* SYNERGY: Filter by contact when navigating from Contacts (filterByContact) */
+  useEffect(() => {
+    const state = location.state as { filterByContact?: string };
+    if (state?.filterByContact) {
+      setSearch(state.filterByContact);
+      navigate(location.pathname, { replace: true, state: {} });
+      toast.info(`Filter: Deals für „${state.filterByContact}"`);
+    }
+  }, [location.state, navigate, location.pathname]);
+
   /* SYNERGY: Prefill deal form when navigating from CRM (fromLead) or Contacts (fromContact) */
   useEffect(() => {
     const state = location.state as { fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string }; fromContact?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string } };
@@ -840,6 +893,7 @@ const Deals = () => {
                       <DealCard
                         deal={deal}
                         onClick={() => openEdit(deal)}
+                        onShare={(d) => share({ title: d.title, text: d.address || undefined, url: `${window.location.origin}/deals?id=${d.id}` })}
                         draggable={!isMobile}
                         onDragStart={(e) => {
                           setDraggedDeal(deal);
@@ -1098,16 +1152,38 @@ const Deals = () => {
                 {editDeal ? "Speichern" : "Deal anlegen"}
               </LoadingButton>
             </div>
-            {/* SYNERGY: Link zur Besichtigung wenn Deal in Stage Besichtigung */}
+            {/* SYNERGY: Besichtigungs-Picker & Link wenn Deal in Stage Besichtigung */}
             {editDeal && form.stage === "besichtigung" && (
-              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium flex items-center gap-2">
-                  <Camera className="h-4 w-4 text-amber-600" />
-                  Besichtigung angelegt
-                </span>
-                <Link to="/besichtigungen" className="text-sm text-primary hover:underline flex items-center gap-1" onClick={() => setAddOpen(false)}>
-                  Zu Besichtigungen →
-                </Link>
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <Camera className="h-4 w-4 text-amber-600" />
+                    Besichtigung angelegt
+                  </span>
+                  <Link to="/besichtigungen" className="text-sm text-primary hover:underline flex items-center gap-1" onClick={() => setAddOpen(false)}>
+                    Zu Besichtigungen →
+                  </Link>
+                </div>
+                {viewings.length > 0 && (
+                  <Select
+                    value="__link__"
+                    onValueChange={(v) => { if (v !== "__link__") linkViewingToDeal.mutate({ viewingId: v }); }}
+                  >
+                    <SelectTrigger className="h-8 text-xs" aria-label="Besthende Besichtigung zuordnen">
+                      <SelectValue placeholder="Besthende Besichtigung zuordnen…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__link__">— Besichtigung wählen —</SelectItem>
+                      {viewings.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.title}
+                          {v.address ? ` · ${v.address}` : ""}
+                          {v.deal_id === editDeal.id ? " ✓" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
             {/* IMP20-4: Deal → Immobilie Konvertierung for won deals */}

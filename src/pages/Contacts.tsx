@@ -554,11 +554,16 @@ const ContactManagement = () => {
                           💰 {formatCurrency(contactCosts[c.id])}
                         </span>
                       )}
-                      {/* Synergy 9: Deal count per contact */}
+                      {/* Synergy 9: Deal count per contact – klickbar → /deals mit Filter */}
                       {contactDealCounts[c.id] > 0 && (
-                        <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); navigate("/deals", { state: { filterByContact: c.name } }); }}
+                          className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-medium hover:bg-primary/25 transition-colors cursor-pointer"
+                          title={`${contactDealCounts[c.id]} Deal(s) anzeigen`}
+                        >
                           📋 {contactDealCounts[c.id]} Deal{contactDealCounts[c.id] > 1 ? "s" : ""}
-                        </span>
+                        </button>
                       )}
                     </div>
                     {c.company && <p className="text-xs text-muted-foreground">{c.company}</p>}
