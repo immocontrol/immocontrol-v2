@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3 } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -61,23 +61,26 @@ const PropertyDetail = () => {
   const [tenantVersion, setTenantVersion] = useState(0);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
-  // Synergy 13: Fetch property-level synergy stats
-  const [synergy, setSynergy] = useState({ openTickets: 0, overduePayments: 0, totalRepairCost: 0, activeTenants: 0, confirmedRevenue: 0 });
+  // Synergy 13: Fetch property-level synergy stats + Besichtigungen (vernetzt Objekte mit Akquise)
+  const [synergy, setSynergy] = useState({ openTickets: 0, overduePayments: 0, totalRepairCost: 0, activeTenants: 0, confirmedRevenue: 0, viewings: [] as { id: string; title: string; visited_at: string | null; deal_id: string | null }[] });
   useEffect(() => {
     if (!property) return;
     Promise.all([
       supabase.from("tickets").select("id, status, actual_cost, estimated_cost").eq("property_id", property.id).in("status", ["open", "in_progress"]),
       supabase.from("rent_payments").select("id, status, amount").eq("property_id", property.id),
       supabase.from("tenants").select("id").eq("property_id", property.id).eq("is_active", true),
-    ]).then(([ticketsRes, paymentsRes, tenantsRes]) => {
+      supabase.from("property_viewings").select("id, title, visited_at, deal_id").eq("property_id", property.id).order("visited_at", { ascending: false }).limit(5),
+    ]).then(([ticketsRes, paymentsRes, tenantsRes, viewingsRes]) => {
       const tickets = ticketsRes.data || [];
       const payments = paymentsRes.data || [];
+      const viewings = viewingsRes.data || [];
       setSynergy({
         openTickets: tickets.length,
         overduePayments: payments.filter(p => p.status === "overdue").length,
         totalRepairCost: tickets.reduce((s, t) => s + Number(t.actual_cost || t.estimated_cost || 0), 0),
         activeTenants: tenantsRes.data?.length || 0,
         confirmedRevenue: payments.filter(p => p.status === "confirmed").reduce((s, p) => s + Number(p.amount), 0),
+        viewings: viewings.map(v => ({ id: v.id, title: v.title, visited_at: v.visited_at, deal_id: v.deal_id })),
       });
     }).catch(() => {});
   }, [property?.id, tenantVersion]);
@@ -404,6 +407,32 @@ const PropertyDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Synergy: Besichtigungen für dieses Objekt — verbindet Objekte mit Akquise */}
+      {synergy.viewings.length > 0 && (
+        <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:550ms]">
+          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Camera className="h-4 w-4 text-muted-foreground" /> Besichtigungen
+          </h2>
+          <div className="space-y-2">
+            {synergy.viewings.map(v => (
+              <Link
+                key={v.id}
+                to="/besichtigungen"
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/80 transition-colors group"
+              >
+                <span className="text-sm font-medium truncate">{v.title}</span>
+                <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                  {v.visited_at ? new Date(v.visited_at).toLocaleDateString("de-DE") : "–"}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <Link to="/besichtigungen" className="text-xs text-primary hover:underline mt-2 inline-block">
+            Alle Besichtigungen →
+          </Link>
+        </div>
+      )}
 
       {/* Synergy 14: Property-level action summary */}
       {(synergy.openTickets > 0 || synergy.overduePayments > 0 || synergy.totalRepairCost > 0) && (

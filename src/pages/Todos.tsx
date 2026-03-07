@@ -545,6 +545,7 @@ const Todos = () => {
               <Input
                 /* IMPROVE-33: More specific search placeholder */
                 placeholder="Aufgabe suchen..."
+                aria-label="Aufgaben durchsuchen"
                 value={searchInput}
                 onChange={e => {
                   const v = e.target.value;

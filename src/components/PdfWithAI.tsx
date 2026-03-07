@@ -18,6 +18,7 @@ const PRESET_PROMPTS = [
   { label: "Kurz zusammenfassen", value: "Fasse den folgenden Text in 3–5 Sätzen zusammen. Behalte die wichtigsten Fakten bei." },
   { label: "Vertrag: Fristen & Kernpunkte", value: "Analysiere den Text als Vertrag (z.B. Mietvertrag, Darlehen). Extrahiere: Vertragsparteien, Laufzeit, Kündigungsfristen, Beträge/Miete, Besondere Klauseln. Formatiere als Stichpunkte." },
   { label: "Exposé: Stichpunkte", value: "Der Text ist ein Immobilien-Exposé. Extrahiere: Objektart, Adresse/Lage, Preis, Fläche, Miete/Kosten, Besonderheiten. Formatiere als kurze Stichpunkte." },
+  { label: "Exposé: Analyse + Bewertung", value: "Der Text ist ein Immobilien-Exposé. Analysiere: Objektart, Lage, Preis, Fläche, Miete, Kaufnebenkosten. Gib eine kurze Einschätzung: Chancen, Risiken, grobe Rendite-Einschätzung. Formatiere als Stichpunkte mit Fazit am Ende." },
   { label: "Rechnung/Gutachten: Kerninfos", value: "Extrahiere aus dem Dokument: Art (Rechnung/Gutachten/Bescheid), Beträge, Datum, Fristen, Zahlungsempfänger/Aussteller. Kurz in Stichpunkten." },
 ];
 

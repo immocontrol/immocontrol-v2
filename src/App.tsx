@@ -55,6 +55,7 @@ const hockeyStickImport = () => import("@/pages/HockeyStickPage");
 const newstickerImport = () => import("@/pages/Newsticker");
 const bewertungImport = () => import("@/pages/ImmobilienBewertung");
 const objekteListImport = () => import("@/pages/ObjekteList");
+const besichtigungenImport = () => import("@/pages/Besichtigungen");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -83,6 +84,7 @@ const HockeyStickPage = lazy(hockeyStickImport);
 const Newsticker = lazy(newstickerImport);
 const ImmobilienBewertung = lazy(bewertungImport);
 const ObjekteList = lazy(objekteListImport);
+const Besichtigungen = lazy(besichtigungenImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -108,6 +110,7 @@ const preloadRoutes = () => {
   newstickerImport();
   bewertungImport();
   objekteListImport();
+  besichtigungenImport();
 };
 
 const PageLoader = () => (
@@ -145,6 +148,7 @@ queryClient.setQueryDefaults(["todos"], { staleTime: 60_000 });
 queryClient.setQueryDefaults(queryKeys.maintenance.all, { staleTime: 5 * 60_000 });
 queryClient.setQueryDefaults(["documents"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(["tickets"], { staleTime: 2 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.viewings.all, { staleTime: 2 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -278,6 +282,7 @@ const RoleRouter = () => {
           <Route path={ROUTES.CONTRACTS} element={<ErrorBoundary><Vertraege /></ErrorBoundary>} />
           <Route path={ROUTES.CRM} element={<ErrorBoundary><CRM /></ErrorBoundary>} />
           <Route path={ROUTES.DEALS} element={<ErrorBoundary><Deals /></ErrorBoundary>} />
+          <Route path={ROUTES.BESICHTIGUNGEN} element={<ErrorBoundary><Besichtigungen /></ErrorBoundary>} />
           <Route path={ROUTES.DOKUMENTE} element={<ErrorBoundary><Dokumente /></ErrorBoundary>} />
           <Route path={ROUTES.WARTUNG} element={<ErrorBoundary><Wartungsplaner /></ErrorBoundary>} />
           <Route path={ROUTES.HOCKEY_STICK} element={<ErrorBoundary><HockeyStickPage /></ErrorBoundary>} />

@@ -85,6 +85,10 @@ export const queryKeys = {
     leads: (userId?: string) => ["crm_leads", userId] as const,
     callLogs: (leadId?: string) => ["crm_call_logs", leadId] as const,
   },
+  viewings: {
+    all: ["property_viewings"] as const,
+    media: (viewingId: string) => ["viewing_media", viewingId] as const,
+  },
   userBanks: {
     all: ["user_banks"] as const,
   },

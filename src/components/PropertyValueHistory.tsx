@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,7 +65,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["value_history", propertyId] });
     },
-    onError: () => toast.error("Fehler beim Speichern"),
+    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Fehler beim Speichern" }),
   });
 
   const deleteMutation = useMutation({

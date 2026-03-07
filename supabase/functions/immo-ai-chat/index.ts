@@ -104,12 +104,14 @@ serve(async (req) => {
     const { messages } = (await req.json()) as { messages: ChatMessage[] };
 
     // Fetch user's portfolio data for context
-    const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes] = await Promise.all([
+    const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes, dealsRes, viewingsRes] = await Promise.all([
       supabase.from("properties").select("*").order("name"),
       supabase.from("tenants").select("*, properties(name, address)").order("last_name"),
       supabase.from("loans").select("*, properties(name)").order("created_at", { ascending: false }),
       supabase.from("todos").select("*").eq("completed", false).order("priority").limit(20),
       supabase.from("tickets").select("*, properties(name), tenants(first_name, last_name)").order("created_at", { ascending: false }).limit(20),
+      supabase.from("deals").select("id, title, address, stage, purchase_price, expected_rent, sqm, units").order("created_at", { ascending: false }).limit(20),
+      supabase.from("property_viewings").select("id, title, address, rating, notes, pro_points, contra_points, visited_at").order("visited_at", { ascending: false, nullsFirst: false }).limit(15),
     ]);
 
     const properties = (propertiesRes.data || []) as PropertyRow[];
@@ -117,6 +119,8 @@ serve(async (req) => {
     const loans = (loansRes.data || []) as LoanRow[];
     const todos = (todosRes.data || []) as TodoRow[];
     const tickets = (ticketsRes.data || []) as TicketRow[];
+    const deals = (dealsRes.data || []) as Array<{ title?: string; address?: string; stage?: string; purchase_price?: number; expected_rent?: number }>;
+    const viewings = (viewingsRes.data || []) as Array<{ title?: string; address?: string; rating?: number; notes?: string; pro_points?: string; contra_points?: string }>;
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -176,6 +180,12 @@ ${tickets.map((t) => {
   const propName = t.properties?.name || "";
   return `- [${t.status ?? "?"}/${t.priority ?? "?"}] ${t.title ?? "k.A."} – ${propName}${tenantName ? ` (${tenantName})` : ""}`;
 }).join("\n")}
+
+## Deals (${deals.length})
+${deals.map((d) => `- ${d.title ?? "k.A."} | ${d.address ?? ""} | Stage: ${d.stage ?? "?"} | Kaufpreis: ${Number(d.purchase_price ?? 0).toLocaleString("de-DE")} € | Miete: ${Number(d.expected_rent ?? 0).toLocaleString("de-DE")} €/Monat`).join("\n")}
+
+## Besichtigungen (${viewings.length})
+${viewings.map((v) => `- ${v.title ?? "k.A."} | Bewertung: ${v.rating ?? "–"}/5 | Pro: ${(v.pro_points ?? "").slice(0, 80)} | Kontra: ${(v.contra_points ?? "").slice(0, 80)}`).join("\n")}
 `.trim();
 
     const systemPrompt = `Du bist "Immo AI", ein intelligenter Immobilien-Assistent für einen deutschen Immobilieninvestor. Du hast Zugriff auf das komplette Portfolio des Nutzers.

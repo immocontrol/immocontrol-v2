@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
 
 interface DocExpiry {
   id: string;
@@ -60,7 +61,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["doc_expiry", propertyId] });
     },
-    onError: () => toast.error("Fehler"),
+    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Fehler beim Speichern" }),
   });
 
   const deleteMutation = useMutation({

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2 } from "lucide-react";
+import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +71,7 @@ export const GlobalSearch = () => {
       { id: "nav-berichte", title: "Berichte", subtitle: "Auswertungen", path: "/berichte" },
       { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: "/crm" },
       { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: "/deals" },
+      { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: "/besichtigungen" },
       { id: "nav-settings", title: "Einstellungen", subtitle: "Profil & Theme", path: "/einstellungen" },
     ];
     return items.map(i => ({
@@ -171,6 +172,24 @@ export const GlobalSearch = () => {
           category: "Deals",
           icon: <Landmark className="h-4 w-4" />,
           action: () => go("/deals"),
+        });
+      });
+
+      // Search Besichtigungen
+      const { data: viewings } = await supabase
+        .from("property_viewings")
+        .select("id, title, address, visited_at")
+        .or(`title.ilike.${lowerQ},address.ilike.${lowerQ},notes.ilike.${lowerQ},pro_points.ilike.${lowerQ},contra_points.ilike.${lowerQ}`)
+        .limit(5);
+
+      viewings?.forEach(v => {
+        dbResults.push({
+          id: `viewing-${v.id}`,
+          title: v.title,
+          subtitle: [v.address, v.visited_at ? new Date(v.visited_at).toLocaleDateString("de-DE") : null].filter(Boolean).join(" · "),
+          category: "Besichtigungen",
+          icon: <Camera className="h-4 w-4" />,
+          action: () => go("/besichtigungen"),
         });
       });
 

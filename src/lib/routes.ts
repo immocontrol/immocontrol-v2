@@ -27,6 +27,7 @@ export const ROUTES = {
   WARTUNG: "/wartungsplaner",
   NEWSTICKER: "/newsticker",
   BEWERTUNG: "/bewertung",
+  BESICHTIGUNGEN: "/besichtigungen",
   OBJEKTE: "/objekte",
   TENANT_PORTAL: "/mieter",
   HANDWORKER_PORTAL: "/handwerker",

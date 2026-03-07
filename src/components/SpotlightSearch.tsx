@@ -19,7 +19,8 @@ import {
   X, Loader2, Clock, Zap, ArrowRight, Command, Plus, Download,
   Settings, BarChart3, Calculator, CheckSquare, Wrench, Target,
   Handshake, FolderOpen, Receipt, PieChart, TrendingUp, Activity,
-  Map, PiggyBank, Banknote, LineChart, Shield, Calendar, Lightbulb
+  Map, PiggyBank, Banknote, LineChart, Shield, Calendar, Lightbulb,
+  Camera,
 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,7 @@ export default function SpotlightSearch() {
       { id: "nav-wartung", title: "Wartungsplaner", subtitle: "Instandhaltung", path: "/wartungsplaner", icon: <Wrench className="h-4 w-4" />, keywords: "wartung instandhaltung reparatur" },
       { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: "/crm", icon: <Target className="h-4 w-4" />, keywords: "crm leads akquise" },
       { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: "/deals", icon: <Handshake className="h-4 w-4" />, keywords: "deals pipeline" },
+      { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: "/besichtigungen", icon: <Camera className="h-4 w-4" />, keywords: "besichtigung besichtigungen notizen fotos videos immo viewing" },
       { id: "nav-analyse", title: "Rechner & Analyse", subtitle: "Kalkulatoren", path: "/analyse", icon: <Calculator className="h-4 w-4" />, keywords: "rechner analyse kalkulator berechnung" },
     ];
     return items.map(i => ({

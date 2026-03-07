@@ -7,6 +7,7 @@ import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -73,7 +74,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["portfolio_goals"] });
     },
-    onError: () => toast.error("Fehler"),
+    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Fehler beim Speichern" }),
   });
 
   const deleteMutation = useMutation({

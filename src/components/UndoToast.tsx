@@ -2,6 +2,7 @@
  * Provides a reusable undo mechanism that delays destructive operations
  * and shows a toast with an undo button for 8 seconds. */
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
 
 interface UndoOptions {
   /** Description shown in the toast */
@@ -37,8 +38,8 @@ export function undoableAction(options: UndoOptions): Promise<boolean> {
           try {
             await action();
             resolve(true);
-          } catch {
-            toast.error("Fehler beim Ausführen der Aktion");
+          } catch (err) {
+            handleError(err, { context: "general", toastMessage: "Fehler beim Ausführen der Aktion" });
             resolve(false);
           }
         }
@@ -49,8 +50,8 @@ export function undoableAction(options: UndoOptions): Promise<boolean> {
           try {
             await action();
             resolve(true);
-          } catch {
-            toast.error("Fehler beim Ausführen der Aktion");
+          } catch (err) {
+            handleError(err, { context: "general", toastMessage: "Fehler beim Ausführen der Aktion" });
             resolve(false);
           }
         }

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,14 +15,14 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2 } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
+import { queryKeys } from "@/lib/queryKeys";
 import { useDebounce } from "@/hooks/useDebounce";
 import { TelegramDealImport, telegramDealToForm } from "@/components/TelegramDealImport";
 import { useTelegramBot } from "@/hooks/useTelegramBot";
 import { useSupabaseStorage } from "@/hooks/useSupabaseStorage";
-import { queryKeys } from "@/lib/queryKeys";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { logAudit } from "@/lib/auditLog";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
@@ -172,6 +173,8 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 
 const Deals = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const haptic = useHaptic();
   const isMobile = useIsMobile();
@@ -196,6 +199,16 @@ const Deals = () => {
   /* FUNC-12: Kanban Drag & Drop between stages */
   const [draggedDeal, setDraggedDeal] = useState<DealRecord | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+
+  /* SYNERGY: Load contacts for contact picker */
+  const { data: contacts = [] } = useQuery({
+    queryKey: queryKeys.contacts.all,
+    queryFn: async () => {
+      const { data } = await supabase.from("contacts").select("id, name, phone, email").is("deleted_at", null).order("name");
+      return (data || []) as { id: string; name: string; phone: string | null; email: string | null }[];
+    },
+    enabled: !!user && addOpen,
+  });
 
   /* UPD-20: Use centralised query keys */
   const { data: deals = [], isLoading } = useQuery({
@@ -264,11 +277,55 @@ const Deals = () => {
   });
 
   const moveDeal = useMutation({
-    mutationFn: async ({ id, stage }: { id: string; stage: string }) => {
+    mutationFn: async ({ id, stage, deal }: { id: string; stage: string; deal?: DealRecord }) => {
       const { error } = await supabase.from("deals").update({ stage }).eq("id", id);
       if (error) throw error;
+
+      /* BESICHTIGUNG-AUTO: Wenn Deal auf Besichtigung gesetzt wird, automatisch Besichtigungseintrag anlegen */
+      if (stage === "besichtigung" && deal && user) {
+        const { data: existing } = await supabase
+          .from("property_viewings")
+          .select("id")
+          .eq("deal_id", id)
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        if (!existing) {
+          const notesParts: string[] = [];
+          if (deal.description?.trim()) notesParts.push(deal.description.trim());
+          if (deal.notes?.trim()) notesParts.push(deal.notes.trim());
+          const facts: string[] = [];
+          if (deal.purchase_price && deal.purchase_price > 0) facts.push(`Kaufpreis: ${formatCurrency(deal.purchase_price)}`);
+          if (deal.expected_rent && deal.expected_rent > 0) facts.push(`Miete: ${formatCurrency(deal.expected_rent)}/Monat`);
+          if (deal.sqm && deal.sqm > 0) facts.push(`${deal.sqm} m²`);
+          if (deal.units && deal.units > 1) facts.push(`${deal.units} Einheiten`);
+          if (deal.property_type) facts.push(deal.property_type);
+          if (deal.source) facts.push(`Quelle: ${deal.source}`);
+          if (facts.length > 0) notesParts.push(facts.join(" · "));
+          const notes = notesParts.length > 0 ? notesParts.join("\n\n") : null;
+
+          const { error: insErr } = await supabase.from("property_viewings").insert({
+            user_id: user.id,
+            deal_id: id,
+            title: deal.title || "Unbenannte Besichtigung",
+            address: deal.address || null,
+            notes,
+            contact_name: deal.contact_name || null,
+            contact_phone: deal.contact_phone || null,
+            visited_at: new Date().toISOString(),
+          } as never);
+          if (!insErr) {
+            toast.success("Besichtigung angelegt — Notizen & Fotos unter Besichtigungen hinzufügen");
+          }
+        }
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.deals.all }),
+    onSuccess: (_, { stage }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
+      if (stage === "besichtigung") {
+        queryClient.invalidateQueries({ queryKey: queryKeys.viewings.all });
+      }
+    },
     /* UPD-23: Error handler for move mutation */
     onError: (e: Error) => toast.error(`Verschieben fehlgeschlagen: ${e.message}`),
   });
@@ -521,6 +578,27 @@ const Deals = () => {
     toast.success("Deals als CSV exportiert");
   }, [deals]);
 
+  /* SYNERGY: Prefill deal form when navigating from CRM with fromLead */
+  useEffect(() => {
+    const fromLead = (location.state as { fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string } })?.fromLead;
+    if (fromLead && fromLead.name) {
+      setForm(p => ({
+        ...p,
+        title: fromLead.name,
+        address: fromLead.address || "",
+        description: fromLead.notes || "",
+        contact_name: fromLead.name,
+        contact_phone: fromLead.phone || "",
+        contact_email: fromLead.email || "",
+        source: "CRM",
+      }));
+      setEditDeal(null);
+      setAddOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+      toast.info("Deal-Vorlage aus CRM übernommen");
+    }
+  }, [location.state, navigate, location.pathname]);
+
   /* UPD-31: Keyboard shortcut -- press n to create new deal */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -706,7 +784,7 @@ const Deals = () => {
                   e.preventDefault();
                   if (!draggedDeal) return;
                   if (draggedDeal.stage !== stage.key) {
-                    moveDeal.mutate({ id: draggedDeal.id, stage: stage.key });
+                    moveDeal.mutate({ id: draggedDeal.id, stage: stage.key, deal: draggedDeal });
                     toast.success(`Verschoben: ${stage.label}`);
                   }
                   setDraggedDeal(null);
@@ -729,7 +807,7 @@ const Deals = () => {
                       currentStage={deal.stage}
                       stages={STAGES.map(s => ({ key: s.key, label: s.label, color: s.color }))}
                       onStageChange={(newStage) => {
-                        moveDeal.mutate({ id: deal.id, stage: newStage });
+                        moveDeal.mutate({ id: deal.id, stage: newStage, deal });
                         toast.success(`Verschoben: ${stageMap[newStage]?.label || newStage}`);
                       }}
                     >
@@ -920,7 +998,32 @@ const Deals = () => {
               <Input type="number" placeholder="Miete \u20ac/Monat" value={form.expected_rent || ""} onChange={e => setForm(p => ({ ...p, expected_rent: parseFloat(e.target.value) || 0 }))} aria-label="Erwartete Miete" />
               <Input type="number" placeholder="qm" value={form.sqm || ""} onChange={e => setForm(p => ({ ...p, sqm: parseFloat(e.target.value) || 0 }))} aria-label="Quadratmeter" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* SYNERGY: Contact picker — Kontakt aus Kontaktliste übernehmen */}
+            {contacts.length > 0 && (
+              <div className="col-span-full">
+                <Select
+                  value="__none__"
+                  onValueChange={(id) => {
+                    if (id === "__none__") return;
+                    const c = contacts.find((x) => x.id === id);
+                    if (c) setForm(p => ({ ...p, contact_name: c.name, contact_phone: c.phone || "", contact_email: c.email || "" }));
+                  }}
+                >
+                  <SelectTrigger className="w-full" aria-label="Kontakt übernehmen">
+                    <SelectValue placeholder="Kontakt aus Liste übernehmen…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Kontakt wählen —</SelectItem>
+                    {contacts.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name} {c.phone ? ` · ${c.phone}` : ""} {c.email ? ` · ${c.email}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 col-span-full">
               <Input placeholder="Kontakt Name" value={form.contact_name} onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} aria-label="Kontaktname" />
               <Input placeholder="Kontakt Tel." value={form.contact_phone} onChange={e => setForm(p => ({ ...p, contact_phone: e.target.value }))} aria-label="Kontakt Telefon" />
               <Input placeholder="Kontakt E-Mail" value={form.contact_email} onChange={e => setForm(p => ({ ...p, contact_email: e.target.value }))} aria-label="Kontakt E-Mail" />
@@ -948,6 +1051,18 @@ const Deals = () => {
                 {editDeal ? "Speichern" : "Deal anlegen"}
               </LoadingButton>
             </div>
+            {/* SYNERGY: Link zur Besichtigung wenn Deal in Stage Besichtigung */}
+            {editDeal && form.stage === "besichtigung" && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-amber-600" />
+                  Besichtigung angelegt
+                </span>
+                <Link to="/besichtigungen" className="text-sm text-primary hover:underline flex items-center gap-1" onClick={() => setAddOpen(false)}>
+                  Zu Besichtigungen →
+                </Link>
+              </div>
+            )}
             {/* IMP20-4: Deal → Immobilie Konvertierung for won deals */}
             {editDeal && form.stage === "abgeschlossen" && (
               <DealToPropertyConverter
@@ -960,7 +1075,7 @@ const Deals = () => {
                 <span className="text-xs text-muted-foreground mr-1 mt-1">Verschieben:</span>
                 {STAGES.filter(s => s.key !== form.stage).map(s => (
                   <Button key={s.key} variant="outline" size="sm" className="text-xs h-7" onClick={() => {
-                    moveDeal.mutate({ id: editDeal.id, stage: s.key });
+                    moveDeal.mutate({ id: editDeal.id, stage: s.key, deal: editDeal });
                     setForm(p => ({ ...p, stage: s.key }));
                   }}>
                     <div className={cn("w-2 h-2 rounded-full mr-1", s.color)} /> {s.label}

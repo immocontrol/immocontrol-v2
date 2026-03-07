@@ -27,6 +27,7 @@ const SHORTCUT_GROUPS: { title: string; shortcuts: { keys: string; description: 
     shortcuts: [
       { keys: "Ctrl+K", description: "Suche öffnen / Spotlight" },
       { keys: "Ctrl+N", description: "Neues Objekt anlegen" },
+      { keys: "n", description: "Neue Besichtigung (auf /besichtigungen)" },
       { keys: "?", description: "Tastenkürzel anzeigen" },
     ],
   },

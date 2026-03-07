@@ -139,9 +139,9 @@ export const MobileDataExportSheet = memo(function MobileDataExportSheet({
 
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 3000);
-    } catch {
-      /* FIX-11: Removed console.error — export failure is visible via UI state */
-      toast.error("Export fehlgeschlagen");
+    } catch (err) {
+      const { handleError } = await import("@/lib/handleError");
+      handleError(err, { context: "export", toastMessage: "Export fehlgeschlagen" });
     } finally {
       setIsExporting(false);
     }

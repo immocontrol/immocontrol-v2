@@ -18,6 +18,7 @@ import {
   Target,
   Handshake,
   Newspaper,
+  Camera,
 } from "lucide-react";
 
 export interface NavItem {
@@ -71,6 +72,7 @@ export const navEntries: NavEntry[] = [
     items: [
       { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
       { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
+      { path: "/besichtigungen", label: "Besichtigungen", icon: Camera, shortcut: "" },
       { path: "/newsticker", label: "Newsticker", icon: Newspaper, shortcut: "" },
       { path: "/bewertung", label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
     ],
@@ -102,6 +104,7 @@ export const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Berichte": "/berichte",
   "Navigation: CRM": "/crm",
   "Navigation: Deals": "/deals",
+  "Navigation: Besichtigungen": "/besichtigungen",
   "Navigation: Hockey Stick Simulator": "/hockey-stick",
   "Navigation: Einstellungen": "/einstellungen",
 };

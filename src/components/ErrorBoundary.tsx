@@ -77,7 +77,7 @@ class ErrorBoundary extends Component<Props, State> {
           <p className="text-[10px] text-muted-foreground mb-4">
             Zeitpunkt: {new Date().toLocaleString("de-DE")}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="group" aria-label="Fehlerbehebung">
             <Button variant="outline" size="sm" onClick={this.handleRetry}>
               <RefreshCw className="h-4 w-4 mr-1.5" />
               {this.state.retryCount >= 3 ? "Seite neu laden" : "Erneut versuchen"}
