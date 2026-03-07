@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { StickyNote, Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { relativeTime } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -68,16 +70,25 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
       qc.invalidateQueries({ queryKey: queryKeys.notes.byProperty(propertyId) });
       qc.invalidateQueries({ queryKey: queryKeys.timeline.byProperty(propertyId) });
     },
-    onError: () => toast.error("Fehler beim Speichern"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "property_notes.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Speichern", () => addMutation.mutate());
+    },
   });
 
+  const lastDeletedNoteIdRef = useRef<string | null>(null);
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("property_notes").delete().eq("id", id);
+      const { error } = await supabase.from("property_notes").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.notes.byProperty(propertyId) });
       qc.invalidateQueries({ queryKey: queryKeys.timeline.byProperty(propertyId) });
+    },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "property_notes.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => { if (lastDeletedNoteIdRef.current) deleteMutation.mutate(lastDeletedNoteIdRef.current); });
     },
   });
 
@@ -146,7 +157,7 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
                   {relativeTime(note.created_at)}
                 </span>
                 <button
-                  onClick={() => deleteMutation.mutate(note.id)}
+                  onClick={() => { lastDeletedNoteIdRef.current = note.id; deleteMutation.mutate(note.id); }}
                   className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
                 >
                   <Trash2 className="h-3 w-3" />

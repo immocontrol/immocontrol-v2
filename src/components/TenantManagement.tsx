@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Users, Plus, Phone, Mail, Calendar, Home, Trash2, Edit2, UserPlus, Send, Copy, Check, Loader2, Eye } from "lucide-react";
 import AddTenantDialog from "@/components/AddTenantDialog";
 import { isValidEmail } from "@/lib/validation";
@@ -13,6 +13,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import TenantPortalPreview from "@/components/TenantPortalPreview";
 import { formatCurrency } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -43,6 +45,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
     unit_label: "", move_in_date: "", monthly_rent: 0, deposit: 0,
   });
   const qc = useQueryClient();
+  const lastDeletedTenantIdRef = useRef<string | null>(null);
 
   const { data: tenants = [] } = useQuery({
     queryKey: queryKeys.tenants.byProperty(propertyId),
@@ -139,14 +142,22 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
       setOpen(false);
       invalidate();
     },
-    onError: () => toast.error("Fehler beim Speichern"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "tenants.insert/update", showToast: false });
+      toastErrorWithRetry("Fehler beim Speichern", () => saveMutation.mutate());
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("tenants").delete().eq("id", id);
+      const { error } = await supabase.from("tenants").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => { toast.success("Mieter entfernt"); invalidate(); },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "tenants.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Entfernen", () => { if (lastDeletedTenantIdRef.current) deleteMutation.mutate(lastDeletedTenantIdRef.current); });
+    },
   });
 
   const deactivateMutation = useMutation({
@@ -447,7 +458,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteMutation.mutate(t.id)}
+                      onClick={() => { lastDeletedTenantIdRef.current = t.id; deleteMutation.mutate(t.id); }}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

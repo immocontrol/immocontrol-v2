@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Gauge, Plus, Trash2, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 const METER_TYPES = ["Strom", "Gas", "Wasser", "Heizung", "Warmwasser"];
 
@@ -23,6 +25,8 @@ const MeterManagement = ({ propertyId }: Props) => {
   const [readingOpen, setReadingOpen] = useState<string | null>(null);
   const [form, setForm] = useState({ meter_type: "Strom", meter_number: "", unit_label: "", location_note: "" });
   const [readingForm, setReadingForm] = useState({ value: "", reading_date: new Date().toISOString().split("T")[0], note: "" });
+  const lastMeterIdRef = useRef<string | null>(null);
+  const lastDeletedMeterIdRef = useRef<string | null>(null);
 
   const { data: meters = [] } = useQuery({
     queryKey: ["meters", propertyId],
@@ -63,7 +67,10 @@ const MeterManagement = ({ propertyId }: Props) => {
       setForm({ meter_type: "Strom", meter_number: "", unit_label: "", location_note: "" });
       qc.invalidateQueries({ queryKey: ["meters", propertyId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "meters.insert", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Anlegen", () => addMeter.mutate());
+    },
   });
 
   const addReading = useMutation({
@@ -84,16 +91,24 @@ const MeterManagement = ({ propertyId }: Props) => {
       setReadingForm({ value: "", reading_date: new Date().toISOString().split("T")[0], note: "" });
       qc.invalidateQueries({ queryKey: ["meter_readings", propertyId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "meter_readings.insert", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Erfassen", () => { if (lastMeterIdRef.current) addReading.mutate(lastMeterIdRef.current); });
+    },
   });
 
   const deleteMeter = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("meters").delete().eq("id", id);
+      const { error } = await supabase.from("meters").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Zähler entfernt");
       qc.invalidateQueries({ queryKey: ["meters", propertyId] });
+    },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "meters.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Entfernen", () => { if (lastDeletedMeterIdRef.current) deleteMeter.mutate(lastDeletedMeterIdRef.current); });
     },
   });
 
@@ -219,13 +234,13 @@ const MeterManagement = ({ propertyId }: Props) => {
                         <Label className="text-xs">Notiz</Label>
                         <Input value={readingForm.note} onChange={e => setReadingForm({ ...readingForm, note: e.target.value })} className="h-9 text-sm" placeholder="Optional" />
                       </div>
-                      <Button onClick={() => addReading.mutate(meter.id)} className="w-full" disabled={!readingForm.value || addReading.isPending}>
+                      <Button onClick={() => { lastMeterIdRef.current = meter.id; addReading.mutate(meter.id); }} className="w-full" disabled={!readingForm.value || addReading.isPending}>
                         Stand erfassen
                       </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteMeter.mutate(meter.id)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { lastDeletedMeterIdRef.current = meter.id; deleteMeter.mutate(meter.id); }}>
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>

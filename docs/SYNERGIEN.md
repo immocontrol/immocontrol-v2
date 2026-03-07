@@ -68,6 +68,9 @@
 | **Mietvertragsverwaltung** | — | Vertrag anlegen/löschen: handleError + toastErrorWithRetry (Retry ohne Formularverlust / mit lastDeletedIdRef) |
 | **AutoTodoGenerator** | Todos | Todo aus Vorschlag erstellen: handleError + toastErrorWithRetry (Retry mit lastTodoRef) |
 | **BulkRentAdjustment** | Mieter, Mietübersicht | Bulk-Mietanpassung: handleError + toastErrorWithRetry (Retry = applyAdjustments) |
+| **MeterManagement** | — | Zähler anlegen, Ablesung erfassen, Zähler löschen: handleError + toastErrorWithRetry (Retry mit lastMeterIdRef/lastDeletedMeterIdRef) |
+| **PropertyNotes** | — | Notiz anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedNoteIdRef) |
+| **TenantManagement** | — | Mieter speichern/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedTenantIdRef) |
 
 ## Technische Details
 
