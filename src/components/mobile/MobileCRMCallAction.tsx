@@ -9,6 +9,7 @@ import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { startCall } from "@/integrations/voice";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface MobileCRMCallActionProps {
   /** Phone number to call */
@@ -64,12 +65,12 @@ export const MobileCRMCallAction = memo(function MobileCRMCallAction({
       context: leadId != null ? { leadId, record: true, toLabel: contactName } : undefined,
     });
     if (!result?.ok && result?.error) {
-      toast.error(result.error);
       setCalling(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      toastErrorWithRetry(result.error, handleStartCall);
     }
   }, [haptic, phoneNumber, leadId, contactName]);
 

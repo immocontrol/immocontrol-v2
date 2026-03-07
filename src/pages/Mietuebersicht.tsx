@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart, Store, FileSignature, CalendarDays } from "lucide-react";
+import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart, Store, FileSignature, CalendarDays, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -258,6 +258,9 @@ const Mietuebersicht = () => {
           </Link>
           <Link to={ROUTES.FORECAST} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Cashforecast">
             <CalendarDays className="h-3.5 w-3.5" /> Cashforecast
+          </Link>
+          <Link to={ROUTES.FINANZIERUNG} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Finanzierungs-Cockpit">
+            <Wallet className="h-3.5 w-3.5" /> Finanzierung
           </Link>
         </div>
       </div>

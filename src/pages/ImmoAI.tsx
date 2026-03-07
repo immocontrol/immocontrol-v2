@@ -45,6 +45,7 @@ const SUGGESTIONS = [
   "Wann hat sich ein Objekt amortisiert?",
   "Wie hoch sind meine monatlichen Darlehensraten?",
   "Welche Objekte haben die beste Mietrendite?",
+  "Was brauche ich für eine neue Finanzierung?",
 ];
 
 export default function ImmoAI() {

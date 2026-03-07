@@ -68,7 +68,7 @@
 | **Nebenkosten** | Dokumente, WGH-Scout | Links Dokumente, WGH finden in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
 | **Nebenkosten** | Objekte | Link „Zum Objekt“ bei Abrechnungsdetail (zum PropertyDetail) |
 | **Kontakte** | Deals, WGH-Scout | Empty State: Buttons „Zu Deals“, „WGH finden“ (ROUTES.CRM_SCOUT) |
-| **Mietübersicht** | Nebenkosten, Berichte, WGH-Scout | Links NK-Abrechnung, Berichte, WGH finden in Kopfzeile (ROUTES) |
+| **Mietübersicht** | Nebenkosten, Berichte, WGH-Scout, Finanzierung | Links NK-Abrechnung, Berichte, WGH finden, Cashforecast, Finanzierung in Kopfzeile (ROUTES). |
 | **PropertyDetail** | Nebenkosten | Link „Nebenkostenabrechnung“ in Finanzierungs-Sektion |
 | **DashboardActionCenter** | Nebenkosten | Kachel „X NK-Entwürfe“ wenn status=draft; verlinkt auf /nebenkosten |
 | **GlobalSearch** | Kontakte, Deals, Besichtigungen, Nebenkosten, Dokumente | Suche und Navigation für alle Seiten; Deep-Links `?highlight=xxx`, `?id=xxx` |

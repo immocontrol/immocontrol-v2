@@ -1065,7 +1065,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                   role="option"
                   aria-selected={i === focusedResultIndex}
                   className={cn(
-                    "flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm",
+                    "flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm touch-target min-h-[44px]",
                     i === focusedResultIndex && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
                   )}
                   onClick={() => setFocusedResultIndex(i)}
