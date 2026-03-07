@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash, Target, Briefcase } from "lucide-react";
+import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash, Target, Briefcase, FileBarChart } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import TodoStats from "@/components/TodoStats";
 import TodoCalendarSync from "@/components/TodoCalendarSync";
 import { RecurringTodos } from "@/components/RecurringTodos";
@@ -660,11 +661,14 @@ const Todos = () => {
                 >
                   <Plus className="h-3.5 w-3.5" /> Aufgabe hinzufügen
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate("/crm")} className="gap-1.5 touch-target min-h-[44px]">
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu CRM">
                   <Target className="h-3.5 w-3.5" /> Zu CRM
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="gap-1.5 touch-target min-h-[44px]">
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Deals">
                   <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Berichte">
+                  <FileBarChart className="h-3.5 w-3.5" /> Berichte
                 </Button>
               </div>
             )}

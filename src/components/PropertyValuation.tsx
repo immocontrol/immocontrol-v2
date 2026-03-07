@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 
 interface ValuationResult {
   ertragswert: number;
@@ -98,8 +100,9 @@ const PropertyValuation = ({
       setBodenrichtwertResult(estimatedBRW);
 
       toast.success(`Bodenrichtwert geschätzt: ${estimatedBRW} €/m²`);
-    } catch {
-      toast.error("Fehler bei der Adresssuche");
+    } catch (err: unknown) {
+      handleError(err, { context: "network", showToast: false });
+      toastErrorWithRetry("Fehler bei der Adresssuche", () => lookupBodenrichtwert());
     } finally {
       setLoading(false);
     }

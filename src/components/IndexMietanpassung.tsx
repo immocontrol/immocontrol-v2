@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { generateRentIncreaseJustification, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 
 // CPI data (Verbraucherpreisindex) — approximate recent values
@@ -79,8 +81,10 @@ const IndexMietanpassung = memo(() => {
       });
       await navigator.clipboard.writeText(text);
       toast.success(`Begründung generiert und in Zwischenablage kopiert`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Begründung konnte nicht generiert werden.");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      const msg = e instanceof Error ? e.message : "Begründung konnte nicht generiert werden.";
+      toastErrorWithRetry(msg, () => handleGenerateJustification(adj));
     } finally {
       setAiGenerating(null);
     }

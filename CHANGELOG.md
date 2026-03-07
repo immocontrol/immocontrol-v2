@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Index-Mietanpassung, CRM-Suche, PropertyValuation)** — IndexMietanpassung (KI-Begründung), CRM (Adresssuche), PropertyValuation (Bodenrichtwert) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
+- **Synergie Todos → Berichte** — Empty State: Button „Berichte“; ROUTES für CRM, Deals, Berichte; aria-labels
 - **Retry-Toast + Fehleranalyse (Bewertung-PDF, DataExport, Selbstauskunft)** — ImmobilienBewertung (PDF-Upload), DataExportBackup (JSON/CSV) und SelbstauskunftGenerator nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Synergie Darlehen → Berichte** — Link „Berichte“ in Darlehen-Kopfzeile; Empty State: Button „Berichte“; ROUTES für alle Navigationen
 - **Retry-Toast + Fehleranalyse (Objekt-CSV, BerichteInProsa, Pull-to-Refresh)** — PropertyCsvImport, BerichteInProsa (KI) und MobilePullToRefresh nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
@@ -61,6 +63,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **IndexMietanpassung** — Bei KI-Begründungsfehler: handleError + toastErrorWithRetry (Retry mit gleichem Eintrag)
+- **CRM** — Bei Adresssuche-Fehler: handleError + toastErrorWithRetry (Retry searchPlaces)
+- **PropertyValuation** — Bei Bodenrichtwert-/Adresssuche-Fehler: handleError + toastErrorWithRetry (Retry)
+- **Todos** — Empty State: Button „Berichte“; ROUTES für CRM, Deals; aria-labels für Synergie-Buttons
 - **ImmobilienBewertung** — Bei PDF-Upload-Fehler: handleError + toastErrorWithRetry (letzte Datei per Ref für Retry)
 - **DataExportBackup** — Bei JSON-/CSV-Export-Fehler: handleError + toastErrorWithRetry (Retry)
 - **SelbstauskunftGenerator** — Bei PDF-Erstellungsfehler: handleError + toastErrorWithRetry (Retry)

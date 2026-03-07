@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -145,7 +147,9 @@ const CRM = () => {
         toast.info("Keine Ergebnisse gefunden");
       }
     } catch (err: unknown) {
-      toast.error("Fehler bei der Suche: " + (err instanceof Error ? err.message : "Unbekannt"));
+      handleError(err, { context: "network", showToast: false });
+      const msg = "Fehler bei der Suche: " + (err instanceof Error ? err.message : "Unbekannt");
+      toastErrorWithRetry(msg, () => searchPlaces());
     } finally {
       setPlacesLoading(false);
     }

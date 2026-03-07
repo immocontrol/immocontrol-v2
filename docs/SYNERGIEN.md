@@ -23,7 +23,7 @@
 | **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte (ROUTES)
 | **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen |
 | **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
-| **Todos** | CRM, Deals | Empty State: Buttons „Zu CRM“, „Zu Deals“ |
+| **Todos** | CRM, Deals, Berichte | Empty State: Buttons „Zu CRM“, „Zu Deals“, „Berichte“ (ROUTES, Touch-Target)
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
 | **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
