@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 
 const STEP_LABELS = ["Persönliche Daten", "Mietdetails", "Zusammenfassung"];
 
@@ -48,6 +49,7 @@ interface AddTenantDialogProps {
 
 const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTenantDialogProps) => {
   const { user } = useAuth();
+  const { announce } = useAccessibility();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -101,6 +103,7 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
       });
       if (error) throw error;
       toast.success(`${form.first_name} ${form.last_name} angelegt`);
+      announce(`${form.first_name} ${form.last_name} wurde als Mieter angelegt.`);
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.tenants.byProperty(propertyId) });
       onCreated?.();

@@ -25,6 +25,7 @@ export function EmptyState({
       className={`flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border bg-muted/20 ${className}`}
       role="status"
       aria-label={title}
+      data-testid="empty-state"
     >
       <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
         <Icon className="h-6 w-6 text-muted-foreground" />

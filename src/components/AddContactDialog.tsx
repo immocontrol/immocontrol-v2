@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 
 const CATEGORIES = [
   { value: "Handwerker", icon: Wrench, description: "Elektriker, Klempner, Maler, …" },
@@ -55,6 +56,7 @@ interface AddContactDialogProps {
 
 const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   const { user } = useAuth();
+  const { announce } = useAccessibility();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -98,6 +100,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
       });
       if (error) throw error;
       toast.success(`${form.name} angelegt`);
+      announce(`${form.name} wurde als Kontakt angelegt.`);
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
       onCreated?.();

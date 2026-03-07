@@ -483,7 +483,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {breadcrumb}
           </div>
           <div className="flex items-center gap-1 overflow-visible">
-            <nav ref={desktopNavRef} className="hidden md:flex items-center gap-0.5 relative overflow-visible" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
+            <nav ref={desktopNavRef} data-testid="sidebar" className="hidden md:flex items-center gap-0.5 relative overflow-visible" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navEntries.map((entry) => {
                 if (isGroup(entry)) {
                   const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
@@ -506,10 +506,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       }`}>
                         {entry.items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
+                          const navAttr = item.path === "/darlehen" ? { "data-nav-loans": "" } : item.path === "/mietuebersicht" ? { "data-nav-rent": "" } : item.path === "/kontakte" ? { "data-nav-contacts": "" } : {};
                           return (
                             <Link
                               key={item.path}
                               to={item.path}
+                              {...navAttr}
                               aria-current={isActive ? "page" : undefined}
                               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg ${
                                 isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
@@ -664,10 +666,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
                     {group.items.map((item, idx) => {
                       const isActive = isRouteActive(item.path, location.pathname);
+                      const navAttr = item.path === "/darlehen" ? { "data-nav-loans": "" } : item.path === "/mietuebersicht" ? { "data-nav-rent": "" } : item.path === "/kontakte" ? { "data-nav-contacts": "" } : {};
                       return (
                         <Link
                           key={item.path}
                           to={item.path}
+                          {...navAttr}
                           onClick={() => setMobileActiveGroup(null)}
                           className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl nav-label-responsive font-medium transition-all duration-200 ${
                             isActive

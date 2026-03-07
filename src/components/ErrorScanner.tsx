@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bug, Download, Trash2, RefreshCw, FileText, AlertTriangle, Info, AlertCircle, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { trackError } from "@/lib/errorTracking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +112,8 @@ export function ErrorInterceptor() {
 
     const onError = (event: ErrorEvent) => {
       addErrorToStore("error", event.message, event.filename || "unknown", event.error?.stack);
+      const err = event.error instanceof Error ? event.error : new Error(event.message);
+      trackError(err, "error");
     };
     window.addEventListener("error", onError);
 
@@ -118,6 +121,8 @@ export function ErrorInterceptor() {
       const msg = event.reason instanceof Error ? event.reason.message : String(event.reason);
       const stack = event.reason instanceof Error ? event.reason.stack : undefined;
       addErrorToStore("error", msg, "unhandledrejection", stack);
+      const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      trackError(err, "unhandledrejection");
     };
     window.addEventListener("unhandledrejection", onRejection);
 

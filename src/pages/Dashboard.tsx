@@ -772,7 +772,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             </Button>
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 list-stagger">
+          <div className="grid gap-3 md:grid-cols-2 list-stagger" data-testid="property-list">
             {filteredProperties.map((property, i) => (
               <PropertyCard
                 key={property.id}

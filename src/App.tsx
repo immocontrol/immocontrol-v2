@@ -22,7 +22,6 @@ import { queryKeys } from "@/lib/queryKeys";
 import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
-import { initErrorTracking } from "@/lib/errorTracking";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
 
@@ -292,16 +291,10 @@ const RoleRouter = () => {
   );
 };
 
-/* STRONG-2: Use cleanup function from initErrorTracking — prevents duplicate listeners on HMR reload */
-const cleanupErrorTracking = initErrorTracking();
-if (import.meta.hot) {
-  import.meta.hot.dispose(() => cleanupErrorTracking());
-}
+/* Error capture unified: ErrorInterceptor (ErrorScanner) handles error/unhandledrejection
+   and forwards to trackError. Single source of truth, no duplicate listeners. */
 
 const App = () => {
-  /* Unhandled rejection logging is handled by ErrorInterceptor (ErrorScanner.tsx)
-   * which registers its own window.unhandledrejection listener. No duplicate
-   * handler needed here — that would cause double-logging in the error store. */
 
   if (!isSupabaseConfigured()) {
     return (

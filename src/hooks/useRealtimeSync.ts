@@ -13,22 +13,22 @@ import { toast } from "sonner";
  * all other devices automatically refresh their React Query cache.
  */
 
-/** Tables to watch for changes */
+/** Tables to watch for changes. Use filterColumn when table uses landlord_id instead of user_id. */
 const WATCHED_TABLES = [
-  { table: "properties", queryKey: queryKeys.properties.all, label: "Objekt" },
-  { table: "tenants", queryKey: ["tenants"], label: "Mieter" },
-  { table: "loans", queryKey: queryKeys.loans.all, label: "Darlehen" },
-  { table: "todos", queryKey: ["todos"], label: "Aufgabe" },
-  { table: "tickets", queryKey: ["tickets"], label: "Ticket" },
-  { table: "deals", queryKey: queryKeys.deals.all, label: "Deal" },
-  { table: "contacts", queryKey: queryKeys.contacts.all, label: "Kontakt" },
-  { table: "rent_payments", queryKey: ["mietuebersicht_payments"], label: "Mietzahlung" },
-  { table: "messages", queryKey: ["messages"], label: "Nachricht" },
-  { table: "documents", queryKey: ["documents"], label: "Dokument" },
-  { table: "maintenance_items", queryKey: queryKeys.maintenance.all, label: "Wartung" },
-  { table: "contracts", queryKey: ["vertraege_stats"], label: "Vertrag" },
-  { table: "service_contracts", queryKey: queryKeys.serviceContracts.all, label: "Dienstleister" },
-  { table: "invoices", queryKey: queryKeys.invoices.all, label: "Rechnung" },
+  { table: "properties", queryKey: queryKeys.properties.all, label: "Objekt", filterColumn: "user_id" },
+  { table: "tenants", queryKey: ["tenants"], label: "Mieter", filterColumn: "landlord_id" },
+  { table: "loans", queryKey: queryKeys.loans.all, label: "Darlehen", filterColumn: "user_id" },
+  { table: "todos", queryKey: ["todos"], label: "Aufgabe", filterColumn: "user_id" },
+  { table: "tickets", queryKey: ["tickets"], label: "Ticket", filterColumn: "landlord_id" },
+  { table: "deals", queryKey: queryKeys.deals.all, label: "Deal", filterColumn: "user_id" },
+  { table: "contacts", queryKey: queryKeys.contacts.all, label: "Kontakt", filterColumn: "user_id" },
+  { table: "rent_payments", queryKey: ["mietuebersicht_payments"], label: "Mietzahlung", filterColumn: "landlord_id" },
+  { table: "messages", queryKey: ["messages"], label: "Nachricht", filterColumn: "sender_id" },
+  { table: "documents", queryKey: ["documents"], label: "Dokument", filterColumn: "user_id" },
+  { table: "maintenance_items", queryKey: queryKeys.maintenance.all, label: "Wartung", filterColumn: "user_id" },
+  { table: "contracts", queryKey: ["vertraege_stats"], label: "Vertrag", filterColumn: "user_id" },
+  { table: "service_contracts", queryKey: queryKeys.serviceContracts.all, label: "Dienstleister", filterColumn: "user_id" },
+  { table: "invoices", queryKey: queryKeys.invoices.all, label: "Rechnung", filterColumn: "user_id" },
 ] as const;
 
 interface RealtimeEvent {
@@ -50,15 +50,15 @@ export function useRealtimeSync(showToasts = false) {
       config: { broadcast: { self: false } },
     });
 
-    /* REALTIME-3: Subscribe to each watched table */
-    for (const { table, queryKey, label } of WATCHED_TABLES) {
+    /* REALTIME-3: Subscribe to each watched table (landlord_id for tenants, rent_payments, tickets) */
+    for (const { table, queryKey, label, filterColumn } of WATCHED_TABLES) {
       channel.on(
         "postgres_changes" as "system",
         {
           event: "*",
           schema: "public",
           table,
-          filter: `user_id=eq.${user.id}`,
+          filter: `${filterColumn}=eq.${user.id}`,
         } as Record<string, string>,
         (payload: RealtimeEvent) => {
           /* REALTIME-4: Invalidate React Query cache for the affected table */

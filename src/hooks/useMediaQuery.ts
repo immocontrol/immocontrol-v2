@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BREAKPOINTS } from "@/lib/breakpoints";
 
 /** IMP-136: Responsive media query hook */
 export function useMediaQuery(query: string): boolean {
@@ -26,11 +27,11 @@ export function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-/** Convenience: check if mobile viewport */
-export const useIsMobile = () => useMediaQuery("(max-width: 639px)");
+/** Convenience: check if mobile viewport (below sm) */
+export const useIsMobile = () => useMediaQuery(`(max-width: ${BREAKPOINTS.sm - 1}px)`);
 
-/** Convenience: check if tablet viewport */
-export const useIsTablet = () => useMediaQuery("(min-width: 640px) and (max-width: 1023px)");
+/** Convenience: check if tablet viewport (sm to lg-1) */
+export const useIsTablet = () => useMediaQuery(`(min-width: ${BREAKPOINTS.sm}px) and (max-width: ${BREAKPOINTS.lg - 1}px)`);
 
-/** Convenience: check if desktop viewport */
-export const useIsDesktop = () => useMediaQuery("(min-width: 1024px)");
+/** Convenience: check if desktop viewport (lg+) */
+export const useIsDesktop = () => useMediaQuery(`(min-width: ${BREAKPOINTS.lg}px)`);

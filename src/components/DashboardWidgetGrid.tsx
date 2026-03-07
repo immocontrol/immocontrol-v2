@@ -174,6 +174,7 @@ export const DashboardWidgetGrid: React.FC<DashboardWidgetGridProps> = (props) =
   return (
     <div
       ref={widgetDrag.containerRef}
+      data-testid="widget-grid"
       className={`grid md:grid-cols-2 gap-3 transition-transform duration-300 origin-top ${isWidgetDragOverview ? "scale-[0.92] opacity-90" : ""}`}
     >
       {widgetOrder.map((wId, idx) => {

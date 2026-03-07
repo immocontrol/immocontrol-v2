@@ -200,7 +200,7 @@ const AddPropertyDialog = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5" data-add-property>
+            <Button size="sm" className="gap-1.5" data-add-property data-testid="add-property">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Objekt hinzufügen</span>
               <span className="sm:hidden">Hinzufügen</span>
