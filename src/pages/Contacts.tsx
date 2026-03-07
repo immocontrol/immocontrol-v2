@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
+import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -39,6 +39,7 @@ import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnima
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { EmptyState } from "@/components/EmptyState";
+import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 
 interface ContactItem {
   id: string;
@@ -51,15 +52,10 @@ interface ContactItem {
   notes: string | null;
 }
 
-const CATEGORIES = [
-  { value: "Handwerker", icon: Wrench },
-  { value: "Hausverwaltung", icon: Building },
-  { value: "Versicherung", icon: Shield },
-  { value: "Sonstiges", icon: Briefcase },
-];
-
 /* IMPROVE-1: Batch empty-trash cleanup after 30 days */
 const TRASH_RETENTION_DAYS = 30;
+/** Performance: show first N contacts, then "Mehr anzeigen" */
+const CONTACTS_PAGE_SIZE = 50;
 
 const ContactManagement = () => {
   const { user } = useAuth();
@@ -79,10 +75,15 @@ const ContactManagement = () => {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editContact, setEditContact] = useState<ContactItem | null>(null);
   const [showTrash, setShowTrash] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(CONTACTS_PAGE_SIZE);
   const [form, setForm] = useState({
     name: "", company: "", category: "Handwerker",
     email: "", phone: "", address: "", notes: "",
   });
+
+  useEffect(() => {
+    setVisibleCount(CONTACTS_PAGE_SIZE);
+  }, [search, catFilter]);
 
   // Improvement 5: React Query for contacts
   const { data: contacts = [] } = useQuery({
@@ -410,7 +411,7 @@ const ContactManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => (
+                    {CONTACT_CATEGORIES.map((c) => (
                       <SelectItem key={c.value} value={c.value}>{c.value}</SelectItem>
                     ))}
                   </SelectContent>
@@ -467,7 +468,7 @@ const ContactManagement = () => {
         </div>
         {/* IMPROVE-24: Category filter badges with emoji icons and count for quick visual scanning */}
         <div className="flex gap-1 flex-wrap">
-          {[{ value: "alle", label: "Alle", icon: "👥" }, ...CATEGORIES.map(c => ({ value: c.value, label: c.value, icon: c.value === "Handwerker" ? "🔧" : c.value === "Hausverwaltung" ? "🏢" : c.value === "Versicherung" ? "🛡️" : "📋" }))].map((f) => {
+          {[{ value: "alle", label: "Alle", icon: "👥" }, ...CONTACT_CATEGORIES.map(c => ({ value: c.value, label: c.value, icon: c.value === "Handwerker" ? "🔧" : c.value === "Hausverwaltung" ? "🏢" : c.value === "Versicherung" ? "🛡️" : "📋" }))].map((f) => {
             const count = f.value === "alle" ? contacts.length : contacts.filter(c => c.category === f.value).length;
             return (
               <button
@@ -526,11 +527,10 @@ const ContactManagement = () => {
         <>
           <ContactStats contacts={contacts} />
           {/* Improvement 14: Contact list with stagger animation */}
-                    {/* UI-UPDATE-14: Card hover animation for contacts */}
-          {/* UPD-25: Add card-press class for mobile touch feedback */}
+          {/* Performance: show first CONTACTS_PAGE_SIZE, then "Mehr anzeigen" */}
           <div className="grid gap-3 md:grid-cols-2 list-stagger">
-          {filtered.map((c) => {
-            const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
+          {filtered.slice(0, visibleCount).map((c) => {
+            const CatIcon = CONTACT_CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
             /* MOB-IMPROVE-6: Contact card with swipe-to-delete on mobile */
             const isHighlighted = highlightId === c.id;
             const contactCard = (
@@ -712,6 +712,15 @@ const ContactManagement = () => {
             ) : contactCard;
           })}
           </div>
+          {filtered.length > visibleCount && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => setVisibleCount((n) => n + CONTACTS_PAGE_SIZE)}>
+                {filtered.length - visibleCount <= CONTACTS_PAGE_SIZE
+                  ? `Alle ${filtered.length} anzeigen`
+                  : `${CONTACTS_PAGE_SIZE} weitere anzeigen (${filtered.length - visibleCount} übrig)`}
+              </Button>
+            </div>
+          )}
         </>
       )}
       {/* UX-15: Success animation overlay */}

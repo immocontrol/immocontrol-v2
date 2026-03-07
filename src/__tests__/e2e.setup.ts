@@ -4,18 +4,13 @@
  *
  * FUND-28: Visual regression test setup — screenshot comparison
  * utilities for detecting unintended UI changes.
+ *
+ * Paths aligned with src/lib/routes.ts (ROUTES) as single source of truth.
  */
+import { ROUTES } from "@/lib/routes";
 
 /**
  * FUND-27: E2E test helper — login to the app.
- * Usage in Playwright tests:
- * ```ts
- * import { login } from './e2e.setup';
- * test('dashboard loads', async ({ page }) => {
- *   await login(page, 'test@example.com', 'password');
- *   await expect(page.locator('h1')).toContainText('Dashboard');
- * });
- * ```
  */
 export async function login(
   page: { goto: (url: string) => Promise<void>; fill: (selector: string, value: string) => Promise<void>; click: (selector: string) => Promise<void>; waitForURL: (url: string | RegExp) => Promise<void> },
@@ -23,11 +18,11 @@ export async function login(
   password: string,
   baseUrl = "http://localhost:5173",
 ) {
-  await page.goto(`${baseUrl}/auth`);
+  await page.goto(`${baseUrl}${ROUTES.AUTH}`);
   await page.fill('input[type="email"]', email);
   await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
-  await page.waitForURL((url: URL) => url.pathname === "/" || url.pathname === "/dashboard");
+  await page.waitForURL((url: URL) => url.pathname === ROUTES.HOME || url.pathname === ROUTES.PERSONAL_DASHBOARD);
 }
 
 /**
@@ -115,17 +110,17 @@ export const VISUAL_REGRESSION_CONFIG = {
   diffDir: "tests/screenshots/diff",
   /** Maximum allowed pixel difference percentage */
   threshold: 0.1,
-  /** Pages to capture for visual regression — paths aligned with App ROUTES */
+  /** Pages to capture for visual regression — paths from ROUTES */
   pages: [
-    { name: "login", path: "/auth" },
-    { name: "dashboard", path: "/dashboard", requiresAuth: true },
-    { name: "home", path: "/", requiresAuth: true },
-    { name: "properties", path: "/objekte", requiresAuth: true },
-    { name: "loans", path: "/darlehen", requiresAuth: true },
-    { name: "deals", path: "/deals", requiresAuth: true },
-    { name: "contacts", path: "/kontakte", requiresAuth: true },
-    { name: "todos", path: "/aufgaben", requiresAuth: true },
-    { name: "settings", path: "/einstellungen", requiresAuth: true },
+    { name: "login", path: ROUTES.AUTH },
+    { name: "dashboard", path: ROUTES.PERSONAL_DASHBOARD, requiresAuth: true },
+    { name: "home", path: ROUTES.HOME, requiresAuth: true },
+    { name: "properties", path: ROUTES.OBJEKTE, requiresAuth: true },
+    { name: "loans", path: ROUTES.LOANS, requiresAuth: true },
+    { name: "deals", path: ROUTES.DEALS, requiresAuth: true },
+    { name: "contacts", path: ROUTES.CONTACTS, requiresAuth: true },
+    { name: "todos", path: ROUTES.TODOS, requiresAuth: true },
+    { name: "settings", path: ROUTES.SETTINGS, requiresAuth: true },
   ],
   /** Viewports to test */
   viewports: [

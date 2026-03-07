@@ -8,6 +8,12 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Performance: VirtualList** — Objektliste nutzt VirtualList ab 25 Objekten (weniger DOM, flüssiger Scroll)
+- **Performance: Kontakte** — Erst 50 Kontakte anzeigen, dann „Mehr anzeigen“ (reduziert initiales Rendering)
+- **Sentry (optional)** — Bei gesetztem `VITE_SENTRY_DSN` und installiertem `@sentry/react`: Fehler werden an Sentry gesendet (`src/lib/sentryInit.ts`)
+- **docs/OFFLINE.md** — Doku: welche Aktionen offline gequeuet werden, Ablauf, geplante Erweiterungen (Kontakte, Darlehen)
+- **Kontakt-Kategorien zentral** — `src/lib/contactCategories.ts` als einzige Quelle für Kategorie/Rolle; Contacts und AddContactDialog nutzen `CONTACT_CATEGORIES`
+- **E2E an ROUTES** — e2e.setup und auth.spec nutzen `ROUTES` aus `src/lib/routes.ts` (Single Source of Truth)
 - **Berichte Empty State** — Bei 0 Objekten: EmptyState mit Buttons „Objekte“, „Zu Deals“ (Synergie)
 - **Deals: improveText** — KI-Button „Verbessern“ bei Notizen (DeepSeek) überarbeitet Formulierung
 - **Nebenkosten Empty State** — Buttons „Mietübersicht“, „Objekte“ für Synergie
@@ -43,6 +49,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **ObjekteList** — VirtualList ab 25 Einträgen; PropertyCard-Höhe 220px
+- **Contacts** — Pagination „Mehr anzeigen“ ab 50 Einträgen; Filter-Reset setzt sichtbare Anzahl zurück
+- **errorTracking** — `ErrorEntry` exportiert für Sentry-Integration
 - **Berichte** — ROUTES für Navigation; Empty State bei 0 Objekten; Touch-Target (44px) für alle Bericht-Buttons (Mobile)
 - **Deals** — KI „Verbessern“ für Notizen (improveText); Touch-Target für KI-Buttons
 - **Besichtigungen** — Empty State: Link „Zu Deals“ (Synergie); Touch-Target für Erste-Besichtigung-Button

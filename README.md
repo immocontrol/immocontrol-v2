@@ -34,7 +34,7 @@ Lege `.env` bzw. `.env.local` an (siehe `.env.example` falls vorhanden). Typisch
 - `VITE_SUPABASE_ANON_KEY` – Supabase anon key
 - `VITE_APP_URL` – (optional) Canonical- und OG-URL der App, z. B. `https://deine-app.de`. Beim Build werden `index.html`-Platzhalter ersetzt.
 - `VITE_APP_OG_IMAGE` – (optional) Voll-URL des OG/Twitter-Bildes. Fallback: Default-Image.
-- `VITE_SENTRY_DSN` – (optional) Wenn gesetzt, können Fehler per `window.__immocontrol_reportError` (z. B. an Sentry) gesendet werden. Fehlermeldungen werden vorher bereinigt (keine Passwörter/PII).
+- `VITE_SENTRY_DSN` – (optional) Wenn gesetzt, werden Fehler automatisch an Sentry gesendet (Projekt nutzt `@sentry/react`). Sonst: Fehler landen nur in localStorage; `window.__immocontrol_reportError` kann manuell gesetzt werden.
 - **`VITE_DEEPSEEK_API_KEY`** – (optional) API-Key von [DeepSeek](https://platform.deepseek.com). Wenn gesetzt, nutzen der **Immo-Chat** (Seite „Immo-AI“ und Chat-Bubble) und der **KI-Tipp** auf dem Dashboard die DeepSeek-API direkt. Ohne Key wird die bestehende Supabase Edge Function `immo-ai-chat` verwendet. **Hinweis:** Der Key ist im Frontend sichtbar; für Produktion empfiehlt sich ein eigener Proxy, der den Key server-seitig hält.
 
 Weitere Keys (z. B. für Auth-Provider) je nach Deployment.

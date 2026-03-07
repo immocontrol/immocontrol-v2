@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Plus, ChevronRight, ChevronLeft, Contact2, Wrench, Building, Shield, Briefcase } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, Contact2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,13 +16,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
-
-const CATEGORIES = [
-  { value: "Handwerker", icon: Wrench, description: "Elektriker, Klempner, Maler, …" },
-  { value: "Hausverwaltung", icon: Building, description: "Externe Verwaltung, WEG, …" },
-  { value: "Versicherung", icon: Shield, description: "Gebäude-, Haftpflicht-, …" },
-  { value: "Sonstiges", icon: Briefcase, description: "Notar, Steuerberater, …" },
-];
+import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 
 const STEP_LABELS = ["Kategorie", "Kontaktdaten", "Adresse & Notizen"];
 
@@ -134,7 +128,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
         <div className="space-y-4 min-h-[220px]">
           {step === 0 && (
             <div className="grid grid-cols-2 gap-3">
-              {CATEGORIES.map(cat => {
+              {CONTACT_CATEGORIES.map(cat => {
                 const Icon = cat.icon;
                 return (
                   <button
@@ -176,7 +170,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
                   <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.value}</SelectItem>)}
+                      {CONTACT_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.value}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

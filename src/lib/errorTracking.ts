@@ -6,7 +6,7 @@
  * Optional: set VITE_SENTRY_DSN and assign globalThis.__immocontrol_reportError to send to Sentry.
  */
 
-interface ErrorEntry {
+export interface ErrorEntry {
   id: string;
   timestamp: string;
   message: string;

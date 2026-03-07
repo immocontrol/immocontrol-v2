@@ -1,17 +1,22 @@
 /**
  * ObjekteList — reine Objektliste unter /objekte.
  * Klare IA und Verlinkbarkeit (Vorschlag 16).
+ * VirtualList ab 25 Objekten für bessere Performance.
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Plus, Search, Briefcase, Camera } from "lucide-react";
+import { Building2, Search, Briefcase, Camera } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
+
+const VIRTUAL_LIST_THRESHOLD = 25;
+const PROPERTY_CARD_HEIGHT = 220;
 
 type SortType = "name" | "value" | "rent" | "cashflow";
 
@@ -110,6 +115,22 @@ const ObjekteList = () => {
               </div>
             ) : undefined
           }
+        />
+      ) : sorted.length > VIRTUAL_LIST_THRESHOLD ? (
+        <VirtualList
+          items={sorted}
+          itemHeight={PROPERTY_CARD_HEIGHT}
+          maxHeight={typeof window !== "undefined" ? window.innerHeight - 200 : 600}
+          overscan={4}
+          getKey={(p) => p.id}
+          renderItem={(property) => (
+            <div className="pb-4">
+              <PropertyCard
+                property={property}
+                onClick={() => navigate(`${ROUTES.PROPERTY}/${property.id}`)}
+              />
+            </div>
+          )}
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">

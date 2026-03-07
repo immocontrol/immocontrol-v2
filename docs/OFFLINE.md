@@ -1,26 +1,34 @@
 # Offline-Verhalten (ImmoControl)
 
-## Übersicht
+Kurzbeschreibung, welche Aktionen offline gequeuet werden und wie der Sync funktioniert.
 
-Die App unterstützt Offline-Nutzung für zentrale Daten: Objekte werden gecacht, und bestimmte Aktionen werden in eine lokale Warteschlange gelegt und beim nächsten Verbindungsaufbau mit dem Server abgeglichen.
+## Aktuell unterstützt
 
-## Gequeute Aktionen
+### Objekte (Properties)
 
-- **Objekte anlegen:** Wenn du offline ein neues Objekt anlegst, wird es in der **Offline-Queue** gespeichert. Beim Speichern erscheint der Hinweis: „Wird gespeichert, sobald du wieder online bist.“ Nach Reconnect werden die gequeuten Einträge in der Reihenfolge an Supabase gesendet.
+- **Anlegen:** Beim Anlegen eines Objekts ohne Netz wird die Mutation in die Offline-Queue geschrieben. Toast: „Wird gespeichert, sobald du wieder online bist.“
+- **Sync:** Beim Wieder-online werden ausstehende Mutationen nacheinander an Supabase gesendet. Danach wird der Properties-Cache invalidiert, damit die echten Daten geladen werden.
+- **Speicherort:** IndexedDB (Store `pending_mutations`), Key `immocontrol-offline`.
 
-## Technik
+### Lesen (Cache)
 
-- **Cache:** IndexedDB (`immocontrol-offline`) mit Stores für Cache und `pending_mutations`.
-- **Sync:** `useBackgroundSync` (in App.tsx aktiviert) hört auf „online“ und auf Nachrichten vom Service Worker und ruft `syncPendingToServer()` auf.
-- **Reihenfolge:** Mutations werden in der Reihenfolge abgearbeitet, in der sie gequeuet wurden. Schlägt eine Mutation fehl, wird die Verarbeitung gestoppt; bereits erfolgreiche werden aus der Queue entfernt, der Rest bleibt für den nächsten Sync.
-- **Konflikte:** Es gibt keine automatische Konfliktauflösung (z. B. Last-Write-Wins). Bei Fehlern (z. B. doppelte IDs oder RLS) bleibt die betroffene Mutation in der Queue; Nutzer können Fehler in der App (z. B. Toasts) sehen.
+- Abfragen (React Query) nutzen bei Offline den IndexedDB-Cache, wenn zuvor Daten geladen wurden. Keine Garantie auf Aktualität.
 
-## Sichtbarkeit
+## Ablauf
 
-- **Offline-Banner:** Wenn kein Netz verfügbar ist, erscheint ein Banner (Desktop und Mobil).
-- **Mobile Offline Queue:** Auf Mobil zeigt die Offline-Queue die Anzahl ausstehender Aktionen und optional einen Sync-Button nach Reconnect.
+1. **Online:** Mutations gehen direkt an Supabase.
+2. **Offline:** Mutations (derzeit nur Objekt-Anlegen) werden in die Queue geschrieben, lokaler Cache ggf. optimistisch aktualisiert.
+3. **Wieder online:** `useOfflineCache` / Background-Sync verarbeitet die Queue in Reihenfolge. Bei Fehler (z. B. 409) wird die Mutation übersprungen oder gemeldet; der Rest läuft weiter.
+4. Nach Sync: entsprechende Query-Keys werden invalidiert (z. B. `queryKeys.properties.all`).
 
 ## Geplante Erweiterungen
 
-- Offline-Queue für **Kontakte** und **Darlehen** (analog zu Objekten) ist vorgesehen.
-- Optionale Konfliktauflösung oder bessere Fehlermeldungen bei Sync-Fehlern können ergänzt werden.
+- **Kontakte:** Offline-Queue für Anlegen/Bearbeiten/Löschen (analog zu Objekten).
+- **Darlehen:** Offline-Queue für Anlegen/Bearbeiten.
+- **Konflikthandling:** Dokumentation, wie Duplikate oder Konflikte (z. B. gleiche ID) behandelt werden.
+
+## Technische Referenz
+
+- Hook: `useOfflineCache.ts` (IndexedDB, `addPendingMutation`, `getPendingMutations`, Sync-Loop).
+- PropertyContext: `addProperty` prüft `isOnline` und schreibt bei Offline in die Queue.
+- Query-Invalidierung nach Sync: `queryKeys.properties.all` in `useBackgroundSync`.
