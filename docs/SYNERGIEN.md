@@ -77,7 +77,7 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
-| **GewerbeScout** | CRM, Leads | Adresse + Umkreis (200–1000 m) → Gewerbe/Läden via OpenStreetMap/Overpass; Anrufen (tel:), Google Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog mit vorausgefüllten Daten) |
+| **GewerbeScout** | CRM, Leads | Ort (ganzes Gebiet) oder Adresse + Umkreis; Gebäudegröße aus OSM; Sortierung nach Größe/Entfernung/Name; Anrufen, Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog) |
 | **EnergyCertificateTracker** | — | Energieausweis anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedCertIdRef) |
 | **CrmFollowUpReminder** | Todos | Follow-Up-Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastContactRef) |
 | **InsuranceTracker** | — | Versicherung anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedInsuranceIdRef); Touch-Target für Löschen-Button (Mobile) |
@@ -88,3 +88,4 @@
 - **Deep-Links**: `useSearchParams()` liest `?id=xxx` (Deals, Besichtigungen) bzw. `?highlight=xxx` (Kontakte). Kontakte scrollt zum hervorgehobenen Kontakt, Deals/Besichtigungen öffnen den Bearbeitungsdialog.
 - **Share-Buttons**: Deals und Besichtigungen nutzen `useShare()` für native Share API (Mobile) oder Kopieren in Zwischenablage.
 - **Todos**: `project: "Besichtigungen"`, `title: "Besichtigung nachbereiten: …"`.
+- **Gewerbe-Scout**: Modus „Ganzer Ort“ nutzt Nominatim-Boundingbox und durchsucht das gesamte Gebiet; Gebäudegröße aus Overpass (way["building"] + geom), POIs werden dem nächsten Gebäude zugeordnet; Sortierung nach geschätzter Bruttogeschossfläche.

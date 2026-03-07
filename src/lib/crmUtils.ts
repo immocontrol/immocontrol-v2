@@ -336,19 +336,137 @@ export async function geocodeToCoord(query: string): Promise<{ lat: number; lng:
   return { lat, lng: lon, display_name: item.display_name ?? "" };
 }
 
-/** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Same structure as fetchNearbyBusinesses. */
-export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number): Promise<NearbyBusiness[]> {
-  const query = `[out:json][timeout:15];
+/** Bounding box from Nominatim (south, north, west, east). For "whole city" search. */
+export interface PlaceBbox {
+  south: number;
+  north: number;
+  west: number;
+  east: number;
+  display_name: string;
+}
+
+export async function geocodePlaceToBbox(query: string): Promise<PlaceBbox | null> {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
+  const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
+  if (!res.ok) return null;
+  const raw = await res.json();
+  const arr = Array.isArray(raw) ? raw : [];
+  const item = arr[0];
+  if (!item || !item.boundingbox || !Array.isArray(item.boundingbox) || item.boundingbox.length < 4) {
+    const parsed = parseNominatimResponse(arr);
+    if (parsed.length === 0) return null;
+    const lat = typeof parsed[0].lat === "string" ? parseFloat(parsed[0].lat) : (parsed[0].lat ?? 0);
+    const lon = typeof parsed[0].lon === "string" ? parseFloat(parsed[0].lon) : (parsed[0].lon ?? 0);
+    const delta = 0.01;
+    return { south: lat - delta, north: lat + delta, west: lon - delta, east: lon + delta, display_name: parsed[0].display_name ?? "" };
+  }
+  const [south, north, west, east] = item.boundingbox.map((v: string | number) => typeof v === "string" ? parseFloat(v) : v);
+  return { south, north, west, east, display_name: item.display_name ?? "" };
+}
+
+/** Building with centroid and estimated gross area (for matching to POIs). */
+export interface BuildingWithSize {
+  lat: number;
+  lon: number;
+  estimatedGrossArea: number;
+  footprintArea: number;
+}
+
+/** Fetch buildings in bbox with geometry; return centroid + estimated gross area. */
+export async function fetchBuildingsInBbox(bbox: PlaceBbox): Promise<BuildingWithSize[]> {
+  const { south, north, west, east } = bbox;
+  const query = `[out:json][timeout:25];
+way["building"](${south},${west},${north},${east});
+out body geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const ways = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) => e.type === "way" && e.tags?.building) || [];
+    const result: BuildingWithSize[] = [];
+    for (const way of ways) {
+      const geom = way.geometry as { lat: number; lon: number }[] | undefined;
+      const coords = geom && geom.length >= 3 ? geom.map((g: { lat: number; lon: number }) => ({ lat: g.lat, lon: g.lon })) : [];
+      if (coords.length < 3) continue;
+      const footprintArea = Math.round(calculatePolygonArea(coords));
+      if (footprintArea < 20) continue;
+      const sumLat = coords.reduce((s, c) => s + c.lat, 0);
+      const sumLon = coords.reduce((s, c) => s + c.lon, 0);
+      const levels = parseInt(way.tags?.["building:levels"]) || 2;
+      result.push({
+        lat: sumLat / coords.length,
+        lon: sumLon / coords.length,
+        estimatedGrossArea: footprintArea * levels,
+        footprintArea,
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/** Fetch buildings in radius (for Umkreis mode) with centroid + area. */
+export async function fetchBuildingsInRadius(lat: number, lng: number, radiusM: number): Promise<BuildingWithSize[]> {
+  const query = `[out:json][timeout:20];
+way["building"](around:${radiusM},${lat},${lng});
+out body geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const ways = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) => e.type === "way" && e.tags?.building) || [];
+    const result: BuildingWithSize[] = [];
+    for (const way of ways) {
+      const geom = way.geometry as { lat: number; lon: number }[] | undefined;
+      const coords = geom || [];
+      if (coords.length < 3) continue;
+      const footprintArea = Math.round(calculatePolygonArea(coords));
+      if (footprintArea < 20) continue;
+      const sumLat = coords.reduce((s, c) => s + c.lat, 0);
+      const sumLon = coords.reduce((s, c) => s + c.lon, 0);
+      const levels = parseInt(way.tags?.["building:levels"]) || 2;
+      result.push({
+        lat: sumLat / coords.length,
+        lon: sumLon / coords.length,
+        estimatedGrossArea: footprintArea * levels,
+        footprintArea,
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/** Commercial POI with lat/lon for matching. */
+export interface CommercialPOIWithCoord extends NearbyBusiness {
+  lat: number;
+  lon: number;
+}
+
+/** Fetch commercial POIs in bbox (for whole-place search). */
+export async function fetchCommercialPOIsInBbox(bbox: PlaceBbox): Promise<CommercialPOIWithCoord[]> {
+  const { south, north, west, east } = bbox;
+  const query = `[out:json][timeout:25];
 (
-  node["shop"](around:${radiusM},${lat},${lng});
-  node["office"](around:${radiusM},${lat},${lng});
-  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
-  node["craft"](around:${radiusM},${lat},${lng});
-  way["shop"](around:${radiusM},${lat},${lng});
-  way["office"](around:${radiusM},${lat},${lng});
-  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+  node["shop"](${south},${west},${north},${east});
+  node["office"](${south},${west},${north},${east});
+  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](${south},${west},${north},${east});
+  node["craft"](${south},${west},${north},${east});
+  way["shop"](${south},${west},${north},${east});
+  way["office"](${south},${west},${north},${east});
+  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](${south},${west},${north},${east});
 );
-out body;`;
+out body center;`;
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
@@ -358,11 +476,13 @@ out body;`;
     if (!res.ok) return [];
     const data = await res.json();
     const pois = data.elements?.filter((e: { tags?: Record<string, string> }) => e.tags?.name) || [];
-    return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number }) => {
+    const centerLat = (bbox.south + bbox.north) / 2;
+    const centerLon = (bbox.west + bbox.east) / 2;
+    return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number; center?: { lat: number; lon: number } }) => {
       const tags = poi.tags || {};
-      const poiLat = poi.lat || 0;
-      const poiLon = poi.lon || 0;
-      const dist = Math.round(Math.sqrt(Math.pow((poiLat - lat) * 111320, 2) + Math.pow((poiLon - lng) * 111320 * Math.cos(lat * Math.PI / 180), 2)));
+      const lat = poi.lat ?? poi.center?.lat ?? centerLat;
+      const lon = poi.lon ?? poi.center?.lon ?? centerLon;
+      const dist = Math.round(distanceMeters({ lat, lon: lon }, { lat: centerLat, lon: centerLon }));
       const type = tags.shop || tags.office || tags.amenity || tags.craft || "Geschäft";
       return {
         name: tags.name || "Unbekannt",
@@ -373,8 +493,80 @@ out body;`;
         distance: dist,
         address: tags["addr:street"] ? `${tags["addr:street"]} ${tags["addr:housenumber"] || ""}`.trim() : (tags["addr:full"] || null),
         opening_hours: tags.opening_hours || null,
+        lat,
+        lon,
       };
-    }).sort((a: NearbyBusiness, b: NearbyBusiness) => a.distance - b.distance);
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** Attach estimated building size to each POI (nearest building within maxDistM). */
+export function attachBuildingSizes(
+  pois: CommercialPOIWithCoord[],
+  buildings: BuildingWithSize[],
+  maxDistM = 60
+): (CommercialPOIWithCoord & { estimatedGrossArea: number | null })[] {
+  return pois.map((poi) => {
+    let best: BuildingWithSize | null = null;
+    let bestDist = maxDistM + 1;
+    const p = { lat: poi.lat, lon: poi.lon };
+    for (const b of buildings) {
+      const d = distanceMeters(p, { lat: b.lat, lon: b.lon });
+      if (d < bestDist) {
+        bestDist = d;
+        best = b;
+      }
+    }
+    return {
+      ...poi,
+      estimatedGrossArea: best ? best.estimatedGrossArea : null,
+    };
+  });
+}
+
+/** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Returns POIs with coords for building-size matching. */
+export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number): Promise<CommercialPOIWithCoord[]> {
+  const query = `[out:json][timeout:15];
+(
+  node["shop"](around:${radiusM},${lat},${lng});
+  node["office"](around:${radiusM},${lat},${lng});
+  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+  node["craft"](around:${radiusM},${lat},${lng});
+  way["shop"](around:${radiusM},${lat},${lng});
+  way["office"](around:${radiusM},${lat},${lng});
+  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+);
+out body center;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pois = data.elements?.filter((e: { tags?: Record<string, string> }) => e.tags?.name) || [];
+    return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number; center?: { lat: number; lon: number } }) => {
+      const tags = poi.tags || {};
+      const poiLat = poi.lat ?? poi.center?.lat ?? lat;
+      const poiLon = poi.lon ?? poi.center?.lon ?? lng;
+      const dist = Math.round(distanceMeters({ lat: poiLat, lon: poiLon }, { lat, lon: lng }));
+      const type = tags.shop || tags.office || tags.amenity || tags.craft || "Geschäft";
+      return {
+        name: tags.name || "Unbekannt",
+        type,
+        phone: tags.phone || tags["contact:phone"] || null,
+        website: tags.website || tags["contact:website"] || null,
+        email: tags.email || tags["contact:email"] || null,
+        distance: dist,
+        address: tags["addr:street"] ? `${tags["addr:street"]} ${tags["addr:housenumber"] || ""}`.trim() : (tags["addr:full"] || null),
+        opening_hours: tags.opening_hours || null,
+        lat: poiLat,
+        lon: poiLon,
+      };
+    }).sort((a, b) => a.distance - b.distance);
   } catch {
     return [];
   }

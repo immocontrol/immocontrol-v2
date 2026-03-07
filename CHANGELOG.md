@@ -8,7 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
-- **Gewerbe-Scout (CRM)** — Neue Funktion: Adresse/Umkreis eingeben → Gewerbe & Läden in der Nähe finden (OpenStreetMap/Overpass). Ideal für MFH mit Gewerbe im EG: Telefon anrufen (wenn in OSM), in Google Maps prüfen, als Lead übernehmen. Tab „Gewerbe-Scout“ in CRM; Synergie mit Lead-Dialog.
+- **Gewerbe-Scout erweitert (CRM)** — Ortssuche (z. B. „Hennigsdorf“) durchsucht das gesamte Gebiet; Umkreis-Modus um eine Adresse. Gebäudegröße aus Karten-Daten (OpenStreetMap) wird berücksichtigt; Sortierung nach Gebäudegröße (größte zuerst), Entfernung oder Name. Ideal für größte Wohn- und Geschäftshäuser mit Gewerbe. Synergie mit Lead-Dialog.
 - **Retry-Toast + Fehleranalyse (EnergyCertificateTracker, CrmFollowUpReminder, InsuranceTracker)** — Energieausweis anlegen/löschen, CRM Follow-Up Todo erstellen, Versicherung anlegen/löschen nutzen handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt).
 - **Retry-Toast + Fehleranalyse (Contacts, MaintenancePlanner, OwnerMeetings)** — Kontakt speichern (Kontakte-Seite), Wartungsmaßnahme anlegen, Eigentümerversammlung anlegen nutzen handleError + toastErrorWithRetry (Retry ohne Formularverlust, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (Nebenkosten, CRM, Deals)** — Nebenkosten (Abrechnung/Position anlegen/löschen), CRM (Lead speichern, Gespräch loggen/bearbeiten), Deals (Speichern, Löschen, Verschieben, Besichtigung zuordnen, Batch-Import) nutzen handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt)
