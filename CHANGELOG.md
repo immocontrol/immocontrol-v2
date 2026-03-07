@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: 5 km, „Nur mit E-Mail“, Synergien** — Umkreis-Option 5 km; Filter „Nur mit E-Mail“ (persistiert in sessionStorage); Empty-State-Tipp erwähnt 3 km/5 km; Hinweistext bei >100 Treffern um „Nur mit E-Mail“ ergänzt.
+- **Synergien: Todos, Wartungsplaner → Gewerbe-Scout** — Todos Empty State: Button „Gewerbe finden“. Wartungsplaner Empty State: Button „Gewerbe finden“ (Handwerker/Läden in der Nähe). Immo-AI: Vorschlagsfrage „Zeige mir meine Objekte mit der besten Brutto-Rendite“.
 - **Gewerbe-Scout: E-Mail-Button, Filter-Persistenz, Mobile** — Pro Treffer Button „E-Mail“ (mailto:) wenn von OSM vorhanden; Filter (Nur mit Telefon, Nur mit Web, Mindestfläche, Typ) werden in sessionStorage gespeichert und beim nächsten Besuch wiederhergestellt; Ergebnisliste mit safe-area-inset-bottom für bessere Mobile-Nutzung.
 - **Synergien: Deals, Analyse ↔ Gewerbe-Scout** — Deals Empty State: Link „Gewerbe finden“ neben „Leads aus CRM“. Analyse (Objektanalyse): Button „Gewerbe finden“ in der Kopfzeile. Immo-AI: Vorschlagsfrage „Welche Objekte haben den höchsten Cashflow?“.
 - **Gewerbe-Scout: Abort + Tastatur** — Suche bricht vorherige Anfragen ab (AbortController); Geo/Overpass in crmUtils unterstützen optionales AbortSignal. Autocomplete-Vorschläge: Pfeiltasten hoch/runter, Enter wählt aus; aria-activedescendant + Scroll-into-View.

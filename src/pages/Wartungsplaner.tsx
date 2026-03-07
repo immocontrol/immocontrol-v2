@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X, FileBarChart } from "lucide-react";
+import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X, FileBarChart, Store } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -543,6 +543,9 @@ const Wartungsplaner = () => {
               </Button>
               <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
                 <FileBarChart className="h-3.5 w-3.5" /> Berichte
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(`${ROUTES.CRM}?tab=scout`)} aria-label="Gewerbe finden">
+                <Store className="h-3.5 w-3.5" /> Gewerbe finden
               </Button>
             </div>
           )}

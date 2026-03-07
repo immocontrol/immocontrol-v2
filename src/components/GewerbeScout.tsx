@@ -38,6 +38,7 @@ const RADIUS_OPTIONS = [
   { value: 1000, label: "1 km" },
   { value: 2000, label: "2 km" },
   { value: 3000, label: "3 km" },
+  { value: 5000, label: "5 km" },
 ];
 
 /** POI-Typ-Filter: OSM-Werte zu Kategorien. */
@@ -154,7 +155,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
       if (s) {
         const p = JSON.parse(s) as { radius?: number };
-        return [200, 500, 1000, 2000, 3000].includes(Number(p.radius)) ? Number(p.radius) : 500;
+        return [200, 500, 1000, 2000, 3000, 5000].includes(Number(p.radius)) ? Number(p.radius) : 500;
       }
     } catch { /* ignore */ }
     return 500;
@@ -200,6 +201,16 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     } catch { /* ignore */ }
     return "all";
   });
+  const [onlyWithEmail, setOnlyWithEmail] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { onlyWithEmail?: boolean };
+        return !!p.onlyWithEmail;
+      }
+    } catch { /* ignore */ }
+    return false;
+  });
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
@@ -223,6 +234,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     if (minSize > 0) list = list.filter((r) => (r.estimatedGrossArea ?? 0) >= minSize);
     if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
     if (onlyWithWebsite) list = list.filter((r) => r.website != null && r.website.trim() !== "");
+    if (onlyWithEmail) list = list.filter((r) => r.email != null && r.email.trim() !== "");
     const cat = POI_TYPE_CATEGORIES.find((c) => c.value === poiTypeFilter);
     if (cat && cat.value !== "all") list = list.filter((r) => cat.match(r.type));
     if (sortBy === "size") {
@@ -233,7 +245,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [results, minSize, onlyWithPhone, onlyWithWebsite, poiTypeFilter, sortBy]);
+  }, [results, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter, sortBy]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -345,7 +357,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "ort", radius,
-            minSize, onlyWithPhone, onlyWithWebsite, poiTypeFilter,
+            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter,
           }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Gewerbe in diesem Gebiet gefunden");
@@ -376,7 +388,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "umkreis", radius,
-            minSize, onlyWithPhone, onlyWithWebsite, poiTypeFilter,
+            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter,
           }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Gewerbe im gewählten Umkreis gefunden");
@@ -547,7 +559,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe">
               <p className="font-medium text-foreground">Keine Gewerbe gefunden</p>
-              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 2 km).</p>
+              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 3 km oder 5 km).</p>
             </div>
           </div>
         )}
@@ -592,6 +604,16 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Web</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={onlyWithEmail}
+                    onChange={(e) => setOnlyWithEmail(e.target.checked)}
+                    className="rounded border-input h-4 w-4 touch-target"
+                    aria-label="Nur Einträge mit E-Mail"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit E-Mail</span>
+                </label>
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap">Mind. Fläche:</Label>
                   <Select value={String(minSize)} onValueChange={(v) => setMinSize(Number(v))}>
@@ -625,7 +647,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             </div>
             {sortedResults.length > SCOUT_DISPLAY_CAP && (
               <p className="text-xs text-muted-foreground">
-                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon) nutzen, um die Liste einzugrenzen.
+                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail) nutzen, um die Liste einzugrenzen.
               </p>
             )}
             <ul className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener Gewerbe">

@@ -25,9 +25,9 @@
 | **Objekte** | Deals, Besichtigungen, Gewerbe-Scout | Empty State: Buttons Deals, Besichtigungen, Gewerbe-Scout (ROUTES, CRM?tab=scout, aria-label) |
 | **Berichte** | Objekte, Deals, Analyse | Empty State: Buttons Objekte, Zu Deals, Zur Analyse (ROUTES) |
 | **Besichtigungen** | Deals, Dokumente | Empty State: Links „Zu Deals“, „Dokumente“ (ROUTES) |
-| **Todos** | CRM, Deals, Berichte | Empty State: Buttons „Zu CRM“, „Zu Deals“, „Berichte“ (ROUTES, Touch-Target)
+| **Todos** | CRM, Deals, Berichte, Gewerbe-Scout | Empty State: Buttons Zu CRM, Zu Deals, Berichte, Gewerbe finden (ROUTES, Touch-Target) |
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
-| **Wartungsplaner** | Objekte, Berichte | Empty State: Buttons „Objekte öffnen“, „Berichte“ (ROUTES, Touch-Target)
+| **Wartungsplaner** | Objekte, Berichte, Gewerbe-Scout | Empty State: Buttons Objekte, Berichte, Gewerbe finden (ROUTES, Touch-Target) |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
 | **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
 | **Nebenkosten** | Objekte | Link „Zum Objekt“ bei Abrechnungsdetail (zum PropertyDetail) |

@@ -36,6 +36,7 @@ const SUGGESTIONS = [
   "Wo finde ich Gewerbe für die Akquise?",
   "Welche Darlehen haben die längste Zinsbindung?",
   "Welche Objekte haben den höchsten Cashflow?",
+  "Zeige mir meine Objekte mit der besten Brutto-Rendite",
 ];
 
 export default function ImmoAI() {
