@@ -56,6 +56,7 @@
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
+| **Finanzierungs-Cockpit** | Objekte, Darlehen, Mietübersicht, Selbstauskunft, Dokumente | Objektübersicht + Mieten aus Properties/Tenants; Kredite aus loans; Vermögen (Giro/Tagesgeld/Depot/LV/Bauspar) in localStorage; Selbstauskunft vorausgefüllt mit Mieten, Krediten, Vermögen; Unterlagen-Checkliste aus property_documents; Links zu Objekte, Darlehen, Objekt-Detail. |
 | **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, WGH-Scout, Verträge | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden, Verträge (ROUTES.CONTRACTS, ROUTES.CRM_SCOUT) |
 | **Objekte** | Deals, Besichtigungen, WGH-Scout | Empty State: Buttons Deals, Besichtigungen, WGH-Scout (ROUTES.CRM_SCOUT, aria-label) |
 | **Berichte** | Objekte, Deals, Analyse, WGH-Scout | Empty State: Buttons Objekte, Zu Deals, Zur Analyse, WGH finden (ROUTES) |

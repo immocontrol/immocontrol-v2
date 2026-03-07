@@ -7,6 +7,7 @@ import {
   Building2,
   Sparkles,
   Landmark,
+  Wallet,
   Receipt,
   Calculator,
   FileBarChart,
@@ -47,6 +48,7 @@ export const navEntries: NavEntry[] = [
     label: "Finanzen",
     icon: Landmark,
     items: [
+      { path: ROUTES.FINANZIERUNG, label: "Finanzierungs-Cockpit", icon: Wallet, shortcut: "" },
       { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark, shortcut: "2" },
       { path: ROUTES.RENT, label: "Mieten", icon: Receipt, shortcut: "3" },
       { path: ROUTES.NK, label: "Nebenkosten", icon: Receipt, shortcut: "" },

@@ -56,6 +56,7 @@ const newstickerImport = () => import("@/pages/Newsticker");
 const bewertungImport = () => import("@/pages/ImmobilienBewertung");
 const objekteListImport = () => import("@/pages/ObjekteList");
 const besichtigungenImport = () => import("@/pages/Besichtigungen");
+const finanzierungsCockpitImport = () => import("@/pages/FinanzierungsCockpit");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -85,6 +86,7 @@ const Newsticker = lazy(newstickerImport);
 const ImmobilienBewertung = lazy(bewertungImport);
 const ObjekteList = lazy(objekteListImport);
 const Besichtigungen = lazy(besichtigungenImport);
+const FinanzierungsCockpit = lazy(finanzierungsCockpitImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -111,6 +113,7 @@ const preloadRoutes = () => {
   bewertungImport();
   objekteListImport();
   besichtigungenImport();
+  finanzierungsCockpitImport();
 };
 
 const PageLoader = () => (
@@ -270,6 +273,7 @@ const RoleRouter = () => {
           <Route path={ROUTES.PERSONAL_DASHBOARD} element={<ErrorBoundary><Dashboard mode="personal" /></ErrorBoundary>} />
           <Route path={ROUTES.OBJEKTE} element={<ErrorBoundary><ObjekteList /></ErrorBoundary>} />
           <Route path={`${ROUTES.PROPERTY}/:id`} element={<ErrorBoundary><PropertyDetail /></ErrorBoundary>} />
+          <Route path={ROUTES.FINANZIERUNG} element={<ErrorBoundary><FinanzierungsCockpit /></ErrorBoundary>} />
           <Route path={ROUTES.LOANS} element={<ErrorBoundary><Loans /></ErrorBoundary>} />
           <Route path={ROUTES.FORECAST} element={<ErrorBoundary><CashForecast /></ErrorBoundary>} />
           <Route path={ROUTES.ANALYSE} element={<ErrorBoundary><AnalysisCalculator /></ErrorBoundary>} />

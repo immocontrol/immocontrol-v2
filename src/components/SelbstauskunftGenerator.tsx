@@ -121,11 +121,33 @@ export const SelbstauskunftGenerator = () => {
       const totalRate = loans?.reduce((s, l) => s + Number(l.monthly_payment || 0), 0) || 0;
       const totalPropertyValue = properties.reduce((s, p) => s + (p.currentValue || 0), 0);
       const nameParts = (profile?.display_name || "").split(" ");
+      const num = (v: string) => (parseFloat(String(v).replace(",", ".")) || 0);
+      let giroKonten = "";
+      let wertpapiere = "";
+      let bausparGuthaben = "";
+      let lebensversicherungen = "";
+      try {
+        const raw = localStorage.getItem("immo-financing-assets");
+        if (raw) {
+          const assets = JSON.parse(raw) as Record<string, string>;
+          const g = num(assets.giro || "0") + num(assets.tagesgeld || "0");
+          if (g > 0) giroKonten = g.toFixed(2);
+          if (num(assets.depot || "0") > 0) wertpapiere = num(assets.depot).toFixed(2);
+          if (num(assets.bauspar || "0") > 0) bausparGuthaben = num(assets.bauspar).toFixed(2);
+          if (num(assets.lebensversicherung || "0") > 0) lebensversicherungen = num(assets.lebensversicherung).toFixed(2);
+        }
+      } catch {
+        /* ignore */
+      }
       setData(prev => ({
         ...prev, email: user.email || "", vorname: nameParts[0] || "", name: nameParts.slice(1).join(" ") || "",
         mieteinnahmen: totalRent > 0 ? totalRent.toFixed(2) : "",
         kreditraten: totalRate > 0 ? totalRate.toFixed(2) : "",
         immobilienFremdgenutzt: totalPropertyValue > 0 ? totalPropertyValue.toFixed(2) : "",
+        ...(giroKonten && { giroKonten }),
+        ...(wertpapiere && { wertpapiere }),
+        ...(bausparGuthaben && { bausparGuthaben }),
+        ...(lebensversicherungen && { lebensversicherungen }),
       }));
     };
     prefill();

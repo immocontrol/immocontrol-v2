@@ -33,4 +33,6 @@ export const ROUTES = {
   OBJEKTE: "/objekte",
   TENANT_PORTAL: "/mieter",
   HANDWORKER_PORTAL: "/handwerker",
+  /** Finanzierungs-Cockpit: Objektübersicht, Kredite, Konten, Selbstauskunft, Unterlagen-Checkliste */
+  FINANZIERUNG: "/finanzierung",
 } as const;
