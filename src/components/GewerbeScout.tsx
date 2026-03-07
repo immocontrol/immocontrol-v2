@@ -131,6 +131,16 @@ export type ScoutResult = ScoutPOI;
 
 const SCOUT_STORAGE_KEY = "gewerbe_scout_last";
 
+/** Liest persistierte Scout-Filter/Suche aus sessionStorage (nur für Initial-State). */
+function getScoutStorage(): Record<string, unknown> | null {
+  try {
+    const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+    return s ? (JSON.parse(s) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 function ScoutAiCallPopover({ business }: { business: ScoutResult }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState<string | null>(null);
@@ -239,111 +249,37 @@ export interface GewerbeScoutProps {
 }
 
 export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing, initialQuery }: GewerbeScoutProps) {
-  const [query, setQuery] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { query?: string; mode?: SearchMode; radius?: number };
-        return p.query ?? "";
-      }
-    } catch { /* ignore */ }
-    return "";
-  });
-  const [mode, setMode] = useState<SearchMode>(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { mode?: SearchMode };
-        return p.mode === "umkreis" ? "umkreis" : "ort";
-      }
-    } catch { /* ignore */ }
-    return "ort";
-  });
+  const [query, setQuery] = useState(() => (getScoutStorage()?.query as string) ?? "");
+  const [mode, setMode] = useState<SearchMode>(() =>
+    getScoutStorage()?.mode === "umkreis" ? "umkreis" : "ort"
+  );
   const [radius, setRadius] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { radius?: number };
-        return VALID_RADIUS_VALUES.includes(Number(p.radius) as (typeof VALID_RADIUS_VALUES)[number]) ? Number(p.radius) : 500;
-      }
-    } catch { /* ignore */ }
-    return 500;
+    const p = getScoutStorage();
+    const r = Number(p?.radius);
+    return VALID_RADIUS_VALUES.includes(r as (typeof VALID_RADIUS_VALUES)[number]) ? r : 500;
   });
-  const { getCallUrl } = useVoiceCall();
+  const { startCall } = useVoiceCall();
   const isMobile = useIsMobile();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const validMinSizes = MIN_SIZE_OPTIONS.map((o) => o.value);
   const [minSize, setMinSize] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { minSize?: number };
-        return validMinSizes.includes(Number(p.minSize)) ? Number(p.minSize) : 0;
-      }
-    } catch { /* ignore */ }
-    return 0;
+    const p = getScoutStorage();
+    const v = Number(p?.minSize);
+    return validMinSizes.includes(v) ? v : 0;
   });
   const [maxSize, setMaxSize] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { maxSize?: number };
-        return MAX_SIZE_OPTIONS.some((o) => o.value === Number(p.maxSize)) ? Number(p.maxSize) : 0;
-      }
-    } catch { /* ignore */ }
-    return 0;
+    const p = getScoutStorage();
+    const v = Number(p?.maxSize);
+    return MAX_SIZE_OPTIONS.some((o) => o.value === v) ? v : 0;
   });
-  const [onlyWithPhone, setOnlyWithPhone] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { onlyWithPhone?: boolean };
-        return !!p.onlyWithPhone;
-      }
-    } catch { /* ignore */ }
-    return false;
-  });
-  const [onlyWithWebsite, setOnlyWithWebsite] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { onlyWithWebsite?: boolean };
-        return !!p.onlyWithWebsite;
-      }
-    } catch { /* ignore */ }
-    return false;
-  });
+  const [onlyWithPhone, setOnlyWithPhone] = useState(() => !!getScoutStorage()?.onlyWithPhone);
+  const [onlyWithWebsite, setOnlyWithWebsite] = useState(() => !!getScoutStorage()?.onlyWithWebsite);
   const [poiTypeFilter, setPoiTypeFilter] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { poiTypeFilter?: string };
-        const v = p.poiTypeFilter;
-        if (v && POI_TYPE_CATEGORIES.some((c) => c.value === v)) return v;
-      }
-    } catch { /* ignore */ }
-    return "all";
+    const v = getScoutStorage()?.poiTypeFilter as string | undefined;
+    return v && POI_TYPE_CATEGORIES.some((c) => c.value === v) ? v : "all";
   });
-  const [onlyWithEmail, setOnlyWithEmail] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { onlyWithEmail?: boolean };
-        return !!p.onlyWithEmail;
-      }
-    } catch { /* ignore */ }
-    return false;
-  });
-  const [onlyWithOpeningHours, setOnlyWithOpeningHours] = useState(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { onlyWithOpeningHours?: boolean };
-        return !!p.onlyWithOpeningHours;
-      }
-    } catch { /* ignore */ }
-    return false;
-  });
+  const [onlyWithEmail, setOnlyWithEmail] = useState(() => !!getScoutStorage()?.onlyWithEmail);
+  const [onlyWithOpeningHours, setOnlyWithOpeningHours] = useState(() => !!getScoutStorage()?.onlyWithOpeningHours);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
@@ -351,15 +287,8 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
   const [lastBbox, setLastBbox] = useState<PlaceBbox | null>(null);
   const [lastCenter, setLastCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>(() => {
-    try {
-      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
-      if (s) {
-        const p = JSON.parse(s) as { sortBy?: string };
-        const v = p.sortBy;
-        if (v === "size" || v === "distance" || v === "name" || v === "source") return v;
-      }
-    } catch { /* ignore */ }
-    return "size";
+    const v = getScoutStorage()?.sortBy as string | undefined;
+    return v === "size" || v === "distance" || v === "name" || v === "source" ? v : "size";
   });
   const [suggestions, setSuggestions] = useState<{ display_name: string; place_id: number }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -1173,10 +1102,17 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                     {b.phone ? (
-                      <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
-                        <a href={getCallUrl(b.phone.replace(/\s/g, ""))} aria-label={`Anrufen: ${b.name}`}>
-                          <Phone className="h-3.5 w-3.5" /> Anrufen
-                        </a>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]"
+                        aria-label={`Anrufen: ${b.name}`}
+                        onClick={async () => {
+                          const result = await startCall(b.phone!.replace(/\s/g, "").trim(), { toLabel: b.name });
+                          if (!result?.ok && result?.error) toast.error(result.error);
+                        }}
+                      >
+                        <Phone className="h-3.5 w-3.5" /> Anrufen
                       </Button>
                     ) : (
                       <span className="text-[10px] text-muted-foreground px-2">Tel. in Maps prüfen</span>

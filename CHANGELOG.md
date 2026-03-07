@@ -8,6 +8,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **WGH-Scout: Anrufen über startCall** — Button „Anrufen“ nutzt einheitlich `startCall()` statt tel:-Link; bei VoIP (z. B. twilio-device) werden Fehler per Toast angezeigt. Synergie Scout ↔ Calling in docs/SYNERGIEN.md und docs/VOICE_CALLING.md.
+- **WGH-Scout: Refactor sessionStorage** — Persistierte Filter/Suche werden über Hilfsfunktion `getScoutStorage()` gelesen; weniger Doppelcode in Initial-State.
+- **Tickets: A11y** — KI-Button „Vorschlag“ (Beschreibung) hat aria-label „KI-Beschreibung vorschlagen“.
 - **WGH-Scout: Warnung bei unrealistischer Gebäudefläche** — Wenn eine angezeigte Gebäudefläche stark von der Norm abweicht (z. B. ≥ 25.000 m², ≥ 80.000 m² oder Verhältnis zur Grundstücksfläche extrem), wird ein Warn-Icon (TriangleAlert) mit Tooltip angezeigt („Ungewöhnlich groß – bitte prüfen“ / „Unrealistisch groß – bitte in Maps/Kataster prüfen“ / Abweichung Grundstück). So erkennt der Nutzer sofort mögliche Datenfehler.
 - **Scout/Brandenburg: Lint-Fix** — Funktionen `useBrandenburgBuildings` / `useBrandenburgBuildingsForPoint` in `isBboxInBrandenburg` / `isPointInBrandenburgForBuildings` umbenannt (keine React-Hooks); Aggregator nutzt die neuen Namen. Alte Namen als deprecated exportiert.
 - **Wartungsplaner: KI Notiz-Vorschlag** — Im Dialog „Wartung planen“ Button „KI Notiz“ (DeepSeek): generiert Vorschlag für das Notizfeld aus Titel und Kategorie (Prüfpunkte, rechtliche Hinweise). Nur bei gesetztem VITE_DEEPSEEK_API_KEY.

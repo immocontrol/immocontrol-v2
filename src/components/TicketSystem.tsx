@@ -318,7 +318,7 @@ export const TenantTickets = ({ tenantId, propertyId, landlordId }: TenantTicket
                   <div className="flex items-center justify-between">
                     <Label className="text-xs">Beschreibung *</Label>
                     {isDeepSeekConfigured() && form.title.trim() && (
-                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs touch-target min-h-[32px]" onClick={suggestDescription} disabled={suggestLoading} type="button">
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs touch-target min-h-[32px]" onClick={suggestDescription} disabled={suggestLoading} type="button" aria-label="KI-Beschreibung vorschlagen">
                         {suggestLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                         Vorschlag
                       </Button>
