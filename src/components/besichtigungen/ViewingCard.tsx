@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
-import { MapPin, Calendar, Star, Image, Link2 } from "lucide-react";
+import { MapPin, Calendar, Star, Image, Link2, Store } from "lucide-react";
 import { formatDate, relativeTime } from "@/lib/formatters";
 
 export interface ViewingCardRecord {
@@ -70,10 +70,20 @@ export function ViewingCard({ viewing, mediaCount, onClick }: ViewingCardProps) 
           </div>
         </CardTitle>
         {viewing.address && (
-          <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
-            <MapPin className="h-3.5 w-3 shrink-0" />
-            {viewing.address}
-          </p>
+          <>
+            <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+              <MapPin className="h-3.5 w-3 shrink-0" />
+              {viewing.address}
+            </p>
+            <Link
+              to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(viewing.address.trim())}`}
+              className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5 w-fit mt-0.5"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="WGH in Umgebung suchen"
+            >
+              <Store className="h-2.5 w-2.5 shrink-0" /> WGH in Umgebung
+            </Link>
+          </>
         )}
         <div className="flex flex-wrap gap-2 mt-2">
           {viewing.visited_at && (

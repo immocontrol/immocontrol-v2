@@ -263,9 +263,11 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
   const inputRef = useRef<HTMLInputElement>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
   const resultsListRef = useRef<HTMLUListElement>(null);
+  const resultsSectionRef = useRef<HTMLDivElement>(null);
   /** Roving tabindex: index of the focused result row (keyboard nav). */
   const [focusedResultIndex, setFocusedResultIndex] = useState<number | null>(null);
   const focusedResultRef = useRef<HTMLLIElement | null>(null);
+  const prevLoadingRef = useRef(false);
 
   useEffect(() => {
     if (initialQuery != null && initialQuery.trim()) setQuery(initialQuery.trim());
@@ -283,6 +285,15 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
   useEffect(() => {
     focusedResultRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [focusedResultIndex]);
+
+  /* Scroll results section into view when search completes with results (UX: user sees results without manual scroll) */
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current;
+    prevLoadingRef.current = loading;
+    if (wasLoading && !loading && results.length > 0) {
+      resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [loading, results.length]);
 
   const sortedResults = useMemo(() => {
     let list = [...results];
@@ -650,7 +661,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
         )}
 
         {results.length > 0 && (
-          <div className="space-y-2">
+          <div ref={resultsSectionRef} className="space-y-2">
             {sortedResults.length === 0 && (
               <div className="rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 p-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-amber-800 dark:text-amber-200">Alle {results.length} Treffer wurden durch die Filter ausgeblendet.</p>

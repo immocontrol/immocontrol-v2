@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity, FileBarChart, Store } from "lucide-react";
+import { RenditeSchnellrechner } from "@/components/RenditeSchnellrechner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AnalysisInputs from "@/components/analysis/AnalysisInputs";
@@ -142,6 +143,7 @@ th{background:#f5f5f5;font-weight:600}
   return (
     /* IMP-18: ARIA landmark for AnalysisCalculator page */
     <div role="main" aria-label="Objektanalyse" className="space-y-6 max-w-5xl mx-auto">
+      <RenditeSchnellrechner />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calculator className="h-6 w-6 text-primary" />

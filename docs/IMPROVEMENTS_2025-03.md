@@ -11,6 +11,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Mobile Touch:** Filter-Checkboxen (Nur mit Telefon/Web/E-Mail/Öffnungszeiten) haben auf Mobilgeräten größere Touch-Ziele (min-h 44px für die gesamte Label-Zeile).
 - **Empty State:** Zusätzlicher Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN (Synergie Scout ↔ Besichtigungen).
 - **Header:** Nach Suche wird „X Treffer“ im Kartentitel angezeigt.
+- **Scroll nach Suche:** Wenn die Suche mit Treffern abgeschlossen ist, scrollt die Ergebnis-Sektion automatisch in den Blick (resultsSectionRef, smooth).
 
 ## CRM
 
@@ -38,6 +39,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 
 - **Kündigungsfrist-Rechner:** Auf der Seite Verträge & Verwaltung. Eingabe: Kündigungsfrist (Monate) und gewünschtes Vertragsende. Ausgabe: „Kündigung spätestens einreichen bis [Datum]“. Relevant für Mietverträge und Kündigungsplanung. Komponente: `KuendigungsfristRechner.tsx`.
 - **Leerstands-Kosten-Rechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: Tage Leerstand, Monatsmiete (€). Ausgabe: entgangene Miete. Komponente: `LeerstandskostenRechner.tsx`. Synergie: Mietübersicht verlinkt „Verträge“ (Kündigungsfrist) in der Kopfzeile.
+- **Rendite-Schnellrechner:** Auf der Objektanalyse (Analyse-Seite). Eingabe: Kaufpreis (€), Monatsmiete (€). Ausgabe: Brutto-Mietrendite (%), Mietmultiplikator (Jahre). Komponente: `RenditeSchnellrechner.tsx`.
 
 ## Technik
 
@@ -50,3 +52,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Mietübersicht:** Import `LeerstandskostenRechner`, `FileSignature`; Link „Verträge“ in Kopfzeile (ROUTES.CONTRACTS); LeerstandskostenRechner im Tab Zahlungen unter den KPI-Karten.
 - **PropertyDetail:** `suggestPropertySummary`, `isDeepSeekConfigured`, `handleError`; Button „KI Kurzbewertung“ (Sparkles) mit Toast-Ausgabe.
 - **extractors.ts:** Neue Funktion `suggestPropertySummary(property)`.
+- **GewerbeScout:** resultsSectionRef + prevLoadingRef; Scroll-into-View der Ergebnis-Sektion wenn Suche mit Treffern endet.
+- **Analyse:** RenditeSchnellrechner oben auf der Seite eingebunden.
+- **Dashboard:** Empty State (keine Objekte) um Button „Verträge“ (ROUTES.CONTRACTS, FileText) ergänzt.
+- **ViewingCard:** Bei Adresse Link „WGH in Umgebung“ → ROUTES.CRM_SCOUT mit ?q=Adresse (Synergie Besichtigungen ↔ Scout).

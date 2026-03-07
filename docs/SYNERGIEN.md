@@ -14,6 +14,9 @@
 | **Verträge** | Fristen | Kündigungsfrist-Rechner auf der Seite Verträge: gewünschtes Enddatum + Frist in Monaten → spätestes Kündigungsdatum |
 | **Mietübersicht** | Verträge | Link „Verträge“ in der Kopfzeile (ROUTES.CONTRACTS); Leerstands-Kosten-Rechner im Tab Zahlungen |
 | **PropertyDetail** | AI | Button „KI Kurzbewertung“ (suggestPropertySummary) – 1–2 Sätze Bewertung bei DeepSeek |
+| **Dashboard** | Verträge | Empty State (keine Objekte): Button „Verträge“ (ROUTES.CONTRACTS) |
+| **Besichtigungen (ViewingCard)** | WGH-Scout | Bei Adresse: Link „WGH in Umgebung“ → CRM Scout mit ?q=Adresse |
+| **Analyse** | — | Rendite-Schnellrechner oben (Kaufpreis + Miete → Rendite, Mietmultiplikator) |
 | **PropertyDetail** | Deals | Link „Deal anlegen“ neben „WGH in Umgebung“ – Deal mit Objektname/Adresse vorausgefüllt (fromProperty) |
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
