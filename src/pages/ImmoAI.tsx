@@ -15,6 +15,7 @@ import { rateLimiters } from "@/lib/rateLimiter";
 import { streamImmoChat } from "@/integrations/ai/client";
 import { PdfWithAI } from "@/components/PdfWithAI";
 import { PropertyDescriptionGenerator } from "@/components/PropertyDescriptionGenerator";
+import { BerichteInProsa } from "@/components/BerichteInProsa";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -184,6 +185,7 @@ export default function ImmoAI() {
         <TabsContent value="pdf" className="mt-4">
           <PdfWithAI />
           <PropertyDescriptionGenerator />
+          <BerichteInProsa />
         </TabsContent>
         <TabsContent value="chat" className="mt-0">
       <Card className="border-border/50">

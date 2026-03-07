@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **BerichteInProsa** — Monatsbericht/Jahresüberblick aus Portfolio-Kennzahlen per DeepSeek (Immo-AI → PDF-Tab)
 - **Besichtigungen** — Neuer Bereich unter Akquise: Notizen, Bilder & Videos zu Immobilien-Besichtigungen
 - **Deal → Besichtigung** — Beim Verschieben eines Deals in Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt
 - **CRM → Deal** — Lead kann direkt als Deal angelegt werden (Synergie)
@@ -26,6 +27,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Deals** — Touch-Target (44px) für Deal-anlegen-Button (Mobile)
 - **ImmoAI** — Vorgeschlagene Fragen um Deals/Besichtigungen ergänzt
 - **TicketSystem** — Link „Zu Kontakten“ wenn keine Handwerker; Synergie Tickets↔Kontakte
 - **Besichtigungen** — Touch-Target (44px) für Schnell- und Neue-Besichtigung-Buttons

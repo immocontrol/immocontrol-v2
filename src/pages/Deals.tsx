@@ -683,7 +683,7 @@ const Deals = () => {
             <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("kanban")}>Kanban</Button>
             <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("list")}>Liste</Button>
           </div>
-          <Button size="sm" onClick={() => { if (!hasDealDraft) setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen">
+          <Button size="sm" onClick={() => { if (!hasDealDraft) setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen" className="touch-target min-h-[44px]">
             <Plus className="h-4 w-4 mr-1" /> Deal anlegen
           </Button>
         </div>
