@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, Shield } from "lucide-react";
+import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, Shield, Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { PasswordStrength } from "@/components/PasswordStrength";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { auth } from "@/integrations/auth";
 import { toast } from "sonner";
+import { ROUTES } from "@/lib/routes";
 
 type AuthMode = "login" | "register" | "forgot";
 
@@ -62,8 +64,7 @@ const Auth = () => {
       toast.success("E-Mail-Adresse erfolgreich geändert! Bitte melde dich mit deiner neuen E-Mail an.", { duration: 8000 });
       setSearchParams({}, { replace: true });
     }
-    /* Note: password_reset redirects to /einstellungen (not /auth) so the user
-       lands on the password change form with an active recovery session. */
+    /* Password reset link redirects to /auth; recovery session shows set-password-only form below. */
   }, [searchParams, setSearchParams]);
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -75,7 +76,14 @@ const Auth = () => {
   const [resetSent, setResetSent] = useState(false);
   const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isRecoverySession, clearRecoverySession, signOut } = useAuth();
+
+  /* Recovery-only: when user landed via password-reset link, show only set-password form (no app access) */
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
 
   /* 2FA enforcement state */
   const [needs2FA, setNeeds2FA] = useState(false);
@@ -269,12 +277,9 @@ const Auth = () => {
 
     try {
       if (mode === "forgot") {
-        /* FIX-10: Redirect to /einstellungen where the password change form is.
-           Supabase creates a recovery session and redirects the user there,
-           so they can immediately set a new password. Uses window.location.origin
-           to always point to the current deployed app (not an old build URL). */
+        /* Redirect to dedicated password-reset page; user sets new password there, then is signed out and sent to /auth to log in with the new password. */
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/einstellungen`,
+          redirectTo: `${window.location.origin}${ROUTES.PASSWORD_RESET}`,
         });
         if (error) throw error;
         setResetSent(true);
@@ -353,6 +358,99 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  /* Recovery session: user clicked password-reset link → show only set-password form (no app access until done) */
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error("Passwort muss mindestens 6 Zeichen lang sein");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwörter stimmen nicht überein");
+      return;
+    }
+    setRecoveryLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Passwort wurde gesetzt. Bitte melde dich mit deinem neuen Passwort an.");
+      clearRecoverySession();
+      await signOut();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Fehler beim Setzen des Passworts");
+    } finally {
+      setRecoveryLoading(false);
+    }
+  };
+
+  if (user && isRecoverySession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Neues Passwort setzen">
+        <div className="w-full max-w-sm space-y-6 animate-fade-in">
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center glow-primary">
+                <Lock className="h-7 w-7 text-primary" />
+              </div>
+              <span className="text-2xl font-bold tracking-tight">ImmoControl</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Neues Passwort setzen</p>
+            <p className="text-xs text-muted-foreground">Du wurdest über den Link aus der E-Mail hierher geleitet. Setze jetzt ein neues Passwort. Danach kannst du dich damit anmelden.</p>
+          </div>
+          <form onSubmit={handleSetNewPassword} className="gradient-card rounded-xl border border-border p-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-pw" className="text-xs text-muted-foreground">Neues Passwort *</Label>
+              <div className="relative">
+                <Input
+                  id="new-pw"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10 h-10"
+                  minLength={6}
+                  autoComplete="new-password"
+                  required
+                />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <PasswordStrength password={newPassword} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-pw" className="text-xs text-muted-foreground">Passwort bestätigen *</Label>
+              <div className="relative">
+                <Input
+                  id="confirm-pw"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10 h-10"
+                  autoComplete="new-password"
+                  required
+                />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-[10px] text-loss flex items-center gap-1"><X className="h-3 w-3" /> Passwörter stimmen nicht überein</p>
+              )}
+              {confirmPassword && newPassword === confirmPassword && confirmPassword.length >= 6 && (
+                <p className="text-[10px] text-profit flex items-center gap-1"><Check className="h-3 w-3" /> Passwörter stimmen überein</p>
+              )}
+            </div>
+            <Button type="submit" className="w-full" disabled={recoveryLoading || !newPassword || newPassword !== confirmPassword || newPassword.length < 6}>
+              {recoveryLoading ? "Wird gesetzt…" : "Neues Passwort setzen"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
@@ -478,6 +576,7 @@ const Auth = () => {
                 <p className="text-xs text-muted-foreground mt-1">
                   Prüfe dein Postfach für <strong>{email}</strong> und klicke auf den Link zum Zurücksetzen.
                 </p>
+                <p className="text-xs text-muted-foreground mt-2">Falls keine E-Mail ankommt, Spam-Ordner prüfen.</p>
               </div>
               <Button
                 type="button"
@@ -498,6 +597,7 @@ const Auth = () => {
                 <p className="text-xs text-muted-foreground mt-1">
                   Wir haben eine Bestätigungs-E-Mail an <strong>{email}</strong> gesendet. Bitte öffne den Link in der E-Mail, um dein Konto zu aktivieren. Danach kannst du dich hier anmelden.
                 </p>
+                <p className="text-xs text-muted-foreground mt-2">Falls keine E-Mail ankommt, Spam-Ordner prüfen.</p>
               </div>
               <Button
                 type="button"

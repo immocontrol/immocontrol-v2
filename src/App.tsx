@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { PropertyProvider } from "@/context/PropertyContext";
@@ -37,6 +37,7 @@ const contactsImport = () => import("@/pages/Contacts");
 const tenantPortalImport = () => import("@/pages/TenantPortal");
 const handworkerPortalImport = () => import("@/pages/HandworkerPortal");
 const einladungImport = () => import("@/pages/Einladung");
+const passwordResetImport = () => import("@/pages/PasswordReset");
 const notFoundImport = () => import("@/pages/NotFound");
 const loansImport = () => import("@/pages/Loans");
 const cashForecastImport = () => import("@/pages/CashForecast");
@@ -67,6 +68,7 @@ const Contacts = lazy(contactsImport);
 const TenantPortal = lazy(tenantPortalImport);
 const HandworkerPortal = lazy(handworkerPortalImport);
 const Einladung = lazy(einladungImport);
+const PasswordReset = lazy(passwordResetImport);
 const NotFound = lazy(notFoundImport);
 const Loans = lazy(loansImport);
 const CashForecast = lazy(cashForecastImport);
@@ -173,6 +175,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const RoleRouter = () => {
   const { user, loading } = useAuth();
+  const { pathname } = useLocation();
   const [role, setRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
@@ -242,7 +245,9 @@ const RoleRouter = () => {
 
   if (!user) return <Navigate to={ROUTES.AUTH} replace />;
 
-  if (!onboardingDone) {
+  /* When onboarding not done: redirect to onboarding only if not already there,
+     so that the Route for ONBOARDING can render; otherwise we’d only redirect and never show the page. */
+  if (!onboardingDone && pathname !== ROUTES.ONBOARDING) {
     return <Navigate to={ROUTES.ONBOARDING} replace />;
   }
 
@@ -339,6 +344,7 @@ const App = () => {
                     <Routes>
                       <Route path={ROUTES.AUTH} element={<Auth />} />
                       <Route path={ROUTES.INVITATION} element={<Einladung />} />
+                      <Route path={ROUTES.PASSWORD_RESET} element={<PasswordReset />} />
                       <Route path="/*" element={<RoleRouter />} />
                     </Routes>
                   </Suspense>

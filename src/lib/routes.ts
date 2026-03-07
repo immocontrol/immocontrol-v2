@@ -7,6 +7,8 @@ export const ROUTES = {
   PERSONAL_DASHBOARD: "/dashboard",
   HOCKEY_STICK: "/hockey-stick",
   AUTH: "/auth",
+  /** Passwort-Reset nach Klick auf E-Mail-Link – nur Formular, danach Abmeldung und Anmeldung */
+  PASSWORD_RESET: "/passwort-zuruecksetzen",
   ONBOARDING: "/onboarding",
   SETTINGS: "/einstellungen",
   CONTACTS: "/kontakte",
