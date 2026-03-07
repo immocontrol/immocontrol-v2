@@ -1049,7 +1049,16 @@ const Deals = () => {
                             <span className="text-xs">{s?.label || deal.stage}</span>
                           </div>
                         </td>
-                        <td className="p-3">{(deal.purchase_price ?? 0) > 0 ? fmt(deal.purchase_price!) : "\u2013"}</td>
+                        <td className="p-3">
+                          {(deal.purchase_price ?? 0) > 0 ? (
+                            <>
+                              {fmt(deal.purchase_price!)}
+                              {(deal.sqm ?? 0) > 0 && (
+                                <span className="block text-xs text-muted-foreground">{fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²</span>
+                              )}
+                            </>
+                          ) : "\u2013"}
+                        </td>
                         <td className="p-3">{(deal.expected_yield ?? 0) > 0 ? `${deal.expected_yield!.toFixed(1)}%` : "\u2013"}</td>
                         <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{deal.contact_name || "\u2013"}</td>
                         <td className="p-3 text-xs text-muted-foreground hidden sm:table-cell">

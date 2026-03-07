@@ -36,6 +36,7 @@ const RADIUS_OPTIONS = [
   { value: 500, label: "500 m" },
   { value: 1000, label: "1 km" },
   { value: 2000, label: "2 km" },
+  { value: 3000, label: "3 km" },
 ];
 
 /** POI-Typ-Filter: OSM-Werte zu Kategorien. */
@@ -152,13 +153,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
       if (s) {
         const p = JSON.parse(s) as { radius?: number };
-        return [200, 500, 1000, 2000].includes(Number(p.radius)) ? Number(p.radius) : 500;
+        return [200, 500, 1000, 2000, 3000].includes(Number(p.radius)) ? Number(p.radius) : 500;
       }
     } catch { /* ignore */ }
     return 500;
   });
   const [minSize, setMinSize] = useState(0);
   const [onlyWithPhone, setOnlyWithPhone] = useState(false);
+  const [onlyWithWebsite, setOnlyWithWebsite] = useState(false);
   const [poiTypeFilter, setPoiTypeFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
@@ -180,6 +182,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     let list = [...results];
     if (minSize > 0) list = list.filter((r) => (r.estimatedGrossArea ?? 0) >= minSize);
     if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
+    if (onlyWithWebsite) list = list.filter((r) => r.website != null && r.website.trim() !== "");
     const cat = POI_TYPE_CATEGORIES.find((c) => c.value === poiTypeFilter);
     if (cat && cat.value !== "all") list = list.filter((r) => cat.match(r.type));
     if (sortBy === "size") {
@@ -190,7 +193,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [results, minSize, onlyWithPhone, poiTypeFilter, sortBy]);
+  }, [results, minSize, onlyWithPhone, onlyWithWebsite, poiTypeFilter, sortBy]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -222,12 +225,13 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
 
   const exportCsv = useCallback(() => {
     if (sortedResults.length === 0) return;
-    const headers = ["Name", "Typ", "Adresse", "Telefon", "Website", "Öffnungszeiten", "ca. m²", "Entfernung (m)"];
+    const headers = ["Name", "Typ", "Adresse", "Telefon", "E-Mail", "Website", "Öffnungszeiten", "ca. m²", "Entfernung (m)"];
     const rows = sortedResults.map((b) => [
       b.name,
       b.type,
       b.address ?? "",
       b.phone ?? "",
+      b.email ?? "",
       b.website ?? "",
       b.opening_hours ?? "",
       b.estimatedGrossArea != null ? String(b.estimatedGrossArea) : "",
@@ -487,6 +491,16 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                     aria-label="Nur Einträge mit Telefonnummer"
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Telefon</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={onlyWithWebsite}
+                    onChange={(e) => setOnlyWithWebsite(e.target.checked)}
+                    className="rounded border-input h-4 w-4 touch-target"
+                    aria-label="Nur Einträge mit Website"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Web</span>
                 </label>
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap">Mind. Fläche:</Label>

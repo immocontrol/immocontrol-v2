@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Filter „Nur mit Web“, 3 km, CSV E-Mail** — Checkbox „Nur mit Web“ filtert Treffer mit Website; Umkreis-Option 3 km; CSV-Export um Spalte „E-Mail“ ergänzt.
+- **Deals Tabelle: €/m²** — In der Tabellenansicht wird unter dem Kaufpreis der Preis pro m² angezeigt, wenn Kaufpreis und Fläche vorhanden sind.
 - **Gewerbe-Scout: Website, CSV erweitert** — Pro Treffer Link „Web“ wenn Website von OSM vorhanden (öffnet in neuem Tab); CSV-Export um Spalten „Website“ und „Öffnungszeiten“ ergänzt.
 - **PropertyDetail → Analyse** — In der Sektion „Renditekennzahlen“ Link „Rendite berechnen & Szenarien“ → Rechner & Analyse (Synergie Objekt ↔ Kalkulation).
 - **Gewerbe-Scout: Karte, Öffnungszeiten, Begrenzung, Synergien** — „Auf Karte anzeigen“ öffnet Suchgebiet in OpenStreetMap (Bbox bei Ort, Zentrum bei Umkreis); Öffnungszeiten in der Trefferzeile (wenn von OSM vorhanden); Anzeige auf erste 100 Treffer begrenzt mit Hinweis „Bitte Filter nutzen“; Synergie Kontakte: bei Adresse Link „Gewerbe in Umgebung“ → Scout. Deals: Kaufpreis pro m² auf Karten (wenn Kaufpreis + m²).
