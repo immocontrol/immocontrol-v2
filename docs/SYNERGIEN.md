@@ -74,6 +74,9 @@
 | **Nebenkosten** | — | Abrechnung/Position anlegen, Position/Abrechnung löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedItemIdRef/lastDeletedBillingIdRef) |
 | **CRM** | — | Lead speichern (Ort/manuel), Gespräch loggen, Gespräch bearbeiten: handleError + toastErrorWithRetry (Retry mit lastPlaceRef/lastEditCallLogRef) |
 | **Deals** | Besichtigungen | Speichern, Löschen, Verschieben, Besichtigung zuordnen, Batch-Import: handleError + toastErrorWithRetry (Retry mit lastDeletedDealIdRef/lastMoveDealRef/lastBatchImportRef) |
+| **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
+| **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
+| **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
 
 ## Technische Details
 

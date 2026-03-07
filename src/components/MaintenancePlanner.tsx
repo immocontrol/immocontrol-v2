@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,7 +83,10 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["maintenance", propertyId] });
     },
-    onError: () => toast.error("Fehler"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "maintenance_items.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Planen", () => addMutation.mutate());
+    },
   });
 
   const toggleMutation = useMutation({

@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Contacts, MaintenancePlanner, OwnerMeetings)** — Kontakt speichern (Kontakte-Seite), Wartungsmaßnahme anlegen, Eigentümerversammlung anlegen nutzen handleError + toastErrorWithRetry (Retry ohne Formularverlust, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (Nebenkosten, CRM, Deals)** — Nebenkosten (Abrechnung/Position anlegen/löschen), CRM (Lead speichern, Gespräch loggen/bearbeiten), Deals (Speichern, Löschen, Verschieben, Besichtigung zuordnen, Batch-Import) nutzen handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (MeterManagement, PropertyNotes, TenantManagement)** — Zähler anlegen/Ablesung/Löschen, Notizen anlegen/löschen, Mieter speichern/löschen nutzen handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (Mietvertragsverwaltung, AutoTodoGenerator, BulkRentAdjustment)** — Mietvertrag anlegen/löschen, Auto-Todo erstellen und Bulk-Mietanpassung nutzen handleError + toastErrorWithRetry (Retry ohne Datenverlust, Fehler getrackt)

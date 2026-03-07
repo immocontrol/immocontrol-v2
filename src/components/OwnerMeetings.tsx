@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Users, Plus, Video, MapPin, Calendar, Vote, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { useProperties } from "@/context/PropertyContext";
 
 interface MeetingRow {
@@ -102,7 +104,10 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
       setOpen(false);
       toast.success("Versammlung angelegt");
     },
-    onError: () => toast.error("Fehler"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "owner_meetings.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Anlegen", () => addMeeting.mutate());
+    },
   });
 
   const addResolution = useMutation({

@@ -35,6 +35,8 @@ import { logAudit } from "@/lib/auditLog";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
 import { LoadingButton } from "@/components/LoadingButton";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -237,7 +239,10 @@ const ContactManagement = () => {
       setOpen(false);
       invalidate();
     },
-    onError: (e: Error) => toast.error(e.message || "Fehler"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "contacts.insert/update", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message || "Fehler" : "Fehler beim Speichern", () => saveMutation.mutate());
+    },
   });
 
   // Soft delete: move to trash (with undo)
