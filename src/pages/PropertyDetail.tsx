@@ -201,11 +201,11 @@ const PropertyDetail = () => {
             </Tooltip>
             {property.address?.trim() && (
               <Link
-                to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(property.address.trim())}`}
+                to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(property.address.trim())}`}
                 className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0"
-                aria-label="Gewerbe in Umgebung suchen"
+                aria-label="WGH in Umgebung suchen"
               >
-                <Store className="h-3 w-3 shrink-0" /> Gewerbe in Umgebung
+                <Store className="h-3 w-3 shrink-0" /> WGH in Umgebung
               </Link>
             )}
           </div>

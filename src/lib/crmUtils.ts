@@ -325,7 +325,7 @@ out body;`;
   }
 }
 
-/** Geocode address to lat/lng via Nominatim (for Gewerbe-Scout). Returns null if not found. Optional signal to cancel. */
+/** Geocode address to lat/lng via Nominatim (for WGH-Scout). Returns null if not found. Optional signal to cancel. */
 export async function geocodeToCoord(query: string, signal?: AbortSignal): Promise<{ lat: number; lng: number; display_name: string } | null> {
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
   const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" }, ...(signal && { signal }) });
@@ -546,7 +546,7 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; estimat
   return Array.from(grid.values());
 }
 
-/** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Returns POIs with coords for building-size matching. Optional signal to cancel. */
+/** Fetch commercial POIs in configurable radius (WGH-Scout). Returns POIs with coords for building-size matching. Optional signal to cancel. */
 export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
 (

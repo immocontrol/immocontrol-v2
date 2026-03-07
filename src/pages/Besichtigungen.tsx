@@ -569,7 +569,7 @@ const Besichtigungen = () => {
               </Button>
               {(editViewing.title?.trim() || editViewing.address?.trim()) && (
                 <Link
-                  to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent([editViewing.title, editViewing.address].filter(Boolean).join(", "))}`}
+                  to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent([editViewing.title, editViewing.address].filter(Boolean).join(", "))}`}
                   className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors touch-target min-h-[36px]"
                   onClick={() => { setAddOpen(false); setEditViewing(null); }}
                   aria-label="Gewerbe in Umgebung suchen"

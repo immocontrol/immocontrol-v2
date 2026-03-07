@@ -241,8 +241,8 @@ const Mietuebersicht = () => {
           <Link to={ROUTES.REPORTS} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Zu Berichte">
             <FileBarChart className="h-3.5 w-3.5" /> Berichte
           </Link>
-          <Link to={`${ROUTES.CRM}?tab=scout`} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Gewerbe finden">
-            <Store className="h-3.5 w-3.5" /> Gewerbe finden
+          <Link to={ROUTES.CRM_SCOUT} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="WGH finden">
+            <Store className="h-3.5 w-3.5" /> WGH finden
           </Link>
         </div>
       </div>

@@ -157,12 +157,12 @@ const DealCard = memo(({
         )}
         {deal.address && (
           <Link
-            to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(deal.address)}`}
+            to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(deal.address)}`}
             className="text-[10px] text-primary hover:underline flex items-center gap-1 w-fit"
             onClick={(e) => e.stopPropagation()}
-            aria-label="Gewerbe in Umgebung suchen"
+            aria-label="WGH in Umgebung suchen"
           >
-            <Store className="h-3 w-3 shrink-0" /> Gewerbe in Umgebung
+            <Store className="h-3 w-3 shrink-0" /> WGH in Umgebung
           </Link>
         )}
         <div className="flex items-center justify-between">
@@ -1074,10 +1074,10 @@ const Deals = () => {
                           <div className="flex items-center gap-1">
                             {deal.address && (
                               <Link
-                                to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(deal.address)}`}
+                                to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(deal.address)}`}
                                 className="text-xs text-primary hover:underline flex items-center gap-0.5 px-1.5 py-1 rounded hover:bg-secondary"
                                 onClick={e => e.stopPropagation()}
-                                aria-label="Gewerbe in Umgebung suchen"
+                                aria-label="WGH in Umgebung suchen"
                               >
                                 <Store className="h-3 w-3" /> Scout
                               </Link>
@@ -1112,8 +1112,8 @@ const Deals = () => {
                         <Link to={ROUTES.CRM} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
                           Leads aus CRM übernehmen →
                         </Link>
-                        <Link to={`${ROUTES.CRM}?tab=scout`} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="Gewerbe-Scout">
-                          <Store className="h-3 w-3" /> Gewerbe finden
+                        <Link to={ROUTES.CRM_SCOUT} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="WGH-Scout">
+                          <Store className="h-3 w-3" /> WGH finden
                         </Link>
                       </div>
                     </>

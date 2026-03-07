@@ -33,13 +33,14 @@ const SUGGESTIONS = [
   "Fasse meine letzten Besichtigungen kurz zusammen",
   "Wie viele offene Tickets habe ich?",
   "Gibt es offene Nebenkostenabrechnungen oder Entwürfe?",
-  "Wo finde ich Gewerbe für die Akquise?",
+  "Wo finde ich Wohn- und Geschäftshäuser (WGH) für die Akquise?",
   "Welche Darlehen haben die längste Zinsbindung?",
   "Welche Objekte haben den höchsten Cashflow?",
   "Zeige mir meine Objekte mit der besten Brutto-Rendite",
   "Gibt es überfällige Mietzahlungen oder offene Posten?",
   "Welche Objekte haben den höchsten Verkehrswert?",
   "Wann endet die Zinsbindung bei meinen Darlehen?",
+  "Welche Objekte haben die höchste Brutto-Mietrendite?",
 ];
 
 export default function ImmoAI() {

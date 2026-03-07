@@ -7,7 +7,7 @@
 | Von | Zu | Verknüpfung |
 |-----|-----|-------------|
 | **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt |
-| **CRM (Leads)** | Gewerbe-Scout, Besichtigungen | Empty State: Buttons „Gewerbe suchen“ (Tab Scout), „Zu Besichtigungen“ |
+| **CRM (Leads)** | WGH-Scout, Besichtigungen | Empty State: Buttons „WGH suchen“ (Tab Scout), „Zu Besichtigungen“ |
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“; fromContact-Vorlage beim „Als Deal“-Button |
@@ -22,18 +22,18 @@
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
-| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, Gewerbe-Scout | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, Gewerbe finden (ROUTES, CRM?tab=scout) |
-| **Objekte** | Deals, Besichtigungen, Gewerbe-Scout | Empty State: Buttons Deals, Besichtigungen, Gewerbe-Scout (ROUTES, CRM?tab=scout, aria-label) |
-| **Berichte** | Objekte, Deals, Analyse | Empty State: Buttons Objekte, Zu Deals, Zur Analyse (ROUTES) |
+| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, WGH-Scout | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden (ROUTES.CRM_SCOUT) |
+| **Objekte** | Deals, Besichtigungen, WGH-Scout | Empty State: Buttons Deals, Besichtigungen, WGH-Scout (ROUTES.CRM_SCOUT, aria-label) |
+| **Berichte** | Objekte, Deals, Analyse, WGH-Scout | Empty State: Buttons Objekte, Zu Deals, Zur Analyse, WGH finden (ROUTES) |
 | **Besichtigungen** | Deals, Dokumente | Empty State: Links „Zu Deals“, „Dokumente“ (ROUTES) |
-| **Todos** | CRM, Deals, Berichte, Gewerbe-Scout | Empty State: Buttons Zu CRM, Zu Deals, Berichte, Gewerbe finden (ROUTES, Touch-Target) |
+| **Todos** | CRM, Deals, Berichte, WGH-Scout | Empty State: Buttons Zu CRM, Zu Deals, Berichte, WGH finden (ROUTES, Touch-Target) |
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
-| **Wartungsplaner** | Objekte, Berichte, Gewerbe-Scout | Empty State: Buttons Objekte, Berichte, Gewerbe finden (ROUTES, Touch-Target) |
+| **Wartungsplaner** | Objekte, Berichte, WGH-Scout | Empty State: Buttons Objekte, Berichte, WGH finden (ROUTES, Touch-Target) |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
-| **Nebenkosten** | Dokumente, Gewerbe-Scout | Links Dokumente, Gewerbe finden in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
+| **Nebenkosten** | Dokumente, WGH-Scout | Links Dokumente, WGH finden in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
 | **Nebenkosten** | Objekte | Link „Zum Objekt“ bei Abrechnungsdetail (zum PropertyDetail) |
-| **Kontakte** | Deals | Empty State: Button „Zu Deals“ für Synergie (Kontakte aus Deals übernehmen) |
-| **Mietübersicht** | Nebenkosten, Berichte, Gewerbe-Scout | Links NK-Abrechnung, Berichte, Gewerbe finden in Kopfzeile (ROUTES) |
+| **Kontakte** | Deals, WGH-Scout | Empty State: Buttons „Zu Deals“, „WGH finden“ (ROUTES.CRM_SCOUT) |
+| **Mietübersicht** | Nebenkosten, Berichte, WGH-Scout | Links NK-Abrechnung, Berichte, WGH finden in Kopfzeile (ROUTES) |
 | **PropertyDetail** | Nebenkosten | Link „Nebenkostenabrechnung“ in Finanzierungs-Sektion |
 | **DashboardActionCenter** | Nebenkosten | Kachel „X NK-Entwürfe“ wenn status=draft; verlinkt auf /nebenkosten |
 | **GlobalSearch** | Kontakte, Deals, Besichtigungen, Nebenkosten, Dokumente | Suche und Navigation für alle Seiten; Deep-Links `?highlight=xxx`, `?id=xxx` |
@@ -42,12 +42,12 @@
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 | **Nebenkosten** | Mietübersicht, Objekte | Empty State: Buttons „Mietübersicht“, „Objekte“ |
-| **Verträge** | Mietübersicht, Berichte, Dokumente, Gewerbe-Scout | Links Mietübersicht, Berichte, Dokumente, Gewerbe finden in Kopfzeile (ROUTES, Touch-Target) |
-| **Dashboard** | Deals, Analyse, Gewerbe-Scout | Empty State (keine Objekte): Buttons Zu Deals, Zur Analyse, Gewerbe finden (ROUTES) |
+| **Verträge** | Mietübersicht, Berichte, Dokumente, WGH-Scout | Links Mietübersicht, Berichte, Dokumente, WGH finden in Kopfzeile (ROUTES, Touch-Target) |
+| **Dashboard** | Deals, Analyse, WGH-Scout | Empty State (keine Objekte): Buttons Zu Deals, Zur Analyse, WGH finden (ROUTES.CRM_SCOUT) |
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio) |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile; Empty State zusätzlich Button „Zur Analyse“ |
-| **Analyse** | Berichte, Gewerbe-Scout | Button „Berichte“ und „Gewerbe finden“ in der Kopfzeile (ROUTES) |
-| **Deals** | CRM, Gewerbe-Scout | Empty State: Links „Leads aus CRM übernehmen“, „Gewerbe finden“ (CRM?tab=scout) |
+| **Analyse** | Berichte, WGH-Scout | Button „Berichte“ und „WGH finden“ in der Kopfzeile (ROUTES) |
+| **Deals** | CRM, WGH-Scout | Empty State: Links „Leads aus CRM übernehmen“, „WGH finden“ (ROUTES.CRM_SCOUT) |
 | **Newsticker** | — | Fehler beim Laden: handleError + toastErrorWithRetry (Retry = Aktualisieren) |
 | **Dashboard** | Mietübersicht | StatCard „Mieteinnahmen“ verlinkt über ROUTES.RENT |
 | **OnboardingBanner** | Home, Analyse | Schritte „Objekt hinzufügen“, „Zum Rechner“ nutzen ROUTES.HOME, ROUTES.ANALYSE |
@@ -78,16 +78,16 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
-| **GewerbeScout** | CRM, Leads | Ort oder Umkreis (bis 2 km); Gebäudegröße aus OSM; Filter Typ/Mindestfläche/Nur mit Telefon; Deduplizierung; CSV mit Website & Öffnungszeiten; pro Treffer Link „Web“ wenn Website; max. 100 Treffer, „Auf Karte anzeigen“ (OSM), Öffnungszeiten, sessionStorage, KI „Anruf-Einstieg“, initialQuery |
-| **CRM** | URL-Tab, Scout | `?tab=scout` öffnet Gewerbe-Scout; `?q=…` wird als initialQuery an GewerbeScout übergeben (Synergie Deals, Objekt, Besichtigung) |
-| **Deals** | CRM (Scout) | Bei Adresse: „Gewerbe in Umgebung“ / „Scout“; bei Kaufpreis + m²: Anzeige €/m² auf Karte |
-| **PropertyDetail** | CRM (Scout), Analyse | Bei Adresse: „Gewerbe in Umgebung“ → Scout; in Renditekennzahlen: „Rendite berechnen & Szenarien“ → Rechner & Analyse |
-| **Besichtigungen** | CRM (Scout) | Im Bearbeitungs-Dialog: „Gewerbe in Umgebung“ → CRM?tab=scout&q=Titel, Adresse |
-| **Kontakte** | CRM (Scout) | Bei Kontakt mit Adresse: Link „Gewerbe in Umgebung“ → CRM?tab=scout&q=Adresse |
-| **DashboardActionCenter** | CRM (Scout) | Link „Gewerbe finden“ → CRM mit Tab Scout (Synergie Akquise) |
-| **QuickActions** | CRM (Scout) | Schnellaktion „Gewerbe-Scout“ → CRM?tab=scout |
-| **SpotlightSearch / MobileSearchOverlay** | CRM (Scout) | Eintrag „Gewerbe-Scout“ → CRM?tab=scout (Suche „gewerbe scout“) |
-| **Immo-AI** | — | Vorschlagsfrage „Wo finde ich Gewerbe für die Akquise?“ (Antwort verweist auf Gewerbe-Scout) |
+| **WGH-Scout** | CRM, Leads | Rebrand von Gewerbe-Scout (Wohn- und Geschäftshaus). Ort oder Umkreis (bis 10 km); Gebäudegröße aus OSM; Filter Typ/Mindestfläche/Nur mit Telefon/Web/E-Mail; Deduplizierung; CSV; „Auf Karte anzeigen“ (OSM), Öffnungszeiten, sessionStorage, KI „Anruf-Einstieg“, initialQuery. ROUTES.CRM_SCOUT. |
+| **CRM** | URL-Tab, Scout | `?tab=scout` öffnet WGH-Scout; `?q=…` wird als initialQuery übergeben (Synergie Deals, Objekt, Besichtigung) |
+| **Deals** | CRM (Scout) | Bei Adresse: „WGH in Umgebung“ / „Scout“; bei Kaufpreis + m²: Anzeige €/m² auf Karte |
+| **PropertyDetail** | CRM (Scout), Analyse | Bei Adresse: „WGH in Umgebung“ → Scout; in Renditekennzahlen: „Rendite berechnen & Szenarien“ → Rechner & Analyse |
+| **Besichtigungen** | CRM (Scout) | Im Bearbeitungs-Dialog: „WGH in Umgebung“ → CRM?tab=scout&q=Titel, Adresse |
+| **Kontakte** | CRM (Scout), Deals | Bei Kontakt mit Adresse: Link „WGH in Umgebung“ → CRM?tab=scout&q=Adresse; Empty State: „WGH finden“ |
+| **DashboardActionCenter** | CRM (Scout) | Link „WGH finden“ → ROUTES.CRM_SCOUT |
+| **QuickActions** | CRM (Scout) | Schnellaktion „WGH-Scout“ → ROUTES.CRM_SCOUT |
+| **SpotlightSearch / MobileSearchOverlay** | CRM (Scout) | Eintrag „WGH-Scout“ → ROUTES.CRM_SCOUT (Suche „wgh scout“) |
+| **Immo-AI** | — | Vorschlagsfrage „Wo finde ich Wohn- und Geschäftshäuser (WGH) für die Akquise?“; weitere Vorschläge u. a. Brutto-Mietrendite, Zinsbindung |
 | **EnergyCertificateTracker** | — | Energieausweis anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedCertIdRef) |
 | **CrmFollowUpReminder** | Todos | Follow-Up-Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastContactRef) |
 | **InsuranceTracker** | — | Versicherung anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedInsuranceIdRef); Touch-Target für Löschen-Button (Mobile) |
@@ -98,4 +98,4 @@
 - **Deep-Links**: `useSearchParams()` liest `?id=xxx` (Deals, Besichtigungen) bzw. `?highlight=xxx` (Kontakte). Kontakte scrollt zum hervorgehobenen Kontakt, Deals/Besichtigungen öffnen den Bearbeitungsdialog.
 - **Share-Buttons**: Deals und Besichtigungen nutzen `useShare()` für native Share API (Mobile) oder Kopieren in Zwischenablage.
 - **Todos**: `project: "Besichtigungen"`, `title: "Besichtigung nachbereiten: …"`.
-- **Gewerbe-Scout**: Modus „Ganzer Ort“ nutzt Nominatim-Boundingbox und durchsucht das gesamte Gebiet; Gebäudegröße aus Overpass (way["building"] + geom), POIs werden dem nächsten Gebäude zugeordnet; Sortierung nach geschätzter Bruttogeschossfläche. Overpass-Timeouts zentral in crmUtils (OVERPASS_TIMEOUT_BBOX/RADIUS). KI-Anruf-Einstieg über suggestColdCallOpening (DeepSeek) in integrations/ai/extractors.
+- **WGH-Scout**: Modus „Ganzer Ort“ nutzt Nominatim-Boundingbox und durchsucht das gesamte Gebiet; Gebäudegröße aus Overpass (way["building"] + geom), POIs werden dem nächsten Gebäude zugeordnet; Sortierung nach geschätzter Bruttogeschossfläche. Overpass-Timeouts zentral in crmUtils (OVERPASS_TIMEOUT_BBOX/RADIUS). KI-Anruf-Einstieg über suggestColdCallOpening (DeepSeek) in integrations/ai/extractors. Route: ROUTES.CRM_SCOUT.

@@ -118,7 +118,7 @@ export default function SpotlightSearch() {
       { id: "nav-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", path: ROUTES.DOKUMENTE, icon: <FolderOpen className="h-4 w-4" />, keywords: "dokumente dateien upload ocr" },
       { id: "nav-wartung", title: "Wartungsplaner", subtitle: "Instandhaltung", path: ROUTES.WARTUNG, icon: <Wrench className="h-4 w-4" />, keywords: "wartung instandhaltung reparatur" },
       { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: ROUTES.CRM, icon: <Target className="h-4 w-4" />, keywords: "crm leads akquise" },
-      { id: "nav-scout", title: "Gewerbe-Scout", subtitle: "Gewerbe nach Ort/Umkreis finden", path: `${ROUTES.CRM}?tab=scout`, icon: <Store className="h-4 w-4" />, keywords: "gewerbe scout akquise ort umkreis gewerbe finden" },
+      { id: "nav-scout", title: "WGH-Scout", subtitle: "Wohn- und Geschäftshäuser nach Ort/Umkreis finden", path: ROUTES.CRM_SCOUT, icon: <Store className="h-4 w-4" />, keywords: "wgh scout gewerbe akquise ort umkreis wohn geschäftshaus finden" },
       { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: ROUTES.DEALS, icon: <Handshake className="h-4 w-4" />, keywords: "deals pipeline" },
       { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: ROUTES.BESICHTIGUNGEN, icon: <Camera className="h-4 w-4" />, keywords: "besichtigung besichtigungen notizen fotos videos immo viewing" },
       { id: "nav-analyse", title: "Rechner & Analyse", subtitle: "Kalkulatoren", path: ROUTES.ANALYSE, icon: <Calculator className="h-4 w-4" />, keywords: "rechner analyse kalkulator berechnung" },

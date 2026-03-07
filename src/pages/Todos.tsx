@@ -670,8 +670,8 @@ const Todos = () => {
                 <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Berichte">
                   <FileBarChart className="h-3.5 w-3.5" /> Berichte
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(`${ROUTES.CRM}?tab=scout`)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Gewerbe-Scout">
-                  <Store className="h-3.5 w-3.5" /> Gewerbe finden
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="gap-1.5 touch-target min-h-[44px]" aria-label="WGH-Scout">
+                  <Store className="h-3.5 w-3.5" /> WGH finden
                 </Button>
               </div>
             )}

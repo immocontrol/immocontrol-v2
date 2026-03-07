@@ -420,7 +420,7 @@ const CRM = () => {
       <Tabs value={crmTab} onValueChange={setCrmTab} className="space-y-4">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="search" className="flex-1 sm:flex-none nav-label-responsive">Suche & Akquise</TabsTrigger>
-          <TabsTrigger value="scout" className="flex-1 sm:flex-none nav-label-responsive">Gewerbe-Scout</TabsTrigger>
+          <TabsTrigger value="scout" className="flex-1 sm:flex-none nav-label-responsive">WGH-Scout</TabsTrigger>
           <TabsTrigger value="leads" className="flex-1 sm:flex-none nav-label-responsive">Meine Leads ({leads.length})</TabsTrigger>
         </TabsList>
 
@@ -716,7 +716,7 @@ const CRM = () => {
           </Card>
         </TabsContent>
 
-        {/* Gewerbe-Scout Tab: MFH mit Gewerbe finden, anrufen, als Lead übernehmen */}
+        {/* WGH-Scout Tab: Wohn- und Geschäftshäuser finden, anrufen, als Lead übernehmen */}
         <TabsContent value="scout" className="space-y-4">
           <GewerbeScout
             initialQuery={searchParams.get("q") ?? undefined}
@@ -756,8 +756,8 @@ const CRM = () => {
                   description="Suche nach Geschäften oder füge Leads manuell hinzu."
                   action={
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setSearchParams({ tab: "scout" })} className="touch-target min-h-[44px] gap-1.5" aria-label="Zum Gewerbe-Scout">
-                        <Store className="h-4 w-4" /> Gewerbe suchen
+                      <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-1.5" aria-label="Zum WGH-Scout">
+                        <Store className="h-4 w-4" /> WGH suchen
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-1.5">
                         <CalendarCheck className="h-4 w-4" /> Zu Besichtigungen

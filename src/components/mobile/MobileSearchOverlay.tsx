@@ -126,7 +126,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
       { id: "page-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.TODOS },
       { id: "page-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.DOKUMENTE },
       { id: "page-crm", title: "CRM", subtitle: "Leads & Akquise", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: ROUTES.CRM },
-      { id: "page-scout", title: "Gewerbe-Scout", subtitle: "Gewerbe nach Ort/Umkreis", category: "Seiten", categoryIcon: <Store className="h-4 w-4" />, path: `${ROUTES.CRM}?tab=scout` },
+      { id: "page-scout", title: "WGH-Scout", subtitle: "Wohn- und Geschäftshäuser nach Ort/Umkreis", category: "Seiten", categoryIcon: <Store className="h-4 w-4" />, path: ROUTES.CRM_SCOUT },
       { id: "page-deals", title: "Deals", subtitle: "Deal Pipeline", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: ROUTES.DEALS },
     ].filter(p => normalizeString(`${p.title} ${p.subtitle}`).includes(q));
 

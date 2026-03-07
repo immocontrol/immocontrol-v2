@@ -8,6 +8,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **WGH-Scout (Rebrand)** — Gewerbe-Scout heißt jetzt „WGH-Scout“ (Wohn- und Geschäftshaus). Alle sichtbaren Texte, Aria-Labels, Spotlight/Mobile-Suche und Synergie-Links (Verträge, Nebenkosten, Mietübersicht, Darlehen, Todos, Wartungsplaner, Deals, Analyse, Objekte, Dashboard, CRM, Berichte, Kontakte) nutzen „WGH-Scout“ bzw. „WGH finden“. Immo-AI-Vorschlagsfrage angepasst auf „Wohn- und Geschäftshäuser (WGH)“.
+- **Refactor: ROUTES.CRM_SCOUT** — Zentrale Route `/crm?tab=scout` als `ROUTES.CRM_SCOUT`; genutzt in Dashboard, Objekte, CRM, Berichte, Kontakte.
+- **Synergien: Berichte, Kontakte → WGH-Scout** — Berichte Empty State: Button „WGH finden“. Kontakte Empty State: Button „WGH finden“.
+- **Immo-AI** — Neue Vorschlagsfrage: „Welche Objekte haben die höchste Brutto-Mietrendite?“.
 - **Gewerbe-Scout: Umkreis 10 km** — Umkreis-Option 10 km für größere Suchgebiete; Empty-State-Tipp erwähnt 5 km/10 km.
 - **Synergien: Verträge, Nebenkosten → Gewerbe-Scout** — Verträge und Nebenkosten: Link „Gewerbe finden“ in der Kopfzeile (CRM Scout). Immo-AI: Vorschlagsfrage „Wann endet die Zinsbindung bei meinen Darlehen?“.
 - **Gewerbe-Scout: Hinweis bei 0 Treffern durch Filter** — Wenn alle Treffer durch Filter ausgeblendet werden, erscheint ein Hinweis mit „Filter zurücksetzen“-Button (auffälliger Block).

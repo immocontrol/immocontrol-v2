@@ -340,11 +340,11 @@ Generiere eine kurze, sachliche Beschreibung (2–4 Sätze) als Vorschlag, die d
 }
 
 /**
- * Kurzer Einstiegssatz für Kaltakquise-Anruf (Gewerbe-Scout).
+ * Kurzer Einstiegssatz für Kaltakquise-Anruf (WGH-Scout).
  * Ein Satz, höflich, mit Namen/Branche, ohne Werbung.
  */
 export async function suggestColdCallOpening(name: string, type: string, address?: string | null): Promise<string> {
-  const prompt = `Du bist ein Immobilieninvestor. Du rufst ein Gewerbe an (Kaltakquise), um nach dem Gebäude/Objekt zu fragen.
+  const prompt = `Du bist ein Immobilieninvestor. Du rufst ein Gewerbe (Wohn- und Geschäftshaus / WGH) an (Kaltakquise), um nach dem Gebäude/Objekt zu fragen.
 Name: ${name}
 Branche/Typ: ${type}
 ${address ? `Adresse: ${address}` : ""}

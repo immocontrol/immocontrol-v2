@@ -1,7 +1,6 @@
 /**
- * Gewerbe-Scout: Findet Gewerbe/Läden nach Ort oder Umkreis (OpenStreetMap/Overpass).
- * Berücksichtigt Gebäudegröße – sortierbar nach größten Wohn- und Geschäftshäusern mit Gewerbe.
- * Mit Ort-Autocomplete, Mindest-Gebäudefläche, Deduplizierung und klaren Lade-/Leer-Zuständen.
+ * WGH-Scout (Wohn- und Geschäftshaus): Findet Gewerbe/Läden nach Ort oder Umkreis (OpenStreetMap/Overpass).
+ * Berücksichtigt Gebäudegröße – sortierbar nach größten WGH mit Gewerbe. Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw } from "lucide-react";
@@ -311,7 +310,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `gewerbe-scout-${searchLabel ? searchLabel.replace(/\s*[(\u2013–)].*$/u, "").trim().replace(/\s+/g, "-") : "export"}.csv`;
+    a.download = `wgh-scout-${searchLabel ? searchLabel.replace(/\s*[(\u2013–)].*$/u, "").trim().replace(/\s+/g, "-") : "export"}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV exportiert");
@@ -362,8 +361,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter,
           }));
         } catch { /* ignore */ }
-        if (deduped.length === 0) toast.info("Keine Gewerbe in diesem Gebiet gefunden");
-        else toast.success(`${deduped.length} Gewerbe in ${bbox.display_name} – sortiert nach Gebäudegröße`);
+        if (deduped.length === 0) toast.info("Keine Treffer in diesem Gebiet gefunden");
+        else toast.success(`${deduped.length} Treffer in ${bbox.display_name} – sortiert nach Gebäudegröße`);
       } else {
         const coord = await geocodeToCoord(query.trim(), signal);
         if (signal.aborted) return;
@@ -393,12 +392,12 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter,
           }));
         } catch { /* ignore */ }
-        if (deduped.length === 0) toast.info("Keine Gewerbe im gewählten Umkreis gefunden");
-        else toast.success(`${deduped.length} Gewerbe gefunden`);
+        if (deduped.length === 0) toast.info("Keine Treffer im gewählten Umkreis gefunden");
+        else toast.success(`${deduped.length} Treffer gefunden`);
       }
     } catch (e: unknown) {
       if ((e as { name?: string }).name === "AbortError") return;
-      handleError(e, { context: "general", details: "GewerbeScout.search", showToast: false });
+      handleError(e, { context: "general", details: "WGHScout.search", showToast: false });
       toastErrorWithRetry("Suche fehlgeschlagen", search);
       setLoadingStep(null);
     } finally {
@@ -410,10 +409,10 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <Store className="h-4 w-4" /> Gewerbe-Scout
+          <Store className="h-4 w-4" /> WGH-Scout
         </CardTitle>
         <p className="text-xs text-muted-foreground text-wrap-safe">
-          Ort (z. B. „Hennigsdorf“) oder Adresse eingeben. Ganzer Ort durchsucht die gesamte Stadt nach Gewerben; Umkreis sucht um eine Adresse. Ergebnisse können nach Gebäudegröße sortiert werden – ideal für MFH mit Gewerbe im EG.
+          Ort oder Adresse eingeben. Ganzer Ort durchsucht die Stadt; Umkreis sucht um eine Adresse. Sortierung nach Gebäudegröße – ideal für Wohn- und Geschäftshäuser (WGH) mit Gewerbe im EG.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -453,7 +452,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                   if (e.key === "Enter") search();
                 }}
                 className="h-9 text-sm min-w-0"
-                aria-label="Ort oder Adresse für Gewerbesuche"
+                aria-label="Ort oder Adresse für WGH-Scout-Suche"
                 aria-autocomplete="list"
                 aria-expanded={showSuggestions && suggestions.length > 0}
                 aria-activedescendant={showSuggestions && suggestions.length > 0 ? `scout-suggestion-${suggestionIndex}` : undefined}
@@ -511,7 +510,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 onClick={search}
                 disabled={loading || !query.trim()}
                 className="gap-1.5 shrink-0 h-9 touch-target min-h-[44px] sm:min-h-[36px]"
-                aria-label="Gewerbe suchen"
+                aria-label="WGH suchen"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 Suchen
@@ -524,7 +523,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
             {loadingStep === "ort" && "Suche Ort…"}
-            {loadingStep === "gewerbe" && "Suche Gewerbe & Gebäude…"}
+            {loadingStep === "gewerbe" && "Suche Objekte & Gebäude…"}
             {loadingStep === "gebaeude" && "Ordne Gebäudegrößen zu…"}
           </p>
         )}
@@ -560,7 +559,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
           <div className="rounded-lg border border-border bg-muted/40 p-4 flex items-start gap-2">
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe">
-              <p className="font-medium text-foreground">Keine Gewerbe gefunden</p>
+              <p className="font-medium text-foreground">Keine Treffer gefunden</p>
               <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 5 km oder 10 km).</p>
             </div>
           </div>
@@ -590,7 +589,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-medium" id="scout-results-heading">
-                Gefundene Gewerbe {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
+                Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
               </h3>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -689,7 +688,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail) nutzen, um die Liste einzugrenzen.
               </p>
             )}
-            <ul className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener Gewerbe">
+            <ul className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener WGH-Treffer">
               {sortedResults.slice(0, SCOUT_DISPLAY_CAP).map((b, i) => (
                 <li
                   key={`${b.name}-${b.lat}-${b.lon}-${i}`}

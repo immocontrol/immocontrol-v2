@@ -160,8 +160,8 @@ th{background:#f5f5f5;font-weight:600}
           <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
             <FileBarChart className="h-3.5 w-3.5" /> Berichte
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(`${ROUTES.CRM}?tab=scout`)} aria-label="Gewerbe finden">
-            <Store className="h-3.5 w-3.5" /> Gewerbe finden
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
+            <Store className="h-3.5 w-3.5" /> WGH finden
           </Button>
         </div>
       </div>

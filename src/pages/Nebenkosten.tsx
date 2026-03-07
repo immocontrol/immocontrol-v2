@@ -359,8 +359,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
               <FolderOpen className="h-3.5 w-3.5" /> Dokumente
             </Link>
-            <Link to={`${ROUTES.CRM}?tab=scout`} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Gewerbe finden">
-              <Store className="h-3.5 w-3.5" /> Gewerbe finden
+            <Link to={ROUTES.CRM_SCOUT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="WGH finden">
+              <Store className="h-3.5 w-3.5" /> WGH finden
             </Link>
           </p>
         </div>

@@ -236,7 +236,7 @@ const DashboardActionCenter = () => {
       {/* Synergy: Gewerbe-Scout – immer sichtbar wenn Handlungsbedarf angezeigt wird */}
       <div className="flex flex-wrap gap-2">
         <Link
-          to={`${ROUTES.CRM}?tab=scout`}
+          to={ROUTES.CRM_SCOUT}
           className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
           aria-label="Gewerbe-Scout – Gewerbe nach Ort oder Umkreis finden"
         >

@@ -273,8 +273,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.ANALYSE)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zur Analyse">
                 <BarChart3 className="h-3.5 w-3.5" /> Zur Analyse
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(`${ROUTES.CRM}?tab=scout`)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Gewerbe finden">
-                <Store className="h-3.5 w-3.5" /> Gewerbe finden
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="gap-1.5 touch-target min-h-[44px]" aria-label="WGH finden">
+                <Store className="h-3.5 w-3.5" /> WGH finden
               </Button>
             </div>
           }

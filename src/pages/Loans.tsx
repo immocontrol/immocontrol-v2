@@ -897,8 +897,8 @@ const Loans = () => {
             <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Berichte">
               <FileBarChart className="h-4 w-4" /> Berichte
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(`${ROUTES.CRM}?tab=scout`)} className="touch-target min-h-[44px] gap-2" aria-label="Gewerbe-Scout">
-              <Store className="h-4 w-4" /> Gewerbe finden
+            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-2" aria-label="WGH-Scout">
+              <Store className="h-4 w-4" /> WGH finden
             </Button>
           </div>
         </div>

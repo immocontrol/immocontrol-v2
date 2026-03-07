@@ -14,6 +14,8 @@ export const ROUTES = {
   LOANS: "/darlehen",
   DEALS: "/deals",
   CRM: "/crm",
+  /** CRM WGH-Scout tab — use for all "WGH finden" / Scout links */
+  CRM_SCOUT: "/crm?tab=scout",
   REPORTS: "/berichte",
   RENT: "/mietuebersicht",
   CONTRACTS: "/vertraege",
