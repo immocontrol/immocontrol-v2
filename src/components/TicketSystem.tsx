@@ -15,7 +15,7 @@ import { isDeepSeekConfigured, suggestTicketDescription } from "@/integrations/a
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ROUTES } from "@/lib/routes";
-import { getCallUrl } from "@/integrations/voice";
+import { CallButton } from "@/components/CallButton";
 
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "urgent";
@@ -627,7 +627,7 @@ export const LandlordTickets = ({ propertyId }: LandlordTicketsProps) => {
                         {assignedContact.company && <div className="text-[10px] text-muted-foreground">{assignedContact.company}</div>}
                       </div>
                       {assignedContact.phone && (
-                        <a href={getCallUrl(assignedContact.phone)} className="ml-auto text-[10px] text-primary hover:underline">{assignedContact.phone}</a>
+                        <CallButton phone={assignedContact.phone} toLabel={assignedContact.name} className="ml-auto text-[10px] text-primary hover:underline" variant="link" />
                       )}
                     </div>
                   ) : assigningId === ticket.id ? (

@@ -110,7 +110,8 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
-| **WGH-Scout** | CRM, Calling | Button „Anrufen“ nutzt startCall() (nicht nur tel:-Link), damit bei VoIP Fehler per Toast angezeigt werden; KI „Anruf-Einstieg“ (suggestColdCallOpening). |
+| **CallButton** | CRM, Contacts, TenantManagement, Tickets, Scout | Einheitliche Anruf-UI: startCall() überall, Fehler-Toast bei VoIP; nutzbar mit toLabel, leadId, record. |
+| **WGH-Scout** | CRM, Calling | Button „Anrufen“ nutzt startCall() (CallButton-Pattern); KI „Anruf-Einstieg“ (suggestColdCallOpening). |
 | **WGH-Scout** | CRM, Leads | Rebrand von Gewerbe-Scout (Wohn- und Geschäftshaus). Ort oder Umkreis (bis 10 km); Gebäudegröße aus OSM; Filter Typ/Mindestfläche/Nur mit Telefon/Web/E-Mail; Deduplizierung; CSV; „Auf Karte anzeigen“ (OSM), Öffnungszeiten, sessionStorage, initialQuery. ROUTES.CRM_SCOUT. |
 | **CRM** | URL-Tab, Scout | `?tab=scout` öffnet WGH-Scout; `?q=…` wird als initialQuery übergeben (Synergie Deals, Objekt, Besichtigung) |
 | **Deals** | CRM (Scout) | Bei Adresse: „WGH in Umgebung“ / „Scout“; bei Kaufpreis + m²: Anzeige €/m² auf Karte |

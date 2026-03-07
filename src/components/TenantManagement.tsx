@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Users, Plus, Phone, Mail, Calendar, Home, Trash2, Edit2, UserPlus, Send, Copy, Check, Loader2, Eye } from "lucide-react";
+import { Users, Plus, Mail, Calendar, Home, Trash2, Edit2, UserPlus, Send, Copy, Check, Loader2, Eye } from "lucide-react";
 import AddTenantDialog from "@/components/AddTenantDialog";
 import { isValidEmail } from "@/lib/validation";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,7 @@ import TenantPortalPreview from "@/components/TenantPortalPreview";
 import { formatCurrency } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { getCallUrl } from "@/integrations/voice";
+import { CallButton } from "@/components/CallButton";
 
 interface Tenant {
   id: string;
@@ -387,9 +387,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                     </Tooltip>
                   )}
                   {t.phone && (
-                    <a href={getCallUrl(t.phone)} className="flex items-center gap-0.5 hover:text-foreground transition-colors">
-                      <Phone className="h-2.5 w-2.5" /> {t.phone}
-                    </a>
+                    <CallButton phone={t.phone} toLabel={[t.first_name, t.last_name].filter(Boolean).join(" ")} className="hover:text-foreground" />
                   )}
                   <span>{formatCurrency(t.monthly_rent)}/M</span>
                   {t.move_in_date && (

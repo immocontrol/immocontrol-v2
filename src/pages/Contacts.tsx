@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck } from "lucide-react";
+import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
-import { getCallUrl } from "@/integrations/voice";
+import { CallButton } from "@/components/CallButton";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useUndoToast } from "@/hooks/useUndoToast";
 import { ContactDuplicateDetector } from "@/components/ContactDuplicateDetector";
@@ -587,9 +587,7 @@ const ContactManagement = () => {
                     {c.company && <p className="text-xs text-muted-foreground">{c.company}</p>}
                     <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
                       {c.phone && (
-                        <a href={getCallUrl(c.phone)} className="flex items-center gap-0.5 hover:text-primary transition-colors">
-                          <Phone className="h-2.5 w-2.5" /> {c.phone}
-                        </a>
+                        <CallButton phone={c.phone} toLabel={c.name ?? undefined} className="hover:text-primary" />
                       )}
                       {c.email && (
                         <a href={`mailto:${c.email}`} className="flex items-center gap-0.5 hover:text-primary transition-colors">

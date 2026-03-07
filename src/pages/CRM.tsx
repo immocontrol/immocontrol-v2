@@ -26,6 +26,7 @@ import {
   statusColors, statusLabels, outcomeLabels,
   calculateLeadScore, LEAD_STATUS_OPTIONS, calcCRMStats, CRM_SEARCH_DEBOUNCE,
 } from "@/lib/crmUtils";
+import { CallButton } from "@/components/CallButton";
 import { EmptyState } from "@/components/EmptyState";
 import GewerbeScout from "@/components/GewerbeScout";
 import { ROUTES } from "@/lib/routes";
@@ -41,7 +42,7 @@ type CRMTabValue = (typeof CRM_TAB_VALUES)[number];
 const CRM = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { startCall, getCallUrl } = useVoiceCall();
+  const { startCall } = useVoiceCall();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const tabFromUrl = searchParams.get("tab");
@@ -655,9 +656,7 @@ const CRM = () => {
                         <p className="text-xs text-muted-foreground truncate">{place.address}</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {place.phone && (
-                            <a href={getCallUrl(place.phone)} className="text-xs text-primary hover:underline flex items-center gap-1">
-                              <Phone className="h-3 w-3" /> {place.phone}
-                            </a>
+                            <CallButton phone={place.phone} toLabel={place.name} className="text-xs text-primary hover:underline flex items-center gap-1" variant="link" />
                           )}
                           {place.website && (
                             <a href={place.website} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
@@ -742,9 +741,7 @@ const CRM = () => {
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                           {biz.phone && (
-                                            <a href={getCallUrl(biz.phone)} className="text-primary hover:underline flex items-center gap-0.5">
-                                              <Phone className="h-2.5 w-2.5" /> {biz.phone}
-                                            </a>
+                                            <CallButton phone={biz.phone} toLabel={biz.name} className="text-primary hover:underline flex items-center gap-0.5" variant="link" />
                                           )}
                                           {biz.email && (
                                             <a href={`mailto:${biz.email}`} className="text-primary hover:underline flex items-center gap-0.5">
@@ -781,9 +778,9 @@ const CRM = () => {
                       </div>
                       <div className="flex gap-1 shrink-0">
                         {place.phone && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                            <a href={getCallUrl(place.phone)}><Phone className="h-3.5 w-3.5" /></a>
-                          </Button>
+                          <CallButton phone={place.phone} toLabel={place.name} className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-accent" ariaLabel={`Anrufen: ${place.name}`}>
+                            <Phone className="h-3.5 w-3.5" />
+                          </CallButton>
                         )}
                         <Button
                           variant="outline"
@@ -984,7 +981,7 @@ const CRM = () => {
                       {selectedLeadData.phone && (
                         <div>
                           <span className="text-muted-foreground text-xs">Telefon</span>
-                          <p><a href={getCallUrl(selectedLeadData.phone)} className="text-primary hover:underline">{selectedLeadData.phone}</a></p>
+                          <p><CallButton phone={selectedLeadData.phone} toLabel={selectedLeadData.name} className="text-primary hover:underline" variant="link" /></p>
                         </div>
                       )}
                       {selectedLeadData.email && (
