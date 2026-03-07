@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DataBackup } from "@/components/DataBackup";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
 
@@ -154,7 +155,7 @@ const Settings = () => {
     try {
       await signOut();
       toast.success("Abgemeldet");
-      navigate("/auth");
+      navigate(ROUTES.AUTH);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Abmeldung fehlgeschlagen");
     }

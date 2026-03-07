@@ -10,6 +10,8 @@ import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 /* Item 9: Proper payment type for Supabase join queries */
 interface PaymentRow {
@@ -100,7 +102,8 @@ export const FinanceExportDialog = () => {
       URL.revokeObjectURL(url);
       toast.success(`Steuer-Export ${year} heruntergeladen`);
     } catch (e: unknown) {
-      toast.error("Fehler beim Export");
+      handleError(e, { context: "export", showToast: false });
+      toastErrorWithRetry("Fehler beim Export", () => exportSteuerCSV());
     } finally {
       setLoading(false);
     }
@@ -227,7 +230,8 @@ ${typedConfirmed.map((p) => {
       }
       toast.success(`Jahresbericht ${year} geöffnet`);
     } catch (e: unknown) {
-      toast.error("Fehler beim Erstellen des Berichts");
+      handleError(e, { context: "export", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen des Berichts", () => exportJahresbericht());
     } finally {
       setLoading(false);
     }

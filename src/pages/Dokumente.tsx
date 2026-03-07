@@ -20,6 +20,7 @@ import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
 import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai/extractors";
 import { extractPdfText } from "@/lib/exposeParser";
 import { EmptyState } from "@/components/EmptyState";
+import { ROUTES } from "@/lib/routes";
 
 interface DocEntry {
   id: string;
@@ -381,10 +382,10 @@ const Dokumente = () => {
           description={documents.length === 0 ? "Lade Verträge, Gutachten oder Nebenkostenabrechnungen hoch." : undefined}
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate("/vertraege")} className="touch-target min-h-[44px] gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2">
                 <FileSignature className="h-4 w-4" /> Verträge verwalten
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate("/nebenkosten")} className="touch-target min-h-[44px] gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.NK)} className="touch-target min-h-[44px] gap-2">
                 <Receipt className="h-4 w-4" /> Nebenkostenabrechnung
               </Button>
             </div>

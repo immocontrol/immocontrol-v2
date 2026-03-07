@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (FinanceExport, Deals)** — FinanceExport (Steuer-Export, Jahresbericht), Deals (Exposé-Analyse, KI Verbessern, Nächster Schritt) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
+- **ROUTES-Synergie** — ObjekteList, Contacts, CRM, Dokumente, Einladung, Settings nutzen `ROUTES` statt Hardcode-Pfade (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (Schadensmeldung, DataBackup, RentIncreaseLetter)** — DamageReport (Senden), DataBackup (Backup erstellen), RentIncreaseLetter (KI-Begründung/Verbessern) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Synergie Wartungsplaner → Berichte** — Empty State: Button „Berichte“; ROUTES für Objekte; Touch-Target, aria-labels
 - **Retry-Toast + Fehleranalyse (Index-Mietanpassung, CRM-Suche, PropertyValuation)** — IndexMietanpassung (KI-Begründung), CRM (Adresssuche), PropertyValuation (Bodenrichtwert) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
@@ -65,6 +67,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **FinanceExport** — Bei Export- und Jahresbericht-Fehler: handleError + toastErrorWithRetry (Retry)
+- **Deals** — Exposé-PDF: handleError + toastErrorWithRetry (Ref für Datei-Retry); KI „Verbessern“ und „Nächster Schritt“: runImproveNotes/runNextStep mit Retry
+- **ObjekteList, Contacts, CRM, Dokumente, Einladung, Settings** — Navigation über ROUTES statt String-Pfade
 - **DamageReport** — Bei Sende-Fehler: handleError + toastErrorWithRetry (Retry Senden)
 - **DataBackup** — Bei Backup-Fehler: handleError + toastErrorWithRetry (Retry exportAll)
 - **RentIncreaseLetter** — KI-Begründung und Verbessern: handleError + toastErrorWithRetry; runGenerateJustification/runImproveText als useCallback für Retry

@@ -40,6 +40,7 @@ import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { EmptyState } from "@/components/EmptyState";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
+import { ROUTES } from "@/lib/routes";
 
 interface ContactItem {
   id: string;
@@ -505,7 +506,7 @@ const ContactManagement = () => {
                 <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
                   <Plus className="h-3.5 w-3.5" /> Ersten Kontakt anlegen
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate("/deals")}>
+                <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.DEALS)}>
                   <Briefcase className="h-3.5 w-3.5" /> Zu Deals
                 </Button>
               </div>
@@ -563,7 +564,7 @@ const ContactManagement = () => {
                       {contactDealCounts[c.id] > 0 && (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); navigate("/deals", { state: { filterByContact: c.name } }); }}
+                          onClick={(e) => { e.stopPropagation(); navigate(ROUTES.DEALS, { state: { filterByContact: c.name } }); }}
                           className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-medium hover:bg-primary/25 transition-colors cursor-pointer"
                           title={`${contactDealCounts[c.id]} Deal(s) anzeigen`}
                         >
@@ -658,7 +659,7 @@ const ContactManagement = () => {
                             size="icon"
                             className="h-7 w-7 text-primary"
                             onClick={() => {
-                              navigate("/deals", { state: { fromContact: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: c.address, notes: c.notes } } });
+                              navigate(ROUTES.DEALS, { state: { fromContact: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: c.address, notes: c.notes } } });
                               toast.info("Deal-Vorlage aus Kontakt übernommen");
                             }}
                           >

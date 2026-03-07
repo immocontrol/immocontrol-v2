@@ -106,10 +106,10 @@ const ObjekteList = () => {
             !search ? (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <AddPropertyDialog />
-                <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="touch-target min-h-[44px] gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Deals">
                   <Briefcase className="h-4 w-4" /> Deals
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate("/besichtigungen")} className="touch-target min-h-[44px] gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Besichtigungen">
                   <Camera className="h-4 w-4" /> Besichtigungen
                 </Button>
               </div>

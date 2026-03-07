@@ -38,6 +38,8 @@ import { extractDealFromExposeText, isDeepSeekConfigured, suggestDealNextStep, i
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { sanitizeFormData } from "@/lib/sanitize";
 import { useShare } from "@/components/mobile/MobileShareSheet";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -379,11 +381,13 @@ const Deals = () => {
     onError: (e: Error) => toast.error(`Verschieben fehlgeschlagen: ${e.message}`),
   });
 
+  const exposePdfFileRef = useRef<File | null>(null);
   const handleExposePdf = async (file: File) => {
     if (!file?.name?.toLowerCase().endsWith(".pdf")) {
       toast.error("Bitte eine PDF-Datei wählen.");
       return;
     }
+    exposePdfFileRef.current = file;
     setExposeAnalyzing(true);
     setDealScore(null);
     setScoreReason(null);
@@ -414,12 +418,50 @@ const Deals = () => {
       if (typeof extracted.deal_score === "number") setDealScore(extracted.deal_score);
       if (extracted.score_reason) setScoreReason(extracted.score_reason);
       toast.success("Exposé ausgewertet. Felder übernommen.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Exposé-Analyse fehlgeschlagen.");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Exposé-Analyse fehlgeschlagen.", () => {
+        if (exposePdfFileRef.current) handleExposePdf(exposePdfFileRef.current);
+      });
     } finally {
       setExposeAnalyzing(false);
     }
   };
+
+  const runImproveNotes = useCallback(async () => {
+    setImproveNotesLoading(true);
+    try {
+      const improved = await improveText(form.notes || "", "Deal-Notizen (Immobilie, Besichtigung, Verhandlung)");
+      setForm(p => ({ ...p, notes: improved }));
+      toast.success("Notizen überarbeitet");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry((e instanceof Error ? e.message : "Text verbessern fehlgeschlagen"), runImproveNotes);
+    } finally {
+      setImproveNotesLoading(false);
+    }
+  }, [form.notes]);
+
+  const runNextStep = useCallback(async () => {
+    setNextStepLoading(true);
+    try {
+      const step = await suggestDealNextStep({
+        stage: form.stage,
+        title: form.title || undefined,
+        address: form.address || undefined,
+        notes: form.notes || undefined,
+        createdAt: editDeal?.created_at,
+      });
+      const prefix = form.notes?.trim() ? "\n\n" : "";
+      setForm(p => ({ ...p, notes: (p.notes || "").trimEnd() + prefix + step }));
+      toast.success("KI-Vorschlag übernommen");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry((e instanceof Error ? e.message : "KI-Vorschlag fehlgeschlagen"), runNextStep);
+    } finally {
+      setNextStepLoading(false);
+    }
+  }, [form.stage, form.title, form.address, form.notes, editDeal?.created_at]);
 
   /* UPD-24: Batch import mutation for Telegram deals */
   const batchImport = useMutation({
@@ -1146,18 +1188,7 @@ const Deals = () => {
                         size="sm"
                         className="h-7 text-xs gap-1 touch-target min-h-[44px]"
                         disabled={improveNotesLoading}
-                        onClick={async () => {
-                          setImproveNotesLoading(true);
-                          try {
-                            const improved = await improveText(form.notes || "", "Deal-Notizen (Immobilie, Besichtigung, Verhandlung)");
-                            setForm(p => ({ ...p, notes: improved }));
-                            toast.success("Notizen überarbeitet");
-                          } catch (e) {
-                            toast.error((e as Error).message || "Text verbessern fehlgeschlagen");
-                          } finally {
-                            setImproveNotesLoading(false);
-                          }
-                        }}
+                        onClick={runImproveNotes}
                         aria-label="Notizen mit KI überarbeiten"
                       >
                         {improveNotesLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
@@ -1171,25 +1202,7 @@ const Deals = () => {
                         size="sm"
                         className="h-7 text-xs gap-1 touch-target min-h-[44px]"
                         disabled={nextStepLoading}
-                        onClick={async () => {
-                          setNextStepLoading(true);
-                          try {
-                            const step = await suggestDealNextStep({
-                              stage: form.stage,
-                              title: form.title || undefined,
-                              address: form.address || undefined,
-                              notes: form.notes || undefined,
-                              createdAt: editDeal?.created_at,
-                            });
-                            const prefix = form.notes?.trim() ? "\n\n" : "";
-                            setForm(p => ({ ...p, notes: (p.notes || "").trimEnd() + prefix + step }));
-                            toast.success("KI-Vorschlag übernommen");
-                          } catch (e) {
-                            toast.error((e as Error).message || "KI-Vorschlag fehlgeschlagen");
-                          } finally {
-                            setNextStepLoading(false);
-                          }
-                        }}
+                        onClick={runNextStep}
                         aria-label="Nächsten Deal-Schritt vorschlagen"
                       >
                         {nextStepLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}

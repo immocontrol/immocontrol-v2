@@ -26,6 +26,7 @@ import {
   calculateLeadScore, LEAD_STATUS_OPTIONS, calcCRMStats, CRM_SEARCH_DEBOUNCE,
 } from "@/lib/crmUtils";
 import { EmptyState } from "@/components/EmptyState";
+import { ROUTES } from "@/lib/routes";
 
 /* IMP-3: Utility functions extracted to @/lib/crmUtils.ts for modularity */
 
@@ -713,7 +714,7 @@ const CRM = () => {
                   title="Keine Leads gefunden"
                   description="Suche nach Geschäften oder füge Leads manuell hinzu."
                   action={
-                    <Button variant="outline" size="sm" onClick={() => navigate("/besichtigungen")} className="touch-target min-h-[44px]">
+                    <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px]">
                       <CalendarCheck className="h-4 w-4 mr-2" /> Zu Besichtigungen
                     </Button>
                   }
@@ -793,7 +794,7 @@ const CRM = () => {
                         <Button size="sm" variant="outline" onClick={() => { setLogDialogOpen(true); setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 }); }}>
                           <MessageSquare className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Gespräch</span> loggen
                         </Button>
-                        <Button size="sm" variant="default" onClick={() => navigate("/deals", { state: { fromLead: selectedLeadData } })} className="touch-target min-h-[44px]">
+                        <Button size="sm" variant="default" onClick={() => navigate(ROUTES.DEALS, { state: { fromLead: selectedLeadData } })} className="touch-target min-h-[44px]">
                           <Handshake className="h-4 w-4 mr-1" /> Als Deal
                         </Button>
                       </div>

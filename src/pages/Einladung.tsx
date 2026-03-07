@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 
 const Einladung = () => {
   const [searchParams] = useSearchParams();
@@ -84,7 +85,7 @@ const Einladung = () => {
           <XCircle className="h-12 w-12 text-destructive mx-auto" />
           <h1 className="text-xl font-bold">Ungültiger Link</h1>
           <p className="text-muted-foreground">Dieser Einladungslink ist ungültig oder unvollständig.</p>
-          <Button onClick={() => navigate("/auth")}>Zur Anmeldung</Button>
+          <Button onClick={() => navigate(ROUTES.AUTH)}>Zur Anmeldung</Button>
         </div>
       </div>
     );
@@ -100,7 +101,7 @@ const Einladung = () => {
           </p>
           <Button onClick={() => {
             sessionStorage.setItem("invitation_token", token || "");
-            navigate("/auth");
+            navigate(ROUTES.AUTH);
           }}>
             Anmelden / Registrieren
           </Button>
