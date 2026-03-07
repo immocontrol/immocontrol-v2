@@ -14,7 +14,7 @@ import StatCard from "@/components/StatCard";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
-import EmptyState from "@/components/EmptyState";
+import { EmptyState } from "@/components/EmptyState";
 import { PropertyCsvImport } from "@/components/PropertyCsvImport";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { AITipCard } from "@/components/AITipCard";

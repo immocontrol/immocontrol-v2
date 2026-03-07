@@ -37,7 +37,7 @@ import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
-import EmptyState from "@/components/EmptyState";
+import { EmptyState } from "@/components/EmptyState";
 
 interface ContactItem {
   id: string;

@@ -298,7 +298,8 @@ export const formatDaysUntil = (dateStr: string): string => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(dateStr);
-  const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  target.setHours(0, 0, 0, 0); // Normalize to local midnight (avoids UTC date-only parsing as next-day)
+  const days = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (days < 0) return `${Math.abs(days)} Tage überfällig`;
   if (days === 0) return "Heute";
   if (days === 1) return "Morgen";

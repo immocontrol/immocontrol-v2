@@ -20,6 +20,25 @@ import {
   DEFAULT_PARAMS,
   SCENARIOS,
 } from "@/lib/hockeyStickEngine";
+
+/** Params with non-zero values so growth/debt/rental assertions pass (DEFAULT_PARAMS is all zeros) */
+const HOCKEY_TEST_PARAMS = {
+  ...DEFAULT_PARAMS,
+  startCapital: 50000,
+  monthlyInvestment: 500,
+  annualReturn: 4,
+  annualAppreciation: 2,
+  inflationRate: 2,
+  taxRate: 26,
+  years: 15,
+  rentYield: 4,
+  leverageRatio: 70,
+  maintenancePct: 1,
+  vacancyRate: 3,
+  rentGrowthRate: 1.5,
+  managementFee: 5,
+  insurancePct: 0.3,
+};
 import {
   calculatePolygonArea,
   distanceMeters,
@@ -236,39 +255,39 @@ describe("Rendite Calculations", () => {
 // ===== HOCKEY STICK SIMULATOR ENGINE =====
 describe("Hockey Stick Simulator", () => {
   it("should return year 0 with initial values", () => {
-    const data = simulate(DEFAULT_PARAMS);
+    const data = simulate(HOCKEY_TEST_PARAMS);
     expect(data[0].year).toBe(0);
-    expect(data[0].totalInvested).toBe(DEFAULT_PARAMS.startCapital);
+    expect(data[0].totalInvested).toBe(HOCKEY_TEST_PARAMS.startCapital);
     expect(data[0].numberOfProperties).toBe(1);
   });
 
   it("should generate data points for all years", () => {
-    const data = simulate(DEFAULT_PARAMS);
-    expect(data).toHaveLength(DEFAULT_PARAMS.years + 1); // year 0 to year N
+    const data = simulate(HOCKEY_TEST_PARAMS);
+    expect(data).toHaveLength(HOCKEY_TEST_PARAMS.years + 1); // year 0 to year N
   });
 
   it("should show portfolio growth over time", () => {
-    const data = simulate(DEFAULT_PARAMS);
+    const data = simulate(HOCKEY_TEST_PARAMS);
     const first = data[0].portfolioValue;
     const last = data[data.length - 1].portfolioValue;
     expect(last).toBeGreaterThan(first);
   });
 
   it("should reduce debt over time", () => {
-    const data = simulate(DEFAULT_PARAMS);
+    const data = simulate(HOCKEY_TEST_PARAMS);
     const initialDebt = data[0].debtRemaining;
     const finalDebt = data[data.length - 1].debtRemaining;
     expect(finalDebt).toBeLessThan(initialDebt);
   });
 
   it("should accumulate rental income", () => {
-    const data = simulate(DEFAULT_PARAMS);
+    const data = simulate(HOCKEY_TEST_PARAMS);
     expect(data[0].rentalIncome).toBe(0);
     expect(data[data.length - 1].rentalIncome).toBeGreaterThan(0);
   });
 
   it("should add additional properties at intervals", () => {
-    const params = { ...DEFAULT_PARAMS, additionalProperties: 2, propertyPurchaseInterval: 5, years: 15 };
+    const params = { ...HOCKEY_TEST_PARAMS, additionalProperties: 2, propertyPurchaseInterval: 5, years: 15 };
     const data = simulate(params);
     const lastPoint = data[data.length - 1];
     expect(lastPoint.numberOfProperties).toBeGreaterThan(1);
@@ -281,14 +300,14 @@ describe("Hockey Stick Simulator", () => {
   });
 
   it("should run sensitivity analysis", () => {
-    const results = sensitivityAnalysis(DEFAULT_PARAMS, "annualReturn", [2, 4, 6, 8]);
+    const results = sensitivityAnalysis(HOCKEY_TEST_PARAMS, "annualReturn", [2, 4, 6, 8]);
     expect(results).toHaveLength(4);
     // Each result should have a netWorth value
     results.forEach(r => expect(typeof r.netWorth).toBe("number"));
   });
 
   it("should calculate real net worth adjusted for inflation", () => {
-    const data = simulate(DEFAULT_PARAMS);
+    const data = simulate(HOCKEY_TEST_PARAMS);
     const lastPoint = data[data.length - 1];
     // Real net worth should be less than nominal due to inflation
     expect(lastPoint.realNetWorth).toBeLessThan(lastPoint.netWorth);
