@@ -7,6 +7,7 @@ import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import { ContractTemplates } from "@/components/ContractTemplates";
+import { KuendigungsfristRechner } from "@/components/KuendigungsfristRechner";
 import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart, Store } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
@@ -162,6 +163,8 @@ const Vertraege = () => {
           </div>
         </div>
       </div>
+
+      <KuendigungsfristRechner />
 
       <Tabs defaultValue="mietvertraege" className="w-full">
         <TabsList className="flex w-full overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible">

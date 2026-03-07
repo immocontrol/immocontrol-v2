@@ -261,10 +261,27 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
   const suggestionRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
+  const resultsListRef = useRef<HTMLUListElement>(null);
+  /** Roving tabindex: index of the focused result row (keyboard nav). */
+  const [focusedResultIndex, setFocusedResultIndex] = useState<number | null>(null);
+  const focusedResultRef = useRef<HTMLLIElement | null>(null);
 
   useEffect(() => {
     if (initialQuery != null && initialQuery.trim()) setQuery(initialQuery.trim());
   }, [initialQuery]);
+
+  /* Reset focused result when results change; scroll focused row into view */
+  const visibleResults = useMemo(() => sortedResults.slice(0, SCOUT_DISPLAY_CAP), [sortedResults]);
+  useEffect(() => {
+    if (visibleResults.length === 0) {
+      setFocusedResultIndex(null);
+      return;
+    }
+    setFocusedResultIndex((prev) => (prev === null ? 0 : Math.min(prev, visibleResults.length - 1)));
+  }, [visibleResults.length]);
+  useEffect(() => {
+    focusedResultRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focusedResultIndex]);
 
   const sortedResults = useMemo(() => {
     let list = [...results];
@@ -662,7 +679,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
                     </SelectContent>
                   </Select>
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2 cursor-pointer select-none touch-target min-h-[44px] sm:min-h-0 py-1 sm:py-0">
                   <input
                     type="checkbox"
                     checked={onlyWithPhone}
@@ -672,7 +689,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Telefon</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2 cursor-pointer select-none touch-target min-h-[44px] sm:min-h-0 py-1 sm:py-0">
                   <input
                     type="checkbox"
                     checked={onlyWithWebsite}
@@ -682,7 +699,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Web</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2 cursor-pointer select-none touch-target min-h-[44px] sm:min-h-0 py-1 sm:py-0">
                   <input
                     type="checkbox"
                     checked={onlyWithEmail}
@@ -692,7 +709,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit E-Mail</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2 cursor-pointer select-none touch-target min-h-[44px] sm:min-h-0 py-1 sm:py-0">
                   <input
                     type="checkbox"
                     checked={onlyWithOpeningHours}
@@ -757,11 +774,47 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
                 {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail/Öffnungszeiten) nutzen, um die Liste einzugrenzen.
               </p>
             )}
-            <ul className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener WGH-Treffer">
-              {sortedResults.slice(0, SCOUT_DISPLAY_CAP).map((b, i) => (
+            <ul
+              className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] outline-none"
+              role="listbox"
+              aria-labelledby="scout-results-heading"
+              aria-label="Liste gefundener WGH-Treffer"
+              tabIndex={0}
+              ref={resultsListRef}
+              onKeyDown={(e) => {
+                if (visibleResults.length === 0) return;
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setFocusedResultIndex((i) => (i === null ? 0 : Math.min(i + 1, visibleResults.length - 1)));
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setFocusedResultIndex((i) => (i === null ? visibleResults.length - 1 : Math.max(0, i - 1)));
+                  return;
+                }
+                if (e.key === "Enter" && focusedResultIndex !== null) {
+                  const li = resultsListRef.current?.children[focusedResultIndex] as HTMLElement | undefined;
+                  const first = li?.querySelector<HTMLElement>("a, button");
+                  if (first) {
+                    e.preventDefault();
+                    first.focus();
+                  }
+                }
+              }}
+            >
+              {visibleResults.map((b, i) => (
                 <li
                   key={`${b.name}-${b.lat}-${b.lon}-${i}`}
-                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm"
+                  ref={i === focusedResultIndex ? focusedResultRef : undefined}
+                  tabIndex={-1}
+                  role="option"
+                  aria-selected={i === focusedResultIndex}
+                  className={cn(
+                    "flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm",
+                    i === focusedResultIndex && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
+                  )}
+                  onClick={() => setFocusedResultIndex(i)}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
