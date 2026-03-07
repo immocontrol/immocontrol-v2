@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **WGH-Scout, Synergien, AI, Leerstand** — Scout: Empty State „Besichtigung planen“ → Besichtigungen; Trefferanzahl im Header nach Suche. Mietübersicht: Leerstands-Kosten-Rechner (Tage + Monatsmiete → entgangene Miete), Link „Verträge“ in Kopfzeile. PropertyDetail: KI Kurzbewertung (suggestPropertySummary, DeepSeek) per Sparkles-Button, Ergebnis im Toast. Neue Komponente LeerstandskostenRechner.tsx.
 - **WGH-Scout: Tastatur & Mobile** — Ergebnisliste mit Tastatur-Navigation (Pfeil hoch/runter, Enter für erste Aktion); roving tabindex, listbox/option A11y; Filter-Checkboxen mit größeren Touch-Zielen auf Mobile (min-h 44px).
 - **Kündigungsfrist-Rechner** — Neue Komponente auf der Seite Verträge: Kündigungsfrist (Monate) + gewünschtes Vertragsende → „Kündigung spätestens einreichen bis [Datum]“. Für Vermieter und Mietvertragsplanung.
 - **WGH-Scout & CRM: Verbesserungen & Synergien** — Scout: Lade-Skeleton während „Ordne Gebäudegrößen zu“ (6 Platzhalter-Karten); Empty State „Keine Treffer“ mit Link „Stattdessen Adresssuche im CRM“; neuer Button „Deal“ pro Treffer (Deal-Formular mit Name/Adresse/Telefon/E-Mail vorausgefüllt). Deals: Vorlage aus WGH-Scout (fromScout) und aus Objekt (fromProperty). PropertyDetail: Link „Deal anlegen“ neben „WGH in Umgebung“. CRM Leads: Lade-Skeleton (CRMSkeleton) statt „Laden…“; Export-Button „Export“ (CSV der gefilterten Leads); KI-Button „Nächster Schritt“ pro Lead (suggestLeadNextStep, DeepSeek). Doku: docs/SYNERGIEN.md ergänzt.

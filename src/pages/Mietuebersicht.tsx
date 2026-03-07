@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart, Store } from "lucide-react";
+import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart, Store, FileSignature } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { MobileQuickStats } from "@/components/mobile/MobileQuickStats";
+import { LeerstandskostenRechner } from "@/components/LeerstandskostenRechner";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -244,6 +245,9 @@ const Mietuebersicht = () => {
           <Link to={ROUTES.CRM_SCOUT} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="WGH finden">
             <Store className="h-3.5 w-3.5" /> WGH finden
           </Link>
+          <Link to={ROUTES.CONTRACTS} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]" aria-label="Verträge und Kündigungsfrist">
+            <FileSignature className="h-3.5 w-3.5" /> Verträge
+          </Link>
         </div>
       </div>
 
@@ -291,6 +295,8 @@ const Mietuebersicht = () => {
               <div className="text-[10px] text-muted-foreground">{stats.pendingCount} ausstehend</div>
             </div>
           </div>
+
+          <LeerstandskostenRechner />
 
           {/* FUNC-22/23/24: Payment trend, top tenants, payment methods */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

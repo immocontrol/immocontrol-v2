@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ import { isDeepSeekConfigured, suggestColdCallOpening } from "@/integrations/ai/
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { Link } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 
 type SearchMode = "ort" | "umkreis";
 
@@ -455,8 +456,15 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Store className="h-4 w-4" /> WGH-Scout
+        <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+          <span className="flex items-center gap-2">
+            <Store className="h-4 w-4" /> WGH-Scout
+          </span>
+          {searchLabel != null && results.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {results.length} Treffer
+            </span>
+          )}
         </CardTitle>
         <p className="text-xs text-muted-foreground text-wrap-safe">
           Ort oder Adresse eingeben. Ganzer Ort durchsucht die Stadt; Umkreis sucht um eine Adresse. Sortierung nach Gebäudegröße – ideal für Wohn- und Geschäftshäuser (WGH) mit Gewerbe im EG.
@@ -631,8 +639,11 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
             <div className="text-sm text-wrap-safe flex-1">
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
               <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 5 km oder 10 km).</p>
-              <p className="mt-2">
+              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 <Link to="/crm?tab=search" className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
+                <Link to={ROUTES.BESICHTIGUNGEN} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Besichtigung planen">
+                  <CalendarCheck className="h-3 w-3" /> Besichtigung planen →
+                </Link>
               </p>
             </div>
           </div>

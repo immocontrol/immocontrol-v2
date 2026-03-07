@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -51,6 +51,8 @@ import {
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
 import { useShare } from "@/components/mobile/MobileShareSheet";
+import { isDeepSeekConfigured, suggestPropertySummary } from "@/integrations/ai/extractors";
+import { handleError } from "@/lib/handleError";
 
 // Property detail page
 
@@ -62,6 +64,7 @@ const PropertyDetail = () => {
   const { getProperty, deleteProperty, duplicateProperty } = useProperties();
   const property = getProperty(id || "");
   const [tenantVersion, setTenantVersion] = useState(0);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
   // Synergy 13: Fetch property-level synergy stats + Besichtigungen (vernetzt Objekte mit Akquise)
@@ -242,6 +245,41 @@ const PropertyDetail = () => {
               </TooltipTrigger>
               <TooltipContent>Objektdaten teilen</TooltipContent>
             </Tooltip>
+            {isDeepSeekConfigured() && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    aria-label="KI Kurzbewertung"
+                    disabled={aiSummaryLoading}
+                    onClick={async () => {
+                      setAiSummaryLoading(true);
+                      try {
+                        const text = await suggestPropertySummary({
+                          name: property.name,
+                          address: property.address,
+                          monthly_rent: property.monthlyRent,
+                          purchase_price: property.purchasePrice,
+                          sqm: property.sqm,
+                          units: property.units,
+                          notes: property.notes,
+                        });
+                        toast.success(text, { duration: 8000, description: "KI Kurzbewertung" });
+                      } catch (e) {
+                        handleError(e, { context: "ai", details: "suggestPropertySummary", showToast: true });
+                      } finally {
+                        setAiSummaryLoading(false);
+                      }
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>KI Kurzbewertung</TooltipContent>
+              </Tooltip>
+            )}
             {/* UI-UPDATE-45: Tooltip on duplicate property action */}
             <Tooltip>
               <TooltipTrigger asChild>

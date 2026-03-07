@@ -412,6 +412,38 @@ export async function suggestLeadNextStep(lead: {
 }
 
 /**
+ * KI-Kurzbewertung für eine Immobilie (1–2 Sätze: Lage, Rendite, Einschätzung).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestPropertySummary(property: {
+  name?: string | null;
+  address?: string | null;
+  monthly_rent?: number | null;
+  purchase_price?: number | null;
+  sqm?: number | null;
+  units?: number | null;
+  notes?: string | null;
+}): Promise<string> {
+  const parts = [
+    property.name ? `Objekt: ${property.name}` : "",
+    property.address ? `Adresse: ${property.address}` : "",
+    property.monthly_rent != null ? `Monatsmiete: ${property.monthly_rent} €` : "",
+    property.purchase_price != null ? `Kaufpreis: ${property.purchase_price} €` : "",
+    property.sqm != null ? `Wohnfläche: ${property.sqm} m²` : "",
+    property.units != null ? `Einheiten: ${property.units}` : "",
+    property.notes ? `Notizen: ${property.notes.slice(0, 300)}` : "",
+  ].filter(Boolean);
+  const context = parts.join("\n");
+  const prompt = `Bewerte diese Immobilie als Immobilieninvestor in 1–2 kurzen Sätzen (Lage, Rendite wenn möglich, Einschätzung). Max. 25 Wörter. Auf Deutsch.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: `${context}\n\n${prompt}` }],
+    { systemPrompt: "Du bist ein sachkundiger Assistent für Immobilienbewertung. Antworte nur mit den 1–2 Sätzen.", maxTokens: 120 }
+  );
+  return raw.trim();
+}
+
+/**
  * Text verbessern/formalieren (Rechtschreibung, Stil, Formulierung).
  * Für Anschreiben, Begründungen, Notizen.
  */

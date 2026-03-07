@@ -9,6 +9,8 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Als Deal:** Neuer Button „Deal“ pro Treffer; optionaler Callback `onAddAsDeal`. Im CRM wird er genutzt: Navigation zu Deals mit vorausgefülltem Formular (Name, Adresse, Telefon, E-Mail). Quelle im Deal: „WGH-Scout“.
 - **Tastatur-Navigation:** In der Ergebnisliste: Pfeil hoch/runter wechseln den hervorgehobenen Treffer (roving tabindex), Enter fokussiert die erste Aktion (Anrufen/Web/Deal). Klick auf eine Zeile setzt die Hervorhebung. Verbesserte A11y (role="listbox", aria-selected, Fokus-Ring).
 - **Mobile Touch:** Filter-Checkboxen (Nur mit Telefon/Web/E-Mail/Öffnungszeiten) haben auf Mobilgeräten größere Touch-Ziele (min-h 44px für die gesamte Label-Zeile).
+- **Empty State:** Zusätzlicher Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN (Synergie Scout ↔ Besichtigungen).
+- **Header:** Nach Suche wird „X Treffer“ im Kartentitel angezeigt.
 
 ## CRM
 
@@ -25,6 +27,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 ## AI
 
 - **suggestLeadNextStep:** Neue Funktion in `extractors.ts` für CRM-Leads (Name, Firma, Status, Notizen) → ein Satz Vorschlag für den nächsten Schritt.
+- **suggestPropertySummary:** KI-Kurzbewertung für Objekte (Name, Adresse, Miete, Kaufpreis, m², Einheiten, Notizen) → 1–2 Sätze Bewertung. Button „KI Kurzbewertung“ (Sparkles) in PropertyDetail, nur wenn DeepSeek konfiguriert; Ergebnis im Toast (8 s).
 
 ## Dokumentation
 
@@ -34,6 +37,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 ## Neue Funktionen (Investoren)
 
 - **Kündigungsfrist-Rechner:** Auf der Seite Verträge & Verwaltung. Eingabe: Kündigungsfrist (Monate) und gewünschtes Vertragsende. Ausgabe: „Kündigung spätestens einreichen bis [Datum]“. Relevant für Mietverträge und Kündigungsplanung. Komponente: `KuendigungsfristRechner.tsx`.
+- **Leerstands-Kosten-Rechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: Tage Leerstand, Monatsmiete (€). Ausgabe: entgangene Miete. Komponente: `LeerstandskostenRechner.tsx`. Synergie: Mietübersicht verlinkt „Verträge“ (Kündigungsfrist) in der Kopfzeile.
 
 ## Technik
 
@@ -42,3 +46,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Deals:** Erweiterung des location.state-Typs um `fromScout` und `fromProperty`; Vorlage-Logik für beide Fälle.
 - **PropertyDetail:** Import `Handshake`; Button „Deal anlegen“ mit `navigate(ROUTES.DEALS, { state: { fromProperty: { title, address } } })`.
 - **Verträge:** Import und Einbindung `KuendigungsfristRechner` oberhalb der Tabs.
+- **GewerbeScout:** ROUTES.BESICHTIGUNGEN für Empty-State-Link „Besichtigung planen“; Trefferanzahl im CardTitle wenn `searchLabel && results.length > 0`.
+- **Mietübersicht:** Import `LeerstandskostenRechner`, `FileSignature`; Link „Verträge“ in Kopfzeile (ROUTES.CONTRACTS); LeerstandskostenRechner im Tab Zahlungen unter den KPI-Karten.
+- **PropertyDetail:** `suggestPropertySummary`, `isDeepSeekConfigured`, `handleError`; Button „KI Kurzbewertung“ (Sparkles) mit Toast-Ausgabe.
+- **extractors.ts:** Neue Funktion `suggestPropertySummary(property)`.

@@ -10,7 +10,10 @@
 | **CRM (Leads)** | WGH-Scout, Besichtigungen | Empty State: Buttons „WGH suchen“ (Tab Scout), „Zu Besichtigungen“; Export Leads als CSV |
 | **WGH-Scout** | Deals | Button „Deal“ pro Treffer – Deal-Formular mit Name/Adresse/Telefon/E-Mail vorausgefüllt (fromScout) |
 | **WGH-Scout** | CRM Suche | Empty State „Keine Treffer“: Link „Stattdessen Adresssuche im CRM“ → /crm?tab=search |
+| **WGH-Scout** | Besichtigungen | Empty State „Keine Treffer“: Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN |
 | **Verträge** | Fristen | Kündigungsfrist-Rechner auf der Seite Verträge: gewünschtes Enddatum + Frist in Monaten → spätestes Kündigungsdatum |
+| **Mietübersicht** | Verträge | Link „Verträge“ in der Kopfzeile (ROUTES.CONTRACTS); Leerstands-Kosten-Rechner im Tab Zahlungen |
+| **PropertyDetail** | AI | Button „KI Kurzbewertung“ (suggestPropertySummary) – 1–2 Sätze Bewertung bei DeepSeek |
 | **PropertyDetail** | Deals | Link „Deal anlegen“ neben „WGH in Umgebung“ – Deal mit Objektname/Adresse vorausgefüllt (fromProperty) |
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
