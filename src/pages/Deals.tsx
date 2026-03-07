@@ -34,7 +34,7 @@ import { DealToPropertyConverter } from "@/components/DealToPropertyConverter";
 import { MobileSwipeableDealCard } from "@/components/mobile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractPdfText } from "@/lib/exposeParser";
-import { extractDealFromExposeText, isDeepSeekConfigured, suggestDealNextStep } from "@/integrations/ai/extractors";
+import { extractDealFromExposeText, isDeepSeekConfigured, suggestDealNextStep, improveText } from "@/integrations/ai/extractors";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { sanitizeFormData } from "@/lib/sanitize";
 import { useShare } from "@/components/mobile/MobileShareSheet";
@@ -214,6 +214,7 @@ const Deals = () => {
   const [scoreReason, setScoreReason] = useState<string | null>(null);
   /* AI: Nächster Deal-Schritt (suggestDealNextStep) */
   const [nextStepLoading, setNextStepLoading] = useState(false);
+  const [improveNotesLoading, setImproveNotesLoading] = useState(false);
 
   /* FUNC-12: Kanban Drag & Drop between stages */
   const [draggedDeal, setDraggedDeal] = useState<DealRecord | null>(null);
@@ -1134,38 +1135,68 @@ const Deals = () => {
             {/* UPD-42: Source field with Telegram preset hint */}
             <Input placeholder="Quelle (z.B. ImmoScout, Makler, Telegram)" value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value }))} aria-label="Quelle" />
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                 <span className="text-xs text-muted-foreground">Notizen</span>
-                {isDeepSeekConfigured() && (editDeal || form.title || form.address) && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs gap-1"
-                    disabled={nextStepLoading}
-                    onClick={async () => {
-                      setNextStepLoading(true);
-                      try {
-                        const step = await suggestDealNextStep({
-                          stage: form.stage,
-                          title: form.title || undefined,
-                          address: form.address || undefined,
-                          notes: form.notes || undefined,
-                          createdAt: editDeal?.created_at,
-                        });
-                        const prefix = form.notes?.trim() ? "\n\n" : "";
-                        setForm(p => ({ ...p, notes: (p.notes || "").trimEnd() + prefix + step }));
-                        toast.success("KI-Vorschlag übernommen");
-                      } catch (e) {
-                        toast.error((e as Error).message || "KI-Vorschlag fehlgeschlagen");
-                      } finally {
-                        setNextStepLoading(false);
-                      }
-                    }}
-                  >
-                    {nextStepLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                    Nächster Schritt
-                  </Button>
+                {isDeepSeekConfigured() && (
+                  <span className="flex items-center gap-1">
+                    {(form.notes || "").trim().length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1 touch-target min-h-[44px]"
+                        disabled={improveNotesLoading}
+                        onClick={async () => {
+                          setImproveNotesLoading(true);
+                          try {
+                            const improved = await improveText(form.notes || "", "Deal-Notizen (Immobilie, Besichtigung, Verhandlung)");
+                            setForm(p => ({ ...p, notes: improved }));
+                            toast.success("Notizen überarbeitet");
+                          } catch (e) {
+                            toast.error((e as Error).message || "Text verbessern fehlgeschlagen");
+                          } finally {
+                            setImproveNotesLoading(false);
+                          }
+                        }}
+                        aria-label="Notizen mit KI überarbeiten"
+                      >
+                        {improveNotesLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                        Verbessern
+                      </Button>
+                    )}
+                    {(editDeal || form.title || form.address) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1 touch-target min-h-[44px]"
+                        disabled={nextStepLoading}
+                        onClick={async () => {
+                          setNextStepLoading(true);
+                          try {
+                            const step = await suggestDealNextStep({
+                              stage: form.stage,
+                              title: form.title || undefined,
+                              address: form.address || undefined,
+                              notes: form.notes || undefined,
+                              createdAt: editDeal?.created_at,
+                            });
+                            const prefix = form.notes?.trim() ? "\n\n" : "";
+                            setForm(p => ({ ...p, notes: (p.notes || "").trimEnd() + prefix + step }));
+                            toast.success("KI-Vorschlag übernommen");
+                          } catch (e) {
+                            toast.error((e as Error).message || "KI-Vorschlag fehlgeschlagen");
+                          } finally {
+                            setNextStepLoading(false);
+                          }
+                        }}
+                        aria-label="Nächsten Deal-Schritt vorschlagen"
+                      >
+                        {nextStepLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                        Nächster Schritt
+                      </Button>
+                    )}
+                  </span>
                 )}
               </div>
               <Textarea placeholder="Notizen" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} aria-label="Notizen" />

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,10 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
+import { EmptyState } from "@/components/EmptyState";
+import { ROUTES } from "@/lib/routes";
 
 const Berichte = () => {
   const { properties, stats } = useProperties();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState("");
   const [year, setYear] = useState(new Date().getFullYear().toString());
 
@@ -438,6 +442,28 @@ ${rows}
     toast.success("Portfoliobericht erstellt!");
   }, [properties, stats, reportMetrics, year]);
 
+  if (properties.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8" role="main" aria-label="Berichte-Center">
+        <EmptyState
+          icon={FileBarChart}
+          title="Keine Objekte"
+          description="Berichte basieren auf Objekten. Lege zuerst ein Objekt an oder übernimm einen Deal."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.OBJEKTE)}>
+                <Building2 className="h-3.5 w-3.5" /> Objekte
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.DEALS)}>
+                <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+              </Button>
+            </div>
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label="Berichte-Center">
       {/* Improvement 10: Mobile responsive heading */}
@@ -511,7 +537,7 @@ ${rows}
           <div className="text-xs text-muted-foreground">
             {tenants.length} Mieter · {payments.filter(p => p.status === "confirmed").length} bestätigt
           </div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportMietbericht}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 touch-target min-h-[44px]" onClick={exportMietbericht}>
             <Download className="h-3.5 w-3.5" /> Erstellen
           </Button>
         </div>
@@ -528,7 +554,7 @@ ${rows}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">Finanzen, Darlehen, Mieter</div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportObjektbericht} disabled={!selectedProperty || selectedProperty === "all"}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 touch-target min-h-[44px]" onClick={exportObjektbericht} disabled={!selectedProperty || selectedProperty === "all"}>
             <Download className="h-3.5 w-3.5" /> Erstellen
           </Button>
         </div>
@@ -545,7 +571,7 @@ ${rows}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">CSV inkl. Zinsen & Versicherungen</div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportDATEV}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 touch-target min-h-[44px]" onClick={exportDATEV}>
             <Download className="h-3.5 w-3.5" /> CSV exportieren
           </Button>
         </div>
@@ -562,7 +588,7 @@ ${rows}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">Zeilen 9-51 mit AfA & Werbungskosten</div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportAnlageV}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 touch-target min-h-[44px]" onClick={exportAnlageV}>
             <Download className="h-3.5 w-3.5" /> Erstellen
           </Button>
         </div>
@@ -579,7 +605,7 @@ ${rows}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">Ist-Einnahmen vs. Ausgaben</div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportEUR}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 touch-target min-h-[44px]" onClick={exportEUR}>
             <Download className="h-3.5 w-3.5" /> Erstellen
           </Button>
         </div>
@@ -596,7 +622,7 @@ ${rows}
             </div>
           </div>
           <div className="text-xs text-muted-foreground">{properties.length} Objekte einzeln ausgewertet</div>
-          <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={exportGuV}>
+          <Button variant="outline" size="sm" className="w-full gap-1.5 touch-target min-h-[44px]" onClick={exportGuV}>
             <Download className="h-3.5 w-3.5" /> Erstellen
           </Button>
         </div>
@@ -616,10 +642,10 @@ ${rows}
             {stats.propertyCount} Objekte · {formatCurrency(stats.totalValue)}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={exportPortfolio}>
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5 touch-target min-h-[44px]" onClick={exportPortfolio}>
               <Download className="h-3.5 w-3.5" /> Drucken
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={exportPortfolioPDF}>
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5 touch-target min-h-[44px]" onClick={exportPortfolioPDF}>
               <FileDown className="h-3.5 w-3.5" /> PDF
             </Button>
           </div>

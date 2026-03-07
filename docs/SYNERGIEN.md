@@ -42,6 +42,7 @@
 | **Darlehen** | Mietübersicht, Nebenkosten | Empty State: Buttons „Mietübersicht“, „Nebenkosten“ neben Objekt/Deals |
 | **Verträge** | Mietübersicht | Link „Mietübersicht“ in Kopfzeile |
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
+| **Berichte** | Objekte, Deals | Empty State (keine Objekte): Buttons „Objekte“, „Zu Deals“ |
 
 ## Technische Details
 

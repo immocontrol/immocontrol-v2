@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Berichte Empty State** — Bei 0 Objekten: EmptyState mit Buttons „Objekte“, „Zu Deals“ (Synergie)
+- **Deals: improveText** — KI-Button „Verbessern“ bei Notizen (DeepSeek) überarbeitet Formulierung
 - **Nebenkosten Empty State** — Buttons „Mietübersicht“, „Objekte“ für Synergie
 - **Darlehen Empty State** — Buttons „Mietübersicht“, „Nebenkosten“ ergänzt
 - **Verträge** — Link „Mietübersicht“ in Kopfzeile
@@ -41,6 +43,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Berichte** — ROUTES für Navigation; Empty State bei 0 Objekten; Touch-Target (44px) für alle Bericht-Buttons (Mobile)
+- **Deals** — KI „Verbessern“ für Notizen (improveText); Touch-Target für KI-Buttons
 - **Besichtigungen** — Empty State: Link „Zu Deals“ (Synergie); Touch-Target für Erste-Besichtigung-Button
 - **AITipCard** — Touch-Target 44px für Aktualisieren-Button (Mobile)
 - **CRM** — Touch-Target 44px für „Als Deal“-Button
