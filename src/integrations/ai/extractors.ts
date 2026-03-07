@@ -497,6 +497,60 @@ export async function improveText(text: string, context?: string): Promise<strin
   return raw.trim() || text;
 }
 
+/**
+ * Kurze banktaugliche Zusammenfassung der Selbstauskunft (für Anschreiben oder Prüfung).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestSelbstauskunftSummary(data: {
+  vorname?: string;
+  name?: string;
+  sumEinnahmen?: number;
+  sumAusgaben?: number;
+  ueberschuss?: number;
+  vermoegenKurz?: string;
+}): Promise<string> {
+  const parts = [
+    data.vorname || data.name ? `Antragsteller: ${[data.vorname, data.name].filter(Boolean).join(" ")}` : "",
+    data.sumEinnahmen != null ? `Monatliche Einnahmen: ${data.sumEinnahmen.toFixed(2)} €` : "",
+    data.sumAusgaben != null ? `Monatliche Ausgaben: ${data.sumAusgaben.toFixed(2)} €` : "",
+    data.ueberschuss != null ? `Überschuss: ${data.ueberschuss.toFixed(2)} €/Monat` : "",
+    data.vermoegenKurz ? `Vermögen (Kurz): ${data.vermoegenKurz}` : "",
+  ].filter(Boolean);
+  const prompt = `Basierend auf diesen Selbstauskunft-Daten: Erstelle einen kurzen, sachlichen Absatz (3–4 Sätze) für die Bank: Einkommenssituation, Überschuss und ggf. Vermögen. Formell, auf Deutsch. Keine Anrede. Falls Überschuss negativ ist, erwähne das neutral.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: `${parts.join("\n")}\n\n${prompt}` }],
+    { systemPrompt: "Du bist ein Assistent für banktaugliche Formulierungen. Antworte nur mit dem Absatz.", maxTokens: 256 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Kurztext für die Bank zum Entwicklungsplan (Objekt mit Entwicklungspotenzial).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestEntwicklungsplanSummary(plan: {
+  istMieteMonat: number;
+  zielMieteMonat: number;
+  kappungsgrenzePercent: number;
+  angespanntMarkt?: boolean;
+  massnahmenAnzahl?: number;
+}): Promise<string> {
+  const parts = [
+    `Aktuelle Monatsmiete: ${plan.istMieteMonat.toFixed(2)} €`,
+    `Geplante Miete (nach Maßnahmen): ${plan.zielMieteMonat.toFixed(2)} €/Monat`,
+    `Kappungsgrenze §558: ${plan.kappungsgrenzePercent} % alle 3 Jahre${plan.angespanntMarkt ? " (angespannter Markt)" : ""}`,
+    plan.massnahmenAnzahl != null ? `${plan.massnahmenAnzahl} geplante wertsteigernde Maßnahmen (Mietanpassung, PV, Dämmung, Sanierung)` : "",
+  ].filter(Boolean);
+  const prompt = `Für ein Bankanschreiben: Formuliere einen kurzen Absatz (2–3 Sätze), der das Objekt positiv darstellt – Entwicklungspotenzial durch Mietanpassungen und Modernisierungen, Zielmiete. Formell, auf Deutsch. Keine Anrede.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: `${parts.join("\n")}\n\n${prompt}` }],
+    { systemPrompt: "Du bist ein Assistent für Finanzierungsanträge. Antworte nur mit dem Absatz.", maxTokens: 200 }
+  );
+  return raw.trim();
+}
+
 export { isDeepSeekConfigured };
 
 function parseJsonSafe<T>(raw: string): T {

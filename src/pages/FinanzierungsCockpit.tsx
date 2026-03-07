@@ -216,13 +216,13 @@ export default function FinanzierungsCockpit() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto" id="main-content">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <Landmark className="h-5 w-5" />
+    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto min-w-0 overflow-x-hidden" id="main-content">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+        <h1 className="text-xl font-semibold flex items-center gap-2 shrink-0">
+          <Landmark className="h-5 w-5 shrink-0" />
           Finanzierungs-Cockpit
         </h1>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-x-2 gap-y-2 min-w-0">
           <SelbstauskunftGenerator />
           <Button variant="outline" size="sm" asChild>
             <Link to={ROUTES.LOANS}>
@@ -416,11 +416,20 @@ export default function FinanzierungsCockpit() {
         )}
       </Section>
 
-      {/* 4. Selbstauskunft-Hinweis */}
-      <Section id="selbstauskunft" title="Selbstauskunft (Gehalt, Adresse, Kinder, Einnahmen/Ausgaben)" icon={FileText}>
+      {/* 4. Selbstauskunft */}
+      <Section id="selbstauskunft" title="Selbstauskunft für die Bank" icon={FileText}>
         <p className="text-sm text-muted-foreground mb-3">
-          Die Selbstauskunft wird mit Objektübersicht, Krediten und Mieteinnahmen aus der App vorausgefüllt. Gehalt, Lebenshaltungskosten, Adresse und Kinder etc. im Generator ergänzen und PDF herunterladen. Button „Selbstauskunft“ oben öffnet den Generator.
+          Vollständige Selbstauskunft (Persönliches, Vermögen, Einnahmen/Ausgaben) für Finanzierungsanträge. Der Generator wird automatisch vorausgefüllt mit:
         </p>
+        <ul className="list-disc list-inside text-sm text-muted-foreground mb-3 space-y-1">
+          <li>Mieteinnahmen und Kreditraten aus dieser App</li>
+          <li>Konten & Vermögen aus den Feldern oben (Giro, Tagesgeld, Depot, Bauspar, Lebensversicherung)</li>
+          <li>Profil-Daten (Name, E-Mail) nach Anmeldung</li>
+        </ul>
+        <p className="text-sm text-muted-foreground mb-3">
+          Gehalt, Lebenshaltungskosten, Adresse, Kinder und Beruf im Generator ergänzen → PDF herunterladen (Felder im PDF bleiben editierbar). Im letzten Schritt optional: <strong>KI Zusammenfassung prüfen</strong> (banktauglicher Kurztext).
+        </p>
+        <SelbstauskunftGenerator />
       </Section>
 
       {/* 5. Unterlagen zum finanzierenden Objekt */}

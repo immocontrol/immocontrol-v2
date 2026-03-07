@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { FileText, Download, Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { FileText, Download, Loader2, ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
+import { isDeepSeekConfigured, suggestSelbstauskunftSummary } from "@/integrations/ai/extractors";
 
 /* IMPROVE-14: Remove unused jsPDF import (smaller bundle, fewer dependencies) */
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
@@ -110,6 +111,8 @@ export const SelbstauskunftGenerator = () => {
   const [generating, setGenerating] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -153,7 +156,12 @@ export const SelbstauskunftGenerator = () => {
     prefill();
   }, [user, open, properties]);
 
-  useEffect(() => { if (open) setStep(0); }, [open]);
+  useEffect(() => {
+    if (open) {
+      setStep(0);
+      setAiSummary(null);
+    }
+  }, [open]);
 
   const update = useCallback((key: keyof SelbstauskunftData, value: string) => {
     if (NAME_FIELDS.includes(key)) value = value.replace(/[0-9]/g, "");
@@ -566,7 +574,6 @@ export const SelbstauskunftGenerator = () => {
               />
             </div>
             <div className="rounded-lg border border-border p-4 space-y-2 bg-secondary/30">
-              {/* IMPROVE-15: Use literal umlauts/dashes in UI strings (avoid confusing \\uXXXX renderings) */}
               <h4 className="text-sm font-semibold">Zusammenfassung</h4>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div><span className="text-muted-foreground">Name:</span> {data.vorname} {data.name}</div>
@@ -578,6 +585,47 @@ export const SelbstauskunftGenerator = () => {
                   <span className={surplus >= 0 ? "text-profit font-medium" : "text-loss font-medium"}>{fmtCur(surplus.toFixed(2))}</span>
                 </div>
               </div>
+              {isDeepSeekConfigured() && (
+                <div className="pt-2 border-t border-border mt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs h-8"
+                    disabled={aiSummaryLoading}
+                    onClick={async () => {
+                      setAiSummaryLoading(true);
+                      setAiSummary(null);
+                      try {
+                        const vermoegenParts = [
+                          data.giroKonten && `Giro: ${data.giroKonten} €`,
+                          data.wertpapiere && `Wertpapiere: ${data.wertpapiere} €`,
+                          data.immobilienFremdgenutzt && `Immobilien: ${data.immobilienFremdgenutzt} €`,
+                        ].filter(Boolean);
+                        const text = await suggestSelbstauskunftSummary({
+                          vorname: data.vorname,
+                          name: data.name,
+                          sumEinnahmen: sumE,
+                          sumAusgaben: sumA,
+                          ueberschuss: surplus,
+                          vermoegenKurz: vermoegenParts.length ? vermoegenParts.join(", ") : undefined,
+                        });
+                        setAiSummary(text);
+                      } catch {
+                        toast.error("KI-Zusammenfassung konnte nicht erstellt werden.");
+                      } finally {
+                        setAiSummaryLoading(false);
+                      }
+                    }}
+                  >
+                    {aiSummaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {aiSummaryLoading ? "Wird erstellt…" : "KI: Zusammenfassung prüfen"}
+                  </Button>
+                  {aiSummary && (
+                    <p className="text-xs text-muted-foreground mt-2 p-2 rounded bg-muted/50 text-wrap-safe">{aiSummary}</p>
+                  )}
+                </div>
+              )}
             </div>
             <Button onClick={generatePDF} disabled={generating} className="w-full gap-2" size="lg">
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}

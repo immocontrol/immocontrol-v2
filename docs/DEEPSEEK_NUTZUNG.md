@@ -22,6 +22,8 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 | **PropertyDocuments** | Objekt-Dokumente | Beim PDF-Upload: KI schlägt Kategorie vor (suggestDocumentCategory) bei DeepSeek-Konfiguration. |
 | **Deals** | Deal bearbeiten | Button „Nächster Schritt“ (suggestDealNextStep): KI schlägt nächsten konkreten Deal-Schritt vor (Stage, Titel, Adresse, Notizen). |
 | **MessageCenter** | Nachrichten | Button „Antwort vorschlagen“ (suggestReply): KI schlägt sachliche Antwort auf Mieter-Nachricht vor. |
+| **Selbstauskunft** | Finanzierungs-Cockpit → Generator, Schritt Zusammenfassung | Button „KI: Zusammenfassung prüfen“ (suggestSelbstauskunftSummary): banktauglicher Kurzabsatz zu Einnahmen, Ausgaben, Überschuss, Vermögen. |
+| **Entwicklungsplan** | Objekt-Detail → Entwicklungsplan | Button „Kurztext generieren“ (suggestEntwicklungsplanSummary): Absatz für Bankanschreiben zum Entwicklungspotenzial (Mietanpassung, Zielmiete, Maßnahmen). |
 
 ---
 
@@ -46,7 +48,7 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
   ✅ Umgesetzt (Immo-AI → PropertyDescriptionGenerator). Aus Stammdaten oder manueller Eingabe.
 
 - **Selbstauskunft / Anschreiben:**  
-  Vorlagen für Mieter-Selbstauskunft, Kündigung, Mietanpassung ausformulieren (mit Platzhaltern).
+  ✅ Teilweise: Generator-Schritt „Zusammenfassung“ hat KI-Button für banktaugliche Kurzfassung. Vorlagen für Mieter-Selbstauskunft, Kündigung, Mietanpassung ausformulieren (mit Platzhaltern).
 
 - **Berichte in Prosa:**  
   ✅ Umgesetzt (Immo-AI → BerichteInProsa). Monatsbericht oder Jahresüberblick aus Portfolio-Kennzahlen.

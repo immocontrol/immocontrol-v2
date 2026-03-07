@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users, TriangleAlert } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users, TriangleAlert, ChevronDown, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,7 @@ import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ROUTES } from "@/lib/routes";
 
 type SearchMode = "ort" | "umkreis";
@@ -539,6 +540,21 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
             Daten: {getActiveProviders().map((p) => p.name).join(", ")}
           </p>
         )}
+        <Collapsible className="mt-2">
+          <CollapsibleTrigger className="group flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Lightbulb className="h-3.5 w-3.5" /> Tipps für bessere Treffer
+            <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ul className="mt-1.5 text-[11px] text-muted-foreground space-y-1 list-disc list-inside text-wrap-safe">
+              <li>Ganzer Ort: z. B. Stadtname für alle Gewerbe im Gebiet</li>
+              <li>Umkreis: Adresse + 500 m–10 km für gezielte Nachbarschaft</li>
+              <li>Filter „Mindestfläche“ und „Typ“ verfeinern die Liste</li>
+              <li>„Nur mit Telefon“ für Kaltakquise per Anruf</li>
+              <li>KI-Buttons „KI Einstieg“ und „Warum interessant?“ pro Treffer (bei aktiviertem DeepSeek)</li>
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3">

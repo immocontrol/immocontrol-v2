@@ -24,6 +24,7 @@ import ExpensePieChart from "@/components/ExpensePieChart";
 import DocumentExpiryTracker from "@/components/DocumentExpiryTracker";
 import MeterManagement from "@/components/MeterManagement";
 import AfACalculator from "@/components/AfACalculator";
+import { Entwicklungsplan } from "@/components/Entwicklungsplan";
 import KautionsOverview from "@/components/KautionsOverview";
 import { HandoverProtocol } from "@/components/HandoverProtocol";
 import ContractManagement from "@/components/ContractManagement";
@@ -50,6 +51,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { getGebaeudeAnteil, getGrundUndBoden, getAnnualAfa, getAfaRatePercent, getSanierung15PercentBrutto } from "@/lib/afaSanierung";
 import { useShare } from "@/components/mobile/MobileShareSheet";
 import { isDeepSeekConfigured, suggestPropertySummary } from "@/integrations/ai/extractors";
 import { handleError } from "@/lib/handleError";
@@ -450,6 +452,44 @@ const PropertyDetail = () => {
         </div>
       </div>
 
+      {/* AfA & 15%-Sanierungsregel */}
+      {property.purchasePrice > 0 && (() => {
+        const input = { purchasePrice: property.purchasePrice, yearBuilt: property.yearBuilt, buildingSharePercent: property.buildingSharePercent, restnutzungsdauer: property.restnutzungsdauer };
+        const gebaeude = getGebaeudeAnteil(input);
+        const grundBoden = getGrundUndBoden(input);
+        const afaJahr = getAnnualAfa(input);
+        const afaRate = getAfaRatePercent(input);
+        const sanierungBrutto = getSanierung15PercentBrutto(input);
+        return (
+          <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:450ms]">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Percent className="h-4 w-4 text-muted-foreground" /> AfA & Sanierung
+            </h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Grund und Boden</span>
+                <span className="font-medium tabular-nums">{formatCurrency(grundBoden)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Gebäudeanteil ({property.buildingSharePercent ?? 80}%)</span>
+                <span className="font-medium tabular-nums">{formatCurrency(gebaeude)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">AfA/Jahr ({afaRate.toFixed(1)}%)</span>
+                <span className="font-medium tabular-nums text-profit">{formatCurrency(afaJahr)}</span>
+              </div>
+              <div className="pt-2 mt-2 border-t border-border">
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className="text-muted-foreground text-xs">15%-Sanierungsregel (erste 3 Jahre)</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Max. Sanierungskosten Brutto inkl. 19% MwSt.</p>
+                <p className="font-semibold tabular-nums text-primary mt-0.5">{formatCurrency(sanierungBrutto)}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Monthly breakdown */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:500ms]">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
@@ -578,6 +618,24 @@ const PropertyDetail = () => {
 
       {/* Value History */}
       <PropertyValueHistory propertyId={property.id} currentValue={property.currentValue} purchasePrice={property.purchasePrice} />
+
+      {/* Entwicklungsplan: Mietanpassung + Modernisierung für Bankdarstellung */}
+      <Entwicklungsplan
+        property={{
+          id: property.id,
+          name: property.name,
+          address: property.address,
+          location: property.location,
+          monthlyRent: property.monthlyRent,
+          sqm: property.sqm,
+          units: property.units,
+          purchasePrice: property.purchasePrice,
+          purchaseDate: property.purchaseDate,
+          monthlyExpenses: property.monthlyExpenses,
+          monthlyCreditRate: property.monthlyCreditRate,
+        }}
+        defaultOpen={true}
+      />
 
       {/* Rent increase calculator + Maintenance + New tools */}
       <div className="flex items-center gap-2 flex-wrap">
