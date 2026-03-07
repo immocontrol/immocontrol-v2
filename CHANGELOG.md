@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Fristen-Zentrale (Dashboard-Widget)** — Zentrale Übersicht aller relevanten Fristen für Immobilieninvestoren: Mietvertragsende, Kündigungsfrist (spätestens bis), Zinsbindung, Dokumente (document_expiries), Versicherungen (renewal_date), Service-Verträge (end_date). Zeigt die nächsten 12 Fristen sortiert nach Datum mit Links zu Verträgen, Darlehen und Objekten. Widget im persönlichen Dashboard aktivierbar („Fristen-Zentrale“).
 - **CallButton: Einheitliche Anruf-UI** — Neue Komponente `CallButton` nutzt überall `startCall()` (tel + VoIP), zeigt bei Fehler einen Toast. Eingesetzt in Contacts, TenantManagement, TicketSystem und CRM (Suchergebnisse, Lead-Detail, Place-Karten). Ersetzt verstreute `<a href={getCallUrl}>`-Links; Calling-Feature ist damit konsistent und fehlertoleranter. Doku: docs/VOICE_CALLING.md, docs/SYNERGIEN.md.
 - **WGH-Scout: Anrufen über startCall** — Button „Anrufen“ nutzt einheitlich `startCall()` statt tel:-Link; bei VoIP (z. B. twilio-device) werden Fehler per Toast angezeigt. Synergie Scout ↔ Calling in docs/SYNERGIEN.md und docs/VOICE_CALLING.md.
 - **WGH-Scout: Refactor sessionStorage** — Persistierte Filter/Suche werden über Hilfsfunktion `getScoutStorage()` gelesen; weniger Doppelcode in Initial-State.
