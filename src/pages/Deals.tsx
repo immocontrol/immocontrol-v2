@@ -169,6 +169,11 @@ const DealCard = memo(({
           {(deal.purchase_price ?? 0) > 0 && <span className="text-xs font-medium">{fmt(deal.purchase_price!)}</span>}
           {(deal.expected_yield ?? 0) > 0 && <Badge variant="outline" className="text-[10px]">{deal.expected_yield!.toFixed(1)}% Rendite</Badge>}
         </div>
+        {(deal.purchase_price ?? 0) > 0 && (deal.sqm ?? 0) > 0 && (
+          <p className="text-[10px] text-muted-foreground">
+            {fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²
+          </p>
+        )}
         {/* UPD-15: Show source badge on Kanban cards */}
         <div className="flex items-center justify-between">
           {deal.contact_name && (

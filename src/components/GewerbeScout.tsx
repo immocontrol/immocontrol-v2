@@ -4,7 +4,7 @@
  * Mit Ort-Autocomplete, Mindest-Gebäudefläche, Deduplizierung und klaren Lade-/Leer-Zuständen.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles } from "lucide-react";
+import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ import {
   attachBuildingSizes,
   dedupeScoutResults,
   type CommercialPOIWithCoord,
+  type PlaceBbox,
 } from "@/lib/crmUtils";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -53,6 +54,8 @@ const MIN_SIZE_OPTIONS = [
   { value: 500, label: "≥ 500 m²" },
   { value: 1000, label: "≥ 1.000 m²" },
 ];
+
+const SCOUT_DISPLAY_CAP = 100;
 
 type SortBy = "size" | "distance" | "name";
 type LoadingStep = "ort" | "gewerbe" | "gebaeude" | null;
@@ -161,6 +164,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
   const [searchLabel, setSearchLabel] = useState<string | null>(null);
+  const [lastBbox, setLastBbox] = useState<PlaceBbox | null>(null);
+  const [lastCenter, setLastCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>("size");
   const [suggestions, setSuggestions] = useState<{ display_name: string; place_id: number }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -246,6 +251,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     setLoading(true);
     setResults([]);
     setSearchLabel(null);
+    setLastBbox(null);
+    setLastCenter(null);
     setLoadingStep("ort");
     try {
       if (mode === "ort") {
@@ -257,6 +264,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
           return;
         }
         setSearchLabel(`Ganzes Gebiet: ${bbox.display_name}`);
+        setLastBbox(bbox);
+        setLastCenter(null);
         setLoadingStep("gewerbe");
         const [pois, buildings] = await Promise.all([
           fetchCommercialPOIsInBbox(bbox),
@@ -281,6 +290,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
           return;
         }
         setSearchLabel(`${coord.display_name} (${radius} m)`);
+        setLastBbox(null);
+        setLastCenter({ lat: coord.lat, lng: coord.lng });
         setLoadingStep("gewerbe");
         const [pois, buildings] = await Promise.all([
           fetchCommercialPOIsInRadius(coord.lat, coord.lng, radius),
@@ -409,9 +420,30 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         )}
 
         {searchLabel && !loading && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <MapPin className="h-3 w-3 shrink-0" /> {searchLabel}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" /> {searchLabel}
+            </p>
+            {(lastBbox || lastCenter) && results.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                asChild
+              >
+                <a
+                  href={lastBbox
+                    ? `https://www.openstreetmap.org/?bbox=${lastBbox.west},${lastBbox.south},${lastBbox.east},${lastBbox.north}`
+                    : `https://www.openstreetmap.org/?mlat=${lastCenter!.lat}&mlon=${lastCenter!.lng}&zoom=15`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Suchgebiet auf OpenStreetMap anzeigen"
+                >
+                  <Map className="h-3 w-3" /> Auf Karte anzeigen
+                </a>
+              </Button>
+            )}
+          </div>
         )}
 
         {!loading && searchLabel !== null && results.length === 0 && (
@@ -428,7 +460,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-medium" id="scout-results-heading">
-                Gefundene Gewerbe {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
+                Gefundene Gewerbe {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
               </h3>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -485,8 +517,13 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 </Button>
               </div>
             </div>
+            {sortedResults.length > SCOUT_DISPLAY_CAP && (
+              <p className="text-xs text-muted-foreground">
+                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon) nutzen, um die Liste einzugrenzen.
+              </p>
+            )}
             <ul className="space-y-2 max-h-[420px] overflow-y-auto" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener Gewerbe">
-              {sortedResults.map((b, i) => (
+              {sortedResults.slice(0, SCOUT_DISPLAY_CAP).map((b, i) => (
                 <li
                   key={`${b.name}-${b.lat}-${b.lon}-${i}`}
                   className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm"
@@ -502,6 +539,11 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                       )}
                       {b.distance > 0 && <span>{b.distance} m</span>}
                       {b.address && <span className="truncate">{b.address}</span>}
+                      {b.opening_hours && (
+                        <span className="truncate max-w-[180px] sm:max-w-none" title={b.opening_hours}>
+                          Öffn.: {b.opening_hours.length > 25 ? `${b.opening_hours.slice(0, 24)}…` : b.opening_hours}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 shrink-0">

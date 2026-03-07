@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
+import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -593,6 +593,16 @@ const ContactManagement = () => {
                         <span className="flex items-center gap-0.5">
                           <MapPin className="h-2.5 w-2.5" /> {c.address}
                         </span>
+                      )}
+                      {c.address?.trim() && (
+                        <Link
+                          to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(c.address.trim())}`}
+                          className="text-[10px] text-primary hover:underline flex items-center gap-0.5 w-fit mt-0.5"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Gewerbe in Umgebung suchen"
+                        >
+                          <Store className="h-2.5 w-2.5 shrink-0" /> Gewerbe in Umgebung
+                        </Link>
                       )}
                     </div>
                     {/* Improvement 14: Notes preview */}
