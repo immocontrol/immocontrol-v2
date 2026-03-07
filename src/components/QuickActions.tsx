@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera, Landmark, BarChart3, Receipt, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ROUTES } from "@/lib/routes";
 
 interface QuickActionsProps {
   onScrollTo: (section: string) => void;
@@ -39,11 +40,11 @@ const QuickActions = ({ onScrollTo, onNavigate }: QuickActionsProps) => {
     { id: "payments", label: "Zahlung erfassen", icon: CreditCard, color: "text-profit", shortcut: "3", navigate: false },
     { id: "notes", label: "Notiz hinzufügen", icon: StickyNote, color: "text-muted-foreground", shortcut: "4", navigate: false },
     { id: "documents", label: "Dokument hochladen", icon: FileText, color: "text-accent-foreground", shortcut: "5", navigate: false },
-    { id: "viewings", label: "Besichtigung erfassen", icon: Camera, color: "text-accent", shortcut: "6", navigate: true, path: "/besichtigungen" },
-    { id: "deals", label: "Deal erstellen", icon: Landmark, color: "text-blue-500", shortcut: "7", navigate: true, path: "/deals" },
-    { id: "rent", label: "Mietübersicht", icon: BarChart3, color: "text-amber-500", shortcut: "8", navigate: true, path: "/mietuebersicht" },
-    { id: "nebenkosten", label: "Nebenkosten", icon: Receipt, color: "text-emerald-500", shortcut: "9", navigate: true, path: "/nebenkosten" },
-    { id: "immo-ai", label: "Immo-AI", icon: Sparkles, color: "text-violet-500", shortcut: "0", navigate: true, path: "/immo-ai" },
+    { id: "viewings", label: "Besichtigung erfassen", icon: Camera, color: "text-accent", shortcut: "6", navigate: true, path: ROUTES.BESICHTIGUNGEN },
+    { id: "deals", label: "Deal erstellen", icon: Landmark, color: "text-blue-500", shortcut: "7", navigate: true, path: ROUTES.DEALS },
+    { id: "rent", label: "Mietübersicht", icon: BarChart3, color: "text-amber-500", shortcut: "8", navigate: true, path: ROUTES.RENT },
+    { id: "nebenkosten", label: "Nebenkosten", icon: Receipt, color: "text-emerald-500", shortcut: "9", navigate: true, path: ROUTES.NK },
+    { id: "immo-ai", label: "Immo-AI", icon: Sparkles, color: "text-violet-500", shortcut: "0", navigate: true, path: ROUTES.AI },
   ];
 
   return (

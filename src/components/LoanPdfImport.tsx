@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { FileImportPicker } from "@/components/FileImportPicker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { extractPdfText } from "@/lib/exposeParser";
 import { isDeepSeekConfigured, extractLoanFromText, type ExtractedLoanFields } from "@/integrations/ai/extractors";
 
@@ -239,8 +241,10 @@ export function LoanPdfImport({ onImport }: LoanPdfImportProps) {
   const [error, setError] = useState<string | null>(null);
   const [rawText, setRawText] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastFileRef = useRef<File | null>(null);
 
   const handleFile = useCallback(async (file: File) => {
+    lastFileRef.current = file;
     if (!file.type.includes("pdf") && !file.name.endsWith(".pdf")) {
       toast.error("Bitte eine PDF-Datei auswählen");
       return;
@@ -292,7 +296,8 @@ export function LoanPdfImport({ onImport }: LoanPdfImportProps) {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Fehler beim Lesen der PDF";
       setError(msg);
-      toast.error(msg);
+      handleError(e, { context: "file", details: "loan-pdf-import", showToast: false });
+      toastErrorWithRetry(msg, () => lastFileRef.current && handleFile(lastFileRef.current));
     } finally {
       setLoading(false);
     }

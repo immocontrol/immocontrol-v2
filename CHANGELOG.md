@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (LoanPdfImport, ContractManagement PDF)** — Darlehen-PDF-Import und Vertrag-PDF-Extraktion nutzen `toastErrorWithRetry` und `handleError` (Retry mit letzter Datei, Fehler getrackt)
+- **QuickActions an ROUTES** — Schnellaktionen Besichtigung, Deals, Mietübersicht, Nebenkosten, Immo-AI nutzen ROUTES (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (AddContactDialog, DealToPropertyConverter)** — Kontakt anlegen und Deal→Objekt-Konvertierung nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Formularverlust, Fehler getrackt)
 - **GlobalSearch an ROUTES** — Alle Navigations- und Objekt-Links nutzen `ROUTES` (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (AddTenantDialog, AddPropertyDialog)** — Mieter anlegen und Objekt anlegen nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Formularverlust, Fehler getrackt)
@@ -79,6 +81,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **LoanPdfImport** — PDF lesen: handleError + toastErrorWithRetry (Retry mit lastFileRef)
+- **ContractManagement** — PDF-Extraktion Vertrag: handleError + toastErrorWithRetry (Retry mit lastPdfFileRef)
+- **QuickActions** — Pfade Besichtigung, Deals, Mietübersicht, Nebenkosten, Immo-AI über ROUTES
 - **AddContactDialog** — Kontakt anlegen: handleError + toastErrorWithRetry (Retry = handleSave)
 - **DealToPropertyConverter** — Konvertierung: handleError + toastErrorWithRetry (Retry = handleConvert)
 - **GlobalSearch** — Nav- und Objekt-Links über ROUTES (HOME, LOANS, RENT, NK, CONTRACTS, DOKUMENTE, CONTACTS, TODOS, REPORTS, CRM, DEALS, BESICHTIGUNGEN, SETTINGS, PROPERTY)

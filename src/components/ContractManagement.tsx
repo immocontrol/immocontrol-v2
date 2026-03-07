@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,8 @@ import { extractPdfText } from "@/lib/exposeParser";
 import { extractContractFromText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 import { sanitizeFormData } from "@/lib/sanitize";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface ContractRow {
   id: string;
@@ -53,6 +55,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
   const [open, setOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [extractingFromPdf, setExtractingFromPdf] = useState(false);
+  const lastPdfFileRef = useRef<File | null>(null);
   const [form, setForm] = useState({
     property_id: propertyId || "",
     contract_type: "mietvertrag",
@@ -138,6 +141,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
       toast.error("Bitte eine PDF-Datei wählen.");
       return;
     }
+    lastPdfFileRef.current = file;
     setExtractingFromPdf(true);
     try {
       const text = await extractPdfText(file);
@@ -162,8 +166,9 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
         return next;
       });
       toast.success("Felder aus Vertrag übernommen. Bitte prüfen und speichern.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Extraktion fehlgeschlagen.");
+    } catch (e: unknown) {
+      handleError(e, { context: "file", details: "contract-pdf-extract", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Extraktion fehlgeschlagen.", () => lastPdfFileRef.current && handleImportFromPdf(lastPdfFileRef.current));
     } finally {
       setExtractingFromPdf(false);
     }

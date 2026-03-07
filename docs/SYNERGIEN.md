@@ -56,6 +56,9 @@
 | **AddContactDialog** | — | Fehler beim Anlegen: handleError + toastErrorWithRetry (Retry = handleSave) |
 | **DealToPropertyConverter** | Objekte | Deal→Immobilie: handleError + toastErrorWithRetry (Retry = handleConvert); Synergie Deals↔Objekte |
 | **GlobalSearch** | Alle Seiten, Objekte | Nav- und Suchergebnis-Links nutzen ROUTES (Single Source of Truth) |
+| **LoanPdfImport** | — | Fehler beim PDF-Lesen: handleError + toastErrorWithRetry (Retry mit letzter Datei) |
+| **ContractManagement** | — | Fehler bei Vertrag-PDF-Extraktion: handleError + toastErrorWithRetry (Retry mit letzter Datei) |
+| **QuickActions** | Besichtigungen, Deals, Mietübersicht, Nebenkosten, Immo-AI | Schnellaktionen nutzen ROUTES (BESICHTIGUNGEN, DEALS, RENT, NK, AI) |
 
 ## Technische Details
 
