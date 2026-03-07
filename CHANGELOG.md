@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Suche verbessert** — Ort/Adresse-Autocomplete (Nominatim, ab 3 Zeichen); Filter „Mindest-Gebäudefläche“ (≥200/500/1000 m²); Deduplizierung nach Standort (ein Eintrag pro Gebäude); klare Lade-Schritte („Suche Ort…“, „Suche Gewerbe & Gebäude…“, „Ordne Gebäudegrößen zu…“); Empty State mit Tipp (Ganzer Ort / größerer Umkreis); CSV-Export der gefilterten/sortierten Liste. Synergie: CRM-Tab aus URL (`?tab=scout`), QuickActions „Gewerbe-Scout“, Dashboard „Gewerbe finden“ → CRM-Scout.
 - **Gewerbe-Scout erweitert (CRM)** — Ortssuche (z. B. „Hennigsdorf“) durchsucht das gesamte Gebiet; Umkreis-Modus um eine Adresse. Gebäudegröße aus Karten-Daten (OpenStreetMap) wird berücksichtigt; Sortierung nach Gebäudegröße (größte zuerst), Entfernung oder Name. Ideal für größte Wohn- und Geschäftshäuser mit Gewerbe. Synergie mit Lead-Dialog.
 - **Retry-Toast + Fehleranalyse (EnergyCertificateTracker, CrmFollowUpReminder, InsuranceTracker)** — Energieausweis anlegen/löschen, CRM Follow-Up Todo erstellen, Versicherung anlegen/löschen nutzen handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt).
 - **Retry-Toast + Fehleranalyse (Contacts, MaintenancePlanner, OwnerMeetings)** — Kontakt speichern (Kontakte-Seite), Wartungsmaßnahme anlegen, Eigentümerversammlung anlegen nutzen handleError + toastErrorWithRetry (Retry ohne Formularverlust, Fehler getrackt)

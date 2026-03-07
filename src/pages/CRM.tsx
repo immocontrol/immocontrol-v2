@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,10 +31,24 @@ import { ROUTES } from "@/lib/routes";
 
 /* IMP-3: Utility functions extracted to @/lib/crmUtils.ts for modularity */
 
+const CRM_TAB_VALUES = ["search", "scout", "leads"] as const;
+type CRMTabValue = (typeof CRM_TAB_VALUES)[number];
+
 const CRM = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const tabFromUrl = searchParams.get("tab");
+  const crmTab: CRMTabValue = CRM_TAB_VALUES.includes(tabFromUrl as CRMTabValue) ? (tabFromUrl as CRMTabValue) : "search";
+  const setCrmTab = useCallback((value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === "search") next.delete("tab");
+      else next.set("tab", value);
+      return next;
+    });
+  }, [setSearchParams]);
   const [searchQuery, setSearchQuery] = useState("");
   const [placesResults, setPlacesResults] = useState<SearchPlace[]>([]);
   const [placesLoading, setPlacesLoading] = useState(false);
@@ -403,7 +417,7 @@ const CRM = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="search" className="space-y-4">
+      <Tabs value={crmTab} onValueChange={setCrmTab} className="space-y-4">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="search" className="flex-1 sm:flex-none nav-label-responsive">Suche & Akquise</TabsTrigger>
           <TabsTrigger value="scout" className="flex-1 sm:flex-none nav-label-responsive">Gewerbe-Scout</TabsTrigger>

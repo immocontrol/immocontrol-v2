@@ -77,7 +77,10 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
-| **GewerbeScout** | CRM, Leads | Ort (ganzes Gebiet) oder Adresse + Umkreis; Gebäudegröße aus OSM; Sortierung nach Größe/Entfernung/Name; Anrufen, Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog) |
+| **GewerbeScout** | CRM, Leads | Ort (ganzes Gebiet) oder Adresse + Umkreis; Gebäudegröße aus OSM; Sortierung nach Größe/Entfernung/Name; Anrufen, Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog); Autocomplete, Mindestfläche-Filter, Deduplizierung, CSV-Export |
+| **CRM** | URL-Tab | `?tab=scout` öffnet direkt den Gewerbe-Scout-Tab (Deep-Link von Dashboard, QuickActions) |
+| **DashboardActionCenter** | CRM (Scout) | Link „Gewerbe finden“ → CRM mit Tab Scout (Synergie Akquise) |
+| **QuickActions** | CRM (Scout) | Schnellaktion „Gewerbe-Scout“ → CRM?tab=scout |
 | **EnergyCertificateTracker** | — | Energieausweis anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedCertIdRef) |
 | **CrmFollowUpReminder** | Todos | Follow-Up-Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastContactRef) |
 | **InsuranceTracker** | — | Versicherung anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedInsuranceIdRef); Touch-Target für Löschen-Button (Mobile) |

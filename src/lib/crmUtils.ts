@@ -526,6 +526,20 @@ export function attachBuildingSizes(
   });
 }
 
+/** Deduplicate POIs by location (same building): round to grid ~50m, keep one with largest estimatedGrossArea per cell. */
+export function dedupeScoutResults<T extends { lat: number; lon: number; estimatedGrossArea?: number | null }>(items: T[]): T[] {
+  const grid = new Map<string, T>();
+  const round = (v: number, step: number) => Math.round(v / step) * step;
+  for (const item of items) {
+    const key = `${round(item.lat, 0.0005)}_${round(item.lon, 0.0005)}`;
+    const existing = grid.get(key);
+    const area = item.estimatedGrossArea ?? 0;
+    const existingArea = existing?.estimatedGrossArea ?? 0;
+    if (!existing || area > existingArea) grid.set(key, item);
+  }
+  return Array.from(grid.values());
+}
+
 /** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Returns POIs with coords for building-size matching. */
 export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number): Promise<CommercialPOIWithCoord[]> {
   const query = `[out:json][timeout:15];

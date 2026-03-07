@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt } from "lucide-react";
+import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "@/lib/formatters";
+import { ROUTES } from "@/lib/routes";
 
 interface ActionStats {
   openTickets: number;
@@ -231,6 +232,19 @@ const DashboardActionCenter = () => {
           )}
         </div>
       )}
+
+      {/* Synergy: Gewerbe-Scout – immer sichtbar wenn Handlungsbedarf angezeigt wird */}
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to={`${ROUTES.CRM}?tab=scout`}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
+          aria-label="Gewerbe-Scout – Gewerbe nach Ort oder Umkreis finden"
+        >
+          <Store className="h-4 w-4 text-emerald-600" />
+          <span>Gewerbe finden</span>
+          <ArrowRight className="h-3 w-3 text-emerald-600" />
+        </Link>
+      </div>
 
       {recentTickets.length > 0 && (
         <div className="space-y-1.5">
