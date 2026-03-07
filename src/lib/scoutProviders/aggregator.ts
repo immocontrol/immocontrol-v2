@@ -1,10 +1,12 @@
 /**
  * Aggregation mehrerer Scout-Provider: Aufruf aller aktiven Provider,
- * Zusammenführen und Deduplizierung der POIs, Anreicherung mit Gebäudeflächen (OSM).
+ * Zusammenführen und Deduplizierung der POIs, Anreicherung mit Gebäudeflächen.
+ * Gebäude: Brandenburg ALKIS bevorzugt, wenn BBox/Umkreis in Brandenburg liegt.
  */
 import type { ScoutPOI, PlaceBbox, BuildingWithSize, GeocodeResult } from "./types";
 import type { ScoutProvider } from "./types";
 import { distanceMeters, dedupeScoutResults } from "@/lib/crmUtils";
+import { useBrandenburgBuildings, useBrandenburgBuildingsForPoint } from "./brandenburgProvider";
 
 const MAX_BUILDING_DIST_M = 60;
 
@@ -85,10 +87,14 @@ export async function aggregatePOIsByBbox(
   let pois: ScoutPOI[] = results.flat();
 
   let buildings: BuildingWithSize[] = [];
-  const withBuildings = providers.find((p) => p.fetchBuildingsByBbox);
-  if (withBuildings?.fetchBuildingsByBbox) {
+  const buildingProviders = providers.filter((p) => p.fetchBuildingsByBbox);
+  const preferBrandenburg = useBrandenburgBuildings(bbox);
+  const buildingProvider = preferBrandenburg && buildingProviders.some((p) => p.id === "brandenburg")
+    ? buildingProviders.find((p) => p.id === "brandenburg") ?? buildingProviders[0]
+    : buildingProviders[0];
+  if (buildingProvider?.fetchBuildingsByBbox) {
     try {
-      buildings = await withBuildings.fetchBuildingsByBbox(bbox, signal);
+      buildings = await buildingProvider.fetchBuildingsByBbox(bbox, signal);
     } catch {
       // ignore
     }
@@ -113,10 +119,14 @@ export async function aggregatePOIsByRadius(
   let pois: ScoutPOI[] = results.flat();
 
   let buildings: BuildingWithSize[] = [];
-  const withBuildings = providers.find((p) => p.fetchBuildingsByRadius);
-  if (withBuildings?.fetchBuildingsByRadius) {
+  const buildingProviders = providers.filter((p) => p.fetchBuildingsByRadius);
+  const preferBrandenburg = useBrandenburgBuildingsForPoint(lat, lng);
+  const buildingProvider = preferBrandenburg && buildingProviders.some((p) => p.id === "brandenburg")
+    ? buildingProviders.find((p) => p.id === "brandenburg") ?? buildingProviders[0]
+    : buildingProviders[0];
+  if (buildingProvider?.fetchBuildingsByRadius) {
     try {
-      buildings = await withBuildings.fetchBuildingsByRadius(lat, lng, radiusM, signal);
+      buildings = await buildingProvider.fetchBuildingsByRadius(lat, lng, radiusM, signal);
     } catch {
       // ignore
     }

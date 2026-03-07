@@ -7,6 +7,9 @@ Der WGH-Scout (Wohn- und Geschäftshaus) nutzt eine **Provider-Abstraktion**, da
 | Provider        | Geocoding | Bbox/Umkreis POIs | Gebäudeflächen | Kosten / Limit        |
 |-----------------|-----------|-------------------|----------------|------------------------|
 | **OpenStreetMap** (Nominatim + Overpass) | ✅ | ✅ Bbox + Radius | ✅ (Overpass) | Kostenfrei, 1 req/s Nominatim |
+| **Brandenburg ALKIS** (OGC API) | ❌ | ❌ | ✅ (nur Brandenburg) | Kostenfrei, Datenlizenz dl-de/by-2-0 |
+
+Brandenburg ALKIS liefert amtliche Gebäudedaten des Liegenschaftskatasters. Im WGH-Scout wird dieser Provider für Gebäudeflächen **automatisch bevorzugt**, wenn die Suche innerhalb Brandenburgs liegt (ca. 11–15°E, 51.3–53.6°N). Außerhalb Brandenburgs werden weiterhin OSM-Gebäudedaten genutzt.
 
 ## Alternativen (für spätere Anreicherung)
 
@@ -24,13 +27,13 @@ Diese Dienste eignen sich als weitere Provider; die Architektur ist vorbereitet.
 
 ## Konfiguration
 
-- **Aktive Provider:** `VITE_SCOUT_PROVIDERS=openstreetmap` (Standard). Mehrere: `openstreetmap,google` (sobald Google implementiert ist).
+- **Aktive Provider:** `VITE_SCOUT_PROVIDERS=openstreetmap,brandenburg` (Standard). Brandenburg liefert nur Gebäudeflächen für BB; OSM liefert POIs + Gebäude (außerhalb BB).
 - **Neuer Provider:** In `src/lib/scoutProviders/` anlegen und in `index.ts` in `PROVIDER_REGISTRY` eintragen bzw. `registerScoutProvider()` aufrufen.
 
 ## Technik
 
 - **Interface:** `ScoutProvider` in `src/lib/scoutProviders/types.ts` (geocode, geocodeToBbox, fetchPOIsByBbox, fetchPOIsByRadius, optional fetchBuildingsByBbox/ByRadius).
-- **Aggregation:** `aggregatePOIsByBbox` / `aggregatePOIsByRadius` rufen alle aktiven Provider auf, mergen die POIs, hängen Gebäudeflächen (von OSM) an und deduplizieren nach Position.
+- **Aggregation:** `aggregatePOIsByBbox` / `aggregatePOIsByRadius` rufen alle aktiven Provider auf, mergen die POIs, hängen Gebäudeflächen an (Brandenburg ALKIS in BB, sonst OSM) und deduplizieren nach Position.
 - **Scout-Komponente:** Nutzt nur noch `@/lib/scoutProviders` (aggregateGeocode, aggregateGeocodeToBbox, aggregatePOIsByBbox, aggregatePOIsByRadius). Einzelne Karten-APIs sind nicht mehr direkt eingebunden.
 
 ## Ist OpenStreetMap die beste Lösung?

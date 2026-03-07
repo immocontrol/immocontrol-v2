@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Brandenburg ALKIS im WGH-Scout** — Neuer Provider für amtliche Gebäudedaten (OGC API). Suchgebiete in Brandenburg nutzen automatisch ALKIS statt OSM für Gebäudeflächen; höhere Zuverlässigkeit für Grundrisse und Geschossanzahlen. Daten: GeoBasis-DE/LGB, dl-de/by-2-0. Doku: `docs/SCOUT_PROVIDERS.md`.
 - **WGH-Scout, Retry, Synergien** — WGH-Scout: Mobile Filter-Sheet Sortierung „Nach Gebäudegröße (größte zuerst)“. Nebenkosten: Retry + handleError bei Finalisieren und Speichern als Dokument. Wartungsplaner: Retry + handleError bei Toggle und Löschen. Tilgungsplan-Schnellrechner: Link „Objektanalyse (Tilgungsplan & Szenarien)“ → Darlehen ↔ Analyse (Synergie).
 
 ### Unreleased (vorheriger Stand)

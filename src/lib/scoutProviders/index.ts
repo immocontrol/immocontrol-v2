@@ -8,6 +8,7 @@
  */
 import type { ScoutProvider, ScoutPOI, PlaceBbox, GeocodeResult, BuildingWithSize } from "./types";
 import { osmScoutProvider } from "./osmProvider";
+import { brandenburgScoutProvider } from "./brandenburgProvider";
 import {
   aggregateGeocode as aggGeocode,
   aggregateGeocodeToBbox as aggGeocodeToBbox,
@@ -22,9 +23,9 @@ export { attachBuildingSizesToScoutPOIs, dedupeScoutPOIs } from "./aggregator";
 
 const PROVIDER_REGISTRY: Map<string, ScoutProvider> = new Map([
   [osmScoutProvider.id, osmScoutProvider],
+  [brandenburgScoutProvider.id, brandenburgScoutProvider],
   // Weitere Provider hier registrieren, sobald implementiert:
   // [googleScoutProvider.id, googleScoutProvider],
-  // [foursquareScoutProvider.id, foursquareScoutProvider],
 ]);
 
 /** Kommagetrennte Liste aus Env (z. B. "openstreetmap,google"). Default: openstreetmap. */
@@ -33,7 +34,7 @@ function getActiveProviderIds(): string[] {
   if (typeof raw === "string" && raw.trim()) {
     return raw.split(",").map((id) => id.trim().toLowerCase()).filter(Boolean);
   }
-  return ["openstreetmap"];
+  return ["openstreetmap", "brandenburg"];
 }
 
 /** Alle registrierten Provider. */
