@@ -49,6 +49,7 @@ const FIELD_MAP: Record<string, string> = {
   monthlyCreditRate: "monthly_credit_rate", monthlyCashflow: "monthly_cashflow",
   remainingDebt: "remaining_debt", interestRate: "interest_rate", sqm: "sqm",
   yearBuilt: "year_built", ownership: "ownership",
+  restnutzungsdauer: "restnutzungsdauer", buildingSharePercent: "building_share_percent",
 };
 
 interface PropertyDbRow {
@@ -70,6 +71,8 @@ interface PropertyDbRow {
   sqm: number;
   year_built: number;
   ownership: string;
+  restnutzungsdauer?: number | null;
+  building_share_percent?: number | null;
 }
 
 const mapDbToProperty = (row: PropertyDbRow): Property => ({
@@ -91,6 +94,8 @@ const mapDbToProperty = (row: PropertyDbRow): Property => ({
   sqm: Number(row.sqm),
   yearBuilt: row.year_built,
   ownership: row.ownership as "privat" | "egbr",
+  restnutzungsdauer: row.restnutzungsdauer != null ? Number(row.restnutzungsdauer) : undefined,
+  buildingSharePercent: row.building_share_percent != null ? Number(row.building_share_percent) : undefined,
 });
 
 const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string, unknown> => {

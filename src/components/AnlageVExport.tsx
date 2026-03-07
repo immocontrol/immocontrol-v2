@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
+import { loadJsPDF } from "@/lib/lazyImports";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 
@@ -157,10 +157,11 @@ export const AnlageVExport = () => {
     };
   }, [properties, loans, insurances, payments, transactions, extras]);
 
-  const generatePDF = useCallback(() => {
+  const generatePDF = useCallback(async () => {
     setLoading(true);
     try {
-      const doc = new jsPDF({ format: "a4" });
+      const JsPDF = await loadJsPDF();
+      const doc = new JsPDF({ format: "a4" });
       const margin = 20;
       let y = margin;
 

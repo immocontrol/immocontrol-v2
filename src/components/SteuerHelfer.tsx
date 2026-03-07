@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
+import { getAnnualAfa } from "@/lib/afaSanierung";
 
 const SteuerHelfer = () => {
   const { properties, stats } = useProperties();
@@ -32,11 +33,8 @@ const SteuerHelfer = () => {
     // Annual rental income
     const annualRent = stats.totalRent * 12;
     
-    // AfA (2% for pre-2023, 3% for post-2023)
-    const totalAfa = properties.reduce((s, p) => {
-      const rate = (p.yearBuilt || 1970) >= 2023 ? 3 : 2;
-      return s + (p.purchasePrice * 0.75 * rate / 100);
-    }, 0);
+    // AfA: Gebäudeanteil + Restnutzungsdauer oder AfA-Satz
+    const totalAfa = properties.reduce((s, p) => s + getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer }), 0);
 
     // Interest payments (deductible)
     const totalInterest = loans.reduce((s, l) => {

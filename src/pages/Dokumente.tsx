@@ -258,9 +258,9 @@ const Dokumente = () => {
   return (
     /* IMP-14: ARIA landmark for Dokumente page */
     <div className="space-y-6 animate-fade-in" role="main" aria-label="Dokumenten-Management">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Dokumenten-Management</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold break-words">Dokumenten-Management</h1>
           <p className="text-sm text-muted-foreground">
             {documents.length} Dokumente · {formatFileSize(totalSize)} gesamt
             {extracting && <span className="ml-2 text-primary animate-pulse">Text wird extrahiert...</span>}

@@ -2568,6 +2568,10 @@ input:focus, textarea:focus, select:focus {
 #main-content .container {
   min-width: 0;
 }
+/* Overlap prevention: direct children of main can shrink so flex/grid doesn't overflow on small screens */
+#main-content > * {
+  min-width: 0;
+}
 
 /* NAV-LABEL: Menü-Labels bei wenig Platz kleiner + sauberer Umbruch */
 .nav-label-responsive {

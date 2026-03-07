@@ -439,9 +439,9 @@ const Loans = () => {
   }
 
   return (
-    <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
+    <div className="space-y-6 min-w-0" role="main" aria-label="Darlehensverwaltung">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 min-w-0">
+        <div className="min-w-0">
           {/* UI-11: heading-gradient */}
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 heading-gradient">
             <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Darlehen
@@ -462,7 +462,7 @@ const Loans = () => {
             </Button>
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap min-w-0 shrink-0">
           {/* Ownership filter */}
           {["alle", "privat", "egbr"].map(f => (
             <button key={f} onClick={() => setFilterOwnership(f)}

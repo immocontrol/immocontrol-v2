@@ -3,7 +3,7 @@
  * Klare IA und Verlinkbarkeit (Vorschlag 16).
  * VirtualList ab 25 Objekten für bessere Performance.
  */
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Search, Briefcase, Camera, Store, FileText } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
@@ -15,6 +15,7 @@ import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
+import { calcBruttoRendite } from "@/lib/calculations";
 
 const VIRTUAL_LIST_THRESHOLD = 25;
 const PROPERTY_CARD_HEIGHT = 220;
@@ -27,32 +28,51 @@ const ObjekteList = () => {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>("name");
 
-  const filtered = properties.filter(
-    (p) =>
-      !search ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.address && p.address.toLowerCase().includes(search.toLowerCase()))
+  const filtered = useMemo(
+    () =>
+      properties.filter(
+        (p) =>
+          !search ||
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          (p.address && p.address.toLowerCase().includes(search.toLowerCase()))
+      ),
+    [properties, search]
   );
 
-  const bruttoRendite = (p: { purchasePrice: number; monthlyRent: number }) =>
-    p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice) * 100 : 0;
+  const sorted = useMemo(
+    () =>
+      [...filtered].sort((a, b) => {
+        switch (sort) {
+          case "name":
+            return (a.name || "").localeCompare(b.name || "");
+          case "value":
+            return (b.currentValue ?? 0) - (a.currentValue ?? 0);
+          case "rent":
+            return (b.monthlyRent ?? 0) - (a.monthlyRent ?? 0);
+          case "cashflow":
+            return (b.monthlyCashflow ?? 0) - (a.monthlyCashflow ?? 0);
+          case "rendite":
+            return calcBruttoRendite(b.purchasePrice, b.monthlyRent) - calcBruttoRendite(a.purchasePrice, a.monthlyRent);
+          default:
+            return 0;
+        }
+      }),
+    [filtered, sort]
+  );
 
-  const sorted = [...filtered].sort((a, b) => {
-    switch (sort) {
-      case "name":
-        return (a.name || "").localeCompare(b.name || "");
-      case "value":
-        return (b.currentValue ?? 0) - (a.currentValue ?? 0);
-      case "rent":
-        return (b.monthlyRent ?? 0) - (a.monthlyRent ?? 0);
-      case "cashflow":
-        return (b.monthlyCashflow ?? 0) - (a.monthlyCashflow ?? 0);
-      case "rendite":
-        return bruttoRendite(b) - bruttoRendite(a);
-      default:
-        return 0;
-    }
-  });
+  const renderItem = useCallback(
+    (property: (typeof properties)[0]) => (
+      <div className="pb-4">
+        <PropertyCard
+          {...property}
+          monthlyExpenses={property.monthlyExpenses}
+          monthlyCreditRate={property.monthlyCreditRate}
+          ownership={property.ownership}
+        />
+      </div>
+    ),
+    []
+  );
 
   if (loading) {
     return (
@@ -68,13 +88,13 @@ const ObjekteList = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4" id="main-content">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
+    <div className="p-4 md:p-6 space-y-4 min-w-0 overflow-x-hidden" id="main-content">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between min-w-0">
+        <h1 className="text-xl font-semibold flex items-center gap-2 shrink-0">
           <Building2 className="h-5 w-5" />
           Objekte
         </h1>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <div className="relative flex-1 sm:min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -137,22 +157,18 @@ const ObjekteList = () => {
           maxHeight={typeof window !== "undefined" ? window.innerHeight - 200 : 600}
           overscan={4}
           getKey={(p) => p.id}
-          renderItem={(property) => (
-            <div className="pb-4">
-              <PropertyCard
-                property={property}
-                onClick={() => navigate(`${ROUTES.PROPERTY}/${property.id}`)}
-              />
-            </div>
-          )}
+          renderItem={renderItem}
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">
-          {sorted.map((property) => (
+          {sorted.map((property, i) => (
             <li key={property.id}>
               <PropertyCard
-                property={property}
-                onClick={() => navigate(`${ROUTES.PROPERTY}/${property.id}`)}
+                {...property}
+                monthlyExpenses={property.monthlyExpenses}
+                monthlyCreditRate={property.monthlyCreditRate}
+                ownership={property.ownership}
+                delay={i * 60}
               />
             </li>
           ))}

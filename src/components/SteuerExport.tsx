@@ -7,6 +7,7 @@ import { useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
+import { getAnnualAfa } from "@/lib/afaSanierung";
 import { toast } from "sonner";
 
 interface Property {
@@ -50,8 +51,7 @@ export function SteuerExport({ properties, year = new Date().getFullYear() - 1 }
   const entries = useMemo((): AnlageVEntry[] => {
     return properties.map((p) => {
       const mieteinnahmen = p.monthlyRent * 12;
-      // AfA: 2% of purchase price (standard for buildings built after 1924)
-      const afa = p.purchasePrice * 0.02;
+      const afa = getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer });
       // Annual interest: approximate from remaining debt * interest rate
       const schuldzinsen = p.remainingDebt * (p.interestRate / 100);
       // Operating expenses

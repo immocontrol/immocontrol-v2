@@ -2,24 +2,24 @@ import { useMemo } from "react";
 import { Calculator, TrendingDown } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { getGebaeudeAnteil, getAnnualAfa, getAfaRatePercent } from "@/lib/afaSanierung";
 
 const AfACalculator = () => {
   const { properties } = useProperties();
 
   const afaData = useMemo(() => {
     return properties.map(p => {
-      const yearBuilt = p.yearBuilt || 1970;
-      // German depreciation rules: 2% for buildings before 2023, 3% for after
-      const afaRate = yearBuilt >= 2023 ? 3 : 2;
-      // Gebäudeanteil typically 70-80% of purchase price
-      const gebaeudeAnteil = p.purchasePrice * 0.75;
-      const annualAfa = gebaeudeAnteil * (afaRate / 100);
+      const yearBuilt = p.yearBuilt ?? 1970;
+      const input = { purchasePrice: p.purchasePrice, yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer };
+      const gebaeudeAnteil = getGebaeudeAnteil(input);
+      const afaRate = getAfaRatePercent(input);
+      const annualAfa = getAnnualAfa(input);
       const monthlyAfa = annualAfa / 12;
       const purchaseDate = new Date(p.purchaseDate);
       const yearsHeld = Math.max(0, (Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
       const totalAfaClaimed = Math.min(annualAfa * yearsHeld, gebaeudeAnteil);
       const remainingAfa = gebaeudeAnteil - totalAfaClaimed;
-      const remainingYears = afaRate > 0 ? remainingAfa / annualAfa : 0;
+      const remainingYears = annualAfa > 0 ? remainingAfa / annualAfa : 0;
 
       return {
         id: p.id,
@@ -76,7 +76,7 @@ const AfACalculator = () => {
                 <TrendingDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span className="font-medium truncate">{d.name}</span>
                 <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded shrink-0">
-                  {d.afaRate}% · Bj. {d.yearBuilt}
+                  {d.afaRate.toFixed(1)}% · Bj. {d.yearBuilt}
                 </span>
               </div>
               <span className="font-semibold tabular-nums shrink-0">{formatCurrency(d.annualAfa)}/J</span>

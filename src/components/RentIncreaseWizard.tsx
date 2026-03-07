@@ -21,6 +21,13 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
+import {
+  KAPPUNGSGRENZE_NORMAL,
+  KAPPUNGSGRENZE_ANGESPANNT,
+  WARTEFRIST_MONATE,
+  MODERNISIERUNG_UMLAGE_PROZENT,
+  ANGESPANNTE_MÄRKTE,
+} from "@/lib/mietrechtConstants";
 
 interface RentIncreaseWizardProps {
   currentRent?: number;
@@ -34,24 +41,6 @@ interface MietspiegelEntry {
   maxPerSqm: number;
   avgPerSqm: number;
 }
-
-/* §558 BGB: Kappungsgrenze — Miete darf in 3 Jahren max. 20% steigen (15% in angespannten Märkten) */
-const KAPPUNGSGRENZE_NORMAL = 20;
-const KAPPUNGSGRENZE_ANGESPANNT = 15;
-
-/* §558 BGB: Wartefrist — Erhöhung frühestens 15 Monate nach letzter Erhöhung */
-const WARTEFRIST_MONATE = 15;
-
-/* §559 BGB: Modernisierungsumlage — max. 8% der Modernisierungskosten pro Jahr */
-const MODERNISIERUNG_UMLAGE_PROZENT = 8;
-
-/* Common German cities with angespanntem Wohnungsmarkt */
-const ANGESPANNTE_MÄRKTE = [
-  "Berlin", "München", "Hamburg", "Frankfurt", "Köln", "Düsseldorf",
-  "Stuttgart", "Freiburg", "Heidelberg", "Regensburg", "Augsburg",
-  "Münster", "Bonn", "Darmstadt", "Mainz", "Konstanz", "Tübingen",
-  "Potsdam", "Rostock", "Leipzig", "Dresden",
-];
 
 const RentIncreaseWizard = ({ currentRent = 0, propertyName, sqm = 0, tenantName }: RentIncreaseWizardProps) => {
   const [open, setOpen] = useState(false);

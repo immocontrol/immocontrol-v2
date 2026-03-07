@@ -73,9 +73,20 @@ export const addPropertyFormSchema = z.object({
   interestRate: z.coerce.number().min(0).max(20, "Zinssatz max 20%"),
   sqm: z.coerce.number().min(1, "Wohnfläche angeben"),
   yearBuilt: z.coerce.number().min(1800).max(2030, "Jahr 1800–2030"),
+  restnutzungsdauer: z.coerce.number().int().min(1).max(100).optional().or(z.literal("")),
+  buildingSharePercent: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
+  /** Cashflow = Miete - Kosten - Rate. Wird automatisch berechnet, editierbar falls Sonderfall. */
+  monthlyCashflow: z.coerce.number().optional(),
 });
 
 export type AddPropertyFormData = z.infer<typeof addPropertyFormSchema>;
+
+/** Edit-Property-Dialog: gleiche Felder wie Add (einheitliche Typen). */
+export const editPropertyFormSchema = addPropertyFormSchema;
+export type EditPropertyFormData = AddPropertyFormData;
+
+/** Objekttypen für Selects (Add/Edit Property). */
+export const PROPERTY_TYPES = ["ETW", "MFH", "EFH", "DHH", "ZFH", "Gewerbe", "Grundstück", "Sonstige"] as const;
 
 /* ── Contact form schema ────────────────────────────────── */
 

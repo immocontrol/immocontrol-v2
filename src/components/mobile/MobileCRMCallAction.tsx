@@ -29,7 +29,7 @@ export interface CallLog {
   startedAt: string;
   duration: number; // seconds
   notes: string;
-  outcome: "reached" | "voicemail" | "no_answer" | "busy";
+  outcome: "reached" | "voicemail" | "no_answer" | "busy" | "follow_up";
 }
 
 export const MobileCRMCallAction = memo(function MobileCRMCallAction({
@@ -112,6 +112,7 @@ export const MobileCRMCallAction = memo(function MobileCRMCallAction({
     { value: "voicemail", label: "Mailbox" },
     { value: "no_answer", label: "Keine Antwort" },
     { value: "busy", label: "Besetzt" },
+    { value: "follow_up", label: "Follow-up" },
   ];
 
   return (
@@ -151,7 +152,7 @@ export const MobileCRMCallAction = memo(function MobileCRMCallAction({
         <>
           <div className="fixed inset-0 z-[300] bg-black/40" onClick={() => setShowLogDialog(false)} />
           <div
-            className="fixed z-[310] left-2 right-2 bg-background rounded-2xl border border-border shadow-2xl p-4 space-y-3 animate-slide-up"
+            className="fixed z-[310] left-2 right-2 bg-background rounded-2xl border border-border shadow-2xl p-4 space-y-3 animate-slide-up max-h-[min(90vh,28rem)] overflow-y-auto"
             style={{
               bottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
             }}

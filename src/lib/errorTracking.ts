@@ -62,8 +62,12 @@ function saveErrors(errors: ErrorEntry[]) {
   }
 }
 
-/** Log an error to the tracking store. Message and stack are sanitized (no PII/tokens). */
-export function trackError(error: Error | string, type: ErrorEntry["type"] = "manual", componentStack?: string) {
+/** Log an error to the tracking store. Message and stack are sanitized (no PII/tokens). Returns the created entry. */
+export function trackError(
+  error: Error | string,
+  type: ErrorEntry["type"] = "manual",
+  componentStack?: string,
+): ErrorEntry {
   const rawMessage = typeof error === "string" ? error : error.message;
   const rawStack = typeof error === "string" ? undefined : error.stack;
   const entry: ErrorEntry = {
@@ -72,8 +76,8 @@ export function trackError(error: Error | string, type: ErrorEntry["type"] = "ma
     message: sanitizeForLog(rawMessage),
     stack: rawStack ? sanitizeForLog(rawStack) : undefined,
     type,
-    url: window.location.href,
-    userAgent: navigator.userAgent,
+    url: typeof window !== "undefined" ? window.location.href : "",
+    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
     componentStack: componentStack ? sanitizeForLog(componentStack) : undefined,
   };
 
@@ -96,6 +100,8 @@ export function trackError(error: Error | string, type: ErrorEntry["type"] = "ma
   if (import.meta.env.DEV) {
     console.error(`[ErrorTracking] ${entry.type}: ${entry.message}`, entry);
   }
+
+  return entry;
 }
 
 /** Get all tracked errors */
@@ -116,6 +122,78 @@ export function exportErrors(): string {
 /** Get error count for badge display */
 export function getErrorCount(): number {
   return loadErrors().length;
+}
+
+/** Input shape for AI report (ErrorEntry or AppError-like). */
+export interface ErrorReportInput {
+  message: string;
+  stack?: string;
+  type?: string;
+  source?: string;
+  url?: string;
+  componentStack?: string;
+  timestamp?: string;
+}
+
+/**
+ * Format an error as a single block for pasting into AI/vibe coding tools (Cursor, Lovable, etc.).
+ * Contains message, stack, context, URL and a short instruction so the assistant can suggest a fix.
+ */
+export function formatErrorReportForAI(entry: ErrorReportInput): string {
+  const ts = entry.timestamp ? new Date(entry.timestamp).toLocaleString("de-DE") : new Date().toLocaleString("de-DE");
+  const url = entry.url ?? (typeof window !== "undefined" ? window.location.href : "");
+  const context = entry.componentStack ?? entry.source ?? entry.type ?? "";
+
+  const sections: string[] = [
+    "## Error (paste into AI coding assistant to get a fix)",
+    "",
+    "**Message:**",
+    entry.message,
+    "",
+    "**Where:** " + (context ? `${context} · ` : "") + url,
+    "**Time:** " + ts,
+    "",
+  ];
+
+  if (entry.stack) {
+    sections.push("**Stack trace:**", "```", entry.stack.trim(), "```", "");
+  }
+
+  sections.push(
+    "---",
+    "Project: ImmoControl (React/TypeScript, Vite). Fix this error. Reply with exact file path and code changes.",
+  );
+
+  return sections.join("\n");
+}
+
+/** Get the most recently tracked error (for "Copy for AI" right after handleError). */
+export function getLastTrackedError(): ErrorEntry | null {
+  const errors = loadErrors();
+  return errors.length > 0 ? errors[errors.length - 1]! : null;
+}
+
+/**
+ * Copy error report to clipboard in AI-friendly format. Returns true if copied.
+ * Call after an error toast so the user can paste into Cursor/Lovable/etc.
+ */
+export async function copyErrorReportToClipboard(entry: ErrorReportInput | null = null): Promise<boolean> {
+  const toCopy = entry ?? getLastTrackedError();
+  if (!toCopy) return false;
+  const report = formatErrorReportForAI({
+    message: toCopy.message,
+    stack: toCopy.stack,
+    type: toCopy.type,
+    url: toCopy.url,
+    componentStack: toCopy.componentStack,
+    timestamp: toCopy.timestamp,
+  });
+  try {
+    await navigator.clipboard.writeText(report);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /* STRONG-1: Return cleanup function from initErrorTracking so listeners can be removed on HMR / unmount.

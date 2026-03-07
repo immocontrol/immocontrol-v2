@@ -290,13 +290,15 @@ export const TeamManagement = () => {
               </DialogHeader>
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">E-Mail *</Label>
+                  <Label htmlFor="team-invite-email" className="text-xs">E-Mail *</Label>
                   <Input
+                    id="team-invite-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="partner@example.com"
                     className="h-9 text-sm"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-1">

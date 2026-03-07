@@ -60,6 +60,7 @@ const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
             onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setOpen(false); }}
             placeholder="Aufgabe eingeben…"
             className="h-8 text-sm mb-2"
+            aria-label="Schnell-Aufgabe Titel"
           />
           <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full h-8 text-xs gap-1">
             <Check className="h-3.5 w-3.5" /> Speichern

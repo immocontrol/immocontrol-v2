@@ -1,8 +1,9 @@
 /**
  * FUND-5: Unified error handling — replaces empty catch {} blocks with
  * contextual error tracking and user-friendly toasts.
+ * In DEV, toast offers "Copy for AI" so the error report can be pasted into Cursor/Lovable etc.
  */
-import { trackError } from "@/lib/errorTracking";
+import { trackError, copyErrorReportToClipboard } from "@/lib/errorTracking";
 import { toast } from "sonner";
 
 type ErrorContext =
@@ -66,15 +67,26 @@ export function handleError(error: unknown, options: HandleErrorOptions = {}): v
     .filter(Boolean)
     .join(", ");
 
-  // Track the error
-  trackError(err, "manual", trackingDetails);
+  // Track the error and get entry for "Copy for AI"
+  const entry = trackError(err, "manual", trackingDetails);
 
   // Show toast unless silent
   if (showToast && !silent) {
     const message = toastMessage || CONTEXT_MESSAGES[context];
     toast.error(message, {
       description: import.meta.env.DEV ? err.message : undefined,
-      duration: 4000,
+      duration: 6000,
+      action:
+        import.meta.env.DEV
+          ? {
+              label: "Copy for AI",
+              onClick: () => {
+                copyErrorReportToClipboard(entry).then((ok) =>
+                  ok ? toast.success("Fehlerbericht in Zwischenablage – in Cursor/Lovable einfügen") : toast.error("Kopieren fehlgeschlagen"),
+                );
+              },
+            }
+          : undefined,
     });
   }
 }

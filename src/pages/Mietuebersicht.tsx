@@ -25,8 +25,10 @@ import { InflationMietrechner } from "@/components/InflationMietrechner";
 const Mietuebersicht = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const propertyFromUrl = searchParams.get("property");
+  const tabFromUrl = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(() => (tabFromUrl === "bank" || tabFromUrl === "mahnwesen" || tabFromUrl === "trend" ? tabFromUrl : "zahlungen"));
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 200);
   const [statusFilter, setStatusFilter] = useState("alle");
@@ -36,6 +38,10 @@ const Mietuebersicht = () => {
   useEffect(() => {
     if (propertyFromUrl && propertyFromUrl !== propertyFilter) setPropertyFilter(propertyFromUrl);
   }, [propertyFromUrl]);
+
+  useEffect(() => {
+    if (tabFromUrl === "bank" || tabFromUrl === "mahnwesen" || tabFromUrl === "trend") setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
 
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ["mietuebersicht_tenants"],
@@ -226,10 +232,10 @@ const Mietuebersicht = () => {
   }
 
   return (
-    <div className="space-y-6" role="main" aria-label="Mietübersicht">
-      <div>
+    <div className="space-y-6 min-w-0" role="main" aria-label="Mietübersicht">
+      <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
+        <div className="flex items-center gap-x-2 gap-y-2 mt-1 flex-wrap min-w-0">
           <p className="text-sm text-muted-foreground">
             {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat
             {stats.totalDue > 0 && (
@@ -265,7 +271,7 @@ const Mietuebersicht = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="zahlungen" className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchParams((p) => { const next = new URLSearchParams(p); if (v === "zahlungen") next.delete("tab"); else next.set("tab", v); return next; }); }} className="w-full">
         <TabsList>
           <TabsTrigger value="zahlungen">Zahlungen</TabsTrigger>
           <TabsTrigger value="mahnwesen">Mahnwesen</TabsTrigger>

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
+import { getAnnualAfa, getGebaeudeAnteil } from "@/lib/afaSanierung";
 
 interface TaxTip {
   id: string;
@@ -48,11 +49,7 @@ const SteuerOptimierung = memo(() => {
     const result: TaxTip[] = [];
 
     // 1. Standard AfA check
-    const totalAfA = properties.reduce((sum, p) => {
-      const buildingValue = p.purchasePrice * 0.75;
-      const rate = p.yearBuilt < 1925 ? 0.025 : p.yearBuilt >= 2023 ? 0.03 : 0.02;
-      return sum + buildingValue * rate;
-    }, 0);
+    const totalAfA = properties.reduce((sum, p) => sum + getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer }), 0);
     if (totalAfA > 0) {
       result.push({
         id: "afa_standard",
@@ -68,7 +65,7 @@ const SteuerOptimierung = memo(() => {
     // 2. Sonder-AfA §7b EStG (new buildings after 2023)
     const newBuildings = properties.filter((p) => p.yearBuilt >= 2023);
     if (newBuildings.length > 0) {
-      const sonderAfA = newBuildings.reduce((s, p) => s + p.purchasePrice * 0.75 * 0.05, 0);
+      const sonderAfA = newBuildings.reduce((s, p) => s + getGebaeudeAnteil({ purchasePrice: p.purchasePrice, buildingSharePercent: p.buildingSharePercent }) * 0.05, 0);
       result.push({
         id: "sonder_afa",
         title: "Sonder-AfA §7b EStG prüfen",
@@ -87,7 +84,7 @@ const SteuerOptimierung = memo(() => {
         id: "altbau_afa",
         title: "Erhöhte AfA für Altbauten",
         description: `${altbauten.length} Objekt(e) vor 1925 errichtet — 2,5% statt 2% AfA möglich.`,
-        potentialSaving: altbauten.reduce((s, p) => s + p.purchasePrice * 0.75 * 0.005 * taxRate / 100, 0),
+        potentialSaving: altbauten.reduce((s, p) => s + getGebaeudeAnteil({ purchasePrice: p.purchasePrice, buildingSharePercent: p.buildingSharePercent }) * 0.005 * taxRate / 100, 0),
         category: "afa",
         priority: "mittel",
         legalReference: "§7 Abs. 4 Satz 2 EStG",

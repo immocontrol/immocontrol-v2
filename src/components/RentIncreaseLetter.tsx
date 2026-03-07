@@ -11,7 +11,7 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { formatCurrency } from "@/lib/formatters";
 import { generateRentIncreaseJustification, isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
-import jsPDF from "jspdf";
+import { loadJsPDF } from "@/lib/lazyImports";
 
 /** Feature 3: Mietspiegel-Referenzdaten für größere deutsche Städte */
 const MIETSPIEGEL_DATA: Record<string, { min: number; max: number; avg: number; year: number }> = {
@@ -74,15 +74,16 @@ export function RentIncreaseLetter() {
   const rentPerSqm = sqm > 0 ? newRent / sqm : 0;
   const isInMietspiegel = mietspiegelInfo ? (rentPerSqm >= mietspiegelInfo.min && rentPerSqm <= mietspiegelInfo.max) : null;
 
-  /** Feature 3: Generate real PDF using jsPDF */
-  const exportPDF = useCallback(() => {
+  /** Feature 3: Generate real PDF using jsPDF (lazy loaded) */
+  const exportPDF = useCallback(async () => {
     if (!tenantName || !currentRent || !newRent || !effectiveDate) {
       toast.error("Bitte alle Pflichtfelder ausfüllen");
       return;
     }
 
+    const JsPDF = await loadJsPDF();
     const today = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
-    const doc = new jsPDF({ format: "a4" });
+    const doc = new JsPDF({ format: "a4" });
     const margin = 25;
     let y = margin;
 

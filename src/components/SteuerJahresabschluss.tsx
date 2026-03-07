@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
+import { getAnnualAfa } from "@/lib/afaSanierung";
 import { toast } from "sonner";
 
 interface PropertyTaxSummary {
@@ -70,12 +71,8 @@ const SteuerJahresabschluss = memo(() => {
         return sum + Math.max(0, l.monthly_payment * 12 - (l.remaining_balance * l.interest_rate / 100));
       }, 0);
 
-      // AfA: 2% for buildings after 1925, 2.5% before 1925, 3% for new (after 2023, §7 Abs. 4 EStG)
-      const buildingValue = p.purchasePrice * 0.75; // ~75% building
-      let afaRate = 0.02;
-      if (p.yearBuilt && p.yearBuilt < 1925) afaRate = 0.025;
-      if (p.yearBuilt && p.yearBuilt >= 2023) afaRate = 0.03;
-      const afa = buildingValue * afaRate;
+      // AfA: Gebäudeanteil und Restnutzungsdauer oder AfA-Satz nach Baujahr
+      const afa = getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer });
 
       // Estimated maintenance & management costs
       const instandhaltung = annualExpenses * 0.4;

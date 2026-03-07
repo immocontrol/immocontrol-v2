@@ -24,6 +24,8 @@ export const propertyRowSchema = z.object({
   sqm: z.coerce.number().default(0),
   year_built: z.coerce.number().default(0),
   ownership: z.string().default("privat"),
+  restnutzungsdauer: z.coerce.number().int().min(1).max(100).nullable().optional(),
+  building_share_percent: z.coerce.number().min(0).max(100).nullable().optional(),
 });
 export type PropertyRow = z.infer<typeof propertyRowSchema>;
 

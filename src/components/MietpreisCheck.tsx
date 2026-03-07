@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
+import { isAngespanntMarkt, getKappungsgrenzePercent } from "@/lib/mietrechtConstants";
 
 // Simplified Mietspiegel data (real app would fetch from API/DB)
 const MIETSPIEGEL_RANGES: Record<string, { min: number; mid: number; max: number }> = {
@@ -64,8 +65,9 @@ const MietpreisCheck = memo(() => {
       const potentialMonthly = potentialPerSqm * sqm;
       const potentialPercent = currentRentPerSqm > 0 ? (potentialPerSqm / currentRentPerSqm) * 100 : 0;
 
-      // Kappungsgrenze: max 20% increase in 3 years (§558 Abs. 3 BGB)
-      const maxIncrease558 = p.monthlyRent * 0.2;
+      // Kappungsgrenze §558: 15% oder 20% in 3 Jahren je nach Standort
+      const kappungPct = getKappungsgrenzePercent(isAngespanntMarkt(p.location || ""));
+      const maxIncrease558 = p.monthlyRent * (kappungPct / 100);
       const kappungsgrenzeOk = potentialMonthly <= maxIncrease558;
 
       return {

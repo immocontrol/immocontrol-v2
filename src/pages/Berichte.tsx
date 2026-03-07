@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase, BarChart3, Store, FileText } from "lucide-react";
-import { jsPDF } from "jspdf";
+import { loadJsPDF } from "@/lib/lazyImports";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
+import { getAnnualAfa } from "@/lib/afaSanierung";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
 import { EmptyState } from "@/components/EmptyState";
 import { ROUTES } from "@/lib/routes";
@@ -100,9 +101,11 @@ const Berichte = () => {
     setLastReportGenerated(new Date().toLocaleString("de-DE"));
   }, [trackReport]);
 
-  /* FUNC-14: PDF-Export — generates actual downloadable PDF instead of just print window */
-  const exportPDF = useCallback((title: string, sections: { heading?: string; rows: [string, string][] }[]) => {
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  /* FUNC-14: PDF-Export — generates actual downloadable PDF instead of just print window (jsPDF lazy) */
+  const exportPDF = useCallback(async (title: string, sections: { heading?: string; rows: [string, string][] }[]) => {
+    try {
+      const JsPDF = await loadJsPDF();
+    const doc = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();
     let y = 20;
     const checkPage = (need: number) => { if (y + need > 270) { doc.addPage(); y = 20; } };
@@ -146,6 +149,9 @@ const Berichte = () => {
     trackReport();
     setLastReportGenerated(new Date().toLocaleString("de-DE"));
     toast.success(`${title} als PDF gespeichert!`);
+    } catch (e) {
+      toast.error("PDF konnte nicht erstellt werden");
+    }
   }, [year, trackReport]);
 
   /* FUNC-14: PDF version of portfolio report */
@@ -335,13 +341,12 @@ ${properties.map(p => {
   const pLoans = loans.filter(l => l.property_id === p.id);
   const pInterest = pLoans.reduce((s, l) => s + Number(l.remaining_balance) * Number(l.interest_rate) / 100, 0);
   const pIns = insurances.filter(i => i.property_id === p.id).reduce((s, i) => s + Number(i.annual_premium || 0), 0);
-  const afaRate = (p.yearBuilt || 1970) >= 2023 ? 3 : 2;
-  const pAfa = p.purchasePrice * 0.75 * afaRate / 100;
+  const pAfa = getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer });
   const pResult = p.monthlyRent * 12 - p.monthlyExpenses * 12 - pInterest - pIns - pAfa;
   return `<tr><td>${p.name}</td><td>${formatCurrency(p.monthlyRent * 12)}</td><td>${formatCurrency(pAfa)}</td><td>${formatCurrency(pInterest)}</td><td>${formatCurrency(p.monthlyExpenses * 12 + pIns)}</td><td class="${pResult >= 0 ? "negative" : "positive"}">${formatCurrency(pResult)}</td></tr>`;
 }).join("")}
 </table>
-<p style="font-size:11px;color:#888;margin-top:12px">⚠ Diese Aufstellung dient als Hilfestellung und ersetzt keine steuerliche Beratung. Gebäudeanteil pauschal mit 75% angesetzt.</p>
+<p style="font-size:11px;color:#888;margin-top:12px">⚠ Diese Aufstellung dient als Hilfestellung und ersetzt keine steuerliche Beratung. AfA je Objekt aus Gebäudeanteil und Restnutzungsdauer bzw. AfA-Satz.</p>
 <p class="footer">ImmoControl · Anlage V · ${new Date().toLocaleDateString("de-DE")}</p>
 </body></html>`);
     toast.success("Anlage V erstellt!");

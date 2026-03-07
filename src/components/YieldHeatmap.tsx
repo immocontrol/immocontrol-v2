@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Flame } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/formatters";
+import { calcMonthlyCashflow } from "@/lib/calculations";
 
 interface Property {
   id: string;
@@ -32,7 +33,7 @@ const YieldHeatmap = ({ properties }: YieldHeatmapProps) => {
         ...p,
         brutto: p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice) * 100 : 0,
         netto: p.purchasePrice > 0 ? ((p.monthlyRent - p.monthlyExpenses) * 12 / p.purchasePrice) * 100 : 0,
-        cashflow: p.monthlyRent - p.monthlyExpenses - p.monthlyCreditRate,
+        cashflow: calcMonthlyCashflow(p.monthlyRent, p.monthlyExpenses, p.monthlyCreditRate),
       }))
       .sort((a, b) => b.brutto - a.brutto),
     [properties]

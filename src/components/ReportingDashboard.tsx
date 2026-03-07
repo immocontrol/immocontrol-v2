@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, formatPercent, downloadBlob } from "@/lib/formatters";
+import { getAnnualAfa } from "@/lib/afaSanierung";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, Area, AreaChart } from "recharts";
 import { toast } from "sonner";
 
@@ -145,9 +146,8 @@ const ReportingDashboard = () => {
     const annualExpenses = properties.reduce((s, p) => s + (p.monthlyExpenses + p.monthlyCreditRate) * 12, 0);
     const annualCashflow = annualRent - annualExpenses;
 
-    /* Simplified German tax estimation for rental income */
-    const afaRate = 0.02; // 2% AfA for buildings built after 1925
-    const afaDeduction = properties.reduce((s, p) => s + p.purchasePrice * afaRate, 0);
+    /* AfA: Gebäudeanteil + Restnutzungsdauer oder AfA-Satz */
+    const afaDeduction = properties.reduce((s, p) => s + getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer }), 0);
     const taxableIncome = Math.max(0, annualCashflow - afaDeduction);
 
     /* Approximate tax brackets (simplified) */

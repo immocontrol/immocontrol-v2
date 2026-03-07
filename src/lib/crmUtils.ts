@@ -698,6 +698,15 @@ export const outcomeLabels: Record<string, string> = {
   voicemail: "Voicemail",
 };
 
+/** Maps MobileCRMCallAction outcome to crm_call_logs outcome */
+export const mapMobileOutcomeToCrm: Record<string, string> = {
+  reached: "positiv",
+  voicemail: "voicemail",
+  no_answer: "kein_ergebnis",
+  busy: "kein_ergebnis",
+  follow_up: "follow_up",
+};
+
 /* FUNC-39: Lead scoring helper */
 interface LeadScoreInput {
   phone?: string | null;

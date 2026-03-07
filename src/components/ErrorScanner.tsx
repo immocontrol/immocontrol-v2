@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bug, Download, Trash2, RefreshCw, FileText, AlertTriangle, Info, AlertCircle, ChevronDown, ChevronUp, Search } from "lucide-react";
-import { trackError } from "@/lib/errorTracking";
+import { Bug, Download, Trash2, RefreshCw, FileText, AlertTriangle, Info, AlertCircle, ChevronDown, ChevronUp, Search, Copy } from "lucide-react";
+import { trackError, copyErrorReportToClipboard } from "@/lib/errorTracking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -267,6 +267,31 @@ export function ErrorScanner() {
           {warningCount > 0 && <Badge variant="outline" className="text-[10px] bg-gold/10 text-gold border-gold/20">{warningCount} Warnungen</Badge>}
         </h2>
         <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                disabled={filteredErrors.length === 0}
+                onClick={async () => {
+                  const latest = filteredErrors[0];
+                  if (!latest) return;
+                  const ok = await copyErrorReportToClipboard({
+                    message: latest.message,
+                    stack: latest.stack,
+                    source: latest.source,
+                    timestamp: latest.timestamp,
+                  });
+                  if (ok) toast.success("Neuester Fehler kopiert – in Cursor/Lovable einfügen");
+                  else toast.error("Kopieren fehlgeschlagen");
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" /> Copy for AI
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Neuesten Fehlerbericht kopieren (f\u00fcr Cursor/Lovable einfügen)</TooltipContent>
+          </Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={runScan} disabled={scanning}><RefreshCw className={`h-3.5 w-3.5 ${scanning ? "animate-spin" : ""}`} /></Button></TooltipTrigger><TooltipContent>App scannen</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={exportCSV} disabled={filteredErrors.length === 0}><FileText className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>CSV exportieren</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={exportPDF} disabled={filteredErrors.length === 0}><Download className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>PDF exportieren</TooltipContent></Tooltip>
@@ -314,8 +339,30 @@ export function ErrorScanner() {
                   </div>
                   {isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />}
                 </div>
-                {isExpanded && err.stack && (
-                  <pre className="mt-2 text-[10px] text-muted-foreground bg-background rounded p-2 overflow-x-auto max-h-[120px] font-mono whitespace-pre-wrap break-all">{err.stack}</pre>
+                {isExpanded && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    {err.stack && (
+                      <pre className="text-[10px] text-muted-foreground bg-background rounded p-2 overflow-x-auto max-h-[120px] font-mono whitespace-pre-wrap break-all">{err.stack}</pre>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto gap-1.5 h-8 text-xs"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const ok = await copyErrorReportToClipboard({
+                          message: err.message,
+                          stack: err.stack,
+                          source: err.source,
+                          timestamp: err.timestamp,
+                        });
+                        if (ok) toast.success("Fehlerbericht kopiert – in Cursor/Lovable einfügen");
+                        else toast.error("Kopieren fehlgeschlagen");
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copy for AI
+                    </Button>
+                  </div>
                 )}
               </div>
             );

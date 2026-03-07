@@ -2,6 +2,7 @@ import { memo, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Home, TrendingUp, ChevronRight, Percent, Wallet, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
+import { calcBruttoRendite, calcNettoRendite, calcDSCR } from "@/lib/calculations";
 
 interface PropertyCardProps {
   id: string;
@@ -45,13 +46,12 @@ const PropertyCard = memo(({
   const metrics = useMemo(() => {
     const appreciation = purchasePrice > 0 ? ((currentValue - purchasePrice) / purchasePrice) * 100 : 0;
     const pricePerSqm = sqm && sqm > 0 ? currentValue / sqm : null;
-    const bruttoRendite = purchasePrice > 0 ? ((monthlyRent * 12) / purchasePrice) * 100 : 0;
+    const bruttoRendite = calcBruttoRendite(purchasePrice, monthlyRent);
     const ltv = currentValue > 0 ? (remainingDebt / currentValue) * 100 : 0;
     const expenseRatio = monthlyRent > 0 ? ((monthlyExpenses + monthlyCreditRate) / monthlyRent) * 100 : 0;
-    /* NEW-62: Net yield after expenses */
-    const nettoRendite = purchasePrice > 0 ? (((monthlyRent - monthlyExpenses) * 12) / purchasePrice) * 100 : 0;
+    const nettoRendite = calcNettoRendite(purchasePrice, monthlyRent, monthlyExpenses);
     /* IMP20-7: DSCR (Debt Service Coverage Ratio) — key loan health indicator */
-    const dscr = monthlyCreditRate > 0 ? (monthlyRent - monthlyExpenses) / monthlyCreditRate : 0;
+    const dscr = calcDSCR(monthlyRent, monthlyExpenses, monthlyCreditRate);
     return { appreciation, pricePerSqm, bruttoRendite, ltv, expenseRatio, nettoRendite, dscr };
   }, [purchasePrice, currentValue, monthlyRent, sqm, remainingDebt, monthlyExpenses, monthlyCreditRate]);
 

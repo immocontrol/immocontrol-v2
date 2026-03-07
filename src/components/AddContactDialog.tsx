@@ -18,32 +18,9 @@ import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
+import { StepIndicator } from "@/components/StepIndicator";
 
 const STEP_LABELS = ["Kategorie", "Kontaktdaten", "Adresse & Notizen"];
-
-const StepIndicator = ({ current, total }: { current: number; total: number }) => (
-  <div className="flex items-center justify-center gap-0 mb-6">
-    {Array.from({ length: total }, (_, i) => {
-      const isCompleted = i < current;
-      const isActive = i === current;
-      return (
-        <div key={i} className="flex items-center">
-          <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
-            isCompleted && "bg-primary text-primary-foreground",
-            isActive && "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
-            !isCompleted && !isActive && "bg-muted text-muted-foreground"
-          )}>
-            {i + 1}
-          </div>
-          {i < total - 1 && (
-            <div className={cn("w-12 h-0.5 transition-all duration-300", i < current ? "bg-primary" : "bg-muted")} />
-          )}
-        </div>
-      );
-    })}
-  </div>
-);
 
 interface AddContactDialogProps {
   onCreated?: () => void;

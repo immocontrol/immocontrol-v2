@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { formatCurrency, formatDate, formatDaysUntil } from "@/lib/formatters";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { KAPPUNGSGRENZE_NORMAL, KAPPUNGSGRENZE_ANGESPANNT, WARTEFRIST_MONATE } from "@/lib/mietrechtConstants";
 
 /**
  * MIETVERTRAG-1: Mietvertragsverwaltung mit Fristen-Erinnerungen
@@ -54,11 +55,6 @@ interface MietvertragRow {
   created_at: string;
 }
 
-/** §558 BGB: Rent increase limits */
-const KAPPUNGSGRENZE_NORMAL = 20; // % max increase in 3 years
-const KAPPUNGSGRENZE_ANGESPANNT = 15; // % in markets with Mietpreisbremse
-const RENT_INCREASE_COOLDOWN_MONTHS = 15; // §558 minimum 15 months between increases
-
 interface MietvertragsverwaltungProps {
   propertyId?: string;
 }
@@ -72,7 +68,7 @@ function calcRentIncreaseInfo(contract: MietvertragRow, isAngespannterMarkt: boo
   if (contract.last_rent_increase) {
     const last = new Date(contract.last_rent_increase);
     nextIncreaseDate = new Date(last);
-    nextIncreaseDate.setMonth(nextIncreaseDate.getMonth() + RENT_INCREASE_COOLDOWN_MONTHS);
+    nextIncreaseDate.setMonth(nextIncreaseDate.getMonth() + WARTEFRIST_MONATE);
   } else {
     /* If no previous increase, can increase after 12 months from contract start */
     const start = new Date(contract.contract_start);
@@ -88,7 +84,7 @@ function calcRentIncreaseInfo(contract: MietvertragRow, isAngespannterMarkt: boo
     nextIncreaseDate,
     canIncreaseNow,
     daysUntilIncrease,
-    cooldownMonths: RENT_INCREASE_COOLDOWN_MONTHS,
+    cooldownMonths: WARTEFRIST_MONATE,
   };
 }
 
@@ -338,8 +334,13 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
                     </Select>
                   </div>
                 </div>
-                <Button onClick={() => addMutation.mutate()} disabled={!form.tenant_name || !form.property_id} className="w-full">
-                  Vertrag anlegen
+                <Button
+                  onClick={() => addMutation.mutate()}
+                  disabled={addMutation.isPending || !form.tenant_name?.trim() || !form.property_id}
+                  aria-busy={addMutation.isPending}
+                  className="w-full"
+                >
+                  {addMutation.isPending ? "Wird angelegt…" : "Vertrag anlegen"}
                 </Button>
               </div>
             </DialogContent>

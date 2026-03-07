@@ -23,15 +23,15 @@ import {
   type SearchPlace, type BuildingInfo, type NearbyBusiness,
   searchNominatim, searchNominatimAutocomplete, estimateBuildingSize, fetchNearbyBusinesses,
   getBuildingSizeLabel, getBuildingSizeColor,
-  statusColors, statusLabels, outcomeLabels,
+  statusColors, statusLabels, outcomeLabels, mapMobileOutcomeToCrm,
   calculateLeadScore, LEAD_STATUS_OPTIONS, calcCRMStats, CRM_SEARCH_DEBOUNCE,
 } from "@/lib/crmUtils";
 import { CallButton } from "@/components/CallButton";
+import { MobileCRMCallAction } from "@/components/mobile/MobileCRMCallAction";
 import { EmptyState } from "@/components/EmptyState";
 import GewerbeScout from "@/components/GewerbeScout";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { ROUTES } from "@/lib/routes";
-import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { summarizeCallTranscript, isDeepSeekConfigured, suggestLeadNextStep } from "@/integrations/ai/extractors";
 import { CRMSkeleton } from "@/components/mobile/MobileAllPageSkeletons";
 
@@ -43,7 +43,6 @@ type CRMTabValue = (typeof CRM_TAB_VALUES)[number];
 const CRM = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { startCall } = useVoiceCall();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const tabFromUrl = searchParams.get("tab");
@@ -314,6 +313,39 @@ const CRM = () => {
     },
   });
 
+  // Save call log from MobileCRMCallAction (post-call dialog)
+  const saveCallLogFromMobile = useMutation({
+    mutationFn: async ({ log, leadId }: { log: { outcome: string; notes: string; duration: number; startedAt: string }; leadId: string }) => {
+      const crmOutcome = mapMobileOutcomeToCrm[log.outcome] ?? "kein_ergebnis";
+      const durationMinutes = Math.max(1, Math.round(log.duration / 60));
+      const { error } = await supabase.from("crm_call_logs").insert({
+        user_id: user!.id,
+        lead_id: leadId,
+        outcome: crmOutcome,
+        notes: log.notes.trim() || null,
+        duration_minutes: durationMinutes,
+        call_date: log.startedAt,
+      });
+      if (error) throw error;
+      const statusMap: Record<string, string> = {
+        positiv: "interessiert",
+        negativ: "nicht_interessiert",
+        follow_up: "follow_up",
+        kein_ergebnis: "kontaktiert",
+        voicemail: "kontaktiert",
+      };
+      await supabase.from("crm_leads").update({ status: statusMap[crmOutcome] || "kontaktiert" }).eq("id", leadId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.callLogs(selectedLead ?? undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.leads(user?.id) });
+      toast.success("Gespräch geloggt");
+    },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "crm_call_logs.insert (mobile)", showToast: true });
+    },
+  });
+
   // Edit a call log entry
   const editCallLog = useMutation({
     mutationFn: async ({ id, notes, outcome }: { id: string; notes: string; outcome: string }) => {
@@ -476,10 +508,10 @@ const CRM = () => {
   }), [leads]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">CRM & Akquise</h1>
+    <div className="space-y-6 min-w-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight break-words">CRM & Akquise</h1>
           <p className="text-muted-foreground text-sm">
             Leads finden, kontaktieren & nachverfolgen
             {leadStats.total > 0 && (
@@ -873,13 +905,15 @@ const CRM = () => {
                   >
                     <CardContent className="p-3">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{lead.name}</p>
                           {lead.company && <p className="text-xs text-muted-foreground truncate">{lead.company}</p>}
                           {lead.phone && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <Phone className="h-3 w-3" /> {lead.phone}
-                            </p>
+                            <div className="flex items-center gap-1 mt-0.5" onClick={e => e.stopPropagation()}>
+                              <CallButton phone={lead.phone} toLabel={lead.name} leadId={lead.id} record className="text-xs text-primary hover:underline flex items-center gap-0.5 shrink-0" variant="link" ariaLabel={`${lead.name} anrufen`}>
+                                <Phone className="h-3 w-3" /> <span className="truncate">{lead.phone}</span>
+                              </CallButton>
+                            </div>
                           )}
                           {lead.updated_at && (
                             <p className="text-[10px] text-muted-foreground mt-1">
@@ -932,15 +966,25 @@ const CRM = () => {
                           </SelectContent>
                         </Select>
                         {selectedLeadData.phone && (
-                          <Button
-                            size="sm"
-                            onClick={async () => {
-                              const result = await startCall(selectedLeadData.phone!, { leadId: selectedLeadData.id, record: true, toLabel: selectedLeadData.name });
-                              if (!result?.ok && result?.error) toast.error(result.error);
+                          <MobileCRMCallAction
+                            phoneNumber={selectedLeadData.phone}
+                            contactName={selectedLeadData.name}
+                            leadId={selectedLeadData.id}
+                            onSaveLog={(log) => {
+                              if (selectedLead) {
+                                saveCallLogFromMobile.mutate({
+                                  log: {
+                                    outcome: log.outcome,
+                                    notes: log.notes,
+                                    duration: log.duration,
+                                    startedAt: log.startedAt,
+                                  },
+                                  leadId: selectedLead,
+                                });
+                              }
                             }}
-                          >
-                            <Phone className="h-4 w-4 mr-1" /> Anrufen
-                          </Button>
+                            className="h-8 px-2.5 gap-1.5 shrink-0"
+                          />
                         )}
                         <Button size="sm" variant="outline" onClick={() => { setLogDialogOpen(true); setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5, recording_url: "", transcript: "" }); }}>
                           <MessageSquare className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Gespräch</span> loggen

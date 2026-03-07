@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, safeDivide } from "@/lib/formatters";
+import { calcMonthlyCashflow } from "@/lib/calculations";
 
 interface Scenario {
   label: string;
@@ -61,7 +62,7 @@ export function CashflowScenarios() {
       const newRate = Math.max(0, avgRate + s.interestDelta);
       const rateMultiplier = avgRate > 0 ? newRate / avgRate : 1;
       const monthlyCreditRate = stats.totalCreditRate * rateMultiplier;
-      const monthlyCashflow = monthlyRent - monthlyExpenses - monthlyCreditRate;
+      const monthlyCashflow = calcMonthlyCashflow(monthlyRent, monthlyExpenses, monthlyCreditRate);
       const annualCashflow = monthlyCashflow * 12;
 
       return {

@@ -85,7 +85,7 @@ function saveAssets(data: FinancingAssets) {
 
 export default function FinanzierungsCockpit() {
   const { user } = useAuth();
-  const { properties } = useProperties();
+  const { properties, stats } = useProperties();
   const [assets, setAssets] = useState<FinancingAssets>(loadAssets);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("");
   const [expandedSection, setExpandedSection] = useState<string | null>("objekte");
@@ -244,12 +244,51 @@ export default function FinanzierungsCockpit() {
               <Receipt className="h-3.5 w-3.5 mr-1" /> Mietübersicht
             </Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`${ROUTES.RENT}?tab=bank`} aria-label="Bank-Abgleich (Mietübersicht)">
+              <Wallet className="h-3.5 w-3.5 mr-1" /> Bank-Abgleich
+            </Link>
+          </Button>
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground">
         Alle Daten an einem Ort für neue Finanzierungen. Objektübersicht, Kredite und Vermögen werden aus der App übernommen; Kontostände und Unterlagen-Checkliste kannst du hier pflegen.
       </p>
+
+      {/* Quick-Stats: Portfolio auf einen Blick */}
+      {properties.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3" aria-label="Finanzübersicht">
+          <div className="gradient-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Gesamtwert</div>
+            <div className="text-base font-bold tabular-nums">{formatCurrency(stats.totalValue)}</div>
+          </div>
+          <div className="gradient-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Eigenkapital</div>
+            <div className="text-base font-bold tabular-nums text-profit">{formatCurrency(stats.equity)}</div>
+          </div>
+          <div className="gradient-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Gesamtschuld</div>
+            <div className="text-base font-bold tabular-nums">{formatCurrency(stats.totalDebt)}</div>
+          </div>
+          <div className="gradient-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</div>
+            <div className="text-base font-bold tabular-nums">
+              {stats.totalValue > 0 ? ((stats.totalDebt / stats.totalValue) * 100).toFixed(0) : "0"}%
+            </div>
+          </div>
+          <div className="gradient-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Miete/M</div>
+            <div className="text-base font-bold tabular-nums">{formatCurrency(stats.totalRent)}</div>
+          </div>
+          <div className="gradient-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Cashflow/M</div>
+            <div className={`text-base font-bold tabular-nums ${stats.totalCashflow >= 0 ? "text-profit" : "text-loss"}`}>
+              {formatCurrency(stats.totalCashflow)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. Objektübersicht mit aktuellen Mieten */}
       <Section id="objekte" title="Objektübersicht mit aktuellen Mieten" icon={Building2}>
@@ -340,13 +379,16 @@ export default function FinanzierungsCockpit() {
             <ul className="space-y-1 text-sm">
               {bankAccounts.map((a) => (
                 <li key={a.id} className="flex items-center gap-2">
-                  <Banknote className="h-3.5 w-3.5 text-muted-foreground" />
-                  {a.name}
-                  {a.bank_name && <span className="text-muted-foreground">({a.bank_name})</span>}
-                  {a.iban && <span className="text-muted-foreground text-xs">{a.iban.slice(-4)}</span>}
+                  <Banknote className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-wrap-safe min-w-0">{a.name}</span>
+                  {a.bank_name && <span className="text-muted-foreground shrink-0">({a.bank_name})</span>}
+                  {a.iban && <span className="text-muted-foreground text-xs shrink-0">{a.iban.slice(-4)}</span>}
                 </li>
               ))}
             </ul>
+            <Button variant="ghost" size="sm" className="mt-2 text-xs gap-1" asChild>
+              <Link to={`${ROUTES.RENT}?tab=bank`}>Bank-Abgleich → Transaktionen & Matching</Link>
+            </Button>
           </div>
         )}
         <p className="text-xs text-muted-foreground mb-3">

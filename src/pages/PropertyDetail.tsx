@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { calcBruttoRendite, calcNettoRendite, calcMietmultiplikator, calcDSCR } from "@/lib/calculations";
 import { getGebaeudeAnteil, getGrundUndBoden, getAnnualAfa, getAfaRatePercent, getSanierung15PercentBrutto } from "@/lib/afaSanierung";
 import { useShare } from "@/components/mobile/MobileShareSheet";
 import { isDeepSeekConfigured, suggestPropertySummary } from "@/integrations/ai/extractors";
@@ -130,14 +131,14 @@ const PropertyDetail = () => {
      NOTE: Hooks MUST be called before any early return to satisfy React Rules of Hooks */
   const calculatedMetrics = useMemo(() => {
     if (!property) return { bruttoRendite: 0, nettoRendite: 0, appreciation: 0, cashOnCash: 0, mietmultiplikator: 0, ltv: 0, dscr: 0, breakEvenOccupancy: 0, pricePerUnit: 0 };
-    const bruttoRendite = property.purchasePrice > 0 ? ((property.monthlyRent * 12) / property.purchasePrice) * 100 : 0;
-    const nettoRendite = property.purchasePrice > 0 ? (((property.monthlyRent - property.monthlyExpenses) * 12) / property.purchasePrice) * 100 : 0;
+    const bruttoRendite = calcBruttoRendite(property.purchasePrice, property.monthlyRent);
+    const nettoRendite = calcNettoRendite(property.purchasePrice, property.monthlyRent, property.monthlyExpenses);
     const appreciation = property.purchasePrice > 0 ? ((property.currentValue - property.purchasePrice) / property.purchasePrice) * 100 : 0;
     const eigenkapital = property.purchasePrice - property.remainingDebt;
     const cashOnCash = eigenkapital > 0 ? ((property.monthlyCashflow * 12) / eigenkapital) * 100 : 0;
-    const mietmultiplikator = property.monthlyRent > 0 ? property.purchasePrice / (property.monthlyRent * 12) : 0;
+    const mietmultiplikator = calcMietmultiplikator(property.purchasePrice, property.monthlyRent);
     const ltv = property.currentValue > 0 ? (property.remainingDebt / property.currentValue) * 100 : 0;
-    const dscr = property.monthlyCreditRate > 0 ? (property.monthlyRent - property.monthlyExpenses) / property.monthlyCreditRate : 0;
+    const dscr = calcDSCR(property.monthlyRent, property.monthlyExpenses, property.monthlyCreditRate);
     const breakEvenOccupancy = property.monthlyRent > 0 ? ((property.monthlyExpenses + property.monthlyCreditRate) / property.monthlyRent) * 100 : 0;
     const pricePerUnit = property.units > 0 ? property.purchasePrice / property.units : 0;
     return { bruttoRendite, nettoRendite, appreciation, cashOnCash, mietmultiplikator, ltv, dscr, breakEvenOccupancy, pricePerUnit };

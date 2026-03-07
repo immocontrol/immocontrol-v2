@@ -11,6 +11,7 @@
 import { useState, useCallback } from "react";
 import { FileText, Copy, CheckCircle, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useProperties } from "@/context/PropertyContext";
@@ -123,12 +124,15 @@ const DocumentTemplateGenerator = () => {
           <DialogTitle>Dokumentvorlagen</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <Select value={propertyId} onValueChange={setPropertyId}>
-            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
+          <div className="space-y-1.5">
+            <Label htmlFor="doc-template-property" className="text-xs text-muted-foreground">Objekt</Label>
+            <Select value={propertyId} onValueChange={setPropertyId}>
+              <SelectTrigger id="doc-template-property" className="h-9 text-sm"><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
             <SelectContent>
               {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
-          </Select>
+            </Select>
+          </div>
 
           {categories.map(cat => (
             <div key={cat}>
