@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake, Receipt, BarChart3, FileBarChart, Store, FileText, CalendarCheck } from "lucide-react";
+import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake, Receipt, BarChart3, FileBarChart, Store, FileText, CalendarCheck, Calculator } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
@@ -37,6 +37,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, 
 import { GERMAN_BANKS } from "@/data/germanBanks";
 import { Download } from "lucide-react";
 import { ManusFinanzierung } from "@/components/manus/ManusFinanzierung";
+import { TilgungsplanSchnellrechner } from "@/components/TilgungsplanSchnellrechner";
 
 interface Loan {
   id: string;
@@ -456,6 +457,9 @@ const Loans = () => {
             <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
               <FileBarChart className="h-3.5 w-3.5 mr-1" /> Berichte
             </Button>
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Objektanalyse">
+              <Calculator className="h-3.5 w-3.5 mr-1" /> Objektanalyse
+            </Button>
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -870,6 +874,9 @@ const Loans = () => {
           </div>
         )}
       </div>
+
+      {/* Tilgungsplan-Schnellrechner */}
+      <TilgungsplanSchnellrechner />
 
       {/* Loans list */}
       {filteredLoans.length === 0 ? (

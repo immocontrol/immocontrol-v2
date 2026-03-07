@@ -9,7 +9,7 @@ import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import { ContractTemplates } from "@/components/ContractTemplates";
 import { KuendigungsfristRechner } from "@/components/KuendigungsfristRechner";
 import { AfASchnellrechner } from "@/components/AfASchnellrechner";
-import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart, Store, Calculator } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart, Store, Calculator, Landmark } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,6 +113,9 @@ const Vertraege = () => {
           </Link>
           <Link to={ROUTES.ANALYSE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Objektanalyse">
             <Calculator className="h-3.5 w-3.5" /> Objektanalyse
+          </Link>
+          <Link to={ROUTES.LOANS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Darlehen">
+            <Landmark className="h-3.5 w-3.5" /> Darlehen
           </Link>
         </p>
       </div>

@@ -1101,7 +1101,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([b.address || b.name].filter(Boolean).join(" "))}`}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         aria-label={`Google Maps: ${b.name}`}
                       >
                         <ExternalLink className="h-3.5 w-3.5" /> Maps

@@ -44,6 +44,7 @@ const SUGGESTIONS = [
   "Welcher Kaufpreisfaktor ist für meine Objekte typisch?",
   "Wann hat sich ein Objekt amortisiert?",
   "Wie hoch sind meine monatlichen Darlehensraten?",
+  "Welche Objekte haben die beste Mietrendite?",
 ];
 
 export default function ImmoAI() {

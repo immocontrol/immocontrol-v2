@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Tilgungsplan-Schnellrechner, Synergien, Sicherheit** — Tilgungsplan-Schnellrechner auf Darlehen-Seite (Darlehenssumme, Zinssatz, Laufzeit → monatliche Rate). Verträge: Link Darlehen. Darlehen: Link Objektanalyse. WGH-Scout: Maps-Link mit rel="noopener noreferrer". Immo-AI: Vorschlagsfrage Mietrendite.
 - **Zinseszins-Rechner, Scout Erneut, Synergien** — Zinseszins-Rechner auf Objektanalyse (Kapital, Zinssatz, Laufzeit → Endkapital). WGH-Scout: Button „Erneut“ (Suche wiederholen), Cmd+Enter zum Suchen, Empty State Link „Kontakte“. Verträge: Link Objektanalyse. Mietübersicht: Link Cashforecast. Objektanalyse: 4er-Grid mit Zinseszins-Rechner. Immo-AI: Vorschlagsfrage Darlehensraten.
 - **Scout Abbrechen, Amortisations-Rechner, Cashforecast Synergien** — WGH-Scout: Button „Abbrechen“ während der Suche; Ergebnis-Statistik (X mit Telefon · Y mit Web · Z mit E-Mail). Amortisations-Rechner auf Objektanalyse (Investition + jährl. Überschuss → Jahre). Cashforecast Empty State: Buttons Objekte, Verträge, WGH finden. Immo-AI: Vorschlagsfrage „Wann hat sich ein Objekt amortisiert?“.
 - **Kaufpreisfaktor-Rechner, Scout Mobile Filter** — Neuer Kaufpreisfaktor-Rechner auf Objektanalyse (Jahresmiete × Faktor = max. Kaufpreis). WGH-Scout: Mobile Filter-Drawer (Bottom-Sheet mit Filter-Optionen). GewerbeScout: sortedResults/visibleResults-Reihenfolge korrigiert. Objektanalyse: Rendite- und Kaufpreisfaktor-Rechner nebeneinander (lg-Grid).

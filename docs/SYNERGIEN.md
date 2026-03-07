@@ -17,6 +17,8 @@
 | **Verträge** | Objektanalyse | Link „Objektanalyse“ in Kopfzeile (ROUTES.ANALYSE) |
 | **Mietübersicht** | Cashforecast | Link „Cashforecast“ in Kopfzeile (ROUTES.FORECAST) |
 | **WGH-Scout** | Kontakte | Empty State: Link „Kontakte“ (ROUTES.CONTACTS) |
+| **Verträge** | Darlehen | Link „Darlehen“ in Kopfzeile (ROUTES.LOANS) |
+| **Darlehen** | Objektanalyse | Link „Objektanalyse“ in Kopfzeile (ROUTES.ANALYSE) |
 | **Verträge** | Fristen | Kündigungsfrist-Rechner auf der Seite Verträge: gewünschtes Enddatum + Frist in Monaten → spätestes Kündigungsdatum |
 | **Mietübersicht** | Verträge | Link „Verträge“ in der Kopfzeile (ROUTES.CONTRACTS); Leerstands-Kosten-Rechner im Tab Zahlungen |
 | **PropertyDetail** | AI | Button „KI Kurzbewertung“ (suggestPropertySummary) – 1–2 Sätze Bewertung bei DeepSeek |
