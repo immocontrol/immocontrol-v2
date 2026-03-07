@@ -11,6 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 const DEFAULT_OPTIONS = ["Privat", "eGbR"];
 
@@ -32,6 +34,8 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
   const [newName, setNewName] = useState("");
   const addInputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const lastAddedNameRef = useRef<string | null>(null);
+  const lastDeletedIdRef = useRef<string | null>(null);
   const { user } = useAuth();
   const qc = useQueryClient();
 
@@ -61,7 +65,10 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
       setAdding(false);
       toast.success("Gesellschaft hinzugefügt");
     },
-    onError: () => toast.error("Fehler beim Hinzufügen"),
+    onError: (err: unknown) => {
+      handleError(err, { context: "supabase", details: "custom_companies.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Hinzufügen", () => { if (lastAddedNameRef.current) addMutation.mutate(lastAddedNameRef.current); });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -75,7 +82,10 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
       qc.invalidateQueries({ queryKey: queryKeys.customCompanies.all });
       toast.success("Gesellschaft gelöscht");
     },
-    onError: () => toast.error("Fehler beim Löschen"),
+    onError: (err: unknown) => {
+      handleError(err, { context: "supabase", details: "custom_companies.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => { if (lastDeletedIdRef.current) deleteMutation.mutate(lastDeletedIdRef.current); });
+    },
   });
 
   const allOptions = [
@@ -95,6 +105,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
       toast.error("Gesellschaft existiert bereits");
       return;
     }
+    lastAddedNameRef.current = trimmed;
     addMutation.mutate(trimmed);
   }, [newName, allOptions, addMutation]);
 
@@ -102,6 +113,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
     (e: React.MouseEvent, company: CustomCompany) => {
       e.stopPropagation();
       if (value === company.name) onChange("");
+      lastDeletedIdRef.current = company.id;
       deleteMutation.mutate(company.id);
     },
     [value, onChange, deleteMutation]

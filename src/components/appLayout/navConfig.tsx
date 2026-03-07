@@ -1,5 +1,6 @@
 /**
  * AppLayout Nav-Konfiguration — ausgelagert für bessere Wartbarkeit (Refactor großer Dateien).
+ * Pfade aus ROUTES (Single Source of Truth).
  */
 import {
   LayoutDashboard,
@@ -20,6 +21,7 @@ import {
   Newspaper,
   Camera,
 } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 
 export interface NavItem {
   path: string;
@@ -39,42 +41,42 @@ export type NavEntry = NavItem | NavGroup;
 export const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
 
 export const navEntries: NavEntry[] = [
-  { path: "/", label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
-  { path: "/dashboard", label: "Dashboard", icon: Sparkles, shortcut: "" },
+  { path: ROUTES.HOME, label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
+  { path: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard", icon: Sparkles, shortcut: "" },
   {
     label: "Finanzen",
     icon: Landmark,
     items: [
-      { path: "/darlehen", label: "Darlehen", icon: Landmark, shortcut: "2" },
-      { path: "/mietuebersicht", label: "Mieten", icon: Receipt, shortcut: "3" },
-      { path: "/nebenkosten", label: "Nebenkosten", icon: Receipt, shortcut: "" },
-      { path: "/forecast", label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
-      { path: "/berichte", label: "Berichte", icon: FileBarChart, shortcut: "7" },
-      { path: "/analyse", label: "Rechner", icon: Calculator, shortcut: "" },
-      { path: "/hockey-stick", label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
+      { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark, shortcut: "2" },
+      { path: ROUTES.RENT, label: "Mieten", icon: Receipt, shortcut: "3" },
+      { path: ROUTES.NK, label: "Nebenkosten", icon: Receipt, shortcut: "" },
+      { path: ROUTES.FORECAST, label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
+      { path: ROUTES.REPORTS, label: "Berichte", icon: FileBarChart, shortcut: "7" },
+      { path: ROUTES.ANALYSE, label: "Rechner", icon: Calculator, shortcut: "" },
+      { path: ROUTES.HOCKEY_STICK, label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
     ],
   },
   {
     label: "Verwaltung",
     icon: FileText,
     items: [
-      { path: "/objekte", label: "Objekte", icon: Building2, shortcut: "" },
-      { path: "/vertraege", label: "Verträge", icon: FileText, shortcut: "4" },
-      { path: "/kontakte", label: "Kontakte", icon: Users, shortcut: "5" },
-      { path: "/aufgaben", label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
-      { path: "/dokumente", label: "Dokumente", icon: FolderOpen, shortcut: "" },
-      { path: "/wartungsplaner", label: "Wartung", icon: Wrench, shortcut: "" },
+      { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
+      { path: ROUTES.CONTRACTS, label: "Verträge", icon: FileText, shortcut: "4" },
+      { path: ROUTES.CONTACTS, label: "Kontakte", icon: Users, shortcut: "5" },
+      { path: ROUTES.TODOS, label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
+      { path: ROUTES.DOKUMENTE, label: "Dokumente", icon: FolderOpen, shortcut: "" },
+      { path: ROUTES.WARTUNG, label: "Wartung", icon: Wrench, shortcut: "" },
     ],
   },
   {
     label: "Akquise",
     icon: Target,
     items: [
-      { path: "/crm", label: "CRM", icon: Target, shortcut: "8" },
-      { path: "/deals", label: "Deals", icon: Handshake, shortcut: "0" },
-      { path: "/besichtigungen", label: "Besichtigungen", icon: Camera, shortcut: "" },
-      { path: "/newsticker", label: "Newsticker", icon: Newspaper, shortcut: "" },
-      { path: "/bewertung", label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
+      { path: ROUTES.CRM, label: "CRM", icon: Target, shortcut: "8" },
+      { path: ROUTES.DEALS, label: "Deals", icon: Handshake, shortcut: "0" },
+      { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
+      { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
+      { path: ROUTES.BEWERTUNG, label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
     ],
   },
 ];
@@ -93,20 +95,20 @@ navItems.forEach((n) => {
 });
 
 export const ACTION_TO_PATH: Record<string, string> = {
-  "Navigation: Portfolio": "/",
-  "Navigation: Objekte": "/objekte",
-  "Navigation: Dashboard": "/dashboard",
-  "Navigation: Darlehen": "/darlehen",
-  "Navigation: Mieten": "/mietuebersicht",
-  "Navigation: Verträge": "/vertraege",
-  "Navigation: Kontakte": "/kontakte",
-  "Navigation: Aufgaben": "/aufgaben",
-  "Navigation: Berichte": "/berichte",
-  "Navigation: CRM": "/crm",
-  "Navigation: Deals": "/deals",
-  "Navigation: Besichtigungen": "/besichtigungen",
-  "Navigation: Hockey Stick Simulator": "/hockey-stick",
-  "Navigation: Einstellungen": "/einstellungen",
+  "Navigation: Portfolio": ROUTES.HOME,
+  "Navigation: Objekte": ROUTES.OBJEKTE,
+  "Navigation: Dashboard": ROUTES.PERSONAL_DASHBOARD,
+  "Navigation: Darlehen": ROUTES.LOANS,
+  "Navigation: Mieten": ROUTES.RENT,
+  "Navigation: Verträge": ROUTES.CONTRACTS,
+  "Navigation: Kontakte": ROUTES.CONTACTS,
+  "Navigation: Aufgaben": ROUTES.TODOS,
+  "Navigation: Berichte": ROUTES.REPORTS,
+  "Navigation: CRM": ROUTES.CRM,
+  "Navigation: Deals": ROUTES.DEALS,
+  "Navigation: Besichtigungen": ROUTES.BESICHTIGUNGEN,
+  "Navigation: Hockey Stick Simulator": ROUTES.HOCKEY_STICK,
+  "Navigation: Einstellungen": ROUTES.SETTINGS,
 };
 
 export function getDefaultShortcutMap(): Record<string, string> {

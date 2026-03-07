@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **navConfig + MobileBottomTabBar an ROUTES** — Gesamte App-Navigation (Sidebar + Shortcuts + Mobile Tabs) nutzt ROUTES (Single Source of Truth, Mobile Usability)
+- **Retry-Toast + Fehleranalyse (GesellschaftSelector)** — Gesellschaft hinzufügen/löschen nutzt handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (DocumentOCR)** — PDF/Bild-Text-Extraktion nutzt `toastErrorWithRetry` und `handleError` (Retry mit letzter Datei, Fehler getrackt)
 - **SpotlightSearch + MobileSearchOverlay an ROUTES** — Spotlight (Nav, Quick Actions, Objekt-Links) und Mobile Suche (Seiten, Objekt-Links) nutzen ROUTES (Single Source of Truth, Mobile Usability)
 - **Retry-Toast + Fehleranalyse (LoanPdfImport, ContractManagement PDF)** — Darlehen-PDF-Import und Vertrag-PDF-Extraktion nutzen `toastErrorWithRetry` und `handleError` (Retry mit letzter Datei, Fehler getrackt)
@@ -83,6 +85,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **navConfig (appLayout)** — navEntries und ACTION_TO_PATH nutzen ROUTES (Portfolio, Dashboard, Finanzen, Verwaltung, Akquise)
+- **MobileBottomTabBar** — Alle Tab- und Unter-Pfade über ROUTES (Mobile Usability)
+- **GesellschaftSelector** — Hinzufügen/Löschen: handleError + toastErrorWithRetry (Retry mit lastAddedNameRef/lastDeletedIdRef)
 - **DocumentOCR** — Datei/PDF lesen: handleError + toastErrorWithRetry (Retry mit lastFileRef)
 - **SpotlightSearch** — Nav, Quick Actions, Objekt-Links über ROUTES (HOME, LOANS, RENT, CONTRACTS, CONTACTS, TODOS, REPORTS, DOKUMENTE, WARTUNG, CRM, DEALS, BESICHTIGUNGEN, ANALYSE, SETTINGS, PROPERTY)
 - **MobileSearchOverlay** — Seiten- und Objekt-Links über ROUTES (Mobile Usability)

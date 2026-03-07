@@ -62,6 +62,9 @@
 | **DocumentOCR** | — | Fehler beim Datei/PDF-Lesen: handleError + toastErrorWithRetry (Retry mit letzter Datei) |
 | **SpotlightSearch** | Alle Seiten, Objekte, Mieter | Nav, Quick Actions und Objekt-Links nutzen ROUTES (Cmd+K) |
 | **MobileSearchOverlay** | Alle Seiten, Objekte | Mobile Suche: Seiten- und Objekt-Links über ROUTES (Usability) |
+| **navConfig (AppLayout)** | Alle Bereiche | Sidebar-Navigation und Shortcut-Map nutzen ROUTES (Single Source of Truth) |
+| **MobileBottomTabBar** | Alle Tabs | Mobile Tab-Navigation nutzt ROUTES (Finanzen, Verwaltung, Akquise, Mehr) |
+| **GesellschaftSelector** | — | Fehler beim Hinzufügen/Löschen: handleError + toastErrorWithRetry (Retry mit letzter Aktion) |
 
 ## Technische Details
 

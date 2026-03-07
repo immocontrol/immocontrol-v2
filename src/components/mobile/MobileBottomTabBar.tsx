@@ -8,6 +8,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Sparkles, Landmark, FileText, Target, Settings, ChevronUp, X, Camera } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/routes";
 
 interface TabItem {
   path: string;
@@ -18,46 +19,46 @@ interface TabItem {
 }
 
 const TABS: TabItem[] = [
-  { path: "/", label: "Portfolio", icon: LayoutDashboard },
-  { path: "/dashboard", label: "Dashboard", icon: Sparkles },
+  { path: ROUTES.HOME, label: "Portfolio", icon: LayoutDashboard },
+  { path: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard", icon: Sparkles },
   {
-    path: "/darlehen", label: "Finanzen", icon: Landmark,
+    path: ROUTES.LOANS, label: "Finanzen", icon: Landmark,
     children: [
-      { path: "/darlehen", label: "Darlehen", icon: Landmark },
-      { path: "/mietuebersicht", label: "Mieten", icon: Landmark },
-      { path: "/nebenkosten", label: "Nebenkosten", icon: Landmark },
-      { path: "/forecast", label: "Cashflow", icon: Landmark },
-      { path: "/berichte", label: "Berichte", icon: Landmark },
-      { path: "/analyse", label: "Rechner", icon: Landmark },
+      { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark },
+      { path: ROUTES.RENT, label: "Mieten", icon: Landmark },
+      { path: ROUTES.NK, label: "Nebenkosten", icon: Landmark },
+      { path: ROUTES.FORECAST, label: "Cashflow", icon: Landmark },
+      { path: ROUTES.REPORTS, label: "Berichte", icon: Landmark },
+      { path: ROUTES.ANALYSE, label: "Rechner", icon: Landmark },
     ],
   },
   {
-    path: "/vertraege", label: "Verwaltung", icon: FileText,
+    path: ROUTES.CONTRACTS, label: "Verwaltung", icon: FileText,
     children: [
-      { path: "/vertraege", label: "Verträge", icon: FileText },
-      { path: "/kontakte", label: "Kontakte", icon: FileText },
-      { path: "/aufgaben", label: "Aufgaben", icon: FileText },
-      { path: "/dokumente", label: "Dokumente", icon: FileText },
-      { path: "/wartungsplaner", label: "Wartung", icon: FileText },
+      { path: ROUTES.CONTRACTS, label: "Verträge", icon: FileText },
+      { path: ROUTES.CONTACTS, label: "Kontakte", icon: FileText },
+      { path: ROUTES.TODOS, label: "Aufgaben", icon: FileText },
+      { path: ROUTES.DOKUMENTE, label: "Dokumente", icon: FileText },
+      { path: ROUTES.WARTUNG, label: "Wartung", icon: FileText },
     ],
   },
   {
-    path: "/crm", label: "Akquise", icon: Target,
+    path: ROUTES.CRM, label: "Akquise", icon: Target,
     children: [
-      { path: "/crm", label: "CRM", icon: Target },
-      { path: "/deals", label: "Deals", icon: Target },
-      { path: "/besichtigungen", label: "Besichtigungen", icon: Camera },
-      { path: "/newsticker", label: "Newsticker", icon: Target },
-      { path: "/bewertung", label: "Bewertung", icon: Target },
-      { path: "/immo-ai", label: "ImmoAI", icon: Target },
+      { path: ROUTES.CRM, label: "CRM", icon: Target },
+      { path: ROUTES.DEALS, label: "Deals", icon: Target },
+      { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera },
+      { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Target },
+      { path: ROUTES.BEWERTUNG, label: "Bewertung", icon: Target },
+      { path: ROUTES.AI, label: "ImmoAI", icon: Target },
     ],
   },
   {
-    path: "/einstellungen", label: "Mehr", icon: Settings,
+    path: ROUTES.SETTINGS, label: "Mehr", icon: Settings,
     children: [
-      { path: "/einstellungen", label: "Einstellungen", icon: Settings },
-      { path: "/analyse", label: "Rechner", icon: Settings },
-      { path: "/berichte", label: "Berichte", icon: Settings },
+      { path: ROUTES.SETTINGS, label: "Einstellungen", icon: Settings },
+      { path: ROUTES.ANALYSE, label: "Rechner", icon: Settings },
+      { path: ROUTES.REPORTS, label: "Berichte", icon: Settings },
     ],
   },
 ];
