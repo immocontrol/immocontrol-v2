@@ -38,6 +38,10 @@
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
+| **Nebenkosten** | Mietübersicht, Objekte | Empty State: Buttons „Mietübersicht“, „Objekte“ |
+| **Darlehen** | Mietübersicht, Nebenkosten | Empty State: Buttons „Mietübersicht“, „Nebenkosten“ neben Objekt/Deals |
+| **Verträge** | Mietübersicht | Link „Mietübersicht“ in Kopfzeile |
+| **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
 
 ## Technische Details
 

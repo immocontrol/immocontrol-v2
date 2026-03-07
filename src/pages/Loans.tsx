@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake } from "lucide-react";
+import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake, Receipt, BarChart3 } from "lucide-react";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";
@@ -876,6 +876,12 @@ const Loans = () => {
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="touch-target min-h-[44px] gap-2">
               <Handshake className="h-4 w-4" /> Deals
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/mietuebersicht")} className="touch-target min-h-[44px] gap-2">
+              <BarChart3 className="h-4 w-4" /> Mietübersicht
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/nebenkosten")} className="touch-target min-h-[44px] gap-2">
+              <Receipt className="h-4 w-4" /> Nebenkosten
             </Button>
           </div>
         </div>

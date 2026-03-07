@@ -7,7 +7,7 @@ import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import { ContractTemplates } from "@/components/ContractTemplates";
-import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -72,6 +72,9 @@ const Vertraege = () => {
           {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
           <Link to="/dokumente" className="text-primary hover:underline flex items-center gap-1 text-xs">
             <FolderOpen className="h-3.5 w-3.5" /> Dokumente hochladen
+          </Link>
+          <Link to="/mietuebersicht" className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[36px]">
+            <BarChart3 className="h-3.5 w-3.5" /> Mietübersicht
           </Link>
         </p>
       </div>

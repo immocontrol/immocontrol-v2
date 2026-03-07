@@ -8,6 +8,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Nebenkosten Empty State** — Buttons „Mietübersicht“, „Objekte“ für Synergie
+- **Darlehen Empty State** — Buttons „Mietübersicht“, „Nebenkosten“ ergänzt
+- **Verträge** — Link „Mietübersicht“ in Kopfzeile
+- **Dashboard Empty State** — Button „Zu Deals“ wenn keine Objekte
 - **Mietübersicht → Nebenkosten** — Link „Nebenkostenabrechnung“ in Kopfzeile
 - **PropertyDetail → Nebenkosten** — Link „Nebenkostenabrechnung“ in Finanz-Sektion
 - **DashboardActionCenter** — Kachel „X NK-Entwürfe“ wenn Draft-Nebenkosten vorhanden; verlinkt auf /nebenkosten

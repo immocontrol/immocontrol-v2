@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
@@ -29,6 +29,7 @@ import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -47,6 +48,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const { properties, loading, stats } = useProperties();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   /* IMP-41-20: Dynamic document title with property count for browser tab clarity */
   useEffect(() => {
@@ -260,8 +262,15 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         <EmptyState
           icon={Building2}
           title="Noch keine Objekte"
-          description="Füge dein erstes Investmentobjekt hinzu, um dein Portfolio zu tracken – Renditen, Cashflow und Wertentwicklung auf einen Blick."
-          action={<AddPropertyDialog />}
+          description="Füge dein erstes Investmentobjekt hinzu, um dein Portfolio zu tracken – oder starte mit einem Deal aus der Akquise."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <AddPropertyDialog />
+              <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="gap-1.5 touch-target min-h-[44px]">
+                <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+              </Button>
+            </div>
+          }
         />
       </div>
     );
