@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity, FileBarChart, Store } from "lucide-react";
 import { RenditeSchnellrechner } from "@/components/RenditeSchnellrechner";
 import { KaufpreisfaktorRechner } from "@/components/KaufpreisfaktorRechner";
+import { AmortisationsRechner } from "@/components/AmortisationsRechner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AnalysisInputs from "@/components/analysis/AnalysisInputs";
@@ -144,9 +145,10 @@ th{background:#f5f5f5;font-weight:600}
   return (
     /* IMP-18: ARIA landmark for AnalysisCalculator page */
     <div role="main" aria-label="Objektanalyse" className="space-y-6 max-w-5xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RenditeSchnellrechner />
         <KaufpreisfaktorRechner />
+        <AmortisationsRechner />
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

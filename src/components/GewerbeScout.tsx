@@ -343,6 +343,15 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     return list;
   }, [results, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
 
+  const resultStats = useMemo(() => {
+    const list = sortedResults.slice(0, SCOUT_DISPLAY_CAP);
+    return {
+      withPhone: list.filter((r) => r.phone != null && r.phone.trim() !== "").length,
+      withWeb: list.filter((r) => r.website != null && r.website.trim() !== "").length,
+      withEmail: list.filter((r) => r.email != null && r.email.trim() !== "").length,
+    };
+  }, [sortedResults]);
+
   /* Reset focused result when results change; scroll focused row into view */
   const visibleResults = useMemo(() => sortedResults.slice(0, SCOUT_DISPLAY_CAP), [sortedResults]);
   useEffect(() => {
@@ -641,12 +650,26 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
 
         {loading && loadingStep && (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-              {loadingStep === "ort" && "Suche Ort…"}
-              {loadingStep === "gewerbe" && "Suche Objekte & Gebäude…"}
-              {loadingStep === "gebaeude" && "Ordne Gebäudegrößen zu…"}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                {loadingStep === "ort" && "Suche Ort…"}
+                {loadingStep === "gewerbe" && "Suche Objekte & Gebäude…"}
+                {loadingStep === "gebaeude" && "Ordne Gebäudegrößen zu…"}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
+                onClick={() => {
+                  searchAbortRef.current?.abort();
+                  toast.info("Suche abgebrochen");
+                }}
+                aria-label="Suche abbrechen"
+              >
+                Abbrechen
+              </Button>
+            </div>
             {(loadingStep === "gebaeude" || (loadingStep === "gewerbe" && results.length === 0)) && (
               <ul className="space-y-2 max-h-[280px] overflow-hidden" aria-hidden>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -736,9 +759,16 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               </div>
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-medium" id="scout-results-heading" aria-live="polite">
-                Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
-              </h3>
+              <div>
+                <h3 className="text-sm font-medium" id="scout-results-heading" aria-live="polite">
+                  Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
+                </h3>
+                {(resultStats.withPhone > 0 || resultStats.withWeb > 0 || resultStats.withEmail > 0) && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {[resultStats.withPhone > 0 && `${resultStats.withPhone} mit Telefon`, resultStats.withWeb > 0 && `${resultStats.withWeb} mit Web`, resultStats.withEmail > 0 && `${resultStats.withEmail} mit E-Mail`].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"

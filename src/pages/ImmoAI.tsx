@@ -42,6 +42,7 @@ const SUGGESTIONS = [
   "Wann endet die Zinsbindung bei meinen Darlehen?",
   "Welche Objekte haben die höchste Brutto-Mietrendite?",
   "Welcher Kaufpreisfaktor ist für meine Objekte typisch?",
+  "Wann hat sich ein Objekt amortisiert?",
 ];
 
 export default function ImmoAI() {

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
-import { TrendingDown, CalendarDays, Download, Target, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { TrendingDown, CalendarDays, Download, Target, TrendingUp, Building2, FileText, Store } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ interface Loan {
 }
 
 const CashForecast = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { properties, stats, loading } = useProperties();
   const [forecastWeeks, setForecastWeeks] = useState<13 | 26 | 52>(13);
@@ -120,14 +122,25 @@ const CashForecast = () => {
 
   if (properties.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex flex-col items-center justify-center py-20 text-center" role="main" aria-label="Cashforecast">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
           <CalendarDays className="h-8 w-8 text-primary" />
         </div>
         <h2 className="text-lg font-semibold mb-2">Kein Cashforecast verfügbar</h2>
-        <p className="text-sm text-muted-foreground max-w-sm">
+        <p className="text-sm text-muted-foreground max-w-sm mb-4">
           Füge zuerst Objekte zu deinem Portfolio hinzu, um einen Cashforecast zu generieren.
         </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.OBJEKTE)}>
+            <Building2 className="h-4 w-4" /> Objekte
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CONTRACTS)}>
+            <FileText className="h-4 w-4" /> Verträge
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
+            <Store className="h-4 w-4" /> WGH finden
+          </Button>
+        </div>
       </div>
     );
   }
