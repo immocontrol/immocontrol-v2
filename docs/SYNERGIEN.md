@@ -8,13 +8,14 @@
 |-----|-----|-------------|
 | **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt |
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
-| **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“ |
+| **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
+| **Deals** | Kontakte | Dropdown „Kontakt übernehmen“; fromContact-Vorlage beim „Als Deal“-Button |
 | **Deals** | Besichtigungen | Bei Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt |
-| **Deals** | Kontakte | Dropdown „Kontakt übernehmen“ – Name, Tel, E-Mail |
+| **Kontakte** | Deals | Button „Als Deal“ – Kontaktdaten als Deal-Vorlage; Badge „X Deals“ pro Kontakt |
 | **Deals** | Besichtigungen | Link „Zu Besichtigungen“ bei Stage Besichtigung |
 | **Besichtigungen** | Deals | Deal-Badge verlinkt auf /deals; Empty State: Link „Zu Deals“ |
 | **Besichtigungen** | Todos | Button „Todo erstellen“ – Projekt „Besichtigungen“ |
-| **Besichtigungen** | Global | Deep-Link `?id=xxx`; Link kopieren |
+| **Besichtigungen** | Global | Deep-Link `?id=xxx`; Share-Button (native Share API + Fallback Kopieren) |
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
@@ -27,7 +28,7 @@
 | **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
 | **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile |
-| **GlobalSearch** | Kontakte, Deals, Besichtigungen | Deep-Links ?highlight=, ?id= |
+| **GlobalSearch** | Kontakte, Deals, Besichtigungen | Deep-Links `?highlight=xxx` (Kontakte scroll/highlight), `?id=xxx` (Deals/Besichtigungen öffnen Dialog) |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
@@ -36,5 +37,6 @@
 ## Technische Details
 
 - **Deal → Besichtigung**: `moveDeal` Mutation legt `property_viewings`-Eintrag an, wenn `stage === "besichtigung"`.
-- **Deep-Links**: `useSearchParams()` liest `?id=xxx`; Besichtigung öffnet sich automatisch.
+- **Deep-Links**: `useSearchParams()` liest `?id=xxx` (Deals, Besichtigungen) bzw. `?highlight=xxx` (Kontakte). Kontakte scrollt zum hervorgehobenen Kontakt, Deals/Besichtigungen öffnen den Bearbeitungsdialog.
+- **Share-Buttons**: Deals und Besichtigungen nutzen `useShare()` für native Share API (Mobile) oder Kopieren in Zwischenablage.
 - **Todos**: `project: "Besichtigungen"`, `title: "Besichtigung nachbereiten: …"`.

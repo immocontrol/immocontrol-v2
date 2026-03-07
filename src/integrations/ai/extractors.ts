@@ -233,6 +233,30 @@ ${block.slice(0, 8000)}
 /**
  * Ticket-Beschreibung aus Titel und Kategorie vorschlagen (für Handwerker-Vorgaben).
  */
+/**
+ * Begründung für Mieterhöhung (Index-/Staffelmiete) generieren.
+ * Für Mieterhöhungsschreiben und IndexMietanpassung.
+ */
+export async function generateRentIncreaseJustification(adj: {
+  propertyName: string;
+  currentRent: number;
+  newRent: number;
+  increasePct: number;
+}): Promise<string> {
+  const prompt = `Generiere eine kurze, formelle Begründung (2–4 Sätze) für eine Mieterhöhung gemäß Mietvertrag (Index-/Staffelmietanpassung).
+- Objekt: ${adj.propertyName}
+- Aktuelle Nettokaltmiete: ${adj.currentRent.toFixed(2)} €/Monat
+- Neue Nettokaltmiete: ${adj.newRent.toFixed(2)} €/Monat (Erhöhung um ${adj.increasePct.toFixed(2)} %)
+- Bezug auf Verbraucherpreisindex oder vertragliche Staffel, sachlich und höflich.
+- Auf Deutsch. Keine Anrede.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { maxTokens: 256 }
+  );
+  return raw.trim();
+}
+
 export async function suggestTicketDescription(title: string, category: string): Promise<string> {
   const prompt = `Der Nutzer erstellt ein Ticket für Vermieter/Handwerker.
 Titel: "${title}"

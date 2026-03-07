@@ -1,15 +1,16 @@
 /**
  * IMP20-12: Index-Mietanpassung automatisch
  * ContractLifecycleManager: Track CPI changes, auto-calculate new rent
- * + prepare Mieterhöhungsschreiben.
+ * + prepare Mieterhöhungsschreiben. AI: generateRentIncreaseJustification.
  */
 import { memo, useMemo, useState } from "react";
-import { TrendingUp, Calculator, FileText, AlertCircle } from "lucide-react";
+import { TrendingUp, Calculator, FileText, Sparkles, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
 import { toast } from "sonner";
+import { generateRentIncreaseJustification, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 
 // CPI data (Verbraucherpreisindex) — approximate recent values
 const CPI_ANNUAL_CHANGE = 2.3; // Current annual CPI change in %
@@ -28,6 +29,7 @@ interface IndexRentAdjustment {
 const IndexMietanpassung = memo(() => {
   const { properties } = useProperties();
   const [generatedIds, setGeneratedIds] = useState<Set<string>>(new Set());
+  const [aiGenerating, setAiGenerating] = useState<string | null>(null);
 
   const adjustments = useMemo((): IndexRentAdjustment[] => {
     return properties
@@ -62,6 +64,28 @@ const IndexMietanpassung = memo(() => {
     setGeneratedIds(prev => new Set([...prev, adj.propertyId]));
   };
 
+  const handleGenerateJustification = async (adj: IndexRentAdjustment) => {
+    if (!isDeepSeekConfigured()) {
+      toast.error("DeepSeek API-Key nicht konfiguriert.");
+      return;
+    }
+    setAiGenerating(adj.propertyId);
+    try {
+      const text = await generateRentIncreaseJustification({
+        propertyName: adj.propertyName,
+        currentRent: adj.currentRent,
+        newRent: adj.newRent,
+        increasePct: adj.increasePct,
+      });
+      await navigator.clipboard.writeText(text);
+      toast.success(`Begründung generiert und in Zwischenablage kopiert`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Begründung konnte nicht generiert werden.");
+    } finally {
+      setAiGenerating(null);
+    }
+  };
+
   if (adjustments.length === 0) return null;
 
   return (
@@ -88,7 +112,19 @@ const IndexMietanpassung = memo(() => {
                 <span className="text-profit ml-1">(+{formatCurrency(adj.increase)})</span>
               </p>
             </div>
-            <div className="shrink-0">
+            <div className="shrink-0 flex items-center gap-1">
+              {isDeepSeekConfigured() && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[10px] h-6 gap-1"
+                  disabled={aiGenerating !== null}
+                  onClick={() => handleGenerateJustification(adj)}
+                  title="KI-Begründung generieren und kopieren"
+                >
+                  {aiGenerating === adj.propertyId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                </Button>
+              )}
               {generatedIds.has(adj.propertyId) ? (
                 <Badge className="text-[9px] h-5 bg-profit/20 text-profit">Erstellt</Badge>
               ) : (

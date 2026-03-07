@@ -66,6 +66,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **DashboardActionCenter** — Überfällig-Kachel verlinkt auf /mietuebersicht bei überfälligen Zahlungen
 - **Nebenkosten** — Link „Dokumente" in Kopfzeile (Synergy Nebenkosten↔Dokumente)
 - **GlobalSearch** — Deep-Links: Kontakte ?highlight=, Deals ?id=, Besichtigungen ?id= für direkte Navigation
+- **Kontakte** — Deep-Link ?highlight=: scrollt zum Kontakt und hebt ihn hervor
+- **Deals** — Deep-Link ?id=: öffnet Deal-Bearbeitungsdialog; Share-Button im Bearbeitungsdialog; fromContact-Vorlage (Kontakte → „Als Deal“)
+- **Kontakte** — Badge „X Deals“ pro Kontakt; Button „Als Deal“ (Briefcase) für Quick-Add Deal mit vorausgefüllten Kontaktdaten
+- **Besichtigungen** — Share-Button ersetzt „Link kopieren“ (native Share API + Fallback)
+- **IndexMietanpassung** — AI-Button „Begründung generieren“ (generateRentIncreaseJustification); Text wird in Zwischenablage kopiert
 
 ### Behoben
 

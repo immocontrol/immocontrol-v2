@@ -45,6 +45,7 @@ import {
   ChevronRight,
   ListTodo,
   Zap,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDate, relativeTime } from "@/lib/formatters";
@@ -58,6 +59,7 @@ import { ViewingAISummary } from "@/components/ViewingAISummary";
 import { ViewingCard } from "@/components/besichtigungen/ViewingCard";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useShare } from "@/components/mobile/MobileShareSheet";
 
 const MAX_MEDIA_SIZE = 20 * 1024 * 1024; // 20 MB
 const IMAGE_TYPES = "image/*";
@@ -132,6 +134,7 @@ const Besichtigungen = () => {
   const qc = useQueryClient();
   const haptic = useHaptic();
   const { announce } = useAccessibility();
+  const { share } = useShare();
   const [searchParams, setSearchParams] = useSearchParams();
   const [addOpen, setAddOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState(false);
@@ -565,14 +568,17 @@ const Besichtigungen = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs"
+                className="text-xs gap-1.5"
                 onClick={() => {
                   const url = `${window.location.origin}/besichtigungen?id=${editViewing.id}`;
-                  navigator.clipboard.writeText(url);
-                  toast.success("Link kopiert");
+                  share({
+                    title: editViewing.title,
+                    text: editViewing.address || undefined,
+                    url,
+                  });
                 }}
               >
-                Link kopieren
+                <Share2 className="h-3.5 w-3.5" /> Teilen
               </Button>
             </div>
           )}

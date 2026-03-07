@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
 import { Contact, Plus, Search, Phone, Mail, MapPin, Trash2, Edit2, Wrench, Building, Shield, Briefcase, X, Upload, MessageCircle, Download, RotateCcw, Archive } from "lucide-react";
@@ -63,6 +64,10 @@ const TRASH_RETENTION_DAYS = 30;
 const ContactManagement = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const highlightId = searchParams.get("highlight");
+  const contactRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const qc = useQueryClient();
   const haptic = useHaptic();
   const { showUndo } = useUndoToast();
@@ -110,6 +115,15 @@ const ContactManagement = () => {
     purgeExpired();
   }, [user, showTrash]);
 
+  /* SYNERGY: Deep-Link ?highlight= – scroll and highlight contact from GlobalSearch */
+  useEffect(() => {
+    if (!highlightId || filtered.length === 0) return;
+    const el = contactRefs.current[highlightId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, filtered.length]);
+
   /* STR-13: Keyboard shortcut Ctrl+N to open new contact dialog */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -139,6 +153,23 @@ const ContactManagement = () => {
       return counts;
     },
     enabled: !!user,
+  });
+
+  // Synergy 9: Fetch deal count per contact (contact_name match)
+  const { data: contactDealCounts = {} } = useQuery({
+    queryKey: [...queryKeys.contacts.all, "deal-counts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("deals").select("contact_name").not("contact_name", "is", null);
+      const counts: Record<string, number> = {};
+      (data || []).forEach(d => {
+        const name = (d.contact_name || "").trim();
+        if (!name) return;
+        const c = contacts.find(x => x.name.trim().toLowerCase() === name.toLowerCase());
+        if (c) counts[c.id] = (counts[c.id] || 0) + 1;
+      });
+      return counts;
+    },
+    enabled: !!user && contacts.length > 0,
   });
 
   // Synergy 8: Fetch total cost per handworker contact
@@ -496,8 +527,13 @@ const ContactManagement = () => {
           {filtered.map((c) => {
             const CatIcon = CATEGORIES.find(cat => cat.value === c.category)?.icon || Briefcase;
             /* MOB-IMPROVE-6: Contact card with swipe-to-delete on mobile */
+            const isHighlighted = highlightId === c.id;
             const contactCard = (
-              <div key={c.id} className={`gradient-card rounded-xl border p-4 group hover:border-primary/20 transition-all duration-200 hover:shadow-sm hover-lift ${possibleDuplicates.includes(c.id) ? "border-gold/30" : "border-border"}`}>
+              <div
+                key={c.id}
+                ref={(el) => { contactRefs.current[c.id] = el; }}
+                className={`gradient-card rounded-xl border p-4 group hover:border-primary/20 transition-all duration-200 hover:shadow-sm hover-lift ${possibleDuplicates.includes(c.id) ? "border-gold/30" : "border-border"} ${isHighlighted ? "ring-2 ring-primary ring-offset-2" : ""}`}
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <CatIcon className="h-4 w-4 text-primary" />
@@ -516,6 +552,12 @@ const ContactManagement = () => {
                       {c.category === "Handwerker" && contactCosts[c.id] > 0 && (
                         <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">
                           💰 {formatCurrency(contactCosts[c.id])}
+                        </span>
+                      )}
+                      {/* Synergy 9: Deal count per contact */}
+                      {contactDealCounts[c.id] > 0 && (
+                        <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                          📋 {contactDealCounts[c.id]} Deal{contactDealCounts[c.id] > 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
@@ -599,6 +641,20 @@ const ContactManagement = () => {
                           <Edit2 className="h-3 w-3" />
                         </Button>
                         </TooltipTrigger><TooltipContent>Bearbeiten</TooltipContent></Tooltip>
+                        {/* Synergy: Quick-Add Deal mit vorausgefülltem Kontakt */}
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-primary"
+                            onClick={() => {
+                              navigate("/deals", { state: { fromContact: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: c.address, notes: c.notes } } });
+                              toast.info("Deal-Vorlage aus Kontakt übernommen");
+                            }}
+                          >
+                            <Briefcase className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Als Deal</TooltipContent></Tooltip>
                         <AlertDialog>
                           {/* UI-UPDATE-17: Tooltip on trash action */}
                           <Tooltip>

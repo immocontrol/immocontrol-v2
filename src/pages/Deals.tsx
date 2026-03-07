@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
@@ -37,6 +37,7 @@ import { extractPdfText } from "@/lib/exposeParser";
 import { extractDealFromExposeText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { sanitizeFormData } from "@/lib/sanitize";
+import { useShare } from "@/components/mobile/MobileShareSheet";
 
 /* UPD-9: Centralised deal record type */
 interface DealRecord {
@@ -175,6 +176,8 @@ const Deals = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { share } = useShare();
   const queryClient = useQueryClient();
   const haptic = useHaptic();
   const isMobile = useIsMobile();
@@ -578,26 +581,49 @@ const Deals = () => {
     toast.success("Deals als CSV exportiert");
   }, [deals]);
 
-  /* SYNERGY: Prefill deal form when navigating from CRM with fromLead */
+  /* SYNERGY: Prefill deal form when navigating from CRM (fromLead) or Contacts (fromContact) */
   useEffect(() => {
-    const fromLead = (location.state as { fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string } })?.fromLead;
-    if (fromLead && fromLead.name) {
+    const state = location.state as { fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string }; fromContact?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string } };
+    const fromLead = state?.fromLead;
+    const fromContact = state?.fromContact;
+    const prefilled = fromLead || fromContact;
+    if (prefilled && prefilled.name) {
       setForm(p => ({
         ...p,
-        title: fromLead.name,
-        address: fromLead.address || "",
-        description: fromLead.notes || "",
-        contact_name: fromLead.name,
-        contact_phone: fromLead.phone || "",
-        contact_email: fromLead.email || "",
-        source: "CRM",
+        title: prefilled.name,
+        address: prefilled.address || "",
+        description: prefilled.notes || "",
+        contact_name: prefilled.name,
+        contact_phone: prefilled.phone || "",
+        contact_email: prefilled.email || "",
+        source: fromLead ? "CRM" : fromContact ? "Kontakte" : p.source,
       }));
       setEditDeal(null);
       setAddOpen(true);
       navigate(location.pathname, { replace: true, state: {} });
-      toast.info("Deal-Vorlage aus CRM übernommen");
+      toast.info(fromLead ? "Deal-Vorlage aus CRM übernommen" : "Deal-Vorlage aus Kontakt übernommen");
     }
   }, [location.state, navigate, location.pathname]);
+
+  /* SYNERGY: Deep-Link ?id= – open deal when navigating from GlobalSearch */
+  useEffect(() => {
+    const id = searchParams.get("id");
+    if (!id || !deals.length || isLoading) return;
+    const d = deals.find(x => x.id === id);
+    if (d) {
+      setForm({
+        title: d.title, address: d.address || "", description: d.description || "",
+        stage: d.stage, purchase_price: d.purchase_price || 0, expected_rent: d.expected_rent || 0,
+        sqm: d.sqm || 0, units: d.units || 1, property_type: d.property_type || "ETW",
+        contact_name: d.contact_name || "", contact_phone: d.contact_phone || "",
+        contact_email: d.contact_email || "", source: d.source || "", notes: d.notes || "",
+        lost_reason: d.lost_reason || "",
+      });
+      setEditDeal(d);
+      setAddOpen(true);
+      setSearchParams(prev => { const p = new URLSearchParams(prev); p.delete("id"); return p; }, { replace: true });
+    }
+  }, [searchParams, deals, isLoading, setSearchParams]);
 
   /* UPD-31: Keyboard shortcut -- press n to create new deal */
   useEffect(() => {
@@ -942,7 +968,23 @@ const Deals = () => {
       {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
       <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); setDealScore(null); setScoreReason(null); } }} className="max-w-lg">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</ResponsiveDialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              <ResponsiveDialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</ResponsiveDialogTitle>
+              {editDeal && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  aria-label="Deal teilen"
+                  onClick={() => {
+                    const url = `${window.location.origin}/deals?id=${editDeal.id}`;
+                    share({ title: editDeal.title, text: editDeal.address || undefined, url });
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </ResponsiveDialogHeader>
           <div className="space-y-3">
             {isDeepSeekConfigured() && !editDeal && (
