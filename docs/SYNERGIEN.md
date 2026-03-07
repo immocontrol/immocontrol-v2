@@ -53,6 +53,9 @@
 | **PropertyMap** | Objekte | Popup-Link „Details →“ nutzt ROUTES.PROPERTY (Objekt-Detailseite) |
 | **AddTenantDialog** | — | Fehler beim Anlegen: handleError + toastErrorWithRetry (Retry = handleSave) |
 | **AddPropertyDialog** | — | Fehler beim Anlegen: handleError + toastErrorWithRetry (Retry = erneuter Submit) |
+| **AddContactDialog** | — | Fehler beim Anlegen: handleError + toastErrorWithRetry (Retry = handleSave) |
+| **DealToPropertyConverter** | Objekte | Deal→Immobilie: handleError + toastErrorWithRetry (Retry = handleConvert); Synergie Deals↔Objekte |
+| **GlobalSearch** | Alle Seiten, Objekte | Nav- und Suchergebnis-Links nutzen ROUTES (Single Source of Truth) |
 
 ## Technische Details
 

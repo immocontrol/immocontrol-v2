@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/routes";
 
 interface SearchResult {
   id: string;
@@ -62,19 +63,19 @@ export const GlobalSearch = () => {
   // Navigation items (static)
   const navResults = useMemo<SearchResult[]>(() => {
     const items = [
-      { id: "nav-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", path: "/" },
-      { id: "nav-finanzen", title: "Finanzen", subtitle: "Darlehen & Kredite", path: "/darlehen" },
-      { id: "nav-mieten", title: "Mieten", subtitle: "Mietübersicht", path: "/mietuebersicht" },
-      { id: "nav-nebenkosten", title: "Nebenkosten", subtitle: "Nebenkostenabrechnung", path: "/nebenkosten" },
-      { id: "nav-vertraege", title: "Verträge", subtitle: "Vertragsverwaltung", path: "/vertraege" },
-      { id: "nav-dokumente", title: "Dokumente", subtitle: "Dokumentenverwaltung", path: "/dokumente" },
-      { id: "nav-kontakte", title: "Kontakte", subtitle: "Handwerker & Partner", path: "/kontakte" },
-      { id: "nav-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", path: "/aufgaben" },
-      { id: "nav-berichte", title: "Berichte", subtitle: "Auswertungen", path: "/berichte" },
-      { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: "/crm" },
-      { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: "/deals" },
-      { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: "/besichtigungen" },
-      { id: "nav-settings", title: "Einstellungen", subtitle: "Profil & Theme", path: "/einstellungen" },
+      { id: "nav-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", path: ROUTES.HOME },
+      { id: "nav-finanzen", title: "Finanzen", subtitle: "Darlehen & Kredite", path: ROUTES.LOANS },
+      { id: "nav-mieten", title: "Mieten", subtitle: "Mietübersicht", path: ROUTES.RENT },
+      { id: "nav-nebenkosten", title: "Nebenkosten", subtitle: "Nebenkostenabrechnung", path: ROUTES.NK },
+      { id: "nav-vertraege", title: "Verträge", subtitle: "Vertragsverwaltung", path: ROUTES.CONTRACTS },
+      { id: "nav-dokumente", title: "Dokumente", subtitle: "Dokumentenverwaltung", path: ROUTES.DOKUMENTE },
+      { id: "nav-kontakte", title: "Kontakte", subtitle: "Handwerker & Partner", path: ROUTES.CONTACTS },
+      { id: "nav-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", path: ROUTES.TODOS },
+      { id: "nav-berichte", title: "Berichte", subtitle: "Auswertungen", path: ROUTES.REPORTS },
+      { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: ROUTES.CRM },
+      { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: ROUTES.DEALS },
+      { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: ROUTES.BESICHTIGUNGEN },
+      { id: "nav-settings", title: "Einstellungen", subtitle: "Profil & Theme", path: ROUTES.SETTINGS },
     ];
     return items.map(i => ({
       id: i.id,
@@ -94,7 +95,7 @@ export const GlobalSearch = () => {
       subtitle: p.address || p.location,
       category: "Objekte",
       icon: <Building2 className="h-4 w-4" />,
-      action: () => go(`/objekt/${p.id}`),
+      action: () => go(`${ROUTES.PROPERTY}/${p.id}`),
     }));
   }, [properties, go]);
 
@@ -119,7 +120,7 @@ export const GlobalSearch = () => {
           subtitle: [t.email, t.phone].filter(Boolean).join(" · "),
           category: "Mieter",
           icon: <Users className="h-4 w-4" />,
-          action: () => go(`/objekt/${t.property_id}`),
+          action: () => go(`${ROUTES.PROPERTY}/${t.property_id}`),
         });
       });
 

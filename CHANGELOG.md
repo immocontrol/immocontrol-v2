@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (AddContactDialog, DealToPropertyConverter)** — Kontakt anlegen und Deal→Objekt-Konvertierung nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Formularverlust, Fehler getrackt)
+- **GlobalSearch an ROUTES** — Alle Navigations- und Objekt-Links nutzen `ROUTES` (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (AddTenantDialog, AddPropertyDialog)** — Mieter anlegen und Objekt anlegen nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Formularverlust, Fehler getrackt)
 - **ROUTES (Dashboard, OnboardingBanner, PropertyMap)** — Mietübersicht-Link, Analyse/Home-Pfade und Karten-Popup-Link nutzen `ROUTES` (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (AnlageVExport, Newsticker, AddLoanDialog)** — AnlageVExport (PDF-Erstellung), Newsticker (Nachrichten laden), AddLoanDialog (Darlehen speichern/anlegen) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
@@ -77,6 +79,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **AddContactDialog** — Kontakt anlegen: handleError + toastErrorWithRetry (Retry = handleSave)
+- **DealToPropertyConverter** — Konvertierung: handleError + toastErrorWithRetry (Retry = handleConvert)
+- **GlobalSearch** — Nav- und Objekt-Links über ROUTES (HOME, LOANS, RENT, NK, CONTRACTS, DOKUMENTE, CONTACTS, TODOS, REPORTS, CRM, DEALS, BESICHTIGUNGEN, SETTINGS, PROPERTY)
 - **AddTenantDialog** — Mieter anlegen: handleError + toastErrorWithRetry (Retry = handleSave)
 - **AddPropertyDialog** — Objekt anlegen: handleError + toastErrorWithRetry (Retry = erneuter Submit)
 - **Dashboard** — StatCard Mietübersicht-Link über ROUTES.RENT

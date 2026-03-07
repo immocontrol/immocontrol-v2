@@ -16,6 +16,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 
 const STEP_LABELS = ["Kategorie", "Kontaktdaten", "Adresse & Notizen"];
@@ -100,7 +101,8 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
       qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
       onCreated?.();
     } catch (err) {
-      handleError(err, { context: "supabase", details: "contacts.insert" });
+      handleError(err, { context: "supabase", details: "contacts.insert", showToast: false });
+      toastErrorWithRetry("Kontakt anlegen fehlgeschlagen", handleSave);
     } finally {
       setSaving(false);
     }

@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { useProperties } from "@/context/PropertyContext";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface DealData {
   id: string;
@@ -69,8 +71,9 @@ const DealToPropertyConverter = memo(({ deal, onConverted }: DealToPropertyConve
       toast.success(`Deal "${deal.title}" in Immobilie konvertiert`);
       setOpen(false);
       onConverted?.();
-    } catch (e) {
-      toast.error("Konvertierung fehlgeschlagen");
+    } catch (e: unknown) {
+      handleError(e, { context: "supabase", details: "deal-to-property", showToast: false });
+      toastErrorWithRetry("Konvertierung fehlgeschlagen", handleConvert);
     } finally {
       setLoading(false);
     }
