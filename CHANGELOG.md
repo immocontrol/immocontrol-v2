@@ -61,6 +61,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **PropertyDetail** — Besichtigungen: Deep-Link ?id= zur Besichtigung; Link zum Deal bei deal_id
 - **MessageCenter** — Touch-Target für „KI zusammenfassen"-Button (Mobile)
 - **Wartungsplaner** — Empty State: Link „Objekte öffnen" (Synergy zu Tickets)
+- **AI: PropertyNotes** — Button „Zusammenfassen" (summarizeNotes) bei DeepSeek-Konfiguration
+- **AI: TicketSystem** — Button „Vorschlag" für Beschreibung (suggestTicketDescription) aus Titel + Kategorie
+- **DashboardActionCenter** — Überfällig-Kachel verlinkt auf /mietuebersicht bei überfälligen Zahlungen
+- **Nebenkosten** — Link „Dokumente" in Kopfzeile (Synergy Nebenkosten↔Dokumente)
+- **GlobalSearch** — Deep-Links: Kontakte ?highlight=, Deals ?id=, Besichtigungen ?id= für direkte Navigation
 
 ### Behoben
 

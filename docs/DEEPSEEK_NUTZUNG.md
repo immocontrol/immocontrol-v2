@@ -14,6 +14,8 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 | **ViewingAISummary** | Besichtigungen (Dialog) | Fasst Notizen, Pro/Kontra zu einer Kurzfassung (3–5 Sätze). |
 | **PropertyDescriptionGenerator** | Immo-AI → Tab „PDF auswerten“ | Objektbeschreibung aus Stammdaten oder manueller Eingabe generieren. |
 | **BerichteInProsa** | Immo-AI → Tab „PDF auswerten“ | Monatsbericht oder Jahresüberblick aus Portfolio-Kennzahlen (DeepSeek). |
+| **PropertyNotes** | Objekt-Detail → Notizen | Button „Zusammenfassen" – KI fasst alle Notizen zusammen. |
+| **TicketSystem** | Neue Anfrage (Mieter) | Button „Vorschlag" – KI generiert Beschreibung aus Titel + Kategorie. |
 
 ---
 

@@ -124,15 +124,30 @@ const DashboardActionCenter = () => {
           <div className={`text-lg font-bold ${stats.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`}>{stats.openTickets}</div>
           <div className="text-[10px] text-muted-foreground">Offene Tickets</div>
         </div>
-        <div className={`rounded-lg p-3 text-center transition-colors ${stats.overduePayments > 0 ? "bg-loss/10 border border-loss/20" : "bg-secondary/50"}`}>
-          <CreditCard className={`h-4 w-4 mx-auto mb-1 ${stats.overduePayments > 0 ? "text-loss" : "text-muted-foreground"}`} />
-          <div className={`text-lg font-bold ${stats.overduePayments > 0 ? "text-loss" : "text-muted-foreground"}`}>{stats.overduePayments}</div>
+        {stats.overduePayments > 0 ? (
+        <Link
+          to="/mietuebersicht"
+          className="rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-loss/10 border border-loss/20 hover:bg-loss/15"
+          aria-label="Überfällige Zahlungen – zur Mietübersicht"
+        >
+          <CreditCard className="h-4 w-4 mx-auto mb-1 text-loss" />
+          <div className="text-lg font-bold text-loss">{stats.overduePayments}</div>
           <div className="text-[10px] text-muted-foreground">Überfällig</div>
           {/* Synergy 4: Show overdue amount */}
           {overdueAmount > 0 && (
             <div className="text-[9px] text-loss font-medium mt-0.5">{formatCurrency(overdueAmount)}</div>
           )}
+        </Link>
+        ) : (
+        <div
+          className="rounded-lg p-3 text-center bg-secondary/50 touch-target min-h-[60px]"
+          aria-label="Überfällige Zahlungen"
+        >
+          <CreditCard className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+          <div className="text-lg font-bold text-muted-foreground">{stats.overduePayments}</div>
+          <div className="text-[10px] text-muted-foreground">Überfällig</div>
         </div>
+        )}
         <div className={`rounded-lg p-3 text-center transition-colors ${stats.unreadMessages > 0 ? "bg-primary/10 border border-primary/20" : "bg-secondary/50"}`}>
           <MessageSquare className={`h-4 w-4 mx-auto mb-1 ${stats.unreadMessages > 0 ? "text-primary" : "text-muted-foreground"}`} />
           <div className={`text-lg font-bold ${stats.unreadMessages > 0 ? "text-primary" : "text-muted-foreground"}`}>{stats.unreadMessages}</div>

@@ -25,6 +25,9 @@
 | **Todos** | CRM | Empty State: Button „Zu CRM“ |
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
 | **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
+| **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
+| **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile |
+| **GlobalSearch** | Kontakte, Deals, Besichtigungen | Deep-Links ?highlight=, ?id= |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |

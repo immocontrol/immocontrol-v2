@@ -135,7 +135,7 @@ export const GlobalSearch = () => {
           subtitle: [c.company, c.phone, c.email].filter(Boolean).join(" · "),
           category: "Kontakte",
           icon: <Phone className="h-4 w-4" />,
-          action: () => go("/kontakte"),
+          action: () => go(`/kontakte?highlight=${c.id}`),
         });
       });
 
@@ -171,7 +171,7 @@ export const GlobalSearch = () => {
           subtitle: [d.address, d.stage].filter(Boolean).join(" · "),
           category: "Deals",
           icon: <Landmark className="h-4 w-4" />,
-          action: () => go("/deals"),
+          action: () => go(`/deals?id=${d.id}`),
         });
       });
 
@@ -189,7 +189,7 @@ export const GlobalSearch = () => {
           subtitle: [v.address, v.visited_at ? new Date(v.visited_at).toLocaleDateString("de-DE") : null].filter(Boolean).join(" · "),
           category: "Besichtigungen",
           icon: <Camera className="h-4 w-4" />,
-          action: () => go("/besichtigungen"),
+          action: () => go(`/besichtigungen?id=${v.id}`),
         });
       });
 

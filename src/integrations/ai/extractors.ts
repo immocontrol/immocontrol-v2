@@ -206,6 +206,47 @@ ${block.slice(0, 8000)}
   return raw.trim();
 }
 
+/**
+ * Liste von Notizen zu einer Immobilie in 2–4 Sätzen zusammenfassen.
+ */
+export async function summarizeNotes(notes: { content: string; created_at?: string }[]): Promise<string> {
+  if (notes.length === 0) return "";
+
+  const block = notes
+    .map((n, i) => `[${i + 1}]: ${n.content}`)
+    .join("\n");
+
+  const prompt = `Fasse die folgenden Objekt-Notizen in 2–4 Sätzen sachlich zusammen. Nenne die wichtigsten Punkte (Mietermeldungen, geplante Maßnahmen, Besonderheiten). Keine Einleitung wie "Zusammenfassung:".
+
+Notizen:
+---
+${block.slice(0, 8000)}
+---`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { maxTokens: 512 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Ticket-Beschreibung aus Titel und Kategorie vorschlagen (für Handwerker-Vorgaben).
+ */
+export async function suggestTicketDescription(title: string, category: string): Promise<string> {
+  const prompt = `Der Nutzer erstellt ein Ticket für Vermieter/Handwerker.
+Titel: "${title}"
+Kategorie: ${category}
+
+Generiere eine kurze, sachliche Beschreibung (2–4 Sätze) als Vorschlag, die das Problem klar macht und ggf. Handlungsbedarf beschreibt. Auf Deutsch. Keine Anrede.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { maxTokens: 256 }
+  );
+  return raw.trim();
+}
+
 export { isDeepSeekConfigured };
 
 function parseJsonSafe<T>(raw: string): T {

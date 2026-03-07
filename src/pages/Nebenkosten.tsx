@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -243,7 +244,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Nebenkostenabrechnung</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
             {billings.length} Abrechnungen
             {billings.length > 0 && (
               <span className="ml-1">
@@ -253,6 +254,9 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                 {nkPerSqmFormatted && <span> · {nkPerSqmFormatted}</span>}
               </span>
             )}
+            <Link to="/dokumente" className="text-primary hover:underline flex items-center gap-1 text-xs">
+              <FolderOpen className="h-3.5 w-3.5" /> Dokumente
+            </Link>
           </p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>

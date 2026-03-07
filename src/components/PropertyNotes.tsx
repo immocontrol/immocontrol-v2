@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { StickyNote, Plus, Trash2 } from "lucide-react";
+import { StickyNote, Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { relativeTime } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { isDeepSeekConfigured, summarizeNotes } from "@/integrations/ai/extractors";
 
 interface Note {
   id: string;
@@ -20,7 +22,24 @@ const MAX_CHARS = 500;
 const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
   const { user } = useAuth();
   const [newNote, setNewNote] = useState("");
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryText, setSummaryText] = useState("");
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const qc = useQueryClient();
+
+  const handleSummarize = async () => {
+    if (!notes.length || !isDeepSeekConfigured()) return;
+    setSummaryLoading(true);
+    setSummaryOpen(true);
+    try {
+      const text = await summarizeNotes(notes);
+      setSummaryText(text);
+    } catch {
+      setSummaryText("Zusammenfassung konnte nicht erstellt werden.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
 
   const { data: notes = [] } = useQuery({
     queryKey: queryKeys.notes.byProperty(propertyId),
@@ -64,12 +83,34 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
 
   return (
     <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:550ms]" role="region" aria-label="Notizen">
-      <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
-        <StickyNote className="h-4 w-4 text-muted-foreground" /> Notizen
-        {notes.length > 0 && (
-          <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded-full text-muted-foreground">{notes.length}</span>
+      <h2 className="text-sm font-semibold mb-4 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2">
+          <StickyNote className="h-4 w-4 text-muted-foreground" /> Notizen
+          {notes.length > 0 && (
+            <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded-full text-muted-foreground">{notes.length}</span>
+          )}
+        </span>
+        {notes.length > 0 && isDeepSeekConfigured() && (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 touch-target min-h-[36px] text-xs" onClick={handleSummarize} disabled={summaryLoading}>
+            {summaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Zusammenfassen
+          </Button>
         )}
       </h2>
+      <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>KI-Zusammenfassung der Notizen</DialogTitle>
+          </DialogHeader>
+          {summaryLoading ? (
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Auswertung…
+            </p>
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">{summaryText}</p>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-1.5 mb-4">
         <div className="flex gap-2">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Wrench, Plus, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, MessageSquare, UserPlus, ExternalLink, Euro } from "lucide-react";
+import { Wrench, Plus, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, MessageSquare, UserPlus, ExternalLink, Euro, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { isDeepSeekConfigured, suggestTicketDescription } from "@/integrations/ai/extractors";
 
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "urgent";
@@ -194,6 +195,21 @@ export const TenantTickets = ({ tenantId, propertyId, landlordId }: TenantTicket
   const [form, setForm] = useState({ title: "", description: "", category: "repair" as TicketCategory, priority: "medium" as TicketPriority });
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+
+  const suggestDescription = async () => {
+    if (!form.title.trim() || !isDeepSeekConfigured()) return;
+    setSuggestLoading(true);
+    try {
+      const desc = await suggestTicketDescription(form.title, categoryConfig[form.category]?.label ?? form.category);
+      setForm(f => ({ ...f, description: desc }));
+      toast.success("Beschreibung vorgeschlagen");
+    } catch {
+      toast.error("Vorschlag fehlgeschlagen");
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
 
   const fetchTickets = useCallback(async (offset = 0, append = false) => {
     if (offset > 0) setLoadingMore(true);
@@ -290,7 +306,15 @@ export const TenantTickets = ({ tenantId, propertyId, landlordId }: TenantTicket
                   <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="z.B. Wasserhahn tropft" className="h-9 text-sm" maxLength={100} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Beschreibung *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Beschreibung *</Label>
+                    {isDeepSeekConfigured() && form.title.trim() && (
+                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs touch-target min-h-[32px]" onClick={suggestDescription} disabled={suggestLoading} type="button">
+                        {suggestLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        Vorschlag
+                      </Button>
+                    )}
+                  </div>
                   <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Beschreibe das Problem genauer..." className="text-sm min-h-[100px]" maxLength={1000} />
                 </div>
                 <Button onClick={createTicket} className="w-full">Anfrage senden</Button>
