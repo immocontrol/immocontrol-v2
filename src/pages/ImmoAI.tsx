@@ -43,6 +43,7 @@ const SUGGESTIONS = [
   "Welche Objekte haben die höchste Brutto-Mietrendite?",
   "Welcher Kaufpreisfaktor ist für meine Objekte typisch?",
   "Wann hat sich ein Objekt amortisiert?",
+  "Wie hoch sind meine monatlichen Darlehensraten?",
 ];
 
 export default function ImmoAI() {

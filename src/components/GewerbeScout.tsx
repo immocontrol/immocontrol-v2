@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -561,6 +561,20 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                     inputRef.current?.blur();
                     return;
                   }
+                  if (e.key === "Enter") {
+                    if (e.metaKey || e.ctrlKey) {
+                      e.preventDefault();
+                      search();
+                      return;
+                    }
+                    if (showSuggestions && suggestions.length > 0) {
+                      e.preventDefault();
+                      pickSuggestion(suggestions[suggestionIndex].display_name);
+                      return;
+                    }
+                    search();
+                    return;
+                  }
                   if (showSuggestions && suggestions.length > 0) {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
@@ -572,13 +586,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       setSuggestionIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
                       return;
                     }
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      pickSuggestion(suggestions[suggestionIndex].display_name);
-                      return;
-                    }
                   }
-                  if (e.key === "Enter") search();
                 }}
                 className="h-9 text-sm min-w-0"
                 aria-label="Ort oder Adresse für WGH-Scout-Suche"
@@ -644,6 +652,17 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 Suchen
               </Button>
+              {searchLabel != null && query.trim() && !loading && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
+                  onClick={search}
+                  aria-label="Letzte Suche wiederholen"
+                >
+                  <Repeat className="h-3.5 w-3.5" /> Erneut
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -729,6 +748,9 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 </Link>
                 <Link to={ROUTES.DEALS} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Deal anlegen">
                   <Handshake className="h-3 w-3" /> Deal anlegen →
+                </Link>
+                <Link to={ROUTES.CONTACTS} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Zu Kontakten">
+                  <Users className="h-3 w-3" /> Kontakte →
                 </Link>
               </p>
             </div>

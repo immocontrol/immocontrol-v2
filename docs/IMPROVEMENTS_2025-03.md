@@ -66,6 +66,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **AfA-Schnellrechner:** Auf der Seite Verträge & Verwaltung. Eingabe: Kaufpreis (€), Gebäudeanteil (%), Nutzungsdauer (Jahre). Ausgabe: jährliche AfA (Absetzung für Abnutzung) in €. Komponente: `AfASchnellrechner.tsx`. Relevant für Steuerplanung (Anlage V).
 - **Kaufpreisfaktor-Rechner:** Auf der Objektanalyse-Seite. Eingabe: Jahreskaltmiete (€), Kaufpreisfaktor (8–35, Slider). Ausgabe: maximaler Kaufpreis. Komponente: `KaufpreisfaktorRechner.tsx`. Relevant für Preisbewertung (typisch 12–25 für Bestandsimmobilien).
 - **Amortisations-Rechner:** Auf der Objektanalyse-Seite. Eingabe: Investition (€), jährlicher Überschuss (€). Ausgabe: Jahre bis Amortisation. Komponente: `AmortisationsRechner.tsx`. Relevant für Sanierung, Kaufnebenkosten oder Objektbewertung.
+- **Zinseszins-Rechner:** Auf der Objektanalyse-Seite. Eingabe: Startkapital (€), Zinssatz (% p.a.), Laufzeit (Jahre). Ausgabe: Endkapital und Zinsertrag. Komponente: `ZinseszinsRechner.tsx`. Relevant für Rücklagen und Anlageplanung.
 
 ## WGH-Scout: Mobile Filter-Drawer
 
@@ -75,6 +76,12 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 
 - **Suche abbrechen:** Während der Lade-Schritte (Ort, Gewerbe, Gebäude) erscheint ein Button „Abbrechen“, der die laufende Suche per AbortController beendet (Toast „Suche abgebrochen“).
 - **Ergebnis-Statistik:** Unter der Überschrift „Gefundene Treffer“ wird bei Treffern eine Zeile angezeigt: „X mit Telefon · Y mit Web · Z mit E-Mail“ (nur wenn mindestens ein Wert > 0).
+
+## WGH-Scout: Erneut, Cmd+Enter, Kontakte
+
+- **Erneut-Button:** Neben „Suchen“ erscheint ein „Erneut“-Button, wenn die letzte Suche abgeschlossen ist – führt dieselbe Suche erneut aus (z. B. bei neuen OSM-Daten).
+- **Cmd/Ctrl+Enter:** Im Suchfeld triggert Cmd+Enter bzw. Strg+Enter immer die Suche (auch wenn Vorschläge offen sind).
+- **Empty State:** Link „Kontakte“ (ROUTES.CONTACTS) ergänzt – Synergie Scout ↔ Kontakte.
 
 ## GewerbeScout: Code-Refactor
 

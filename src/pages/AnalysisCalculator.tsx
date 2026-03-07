@@ -145,10 +145,11 @@ th{background:#f5f5f5;font-weight:600}
   return (
     /* IMP-18: ARIA landmark for AnalysisCalculator page */
     <div role="main" aria-label="Objektanalyse" className="space-y-6 max-w-5xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
         <RenditeSchnellrechner />
         <KaufpreisfaktorRechner />
         <AmortisationsRechner />
+        <ZinseszinsRechner />
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

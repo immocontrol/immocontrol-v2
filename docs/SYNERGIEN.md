@@ -14,6 +14,9 @@
 | **WGH-Scout** | Besichtigungen | Empty State „Keine Treffer“: Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN |
 | **Objektanalyse** | Kaufpreisfaktor, Amortisation | Kaufpreisfaktor-Rechner und Amortisations-Rechner (Investition/Überschuss → Jahre); Synergie zu Rendite-Schnellrechner |
 | **Cashforecast** | Objekte, Verträge, WGH-Scout | Empty State (keine Objekte): Buttons Objekte, Verträge, WGH finden (ROUTES) |
+| **Verträge** | Objektanalyse | Link „Objektanalyse“ in Kopfzeile (ROUTES.ANALYSE) |
+| **Mietübersicht** | Cashforecast | Link „Cashforecast“ in Kopfzeile (ROUTES.FORECAST) |
+| **WGH-Scout** | Kontakte | Empty State: Link „Kontakte“ (ROUTES.CONTACTS) |
 | **Verträge** | Fristen | Kündigungsfrist-Rechner auf der Seite Verträge: gewünschtes Enddatum + Frist in Monaten → spätestes Kündigungsdatum |
 | **Mietübersicht** | Verträge | Link „Verträge“ in der Kopfzeile (ROUTES.CONTRACTS); Leerstands-Kosten-Rechner im Tab Zahlungen |
 | **PropertyDetail** | AI | Button „KI Kurzbewertung“ (suggestPropertySummary) – 1–2 Sätze Bewertung bei DeepSeek |
