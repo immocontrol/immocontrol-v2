@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -266,8 +267,11 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
               <AddPropertyDialog />
-              <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="gap-1.5 touch-target min-h-[44px]">
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="gap-1.5 touch-target min-h-[44px]">
                 <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.ANALYSE)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zur Analyse">
+                <BarChart3 className="h-3.5 w-3.5" /> Zur Analyse
               </Button>
             </div>
           }
@@ -340,6 +344,10 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               <Printer className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Zur Analyse</span>
+            </Button>
           </div>
         </div>
       ) : (
@@ -354,6 +362,10 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
             <AddPropertyDialog />
             <PropertyCsvImport onImported={() => qc.invalidateQueries({ queryKey: queryKeys.properties.all })} />
+            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
+              <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Zur Analyse</span>
+            </Button>
             <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={sharePortfolio}>
               <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">Teilen</span>

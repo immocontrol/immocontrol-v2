@@ -7,6 +7,8 @@ import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { WifiOff, Wifi, CloudUpload, Check, AlertCircle } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { cn } from "@/lib/utils";
 
 const QUEUE_KEY = "immo-offline-queue";
@@ -91,9 +93,29 @@ export const MobileOfflineQueue = memo(function MobileOfflineQueue({ onSync }: M
             setQueueCount(0);
             toast.success(`${queue.length} ${queue.length === 1 ? "Änderung" : "Änderungen"} synchronisiert`);
           })
-          .catch(() => {
+          .catch((err) => {
             haptic.error();
-            toast.error("Synchronisierung fehlgeschlagen — wird erneut versucht");
+            handleError(err, { context: "network", showToast: false });
+            const retrySync = () => {
+              const q = loadQueue();
+              if (q.length === 0 || !onSync) return;
+              setSyncing(true);
+              onSync(q)
+                .then(() => {
+                  haptic.success();
+                  setSyncedCount(q.length);
+                  saveQueue([]);
+                  setQueueCount(0);
+                  toast.success(`${q.length} ${q.length === 1 ? "Änderung" : "Änderungen"} synchronisiert`);
+                })
+                .catch((e: unknown) => {
+                  haptic.error();
+                  handleError(e, { context: "network", showToast: false });
+                  toast.error("Synchronisierung fehlgeschlagen — wird erneut versucht");
+                })
+                .finally(() => setSyncing(false));
+            };
+            toastErrorWithRetry("Synchronisierung fehlgeschlagen — bitte erneut versuchen", retrySync);
           })
           .finally(() => {
             setSyncing(false);

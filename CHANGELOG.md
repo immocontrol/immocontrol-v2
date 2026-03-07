@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Mobile, Analyse, AI-Bubble)** — Offline-Sync, Standortanalyse und Immo-AI-Bubble nutzen `toastErrorWithRetry` und `handleError` (Fehler werden getrackt, Nutzer können sofort erneut versuchen)
+- **Synergie Dashboard → Analyse** — „Zur Analyse“ in Dashboard-Kopfzeile (Personal + Portfolio) und im Empty State; ROUTES für Deals-Link
 - **Fehler-Toast mit „Erneut versuchen“** — `toastErrorWithRetry()` in `toastMessages.ts`; Immo-AI nutzt es bei Chat-Fehlern (Retry + handleError für Fehleranalyse)
 - **Synergie Berichte ↔ Analyse** — Berichte: Link „Zur Analyse“; Analyse: Button „Berichte“ (Touch-Target, aria-label)
 - **Todos: Pagination** — Erst 50 Aufgaben anzeigen, dann „Mehr anzeigen“ (Performance); doppelter completed-Block entfernt
@@ -53,6 +55,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **MobileOfflineQueue** — Bei Sync-Fehler: handleError + toastErrorWithRetry („Erneut versuchen“)
+- **LocationAnalysis** — Bei Standortanalyse-Fehler: handleError + toastErrorWithRetry (Retry)
+- **ImmoAIBubble** — Bei AI-Fehler: handleError + toastErrorWithRetry; Hinweistext auf Toast
+- **Dashboard** — Link „Zur Analyse“ (ROUTES.ANALYSE), Empty State „Zur Analyse“; Deals-Link über ROUTES
 - **Immo-AI** — Bei Fehler: handleError (trackError) + toastErrorWithRetry („Erneut versuchen“); neue Vorschlagsfrage
 - **Berichte** — Link „Zur Analyse“ in Kopfzeile (Touch-Target)
 - **Analyse** — Button „Berichte“ + Touch-Target für Reset

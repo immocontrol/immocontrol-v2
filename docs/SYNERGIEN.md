@@ -42,6 +42,7 @@
 | **Darlehen** | Mietübersicht, Nebenkosten | Empty State: Buttons „Mietübersicht“, „Nebenkosten“ neben Objekt/Deals |
 | **Verträge** | Mietübersicht | Link „Mietübersicht“ in Kopfzeile |
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
+| **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio); Empty State: Button „Zur Analyse“ |
 | **Berichte** | Objekte, Deals | Empty State (keine Objekte): Buttons „Objekte“, „Zu Deals“ |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile (Kennzahlen vertiefen) |
 | **Analyse** | Berichte | Button „Berichte“ in der Kopfzeile (Miet-, Objekt-, Steuerberichte) |

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { ManusMarktanalyse } from "@/components/manus/ManusMarktanalyse";
 
 interface NominatimResult {
@@ -213,7 +215,9 @@ const LocationAnalysis = () => {
 
       toast.success("Standortanalyse abgeschlossen");
     } catch (err) {
-      toast.error("Fehler bei der Standortanalyse: " + (err instanceof Error ? err.message : "Unbekannt"));
+      handleError(err, { context: "general", showToast: false });
+      const msg = "Fehler bei der Standortanalyse: " + (err instanceof Error ? err.message : "Unbekannt");
+      toastErrorWithRetry(msg, () => analyzeLocation());
     } finally {
       setLoading(false);
     }

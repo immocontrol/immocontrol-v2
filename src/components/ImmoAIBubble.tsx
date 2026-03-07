@@ -4,6 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bot, Send, Trash2, Sparkles, X, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import { useAuth } from "@/hooks/useAuth";
@@ -231,10 +233,12 @@ export default function ImmoAIBubble() {
     } catch (e: unknown) {
       logger.error("ImmoAI bubble request failed", "ImmoAI", e);
       rateLimiters.aiChat.recordFailure();
-      toast.error(e instanceof Error ? e.message : "Fehler bei der AI-Anfrage");
+      handleError(e, { context: "general", showToast: false });
+      const errMsg = e instanceof Error ? e.message : "Fehler bei der AI-Anfrage";
+      toastErrorWithRetry(errMsg, () => send(text.trim()));
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Fehler aufgetreten. Bitte erneut versuchen." },
+        { role: "assistant", content: "Fehler aufgetreten. Über den Toast „Erneut versuchen“ kannst du es nochmal versuchen." },
       ]);
     } finally {
       setIsLoading(false);
