@@ -35,6 +35,7 @@ const SUGGESTIONS = [
   "Gibt es offene Nebenkostenabrechnungen oder Entwürfe?",
   "Wo finde ich Gewerbe für die Akquise?",
   "Welche Darlehen haben die längste Zinsbindung?",
+  "Welche Objekte haben den höchsten Cashflow?",
 ];
 
 export default function ImmoAI() {

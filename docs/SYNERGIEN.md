@@ -46,7 +46,8 @@
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio); Empty State: Button „Zur Analyse“ |
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile; Empty State zusätzlich Button „Zur Analyse“ |
-| **Analyse** | Berichte | Button „Berichte“ in der Kopfzeile (Miet-, Objekt-, Steuerberichte) |
+| **Analyse** | Berichte, Gewerbe-Scout | Button „Berichte“ und „Gewerbe finden“ in der Kopfzeile (ROUTES) |
+| **Deals** | CRM, Gewerbe-Scout | Empty State: Links „Leads aus CRM übernehmen“, „Gewerbe finden“ (CRM?tab=scout) |
 | **Newsticker** | — | Fehler beim Laden: handleError + toastErrorWithRetry (Retry = Aktualisieren) |
 | **Dashboard** | Mietübersicht | StatCard „Mieteinnahmen“ verlinkt über ROUTES.RENT |
 | **OnboardingBanner** | Home, Analyse | Schritte „Objekt hinzufügen“, „Zum Rechner“ nutzen ROUTES.HOME, ROUTES.ANALYSE |

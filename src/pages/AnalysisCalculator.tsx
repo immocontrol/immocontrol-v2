@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity, FileBarChart } from "lucide-react";
+import { Calculator, RotateCcw, Save, FolderOpen, Trash2, Copy, Target, BarChart3, TrendingUp, Activity, FileBarChart, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AnalysisInputs from "@/components/analysis/AnalysisInputs";
@@ -159,6 +159,9 @@ th{background:#f5f5f5;font-weight:600}
           </Button>
           <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
             <FileBarChart className="h-3.5 w-3.5" /> Berichte
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(`${ROUTES.CRM}?tab=scout`)} aria-label="Gewerbe finden">
+            <Store className="h-3.5 w-3.5" /> Gewerbe finden
           </Button>
         </div>
       </div>

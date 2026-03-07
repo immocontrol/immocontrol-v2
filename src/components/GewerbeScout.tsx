@@ -4,7 +4,7 @@
  * Mit Ort-Autocomplete, Mindest-Gebäudefläche, Deduplizierung und klaren Lade-/Leer-Zuständen.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,10 +159,47 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     } catch { /* ignore */ }
     return 500;
   });
-  const [minSize, setMinSize] = useState(0);
-  const [onlyWithPhone, setOnlyWithPhone] = useState(false);
-  const [onlyWithWebsite, setOnlyWithWebsite] = useState(false);
-  const [poiTypeFilter, setPoiTypeFilter] = useState("all");
+  const [minSize, setMinSize] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { minSize?: number };
+        return [0, 200, 500, 1000].includes(Number(p.minSize)) ? Number(p.minSize) : 0;
+      }
+    } catch { /* ignore */ }
+    return 0;
+  });
+  const [onlyWithPhone, setOnlyWithPhone] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { onlyWithPhone?: boolean };
+        return !!p.onlyWithPhone;
+      }
+    } catch { /* ignore */ }
+    return false;
+  });
+  const [onlyWithWebsite, setOnlyWithWebsite] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { onlyWithWebsite?: boolean };
+        return !!p.onlyWithWebsite;
+      }
+    } catch { /* ignore */ }
+    return false;
+  });
+  const [poiTypeFilter, setPoiTypeFilter] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { poiTypeFilter?: string };
+        const v = p.poiTypeFilter;
+        if (v && POI_TYPE_CATEGORIES.some((c) => c.value === v)) return v;
+      }
+    } catch { /* ignore */ }
+    return "all";
+  });
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
@@ -306,7 +343,10 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         setResults(deduped);
         setLoadingStep(null);
         try {
-          sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({ query: query.trim(), mode: "ort", radius }));
+          sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
+            query: query.trim(), mode: "ort", radius,
+            minSize, onlyWithPhone, onlyWithWebsite, poiTypeFilter,
+          }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Gewerbe in diesem Gebiet gefunden");
         else toast.success(`${deduped.length} Gewerbe in ${bbox.display_name} – sortiert nach Gebäudegröße`);
@@ -334,7 +374,10 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         setResults(deduped);
         setLoadingStep(null);
         try {
-          sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({ query: query.trim(), mode: "umkreis", radius }));
+          sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
+            query: query.trim(), mode: "umkreis", radius,
+            minSize, onlyWithPhone, onlyWithWebsite, poiTypeFilter,
+          }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Gewerbe im gewählten Umkreis gefunden");
         else toast.success(`${deduped.length} Gewerbe gefunden`);
@@ -585,7 +628,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon) nutzen, um die Liste einzugrenzen.
               </p>
             )}
-            <ul className="space-y-2 max-h-[420px] overflow-y-auto" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener Gewerbe">
+            <ul className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener Gewerbe">
               {sortedResults.slice(0, SCOUT_DISPLAY_CAP).map((b, i) => (
                 <li
                   key={`${b.name}-${b.lat}-${b.lon}-${i}`}
@@ -623,6 +666,13 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
                         <a href={b.website.startsWith("http") ? b.website : `https://${b.website}`} target="_blank" rel="noreferrer noopener" aria-label={`Website: ${b.name}`}>
                           <Globe className="h-3.5 w-3.5" /> Web
+                        </a>
+                      </Button>
+                    )}
+                    {b.email && (
+                      <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
+                        <a href={`mailto:${b.email.trim()}`} aria-label={`E-Mail: ${b.name}`}>
+                          <Mail className="h-3.5 w-3.5" /> E-Mail
                         </a>
                       </Button>
                     )}

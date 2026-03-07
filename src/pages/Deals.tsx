@@ -1108,9 +1108,14 @@ const Deals = () => {
                       <p className="text-xs mt-2">
                         Erstelle einen Deal mit dem Button oben oder importiere aus Telegram
                       </p>
-                      <Link to={ROUTES.CRM} className="text-xs text-primary hover:underline mt-2 inline-block">
-                        Leads aus CRM übernehmen →
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-2">
+                        <Link to={ROUTES.CRM} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                          Leads aus CRM übernehmen →
+                        </Link>
+                        <Link to={`${ROUTES.CRM}?tab=scout`} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="Gewerbe-Scout">
+                          <Store className="h-3 w-3" /> Gewerbe finden
+                        </Link>
+                      </div>
                     </>
                   )}
                 </div>
