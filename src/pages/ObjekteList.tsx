@@ -9,6 +9,7 @@ import { Building2, Search, Briefcase, Camera, Store, FileText } from "lucide-re
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
+import { PropertyComparison } from "@/components/PropertyComparison";
 import { EmptyState } from "@/components/EmptyState";
 import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ import { ROUTES } from "@/lib/routes";
 const VIRTUAL_LIST_THRESHOLD = 25;
 const PROPERTY_CARD_HEIGHT = 220;
 
-type SortType = "name" | "value" | "rent" | "cashflow";
+type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
 
 const ObjekteList = () => {
   const { properties, loading } = useProperties();
@@ -33,6 +34,9 @@ const ObjekteList = () => {
       (p.address && p.address.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const bruttoRendite = (p: { purchasePrice: number; monthlyRent: number }) =>
+    p.purchasePrice > 0 ? (p.monthlyRent * 12 / p.purchasePrice) * 100 : 0;
+
   const sorted = [...filtered].sort((a, b) => {
     switch (sort) {
       case "name":
@@ -43,6 +47,8 @@ const ObjekteList = () => {
         return (b.monthlyRent ?? 0) - (a.monthlyRent ?? 0);
       case "cashflow":
         return (b.monthlyCashflow ?? 0) - (a.monthlyCashflow ?? 0);
+      case "rendite":
+        return bruttoRendite(b) - bruttoRendite(a);
       default:
         return 0;
     }
@@ -88,7 +94,9 @@ const ObjekteList = () => {
             <option value="value">Wert</option>
             <option value="rent">Miete</option>
             <option value="cashflow">Cashflow</option>
+            <option value="rendite">Rendite</option>
           </select>
+          <PropertyComparison />
           <AddPropertyDialog />
         </div>
       </div>

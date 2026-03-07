@@ -50,6 +50,7 @@
 | **ObjekteList** | Verträge | Empty State: Button „Verträge“ (ROUTES.CONTRACTS) |
 | **Loans** | Besichtigungen | Empty State: „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) |
 | **Berichte** | Verträge | Empty State: Button „Verträge“ (ROUTES.CONTRACTS) |
+| **ObjekteList** | Objektvergleich, Rendite | Button „Vergleichen“ (PropertyComparison) für zwei Objekte; Sortierung u. a. nach Rendite (Brutto). |
 | **Fristen-Zentrale** | Verträge, Darlehen, Objekte | Dashboard-Widget bündelt Mietvertragsende, Kündigungsfrist, Zinsbindung, Dokumente, Versicherungen, Service-Verträge; Links zu Verträge, Darlehen, Objekte. |
 | **PropertyDetail** | Wartungsplaner | Tab Wartung: Link „Alle Wartungen im Wartungsplaner“ → ROUTES.WARTUNG |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
