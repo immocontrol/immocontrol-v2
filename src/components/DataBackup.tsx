@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { downloadBlob } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 
 const TABLES = [
   "properties",
@@ -82,8 +84,9 @@ export function DataBackup() {
 
       localStorage.setItem(BACKUP_TIMESTAMP_KEY, new Date().toISOString());
       toast.success(`Backup erstellt: ${exportData.metadata.totalRecords} Datensätze aus ${TABLES.length} Tabellen`);
-    } catch {
-      toast.error("Fehler beim Erstellen des Backups");
+    } catch (err: unknown) {
+      handleError(err, { context: "export", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen des Backups", () => exportAll());
     } finally {
       setIsExporting(false);
       setProgress(0);

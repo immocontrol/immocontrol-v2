@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import { formatCurrency } from "@/lib/formatters";
 import { generateRentIncreaseJustification, isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 import jsPDF from "jspdf";
@@ -170,6 +172,41 @@ export function RentIncreaseLetter() {
     toast.success("Mieterhöhungsschreiben als PDF erstellt!");
   }, [landlord, tenantName, tenantAddress, currentRent, newRent, effectiveDate, reason, mietspiegelRef, increase, isOverKappung, kappungsgrenze, city, mietspiegelInfo, sqm, rentPerSqm]);
 
+  const runGenerateJustification = useCallback(async () => {
+    setAiGenerating(true);
+    try {
+      const text = await generateRentIncreaseJustification({
+        propertyName: tenantAddress || tenantName || "Mietsache",
+        currentRent,
+        newRent,
+        increasePct: increase,
+      });
+      setReason(text);
+      toast.success("Begründung generiert");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      const msg = e instanceof Error ? e.message : "Begründung konnte nicht generiert werden";
+      toastErrorWithRetry(msg, () => runGenerateJustification());
+    } finally {
+      setAiGenerating(false);
+    }
+  }, [tenantAddress, tenantName, currentRent, newRent, increase]);
+
+  const runImproveText = useCallback(async () => {
+    setAiImproving(true);
+    try {
+      const improved = await improveText(reason, "Begründung für Mieterhöhung gemäß § 558 BGB");
+      setReason(improved);
+      toast.success("Text verbessert");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      const msg = e instanceof Error ? e.message : "Verbessern fehlgeschlagen";
+      toastErrorWithRetry(msg, () => runImproveText());
+    } finally {
+      setAiImproving(false);
+    }
+  }, [reason]);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -299,27 +336,11 @@ export function RentIncreaseLetter() {
                     size="sm"
                     className="h-7 text-xs gap-1"
                     disabled={aiGenerating || aiImproving}
-                    onClick={async () => {
-                    setAiGenerating(true);
-                    try {
-                      const text = await generateRentIncreaseJustification({
-                        propertyName: tenantAddress || tenantName || "Mietsache",
-                        currentRent,
-                        newRent,
-                        increasePct: increase,
-                      });
-                      setReason(text);
-                      toast.success("Begründung generiert");
-                    } catch (e) {
-                      toast.error(e instanceof Error ? e.message : "Begründung konnte nicht generiert werden");
-                    } finally {
-                      setAiGenerating(false);
-                    }
-                  }}
-                >
-                  {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  KI-Begründung
-                </Button>
+                    onClick={() => runGenerateJustification()}
+                  >
+                    {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    KI-Begründung
+                  </Button>
                   )}
                   {reason.trim().length >= 10 && (
                     <Button
@@ -328,18 +349,7 @@ export function RentIncreaseLetter() {
                       size="sm"
                       className="h-7 text-xs gap-1"
                       disabled={aiGenerating || aiImproving}
-                      onClick={async () => {
-                        setAiImproving(true);
-                        try {
-                          const improved = await improveText(reason, "Begründung für Mieterhöhung gemäß § 558 BGB");
-                          setReason(improved);
-                          toast.success("Text verbessert");
-                        } catch (e) {
-                          toast.error(e instanceof Error ? e.message : "Verbessern fehlgeschlagen");
-                        } finally {
-                          setAiImproving(false);
-                        }
-                      }}
+                      onClick={() => runImproveText()}
                     >
                       {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <PenLine className="h-3 w-3" />}
                       Verbessern

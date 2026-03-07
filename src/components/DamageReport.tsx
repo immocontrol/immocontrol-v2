@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { handleError } from "@/lib/handleError";
 import FileImportPicker from "@/components/FileImportPicker";
 
 interface DamageReportProps {
@@ -101,8 +103,9 @@ export const DamageReport = ({ tenantId, propertyId, landlordId, unitLabel }: Da
       setPhotos([]);
       setPreviews([]);
       setOpen(false);
-    } catch {
-      toast.error("Fehler beim Senden der Schadensmeldung");
+    } catch (err: unknown) {
+      handleError(err, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Fehler beim Senden der Schadensmeldung", () => handleSubmit());
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X, FileBarChart } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -526,8 +527,11 @@ const Wartungsplaner = () => {
               <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
                 <Plus className="h-3.5 w-3.5" /> Ersten Eintrag anlegen
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate("/objekte")}>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.OBJEKTE)} aria-label="Objekte öffnen">
                 Objekte öffnen
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
+                <FileBarChart className="h-3.5 w-3.5" /> Berichte
               </Button>
             </div>
           )}

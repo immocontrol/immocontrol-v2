@@ -25,7 +25,7 @@
 | **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
 | **Todos** | CRM, Deals, Berichte | Empty State: Buttons „Zu CRM“, „Zu Deals“, „Berichte“ (ROUTES, Touch-Target)
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
-| **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
+| **Wartungsplaner** | Objekte, Berichte | Empty State: Buttons „Objekte öffnen“, „Berichte“ (ROUTES, Touch-Target)
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
 | **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
 | **Nebenkosten** | Objekte | Link „Zum Objekt“ bei Abrechnungsdetail (zum PropertyDetail) |
