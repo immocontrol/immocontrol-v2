@@ -373,6 +373,9 @@ const PropertyDetail = () => {
             <span>Getilgt</span>
             <span>{formatCurrency(property.purchasePrice - property.remainingDebt)}</span>
           </div>
+          <Link to={`/darlehen${property?.id ? `?property=${property.id}` : ""}`} className="text-xs text-primary hover:underline mt-2 inline-block">
+            Darlehen bearbeiten →
+          </Link>
         </div>
       </div>
 

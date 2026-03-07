@@ -16,6 +16,10 @@
 | **Besichtigungen** | Todos | Button „Todo erstellen“ – Projekt „Besichtigungen“ |
 | **Besichtigungen** | Global | Deep-Link `?id=xxx`; Link kopieren |
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
+| **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
+| **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
+| **Dokumente** | Verträge | Empty State: Link „Verträge verwalten“ |
+| **Darlehen** | Objekte, Deals | Empty State: Links „Objekt anlegen“, „Deals“ |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |

@@ -44,7 +44,12 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **React Query**: Query-Default für `viewings.all` (staleTime 2 min)
 - **Dokumente** — Refactoring: `extractPdfText` aus exposeParser nutzen (layout-aware, weniger Code-Duplizierung)
 - **CRM** — Empty State: Link „Zu Besichtigungen“ (Synergie); EmptyState-Komponente
-- **PWA** — Shortcuts für Deals, Besichtigungen, Kontakte, Immo-AI in manifest.json
+- **PWA** — Shortcuts für Deals, Besichtigungen, Darlehen, Verträge, Dokumente, Kontakte, Immo-AI
+- **Verträge** — Link „Dokumente hochladen“ in Kopfzeile; responsive Tabs (horizontal scroll auf Mobile)
+- **Dokumente** — Empty State mit EmptyState-Komponente; Link „Verträge verwalten“
+- **Darlehen** — Empty State: Links „Objekt anlegen“, „Deals“
+- **PropertyDetail** — Link „Darlehen bearbeiten“ in Finanzierungs-Sektion
+- **LoanPdfImport** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
 
 ### Behoben
 

@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { FileImportPicker } from "@/components/FileImportPicker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { extractPdfText } from "@/lib/exposeParser";
 
 interface ParsedLoan {
   bank_name: string;
@@ -19,25 +20,6 @@ interface ParsedLoan {
   notes: string;
 }
 
-/** Extract text from PDF using pdfjs-dist (local, no API cost) */
-async function extractTextFromPdf(file: File): Promise<string> {
-  const pdfjsLib = await import("pdfjs-dist");
-  /* IMP-1: Use local worker file instead of CDN to avoid fetch errors */
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).toString();
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items.map((item: { str?: string }) => item.str || "").join(" ");
-    pages.push(text);
-  }
-  return pages.join("\n");
-}
 
 /** Parse German currency string like "150.000,00" or "150000" to number */
 function parseGermanNumber(str: string): number {
@@ -255,7 +237,7 @@ export function LoanPdfImport({ onImport }: LoanPdfImportProps) {
     setRawText("");
 
     try {
-      const text = await extractTextFromPdf(file);
+      const text = await extractPdfText(file);
       setRawText(text);
 
       if (!text.trim()) {

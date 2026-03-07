@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText, FileSignature } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import DocumentOCR from "@/components/DocumentOCR";
 import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
 import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai/extractors";
 import { extractPdfText } from "@/lib/exposeParser";
+import { EmptyState } from "@/components/EmptyState";
 
 interface DocEntry {
   id: string;
@@ -60,6 +62,7 @@ const autoDetectCategory = (fileName: string): string => {
 
 
 const Dokumente = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();
@@ -372,12 +375,16 @@ const Dokumente = () => {
       {isLoading ? (
         <TableSkeleton rows={5} />
       ) : filteredDocs.length === 0 ? (
-        <div className="text-center py-12">
-          <FolderOpen className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">
-            {documents.length === 0 ? "Noch keine Dokumente hochgeladen" : "Keine Dokumente gefunden"}
-          </p>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title={documents.length === 0 ? "Noch keine Dokumente hochgeladen" : "Keine Dokumente gefunden"}
+          description={documents.length === 0 ? "Lade Verträge, Gutachten oder Nebenkostenabrechnungen hoch." : undefined}
+          action={
+            <Button variant="outline" size="sm" onClick={() => navigate("/vertraege")} className="touch-target min-h-[44px] gap-2">
+              <FileSignature className="h-4 w-4" /> Verträge verwalten
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-2">
           {filteredDocs.map(doc => (

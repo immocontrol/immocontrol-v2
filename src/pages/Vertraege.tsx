@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ContractManagement from "@/components/ContractManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
@@ -6,7 +7,7 @@ import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import { ContractTemplates } from "@/components/ContractTemplates";
-import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock } from "lucide-react";
+import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -66,9 +67,12 @@ const Vertraege = () => {
       {/* Improvement 8: Mobile responsive heading */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {/* IMPROVE-14: Show total active items count in subtitle */}
+        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+          {/* IMPROVE-14: Show total active items count */}
           {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
+          <Link to="/dokumente" className="text-primary hover:underline flex items-center gap-1 text-xs">
+            <FolderOpen className="h-3.5 w-3.5" /> Dokumente hochladen
+          </Link>
         </p>
       </div>
 
@@ -150,7 +154,7 @@ const Vertraege = () => {
       </div>
 
       <Tabs defaultValue="mietvertraege" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="flex w-full overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible">
           <TabsTrigger value="mietvertraege" className="flex items-center gap-1.5 text-xs">
             <FileText className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Miet</span>verträge
           </TabsTrigger>

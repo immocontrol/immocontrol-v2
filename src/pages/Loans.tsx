@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus } from "lucide-react";
+import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake } from "lucide-react";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";
@@ -59,6 +60,7 @@ const loanTypeLabels: Record<string, string> = {
 };
 
 const Loans = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { properties } = useProperties();
@@ -860,14 +862,22 @@ const Loans = () => {
 
       {/* Loans list */}
       {filteredLoans.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12 space-y-4">
           {/* UI-10: empty-state-float */}
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 empty-state-float">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto empty-state-float">
             <Landmark className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="text-lg font-bold mb-2">Noch keine Darlehen</h2>
-          <p className="text-sm text-muted-foreground mb-4 max-w-xs mx-auto">Lege dein erstes Darlehen an, um Zinsbindungen, Tilgungsfortschritt und Refinanzierungsrisiken zu überwachen.</p>
-          <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
+          <h2 className="text-lg font-bold">Noch keine Darlehen</h2>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">Lege dein erstes Darlehen an, um Zinsbindungen und Tilgungsfortschritt zu überwachen.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
+            <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
+            <Button variant="outline" size="sm" onClick={() => navigate("/objekte")} className="touch-target min-h-[44px] gap-2">
+              <Building2 className="h-4 w-4" /> Objekt anlegen
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/deals")} className="touch-target min-h-[44px] gap-2">
+              <Handshake className="h-4 w-4" /> Deals
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
