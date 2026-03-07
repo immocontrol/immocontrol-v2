@@ -10,7 +10,7 @@
 | **Deals** | Besichtigungen | Bei Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“ – Name, Tel, E-Mail |
 | **Deals** | Besichtigungen | Link „Zu Besichtigungen“ bei Stage Besichtigung |
-| **Besichtigungen** | Deals | Deal-Badge verlinkt auf /deals |
+| **Besichtigungen** | Deals | Deal-Badge verlinkt auf /deals; Empty State: Link „Zu Deals“ |
 | **Besichtigungen** | Todos | Button „Todo erstellen“ – Projekt „Besichtigungen“ |
 | **Besichtigungen** | Global | Deep-Link `?id=xxx`; Link kopieren |
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |

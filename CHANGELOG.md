@@ -27,6 +27,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Besichtigungen** — Empty State: Link „Zu Deals“ (Synergie); Touch-Target für Erste-Besichtigung-Button
+- **AITipCard** — Touch-Target 44px für Aktualisieren-Button (Mobile)
+- **CRM** — Touch-Target 44px für „Als Deal“-Button
 - **Deals** — Touch-Target (44px) für Deal-anlegen-Button (Mobile)
 - **ImmoAI** — Vorgeschlagene Fragen um Deals/Besichtigungen ergänzt
 - **TicketSystem** — Link „Zu Kontakten“ wenn keine Handwerker; Synergie Tickets↔Kontakte

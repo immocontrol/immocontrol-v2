@@ -779,7 +779,7 @@ const CRM = () => {
                         <Button size="sm" variant="outline" onClick={() => { setLogDialogOpen(true); setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 }); }}>
                           <MessageSquare className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Gespräch</span> loggen
                         </Button>
-                        <Button size="sm" variant="default" onClick={() => navigate("/deals", { state: { fromLead: selectedLeadData } })}>
+                        <Button size="sm" variant="default" onClick={() => navigate("/deals", { state: { fromLead: selectedLeadData } })} className="touch-target min-h-[44px]">
                           <Handshake className="h-4 w-4 mr-1" /> Als Deal
                         </Button>
                       </div>

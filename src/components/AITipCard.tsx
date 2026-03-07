@@ -52,7 +52,7 @@ export function AITipCard() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-10 w-10 touch-target min-h-[44px] min-w-[44px]"
           onClick={fetchTip}
           disabled={loading}
           aria-label="Tipp aktualisieren"

@@ -513,7 +513,11 @@ const Besichtigungen = () => {
             <p className="text-sm text-muted-foreground mb-6 max-w-sm">
               Legen Sie eine Besichtigung an, um Notizen, Pro/Kontra-Punkte, Bilder und Videos zu erfassen.
             </p>
-            <Button onClick={openAdd}>
+            <p className="text-xs text-muted-foreground mb-4">
+              Tipp: Deals in Stage „Besichtigung“ erzeugen automatisch einen Besichtigungseintrag.{" "}
+              <Link to="/deals" className="text-primary hover:underline">Zu Deals →</Link>
+            </p>
+            <Button onClick={() => openAdd(false)} className="touch-target min-h-[44px]">
               <Plus className="h-4 w-4 mr-2" />
               Erste Besichtigung anlegen
             </Button>
