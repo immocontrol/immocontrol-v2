@@ -55,8 +55,8 @@
 | **PropertyDetail** | Wartungsplaner | Tab Wartung: Link „Alle Wartungen im Wartungsplaner“ → ROUTES.WARTUNG |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
-| **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
-| **Finanzierungs-Cockpit** | Objekte, Darlehen, Mietübersicht, Selbstauskunft, Dokumente | Objektübersicht + Mieten aus Properties/Tenants; Kredite aus loans; Vermögen (Giro/Tagesgeld/Depot/LV/Bauspar) in localStorage; Selbstauskunft vorausgefüllt mit Mieten, Krediten, Vermögen; Unterlagen-Checkliste aus property_documents; Links zu Objekte, Darlehen, Objekt-Detail. |
+| **Dokumente** | Verträge, Nebenkosten, Finanzierungs-Cockpit | Empty State: Links Verträge, Nebenkosten, Besichtigungen; Kopfzeile und Empty State: Button „Finanzierungs-Cockpit“ → ROUTES.FINANZIERUNG. |
+| **Finanzierungs-Cockpit** | Objekte, Darlehen, Mietübersicht, Selbstauskunft, Dokumente | Objektübersicht + Mieten aus Properties/Tenants; Kredite aus loans; Vermögen in localStorage; Selbstauskunft vorausgefüllt; Unterlagen-Checkliste aus property_documents; Tipp bei fehlenden Unterlagen; Links zu Objekte, Darlehen, Dokumente, Mietübersicht, Objekt-Detail. |
 | **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, WGH-Scout, Verträge | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden, Verträge (ROUTES.CONTRACTS, ROUTES.CRM_SCOUT) |
 | **Objekte** | Deals, Besichtigungen, WGH-Scout | Empty State: Buttons Deals, Besichtigungen, WGH-Scout (ROUTES.CRM_SCOUT, aria-label) |
 | **Berichte** | Objekte, Deals, Analyse, WGH-Scout | Empty State: Buttons Objekte, Zu Deals, Zur Analyse, WGH finden (ROUTES) |

@@ -29,6 +29,7 @@ import {
 import { CallButton } from "@/components/CallButton";
 import { EmptyState } from "@/components/EmptyState";
 import GewerbeScout from "@/components/GewerbeScout";
+import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { ROUTES } from "@/lib/routes";
 import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { summarizeCallTranscript, isDeepSeekConfigured, suggestLeadNextStep } from "@/integrations/ai/extractors";
@@ -809,15 +810,17 @@ const CRM = () => {
 
         {/* WGH-Scout Tab: Wohn- und Geschäftshäuser finden, anrufen, als Lead übernehmen */}
         <TabsContent value="scout" className="space-y-4">
-          <GewerbeScout
-            initialQuery={searchParams.get("q") ?? undefined}
-            onAddAsLead={(b) => {
-              setAddForm((prev) => ({ ...prev, name: b.name, address: b.address || "", phone: b.phone || "" }));
-              setAddDialogOpen(true);
-            }}
-            onAddAsDeal={(b) => navigate(ROUTES.DEALS, { state: { fromScout: { name: b.name, address: b.address ?? undefined, phone: b.phone ?? undefined, email: b.email ?? undefined } } })}
-            onAddAsViewing={(b) => navigate(ROUTES.BESICHTIGUNGEN, { state: { fromScout: { title: b.name, address: b.address ?? "" } } })}
-          />
+          <WidgetErrorBoundary name="WGH-Scout">
+            <GewerbeScout
+              initialQuery={searchParams.get("q") ?? undefined}
+              onAddAsLead={(b) => {
+                setAddForm((prev) => ({ ...prev, name: b.name, address: b.address || "", phone: b.phone || "" }));
+                setAddDialogOpen(true);
+              }}
+              onAddAsDeal={(b) => navigate(ROUTES.DEALS, { state: { fromScout: { name: b.name, address: b.address ?? undefined, phone: b.phone ?? undefined, email: b.email ?? undefined } } })}
+              onAddAsViewing={(b) => navigate(ROUTES.BESICHTIGUNGEN, { state: { fromScout: { title: b.name, address: b.address ?? "" } } })}
+            />
+          </WidgetErrorBoundary>
         </TabsContent>
 
         {/* Leads Tab */}

@@ -298,6 +298,8 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
   const searchAbortRef = useRef<AbortController | null>(null);
   const resultsListRef = useRef<HTMLUListElement>(null);
   const resultsSectionRef = useRef<HTMLDivElement>(null);
+  /* Abort in-flight search on unmount to avoid setState after unmount */
+  useEffect(() => () => { searchAbortRef.current?.abort(); }, []);
   /** Roving tabindex: index of the focused result row (keyboard nav). */
   const [focusedResultIndex, setFocusedResultIndex] = useState<number | null>(null);
   const focusedResultRef = useRef<HTMLLIElement | null>(null);
@@ -451,20 +453,23 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
         const bbox = await aggregateGeocodeToBbox(query.trim(), signal);
         if (signal.aborted) return;
         if (!bbox) {
+          if (!signal.aborted) { setLoading(false); setLoadingStep(null); }
           toast.error("Ort nicht gefunden");
-          setLoading(false);
-          setLoadingStep(null);
           return;
         }
-        setSearchLabel(`Ganzes Gebiet: ${bbox.display_name}`);
-        setLastBbox(bbox);
-        setLastCenter(null);
-        setLoadingStep("gewerbe");
+        if (!signal.aborted) {
+          setSearchLabel(`Ganzes Gebiet: ${bbox.display_name}`);
+          setLastBbox(bbox);
+          setLastCenter(null);
+          setLoadingStep("gewerbe");
+        }
         const { pois: deduped } = await aggregatePOIsByBbox(bbox, signal);
         if (signal.aborted) return;
-        setLoadingStep("gebaeude");
-        setResults(deduped);
-        setLoadingStep(null);
+        if (!signal.aborted) {
+          setLoadingStep("gebaeude");
+          setResults(deduped);
+          setLoadingStep(null);
+        }
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "ort", radius,
@@ -477,20 +482,23 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
         const coord = await aggregateGeocode(query.trim(), signal);
         if (signal.aborted) return;
         if (!coord) {
+          if (!signal.aborted) { setLoading(false); setLoadingStep(null); }
           toast.error("Adresse nicht gefunden");
-          setLoading(false);
-          setLoadingStep(null);
           return;
         }
-        setSearchLabel(`${coord.display_name} (${radius} m)`);
-        setLastBbox(null);
-        setLastCenter({ lat: coord.lat, lng: coord.lng });
-        setLoadingStep("gewerbe");
+        if (!signal.aborted) {
+          setSearchLabel(`${coord.display_name} (${radius} m)`);
+          setLastBbox(null);
+          setLastCenter({ lat: coord.lat, lng: coord.lng });
+          setLoadingStep("gewerbe");
+        }
         const { pois: deduped } = await aggregatePOIsByRadius(coord.lat, coord.lng, radius, signal);
         if (signal.aborted) return;
-        setLoadingStep("gebaeude");
-        setResults(deduped);
-        setLoadingStep(null);
+        if (!signal.aborted) {
+          setLoadingStep("gebaeude");
+          setResults(deduped);
+          setLoadingStep(null);
+        }
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "umkreis", radius,

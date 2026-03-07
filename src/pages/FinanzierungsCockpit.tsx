@@ -10,6 +10,7 @@ import {
   Landmark,
   Wallet,
   FileText,
+  FileStack,
   CheckCircle,
   Circle,
   ExternalLink,
@@ -20,6 +21,7 @@ import {
   PiggyBank,
   TrendingUp,
   Shield,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -232,6 +234,16 @@ export default function FinanzierungsCockpit() {
               <Building2 className="h-3.5 w-3.5 mr-1" /> Objekte
             </Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.DOKUMENTE}>
+              <FileStack className="h-3.5 w-3.5 mr-1" /> Dokumente
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.RENT}>
+              <Receipt className="h-3.5 w-3.5 mr-1" /> Mietübersicht
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -429,6 +441,11 @@ export default function FinanzierungsCockpit() {
             </SelectContent>
           </Select>
         </div>
+        {selectedPropertyId && unterlagenStatus.some((u) => !u.hasDoc) && (
+          <p className="text-sm text-muted-foreground mb-3 p-3 rounded-lg bg-muted/30 border border-border">
+            Noch {unterlagenStatus.filter((u) => !u.hasDoc).length} Unterlage(n) fehlen – für die Bank besonders wichtig: Exposé, Energieausweis und Grundrisse zuerst ergänzen.
+          </p>
+        )}
         {selectedPropertyId ? (
           <ul className="space-y-2">
             {unterlagenStatus.map((u) => (

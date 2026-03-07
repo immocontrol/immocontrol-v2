@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText, FileSignature, Receipt, CalendarCheck } from "lucide-react";
+import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText, FileSignature, Receipt, CalendarCheck, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -266,6 +266,9 @@ const Dokumente = () => {
             {extracting && <span className="ml-2 text-primary animate-pulse">Text wird extrahiert...</span>}
           </p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2 shrink-0" aria-label="Finanzierungs-Cockpit">
+          <Wallet className="h-4 w-4" /> Finanzierungs-Cockpit
+        </Button>
       </div>
 
       {/* Stats */}
@@ -401,6 +404,9 @@ const Dokumente = () => {
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Besichtigungen">
                 <CalendarCheck className="h-4 w-4" /> Besichtigungen
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2" aria-label="Finanzierungs-Cockpit">
+                <Wallet className="h-4 w-4" /> Finanzierungs-Cockpit
               </Button>
             </div>
           }

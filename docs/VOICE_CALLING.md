@@ -35,7 +35,7 @@ VITE_VOICE_PROVIDER=tel
 - **Button „Anrufen“ mit Kontext (Lead, Recording):** `startCall(phone, { leadId, record: true, toLabel })` – verwendet den konfigurierten Provider; bei Twilio geht Kontext ans Backend. Bei Fehler liefert `startCall` `{ ok: false, error: "…" }`; Aufrufer sollten das prüfen und ggf. einen Toast anzeigen (CRM, MobileCRMCallAction).
 - **Hook:** `const { startCall, getCallUrl, providerId, supportsRecording } = useVoiceCall();`
 
-Angebundene Stellen: CRM (Leads, Suchergebnisse, Scout), GewerbeScout, Contacts, TenantManagement, TicketSystem, MobileCRMCallAction. **CallButton** (`src/components/CallButton.tsx`) ist die einheitliche UI-Komponente für Anrufe: nutzt überall `startCall()`, zeigt bei Fehler einen Toast. Eingesetzt in Contacts, TenantManagement, TicketSystem, CRM (Suchergebnisse, Lead-Detail, Karten-Places) und WGH-Scout (eigener Button). Bei Provider `tel` öffnet startCall den System-Wähler; bei VoIP (z. B. twilio-device) läuft der Anruf in der App.
+Angebundene Stellen: CRM (Leads, Suchergebnisse, Scout), GewerbeScout, Contacts, TenantManagement, TicketSystem, MobileCRMCallAction. **CallButton** (`src/components/CallButton.tsx`) ist die einheitliche UI-Komponente für Anrufe: nutzt überall `startCall()`, zeigt bei Fehler einen Toast mit Aktion „Erneut versuchen“ (toastErrorWithRetry). Eingesetzt in Contacts, TenantManagement, TicketSystem, CRM (Suchergebnisse, Lead-Detail, Karten-Places) und WGH-Scout (eigener Button). Bei Provider `tel` öffnet startCall den System-Wähler; bei VoIP (z. B. twilio-device) läuft der Anruf in der App.
 
 ## Anruf direkt aus der App (twilio-device)
 

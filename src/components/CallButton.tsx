@@ -1,12 +1,13 @@
 /**
  * Einheitlicher Anruf-Button/Link: nutzt startCall() für alle Voice-Provider (tel + VoIP).
- * Zeigt bei Fehler einen Toast; bei tel wird der System-Wähler geöffnet.
+ * Zeigt bei Fehler einen Toast mit „Erneut versuchen“; bei tel wird der System-Wähler geöffnet.
  * Nutzbar in Contacts, TenantManagement, TicketSystem, CRM, Scout.
  */
 import { useCallback } from "react";
 import { Phone } from "lucide-react";
 import { toast } from "sonner";
 import { startCall } from "@/integrations/voice";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { cn } from "@/lib/utils";
 
 export interface CallButtonProps {
@@ -36,6 +37,15 @@ export function CallButton({
   ariaLabel,
 }: CallButtonProps) {
   const normalized = phone.replace(/\s/g, "").trim();
+  const performCall = useCallback(async () => {
+    const result = await startCall({
+      to: normalized,
+      context: { toLabel, leadId, record },
+    });
+    if (!result?.ok && result?.error) {
+      toastErrorWithRetry(result.error, performCall);
+    }
+  }, [normalized, toLabel, leadId, record]);
   const handleClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43,16 +53,8 @@ export function CallButton({
       toast.error("Keine Nummer angegeben.");
       return;
     }
-    const result = await startCall({
-      to: normalized,
-      context: {
-        toLabel,
-        leadId,
-        record,
-      },
-    });
-    if (!result?.ok && result?.error) toast.error(result.error);
-  }, [normalized, toLabel, leadId, record]);
+    await performCall();
+  }, [normalized, performCall]);
 
   if (!normalized) return null;
 
