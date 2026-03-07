@@ -443,11 +443,11 @@ const Besichtigungen = () => {
               CSV
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => openAdd(true)} className="shrink-0" aria-label="Schnell erfassen">
+          <Button variant="outline" size="sm" onClick={() => openAdd(true)} className="shrink-0 touch-target min-h-[44px]" aria-label="Schnell erfassen">
             <Zap className="h-4 w-4 mr-2" />
             Schnell
           </Button>
-          <Button onClick={() => openAdd(false)} className="shrink-0" aria-label="Neue Besichtigung anlegen">
+          <Button onClick={() => openAdd(false)} className="shrink-0 touch-target min-h-[44px]" aria-label="Neue Besichtigung anlegen">
             <Plus className="h-4 w-4 mr-2" />
             Neue Besichtigung
             <span className="hidden sm:inline ml-1 text-xs opacity-70">(n)</span>

@@ -25,6 +25,8 @@ const SUGGESTIONS = [
   "Erstelle mir eine Übersicht meiner Restschulden",
   "Wie hoch ist mein monatlicher Gesamt-Cashflow?",
   "Welches Objekt hat die beste Rendite?",
+  "Wie viele Deals habe ich in Besichtigung?",
+  "Fasse meine letzten Besichtigungen kurz zusammen",
 ];
 
 export default function ImmoAI() {

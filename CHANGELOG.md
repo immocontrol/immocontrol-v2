@@ -26,6 +26,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **ImmoAI** — Vorgeschlagene Fragen um Deals/Besichtigungen ergänzt
+- **TicketSystem** — Link „Zu Kontakten“ wenn keine Handwerker; Synergie Tickets↔Kontakte
+- **Besichtigungen** — Touch-Target (44px) für Schnell- und Neue-Besichtigung-Buttons
 - **Besichtigungen**: Sortierung, Filter nach Bewertung, CSV-Export, Tastenkürzel `n`
 - **PropertyDetail** — Zeigt verknüpfte Besichtigungen (wenn `property_id` gesetzt); verbindet Objekte mit Akquise
 - **Besichtigungen**: Datum/Uhrzeit, Deal-Badge, Medien-Anzahl auf Karten

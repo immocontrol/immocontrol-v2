@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { Wrench, Plus, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, MessageSquare, UserPlus, ExternalLink, Euro } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -599,7 +600,10 @@ export const LandlordTickets = ({ propertyId }: LandlordTicketsProps) => {
                   ) : assigningId === ticket.id ? (
                     <div className="space-y-1.5">
                       {handworkerContacts.length === 0 ? (
-                        <p className="text-[10px] text-muted-foreground">Keine Handwerker in Kontakten. Lege zuerst einen Kontakt mit Kategorie "Handwerker" an.</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Keine Handwerker in Kontakten.{" "}
+                          <Link to="/kontakte" className="text-primary hover:underline">Zu Kontakten →</Link>
+                        </p>
                       ) : (
                         handworkerContacts.map(c => (
                           <button

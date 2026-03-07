@@ -16,7 +16,8 @@
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
-| **Immo-Chat** | Deals, Besichtigungen | Portfolio-Kontext um Deals + Besichtigungen erweitert |
+| **Immo-Chat** | Deals, Besichtigungen | Portfolio-Kontext um Deals + Besichtigungen erweitert; vorgeschlagene Fragen |
+| **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 
 ## Technische Details
 
