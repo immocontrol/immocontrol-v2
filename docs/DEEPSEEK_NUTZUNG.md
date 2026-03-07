@@ -8,9 +8,11 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 
 | Funktion | Wo | Beschreibung |
 |----------|-----|--------------|
-| **Immo-Chat** | Seite „Immo-AI“, Chat-Bubble | Fragen zu Portfolio, Mieten, Darlehen, Rendite – Antworten auf Deutsch, gestreamt. |
+| **Immo-Chat** | Seite „Immo-AI“, Chat-Bubble | Fragen zu Portfolio, Mieten, Darlehen, Rendite – Antworten auf Deutsch, gestreamt. Kontext: Properties, Tenants, Loans, Todos, Tickets, **Deals**, **Besichtigungen**. |
 | **KI-Tipp** | Dashboard | Kurzer monatlicher Immobilien-Tipp (1–3 Sätze), mit Aktualisieren-Button. |
-| **PDF mit KI auswerten** | Immo-AI → Tab „PDF auswerten“ | PDF hochladen → Text wird extrahiert → DeepSeek fasst zusammen oder extrahiert Struktur (Vertrag, Exposé, Rechnung). Preset-Buttons und eigene Frage möglich. |
+| **PDF mit KI auswerten** | Immo-AI → Tab „PDF auswerten“ | PDF hochladen → Text extrahiert → DeepSeek fasst zusammen. Presets: Vertrag, Exposé (Stichpunkte), **Exposé: Analyse + Bewertung**, Rechnung. Eigene Frage möglich. |
+| **ViewingAISummary** | Besichtigungen (Dialog) | Fasst Notizen, Pro/Kontra zu einer Kurzfassung (3–5 Sätze). |
+| **PropertyDescriptionGenerator** | Immo-AI → Tab „PDF auswerten“ | Objektbeschreibung aus Stammdaten oder manueller Eingabe generieren. |
 
 ---
 
@@ -20,7 +22,7 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
   PDF hochladen → KI extrahiert Fristen, Miete, Kündigung, Besonderheiten → optional in App-Felder übernehmen (z. B. Vertragsende, Kündigungsfrist).
 
 - **Exposé-Analyse:**  
-  Exposé-PDF oder Text → Stichpunkte zu Objekt, Lage, Preis, Miete, Risiken; optional Deal-Score oder Vergleich mit deinen Kriterien.
+  ✅ Teilweise umgesetzt: Preset „Exposé: Analyse + Bewertung“ in PdfWithAI. Stichpunkte, Chancen, Risiken, grobe Rendite-Einschätzung.
 
 - **Dokumente-Kategorisierung:**  
   Beim Hochladen: KI schlägt Kategorie vor (Mietvertrag, Nebenkostenabrechnung, …) anhand des Inhalts.
@@ -29,7 +31,7 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
   (Falls du Mieter-Anfragen o. Ä. in der App abbildest) KI fasst Anfrage zusammen, schlägt Kategorie oder Standardantwort vor.
 
 - **Objektbeschreibung generieren:**  
-  Aus Stammdaten (Adresse, Typ, m², Miete, …) einen kurzen Anzeigen- oder Exposé-Text erzeugen.
+  ✅ Umgesetzt (Immo-AI → PropertyDescriptionGenerator). Aus Stammdaten oder manueller Eingabe.
 
 - **Selbstauskunft / Anschreiben:**  
   Vorlagen für Mieter-Selbstauskunft, Kündigung, Mietanpassung ausformulieren (mit Platzhaltern).

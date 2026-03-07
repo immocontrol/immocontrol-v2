@@ -22,6 +22,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **ViewingAISummary** — KI fasst Besichtigungsnotizen zusammen (DeepSeek)
 - **PropertyDescriptionGenerator** — Objektbeschreibung aus Stammdaten (ImmoAI)
 - **ViewingCard** — Ausgelagerte Komponente für bessere Wartbarkeit
+- **touch-target** — CSS-Utility min 44×44px für mobile Usability
 
 ### Geändert
 
@@ -36,6 +37,15 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ### Behoben
 
 - MediaThumb: Korrektes Laden der signed URLs für Bilder/Videos
+
+### Dokumentation
+
+- **docs/DOKUMENTATION.md** — Dokumentationsrichtlinien (CHANGELOG, CONTRIBUTING, docs/)
+- **docs/SYNERGIEN.md** — Vernetzung zwischen Modulen
+- **docs/USABILITY_UND_MOBILE.md** — Usability, Touch-Targets, Mobile-Checkliste
+- **docs/DEEPSEEK_NUTZUNG.md** — ViewingAISummary, PropertyDescriptionGenerator, Exposé-Analyse
+- **README.md** — Link auf Dokumentation
+- **KeyboardShortcutOverlay** — Cmd+K, Alt+I dokumentiert
 - ResponsiveDialog: onOpenChange für Besichtigungen-Dialog
 - viewings.media Query-Invalidierung bei Upload/Löschen
 

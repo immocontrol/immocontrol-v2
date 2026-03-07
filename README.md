@@ -69,6 +69,12 @@ Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 - **Sicherheit**: sanitizeFormData beim Deal-Speichern; Auth-Seite mit Safe-Area (pb safe-area-inset-bottom).
 - **Performance**: loading="lazy" für Bilder (DamageReport, MobileMaintenanceTimeline); Tickets-Queries staleTime 2 Min.
 
+## Dokumentation
+
+- **CHANGELOG.md** – Änderungshistorie (Neu, Geändert, Behoben)
+- **.github/CONTRIBUTING.md** – Commit-Konventionen
+- **docs/** – Architektur, AI (DEEPSEEK_NUTZUNG), Synergien (SYNERGIEN), Mobile (MOBILE_BREAKPOINTS, USABILITY_UND_MOBILE), Dokumentationsrichtlinien (DOKUMENTATION)
+
 ## Lizenz & Support
 
 Projekt-spezifisch. Bei Fragen: Repo-Issues oder Kontakt des Betreibers.

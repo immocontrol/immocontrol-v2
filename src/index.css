@@ -161,6 +161,11 @@
     word-break: break-word;
     min-width: 0;
   }
+  /** Nutzen: Touch-Target min 44×44px (WCAG 2.5.5). Für mobile Buttons/Links. */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
   /** Nutzen: Lange Wörter und URLs brechen, nichts läuft aus dem sichtbaren Bereich. */
   .text-overflow-visible {
     overflow: visible;

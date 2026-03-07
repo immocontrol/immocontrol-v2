@@ -26,8 +26,10 @@ const SHORTCUT_GROUPS: { title: string; shortcuts: { keys: string; description: 
     title: "Aktionen",
     shortcuts: [
       { keys: "Ctrl+K", description: "Suche öffnen / Spotlight" },
+      { keys: "Cmd+K", description: "Globale Suche (Desktop)" },
       { keys: "Ctrl+N", description: "Neues Objekt anlegen" },
       { keys: "n", description: "Neue Besichtigung (auf /besichtigungen)" },
+      { keys: "Alt+I", description: "Immo AI öffnen" },
       { keys: "?", description: "Tastenkürzel anzeigen" },
     ],
   },
