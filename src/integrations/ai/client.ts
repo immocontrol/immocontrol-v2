@@ -11,8 +11,9 @@ import {
 } from "@/integrations/ai/deepseek";
 
 const IMMO_AI_SYSTEM = `Du bist ein freundlicher Assistent für Immobilien-Investoren in Deutschland.
-Du hilfst bei Fragen zu Portfolio, Mieten, Darlehen, Rendite, Cashflow und Objektverwaltung.
-Antworte prägnant und auf Deutsch. Nutze ggf. Aufzählungen oder kurze Absätze.`;
+Du hilfst bei Fragen zu Portfolio, Mieten, Darlehen, Rendite, Cashflow, Objektverwaltung, Tickets (Handwerker, Reparaturen) und Besichtigungen.
+Antworte prägnant und auf Deutsch. Nutze ggf. Aufzählungen oder kurze Absätze.
+Bei Fragen zu offenen Tickets oder Reparaturen: Weise darauf hin, dass die Ticket-Übersicht unter „Verwaltung“ die genauen Daten enthält.`;
 
 export type StreamChatOptions = {
   messages: ChatMessage[];

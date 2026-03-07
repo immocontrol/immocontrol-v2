@@ -17,6 +17,7 @@ import FileImportPicker from "@/components/FileImportPicker";
 import DocumentOCR from "@/components/DocumentOCR";
 import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
 import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai/extractors";
+import { extractPdfText } from "@/lib/exposeParser";
 
 interface DocEntry {
   id: string;
@@ -57,29 +58,6 @@ const autoDetectCategory = (fileName: string): string => {
   return "Sonstiges";
 };
 
-/** Feature 2: Extract text from PDF using PDF.js for OCR-like text extraction */
-const extractPdfText = async (file: File): Promise<string> => {
-  try {
-    const pdfjsLib = await import("pdfjs-dist");
-    /* IMP-1: Use local worker file instead of CDN to avoid fetch errors */
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-      import.meta.url
-    ).toString();
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const pages: string[] = [];
-    for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const text = content.items.map((item: { str?: string }) => item.str || "").join(" ");
-      pages.push(text);
-    }
-    return pages.join("\n\n");
-  } catch {
-    return "";
-  }
-};
 
 const Dokumente = () => {
   const { user } = useAuth();

@@ -7,6 +7,7 @@
 | Von | Zu | Verknüpfung |
 |-----|-----|-------------|
 | **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt |
+| **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“ |
 | **Deals** | Besichtigungen | Bei Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“ – Name, Tel, E-Mail |
@@ -17,7 +18,7 @@
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
-| **Immo-Chat** | Deals, Besichtigungen | Portfolio-Kontext um Deals + Besichtigungen erweitert; vorgeschlagene Fragen |
+| **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
 | **Tickets** | Kontakte | Link „Zu Kontakten“ wenn keine Handwerker vorhanden |
 
 ## Technische Details

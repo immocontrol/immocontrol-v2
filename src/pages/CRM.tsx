@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail, Edit2, Save, History, Handshake } from "lucide-react";
+import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail, Edit2, Save, History, Handshake, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { queryKeys } from "@/lib/queryKeys";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,6 +23,7 @@ import {
   statusColors, statusLabels, outcomeLabels,
   calculateLeadScore, LEAD_STATUS_OPTIONS, calcCRMStats, CRM_SEARCH_DEBOUNCE,
 } from "@/lib/crmUtils";
+import { EmptyState } from "@/components/EmptyState";
 
 /* IMP-3: Utility functions extracted to @/lib/crmUtils.ts for modularity */
 
@@ -703,7 +704,16 @@ const CRM = () => {
               {leadsLoading ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">Laden...</div>
               ) : filteredLeads.length === 0 ? (
-                <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Keine Leads gefunden</CardContent></Card>
+                <EmptyState
+                  icon={CalendarCheck}
+                  title="Keine Leads gefunden"
+                  description="Suche nach Geschäften oder füge Leads manuell hinzu."
+                  action={
+                    <Button variant="outline" size="sm" onClick={() => navigate("/besichtigungen")} className="touch-target min-h-[44px]">
+                      <CalendarCheck className="h-4 w-4 mr-2" /> Zu Besichtigungen
+                    </Button>
+                  }
+                />
               ) : (
                 scoredFilteredLeads.map((lead: { id: string; name: string; company?: string; phone?: string; status: string; updated_at?: string; score: number }) => (
                   <Card

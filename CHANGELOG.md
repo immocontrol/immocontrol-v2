@@ -32,7 +32,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **CRM** — Touch-Target 44px für „Als Deal“-Button
 - **Deals** — Touch-Target (44px) für Deal-anlegen-Button; Empty State: Link „Leads aus CRM übernehmen“ (Synergie)
 - **PropertyDocuments** — Touch-Target 44px für Hochladen-Button (Mobile)
-- **ImmoAI** — Vorgeschlagene Fragen um Deals/Besichtigungen ergänzt
+- **ImmoAI** — Vorgeschlagene Fragen um Deals/Besichtigungen/Tickets ergänzt; System-Kontext um Tickets erweitert
 - **TicketSystem** — Link „Zu Kontakten“ wenn keine Handwerker; Synergie Tickets↔Kontakte
 - **Besichtigungen** — Touch-Target (44px) für Schnell- und Neue-Besichtigung-Buttons
 - **Besichtigungen**: Sortierung, Filter nach Bewertung, CSV-Export, Tastenkürzel `n`
@@ -42,6 +42,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Barrierefreiheit**: aria-labels für Suche (Todos, Mietuebersicht, Contacts, Besichtigungen)
 - **KeyboardShortcutOverlay**: Neuer Shortcut `n` für Besichtigungen
 - **React Query**: Query-Default für `viewings.all` (staleTime 2 min)
+- **Dokumente** — Refactoring: `extractPdfText` aus exposeParser nutzen (layout-aware, weniger Code-Duplizierung)
+- **CRM** — Empty State: Link „Zu Besichtigungen“ (Synergie); EmptyState-Komponente
+- **PWA** — Shortcuts für Deals, Besichtigungen, Kontakte, Immo-AI in manifest.json
 
 ### Behoben
 

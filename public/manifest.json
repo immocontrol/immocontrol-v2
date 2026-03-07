@@ -61,5 +61,11 @@
     }
   ],
   "screenshots": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "shortcuts": [
+    { "name": "Deals", "short_name": "Deals", "url": "/deals", "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Besichtigungen", "short_name": "Besichtigungen", "url": "/besichtigungen", "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Kontakte", "short_name": "Kontakte", "url": "/kontakte", "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Immo-AI", "short_name": "AI", "url": "/immo-ai", "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }] }
+  ]
 }

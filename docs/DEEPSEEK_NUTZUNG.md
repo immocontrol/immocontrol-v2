@@ -8,7 +8,7 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 
 | Funktion | Wo | Beschreibung |
 |----------|-----|--------------|
-| **Immo-Chat** | Seite „Immo-AI“, Chat-Bubble | Fragen zu Portfolio, Mieten, Darlehen, Rendite – Antworten auf Deutsch, gestreamt. Kontext: Properties, Tenants, Loans, Todos, Tickets, **Deals**, **Besichtigungen**. |
+| **Immo-Chat** | Seite „Immo-AI“, Chat-Bubble | Fragen zu Portfolio, Mieten, Darlehen, Rendite, **Tickets** – Antworten auf Deutsch, gestreamt. System-Kontext: Properties, Tenants, Loans, Todos, Tickets, Deals, Besichtigungen. Vorgeschlagene Frage: „Wie viele offene Tickets habe ich?“ |
 | **KI-Tipp** | Dashboard | Kurzer monatlicher Immobilien-Tipp (1–3 Sätze), mit Aktualisieren-Button. |
 | **PDF mit KI auswerten** | Immo-AI → Tab „PDF auswerten“ | PDF hochladen → Text extrahiert → DeepSeek fasst zusammen. Presets: Vertrag, Exposé (Stichpunkte), **Exposé: Analyse + Bewertung**, Rechnung. Eigene Frage möglich. |
 | **ViewingAISummary** | Besichtigungen (Dialog) | Fasst Notizen, Pro/Kontra zu einer Kurzfassung (3–5 Sätze). |
