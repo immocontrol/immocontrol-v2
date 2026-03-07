@@ -540,18 +540,19 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
             Daten: {getActiveProviders().map((p) => p.name).join(", ")}
           </p>
         )}
-        <Collapsible className="mt-2">
-          <CollapsibleTrigger className="group flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <Lightbulb className="h-3.5 w-3.5" /> Tipps für bessere Treffer
-            <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+        <Collapsible className="mt-2" defaultOpen={!getScoutStorage()?.query}>
+          <CollapsibleTrigger className="group flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors touch-target min-h-[36px]">
+            <Lightbulb className="h-3.5 w-3.5 shrink-0" /> Tipps für bessere Treffer
+            <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180 shrink-0" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <ul className="mt-1.5 text-[11px] text-muted-foreground space-y-1 list-disc list-inside text-wrap-safe">
-              <li>Ganzer Ort: z. B. Stadtname für alle Gewerbe im Gebiet</li>
-              <li>Umkreis: Adresse + 500 m–10 km für gezielte Nachbarschaft</li>
-              <li>Filter „Mindestfläche“ und „Typ“ verfeinern die Liste</li>
+              <li>Ganzer Ort: z.B. Stadtname für alle Gewerbe im Gebiet</li>
+              <li>Umkreis: Adresse + 500 m–10 km für gezielte Nachbarschaft</li>
+              <li>Filter „Mindestfläche“ (z.B. ≥500 m²) und „Typ“ verfeinern die Liste – vor oder nach der Suche</li>
               <li>„Nur mit Telefon“ für Kaltakquise per Anruf</li>
-              <li>KI-Buttons „KI Einstieg“ und „Warum interessant?“ pro Treffer (bei aktiviertem DeepSeek)</li>
+              <li>KI-Buttons „KI Einstieg“ und „Warum interessant?“ pro Treffer (bei DeepSeek)</li>
+              <li>Strg+Enter startet die Suche direkt aus dem Suchfeld</li>
             </ul>
           </CollapsibleContent>
         </Collapsible>
@@ -563,7 +564,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               <Label className="text-xs">Ort oder Adresse</Label>
               <Input
                 ref={inputRef}
-                placeholder="z.B. Hennigsdorf oder Eisenbahnstraße 73, Eberswalde"
+                placeholder="z.B. Hennigsdorf, Berlin Mitte oder Straße 1, 12345 Stadt"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -601,6 +602,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                   }
                 }}
                 className="h-9 text-sm min-w-0"
+                title="Strg+Enter zum Suchen"
                 aria-label="Ort oder Adresse für WGH-Scout-Suche"
                 aria-autocomplete="list"
                 aria-expanded={showSuggestions && suggestions.length > 0}
@@ -748,11 +750,11 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
         )}
 
         {!loading && searchLabel !== null && results.length === 0 && (
-          <div className="rounded-lg border border-border bg-muted/40 p-4 flex flex-col sm:flex-row sm:items-start gap-3">
+          <div className="rounded-lg border border-border bg-muted/40 p-4 flex flex-col sm:flex-row sm:items-start gap-3" role="status" aria-label="Keine Treffer">
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
-            <div className="text-sm text-wrap-safe flex-1">
+            <div className="text-sm text-wrap-safe flex-1 min-w-0">
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
-              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 5 km oder 10 km).</p>
+              <p className="text-muted-foreground mt-1">Tipps: Bei „Ganzer Ort“ den Stadtnamen genau prüfen. Bei „Umkreis“ den Radius vergrößern (5 km, 10 km). Mindestfläche-Filter entfernen, falls gesetzt.</p>
               <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 <Link to={`${ROUTES.CRM}?tab=search`} className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
                 <Link to={ROUTES.BESICHTIGUNGEN} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Besichtigung planen">
@@ -1088,7 +1090,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium truncate">{b.name}</span>
+                      <span className="font-medium text-wrap-safe" title={b.name}>{b.name}</span>
                       {b.source && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0" title={`Quelle: ${sourceLabel(b.source)}`}>
                           {sourceLabel(b.source)}
@@ -1116,7 +1118,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                         </span>
                       )}
                       {b.distance > 0 && <span>{b.distance} m</span>}
-                      {b.address && <span className="truncate">{b.address}</span>}
+                      {b.address && <span className="text-wrap-safe" title={b.address}>{b.address}</span>}
                       {b.opening_hours && (
                         <span className="truncate max-w-[180px] sm:max-w-none" title={b.opening_hours}>
                           Öffn.: {b.opening_hours.length > 25 ? `${b.opening_hours.slice(0, 24)}…` : b.opening_hours}
@@ -1170,8 +1172,8 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       size="sm"
                       className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
                       onClick={() => {
-                        const text = [b.name, b.address].filter(Boolean).join("\n");
-                        navigator.clipboard.writeText(text).then(() => toast.success("Kopiert"), () => toast.error("Kopieren fehlgeschlagen"));
+                        const parts = [b.name, b.address, b.phone ? `Tel: ${b.phone}` : null, b.email ? `E-Mail: ${b.email}` : null].filter(Boolean) as string[];
+                        navigator.clipboard.writeText(parts.join("\n")).then(() => toast.success("Kopiert"), () => toast.error("Kopieren fehlgeschlagen"));
                       }}
                       aria-label={`Kopieren: ${b.name}`}
                     >

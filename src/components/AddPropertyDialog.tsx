@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { useForm, UseFormRegister, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addPropertyFormSchema, type AddPropertyFormData } from "@/lib/schemas";
@@ -22,10 +22,12 @@ import {
 import { useProperties } from "@/context/PropertyContext";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { focusNextField } from "@/hooks/useEnterToNext";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { scrollToFirstError } from "@/lib/scrollToFirstError";
+import { calcMonthlyCashflow } from "@/lib/calculations";
+import { StepIndicator } from "@/components/StepIndicator";
 
 type FormData = AddPropertyFormData;
 
@@ -61,40 +63,9 @@ const STEP_LABELS = ["Grunddaten", "Finanzen", "Objektdetails"];
 
 const STEP_FIELDS: (keyof FormData)[][] = [
   ["name", "address", "type", "ownership", "units"],
-  ["purchasePrice", "purchaseDate", "currentValue", "remainingDebt", "monthlyRent", "monthlyExpenses", "monthlyCreditRate", "interestRate"],
+  ["purchasePrice", "purchaseDate", "currentValue", "remainingDebt", "monthlyRent", "monthlyExpenses", "monthlyCreditRate", "monthlyCashflow", "interestRate"],
   ["sqm", "yearBuilt"],
 ];
-
-const StepIndicator = ({ current, total }: { current: number; total: number }) => (
-  <div className="flex items-center justify-center gap-0 mb-6">
-    {Array.from({ length: total }, (_, i) => {
-      const isCompleted = i < current;
-      const isActive = i === current;
-      return (
-        <div key={i} className="flex items-center">
-          <div
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
-              isCompleted && "bg-primary text-primary-foreground",
-              isActive && "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
-              !isCompleted && !isActive && "bg-muted text-muted-foreground"
-            )}
-          >
-            {i + 1}
-          </div>
-          {i < total - 1 && (
-            <div
-              className={cn(
-                "w-12 h-0.5 transition-all duration-300",
-                i < current ? "bg-primary" : "bg-muted"
-              )}
-            />
-          )}
-        </div>
-      );
-    })}
-  </div>
-);
 
 const FORM_DEFAULTS: FormData = {
   name: "",
@@ -112,11 +83,15 @@ const FORM_DEFAULTS: FormData = {
   interestRate: 0,
   sqm: 0,
   yearBuilt: 0,
+  restnutzungsdauer: undefined,
+  buildingSharePercent: 80,
+  monthlyCashflow: 0,
 };
 
 const AddPropertyDialog = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const { addProperty, properties } = useProperties();
   const { announce } = useAccessibility();
 
@@ -134,7 +109,7 @@ const AddPropertyDialog = () => {
     setValue,
     watch,
     trigger,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = form;
 
   /* Sync form changes to draft storage — use watch subscription to avoid infinite loop */
@@ -144,6 +119,23 @@ const AddPropertyDialog = () => {
     });
     return () => subscription.unsubscribe();
   }, [watch, setDraftValues]);
+
+  /* Auto-fill currentValue from purchasePrice wenn noch 0 (editierbar falls abweichend) */
+  const purchasePrice = watch("purchasePrice");
+  const currentValue = watch("currentValue");
+  useEffect(() => {
+    const p = Number(purchasePrice) || 0;
+    const cv = Number(currentValue) || 0;
+    if (p > 0 && cv === 0) setValue("currentValue", p, { shouldValidate: false });
+  }, [purchasePrice, currentValue, setValue]);
+
+  /* Auto-calc monthlyCashflow = Miete - Kosten - Rate (editierbar falls Sonderfall) */
+  const monthlyRent = watch("monthlyRent");
+  const monthlyExpenses = watch("monthlyExpenses");
+  const monthlyCreditRate = watch("monthlyCreditRate");
+  useEffect(() => {
+    setValue("monthlyCashflow", calcMonthlyCashflow(Number(monthlyRent), Number(monthlyExpenses), Number(monthlyCreditRate)), { shouldValidate: false });
+  }, [monthlyRent, monthlyExpenses, monthlyCreditRate, setValue]);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -181,9 +173,11 @@ const AddPropertyDialog = () => {
 
   const onSubmit = async (data: FormData) => {
     const wasFirst = properties.length === 0;
-    const monthlyCashflow = data.monthlyRent - data.monthlyExpenses - data.monthlyCreditRate;
+    const monthlyCashflow = typeof data.monthlyCashflow === "number" ? data.monthlyCashflow : calcMonthlyCashflow(data.monthlyRent, data.monthlyExpenses, data.monthlyCreditRate);
+    const restnutzungsdauer = data.restnutzungsdauer !== "" && data.restnutzungsdauer != null ? Number(data.restnutzungsdauer) : undefined;
+    const buildingSharePercent = data.buildingSharePercent !== "" && data.buildingSharePercent != null ? Number(data.buildingSharePercent) : 80;
     try {
-      await addProperty({ ...data, monthlyCashflow, location: "" } as Omit<import("@/data/mockData").Property, "id">);
+      await addProperty({ ...data, monthlyCashflow, location: "", restnutzungsdauer, buildingSharePercent } as Omit<import("@/data/mockData").Property, "id">);
     } catch (e: unknown) {
       handleError(e, { context: "supabase", details: "properties.insert", showToast: false });
       toastErrorWithRetry("Objekt anlegen fehlgeschlagen", () => handleSubmit(onSubmit)());
@@ -227,7 +221,7 @@ const AddPropertyDialog = () => {
 
         <StepIndicator current={step} total={3} />
 
-        <form onSubmit={handleSubmit(onSubmit)} onKeyDown={(e) => {
+        <form ref={formRef} onSubmit={handleSubmit(onSubmit, () => scrollToFirstError(formRef.current))} onKeyDown={(e) => {
           /* Prevent Enter key from submitting the form on non-final steps */
           if (e.key === "Enter" && step < 2) {
             e.preventDefault();
@@ -294,6 +288,7 @@ const AddPropertyDialog = () => {
                 <Field label="Kosten/M (EUR)" name="monthlyExpenses" type="number" placeholder="300" register={register} errors={errors} />
                 <Field label="Rate/M (EUR)" name="monthlyCreditRate" type="number" placeholder="800" register={register} errors={errors} />
               </div>
+              <Field label="Cashflow/M (berechnet, editierbar)" name="monthlyCashflow" type="number" placeholder="100" register={register} errors={errors} />
               <Field label="Zinssatz (%)" name="interestRate" type="number" placeholder="3.5" register={register} errors={errors} />
             </div>
           </div>
@@ -301,9 +296,16 @@ const AddPropertyDialog = () => {
           <div className={step === 2 ? "block" : "hidden"}>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Wohnfläche (m2)" name="sqm" type="number" placeholder="120" register={register} errors={errors} />
+                <Field label="Wohnfläche (m²)" name="sqm" type="number" placeholder="120" register={register} errors={errors} />
                 <Field label="Baujahr" name="yearBuilt" type="number" placeholder="1975" register={register} errors={errors} />
               </div>
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
+                <Field label="Gebäudeanteil (%)" name="buildingSharePercent" type="number" placeholder="80" register={register} errors={errors} />
+                <Field label="Restnutzungsdauer (Jahre)" name="restnutzungsdauer" type="number" placeholder="50" register={register} errors={errors} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Gebäudeanteil = Anteil des Kaufpreises, der auf das Gebäude entfällt (Rest = Grund und Boden). Nur der Gebäudeanteil ist abschreibbar. Restnutzungsdauer für lineare AfA (z.B. 50 Jahre).
+              </p>
             </div>
           </div>
 
@@ -318,8 +320,8 @@ const AddPropertyDialog = () => {
                 Weiter <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button type="submit" className="flex-1">
-                Objekt anlegen
+              <Button type="submit" className="flex-1" disabled={isSubmitting} aria-busy={isSubmitting}>
+                {isSubmitting ? "Wird angelegt…" : "Objekt anlegen"}
               </Button>
             )}
           </div>

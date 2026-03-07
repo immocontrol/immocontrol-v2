@@ -18,7 +18,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
 import { AutoNebenkosten } from "@/components/AutoNebenkosten";
 import { EmptyState } from "@/components/EmptyState";
-import jsPDF from "jspdf";
+import { loadJsPDF } from "@/lib/lazyImports";
 
 const NK_CATEGORIES = [
   "Grundsteuer", "Wasserversorgung", "Entwässerung", "Heizkosten", "Warmwasser",
@@ -220,14 +220,15 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
     if (w) { w.document.write(html); w.document.close(); w.print(); }
   };
 
-  /** SYNERGY: Nebenkostenabrechnung als Dokument speichern (PDF → property_documents) */
-  const generateBillingPdfBlob = useCallback((
+  /** SYNERGY: Nebenkostenabrechnung als Dokument speichern (PDF → property_documents, jsPDF lazy) */
+  const generateBillingPdfBlob = useCallback(async (
     billing: { property_id: string; tenant_id: string | null; billing_period_start: string; billing_period_end: string; prepayments: number; total_costs: number; tenant_share: number; balance: number },
     property: { name: string; address?: string } | undefined,
     tenant: { first_name: string; last_name: string } | undefined,
     items: Array<{ category: string; description: string; distribution_key: string; total_amount: number; tenant_amount: number }>
-  ): Blob => {
-    const doc = new jsPDF({ format: "a4" });
+  ): Promise<Blob> => {
+    const JsPDF = await loadJsPDF();
+    const doc = new JsPDF({ format: "a4" });
     const m = 20;
     let y = m;
     doc.setFontSize(14);
@@ -260,7 +261,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
     doc.text(formatCurrency(Math.abs(Number(billing.balance))), m + 120, y);
     doc.setFontSize(8);
     doc.text(`ImmoControl · Erstellt am ${new Date().toLocaleDateString("de-DE")}`, m, 285);
-    return doc.output("blob");
+    return doc.output("blob") as Blob;
   }, []);
 
   const [savingAsDoc, setSavingAsDoc] = useState(false);
@@ -277,8 +278,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
         total_amount: Number(i.total_amount || 0),
         tenant_amount: Number(i.tenant_amount || 0),
       }));
-      const blob = generateBillingPdfBlob(selectedBillingData, property, tenant, items);
-      const fileName = `Nebenkostenabrechnung_${property?.name || "Objekt"}_${new Date(selectedBillingData.billing_period_end).getFullYear()}.pdf`.replace(/[^a-zA-Z0-9äöüÄÖÜß_\-\.]/g, "_");
+      const blob = await generateBillingPdfBlob(selectedBillingData, property, tenant, items);
+      const fileName = `Nebenkostenabrechnung_${property?.name || "Objekt"}_${new Date(selectedBillingData.billing_period_end).getFullYear()}.pdf`.replace(/[^a-zA-Z0-9äöüÄÖÜß_.-]/g, "_");
       const filePath = `${user.id}/${selectedBillingData.property_id}/${Date.now()}_${fileName}`;
       const { error: uploadError } = await supabase.storage.from("property-documents").upload(filePath, blob, { contentType: "application/pdf" });
       if (uploadError) throw uploadError;

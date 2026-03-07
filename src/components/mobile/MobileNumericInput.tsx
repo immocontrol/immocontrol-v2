@@ -48,7 +48,7 @@ export const MobileNumericInput = memo(function MobileNumericInput({
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     /* FIX-1: Use global /,/g to replace ALL commas */
-    const raw = e.target.value.replace(/[^0-9.,\-]/g, "").replace(/\./g, "").replace(/,/g, ".");
+    const raw = e.target.value.replace(/[^0-9.,-]/g, "").replace(/\./g, "").replace(/,/g, ".");
     const parsed = parseFloat(raw);
     if (!isNaN(parsed)) {
       onChange(clamp(parsed));

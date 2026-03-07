@@ -42,7 +42,7 @@ export function KuendigungsfristRechner() {
           <Calculator className="h-4 w-4" /> Kündigungsfrist-Rechner
         </CardTitle>
         <p className="text-xs text-muted-foreground text-wrap-safe">
-          Ermittelt, bis wann Sie spätestens kündigen müssen, um ein gewünschtes Vertragsende zu erreichen (z. B. Mietvertrag, 3 Monate zum Monatsende).
+          Ermittelt, bis wann Sie spätestens kündigen müssen, um ein gewünschtes Vertragsende zu erreichen (z.B. Mietvertrag, 3 Monate zum Monatsende).
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

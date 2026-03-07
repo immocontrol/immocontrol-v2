@@ -3,16 +3,10 @@
  * Hilft, das Objekt gegenüber der Bank positiv darzustellen: Zeitstrahl mit Mietanpassungen
  * (§558 BGB: 15% oder 20% alle 3 Jahre je nach Mietpreisbremse), Modernisierungen (PV, Dämmung, Sanierung).
  */
+import { ANGESPANNTE_MÄRKTE, WARTEFRIST_MONATE, isAngespanntMarkt, getKappungsgrenzePercent } from "@/lib/mietrechtConstants";
 
-/** Angespannte Wohnungsmärkte: hier gilt Kappungsgrenze 15% in 3 Jahren (sonst 20%). */
-export const ANGESPANNTE_MÄRKTE = [
-  "Berlin", "München", "Hamburg", "Frankfurt", "Köln", "Düsseldorf",
-  "Stuttgart", "Freiburg", "Heidelberg", "Regensburg", "Augsburg",
-  "Münster", "Bonn", "Darmstadt", "Mainz", "Konstanz", "Tübingen",
-  "Potsdam", "Rostock", "Leipzig", "Dresden",
-];
+export { ANGESPANNTE_MÄRKTE };
 
-const WARTEFRIST_MONATE = 15; // §558 BGB: frühestens 15 Monate nach letzter Erhöhung
 const JAHRE_ZWISCHEN_ERHOEHUNG = 3;
 
 export interface PropertyForPlan {
@@ -81,11 +75,6 @@ export interface EntwicklungsplanResult {
   zielMieteMonat: number;
 }
 
-function isAngespanntMarkt(location: string): boolean {
-  const loc = (location || "").toLowerCase();
-  return ANGESPANNTE_MÄRKTE.some(m => loc.includes(m.toLowerCase()));
-}
-
 /**
  * Berechnet den Entwicklungsplan für ein Objekt: Mietanpassungen (15% oder 20% alle 3 Jahre)
  * und empfohlene wertsteigernde Maßnahmen (PV, Dämmung, Wohnungssanierung).
@@ -96,7 +85,7 @@ export function computeEntwicklungsplan(
 ): EntwicklungsplanResult {
   const location = [property.address, property.location].filter(Boolean).join(" ") || "";
   const angespannt = isAngespanntMarkt(location);
-  const kappungsgrenzePercent = angespannt ? 15 : 20;
+  const kappungsgrenzePercent = getKappungsgrenzePercent(angespannt);
   const horizonYears = options.horizonYears ?? 10;
   const lastAdjustment = options.lastRentAdjustmentDate || property.purchaseDate || "";
   const now = new Date();
@@ -104,12 +93,12 @@ export function computeEntwicklungsplan(
   const monthsSinceLast = (now.getFullYear() - lastDate.getFullYear()) * 12 + (now.getMonth() - lastDate.getMonth());
   const naechsteAnpassungInMonaten = Math.max(0, WARTEFRIST_MONATE - monthsSinceLast);
 
-  let rentCurrent = property.monthlyRent || 0;
+  const rentCurrent = property.monthlyRent || 0;
   const mieteProJahr: EntwicklungsplanResult["mieteProJahr"] = [];
   const mietanpassungSteps: MietanpassungStep[] = [];
 
   // Schritte: erste Erhöhung bei naechsteAnpassungInMonaten, dann alle 36 Monate
-  let nextIncreaseMonth = naechsteAnpassungInMonaten;
+  const nextIncreaseMonth = naechsteAnpassungInMonaten;
   let rentAfterSteps = rentCurrent;
   const multiplier = 1 + kappungsgrenzePercent / 100;
 
