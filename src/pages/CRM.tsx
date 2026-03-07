@@ -934,7 +934,10 @@ const CRM = () => {
                         {selectedLeadData.phone && (
                           <Button
                             size="sm"
-                            onClick={() => startCall(selectedLeadData.phone!, { leadId: selectedLeadData.id, record: true, toLabel: selectedLeadData.name })}
+                            onClick={async () => {
+                              const result = await startCall(selectedLeadData.phone!, { leadId: selectedLeadData.id, record: true, toLabel: selectedLeadData.name });
+                              if (!result?.ok && result?.error) toast.error(result.error);
+                            }}
                           >
                             <Phone className="h-4 w-4 mr-1" /> Anrufen
                           </Button>

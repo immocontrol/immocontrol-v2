@@ -60,6 +60,19 @@ const MIN_SIZE_OPTIONS = [
   { value: 200, label: "≥ 200 m²" },
   { value: 500, label: "≥ 500 m²" },
   { value: 1000, label: "≥ 1.000 m²" },
+  { value: 1500, label: "≥ 1.500 m²" },
+  { value: 2000, label: "≥ 2.000 m²" },
+  { value: 3000, label: "≥ 3.000 m²" },
+  { value: 5000, label: "≥ 5.000 m²" },
+];
+
+const MAX_SIZE_OPTIONS = [
+  { value: 0, label: "Kein Maximum" },
+  { value: 500, label: "≤ 500 m²" },
+  { value: 1000, label: "≤ 1.000 m²" },
+  { value: 2000, label: "≤ 2.000 m²" },
+  { value: 5000, label: "≤ 5.000 m²" },
+  { value: 10000, label: "≤ 10.000 m²" },
 ];
 
 const SCOUT_DISPLAY_CAP = 100;
@@ -227,12 +240,23 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
   const { getCallUrl } = useVoiceCall();
   const isMobile = useIsMobile();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const validMinSizes = MIN_SIZE_OPTIONS.map((o) => o.value);
   const [minSize, setMinSize] = useState(() => {
     try {
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
       if (s) {
         const p = JSON.parse(s) as { minSize?: number };
-        return [0, 200, 500, 1000].includes(Number(p.minSize)) ? Number(p.minSize) : 0;
+        return validMinSizes.includes(Number(p.minSize)) ? Number(p.minSize) : 0;
+      }
+    } catch { /* ignore */ }
+    return 0;
+  });
+  const [maxSize, setMaxSize] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { maxSize?: number };
+        return MAX_SIZE_OPTIONS.some((o) => o.value === Number(p.maxSize)) ? Number(p.maxSize) : 0;
       }
     } catch { /* ignore */ }
     return 0;
@@ -322,9 +346,11 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     if (initialQuery != null && initialQuery.trim()) setQuery(initialQuery.trim());
   }, [initialQuery]);
 
+  const effectiveArea = (r: ScoutResult) => r.estimatedGrossArea ?? r.parcelArea ?? 0;
   const sortedResults = useMemo(() => {
     let list = [...results];
-    if (minSize > 0) list = list.filter((r) => (r.estimatedGrossArea ?? 0) >= minSize);
+    if (minSize > 0) list = list.filter((r) => effectiveArea(r) >= minSize);
+    if (maxSize > 0) list = list.filter((r) => effectiveArea(r) <= maxSize);
     if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
     if (onlyWithWebsite) list = list.filter((r) => r.website != null && r.website.trim() !== "");
     if (onlyWithEmail) list = list.filter((r) => r.email != null && r.email.trim() !== "");
@@ -332,7 +358,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     const cat = POI_TYPE_CATEGORIES.find((c) => c.value === poiTypeFilter);
     if (cat && cat.value !== "all") list = list.filter((r) => cat.match(r.type));
     if (sortBy === "size") {
-      list.sort((a, b) => (b.estimatedGrossArea ?? 0) - (a.estimatedGrossArea ?? 0));
+      list.sort((a, b) => effectiveArea(b) - effectiveArea(a));
     } else if (sortBy === "distance") {
       list.sort((a, b) => a.distance - b.distance);
     } else if (sortBy === "source") {
@@ -341,7 +367,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [results, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
+  }, [results, minSize, maxSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
 
   const resultStats = useMemo(() => {
     const list = sortedResults.slice(0, SCOUT_DISPLAY_CAP);
@@ -418,7 +444,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
 
   const exportCsv = useCallback(() => {
     if (sortedResults.length === 0) return;
-    const headers = ["Name", "Typ", "Adresse", "Telefon", "E-Mail", "Website", "Öffnungszeiten", "ca. m²", "Entfernung (m)", "Quelle"];
+    const headers = ["Name", "Typ", "Adresse", "Telefon", "E-Mail", "Website", "Öffnungszeiten", "ca. m²", "Grundstück m²", "Entfernung (m)", "Quelle"];
     const rows = sortedResults.map((b) => [
       b.name,
       b.type,
@@ -428,6 +454,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
       b.website ?? "",
       b.opening_hours ?? "",
       b.estimatedGrossArea != null ? String(b.estimatedGrossArea) : "",
+      b.parcelArea != null ? String(b.parcelArea) : "",
       b.distance > 0 ? String(b.distance) : "",
       sourceLabel(b.source ?? ""),
     ]);
@@ -480,7 +507,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "ort", radius,
-            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy,
+            minSize, maxSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy,
           }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Treffer in diesem Gebiet gefunden");
@@ -506,7 +533,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "umkreis", radius,
-            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy,
+            minSize, maxSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy,
           }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Treffer im gewählten Umkreis gefunden");
@@ -520,7 +547,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     } finally {
       if (!signal.aborted) setLoading(false);
     }
-  }, [query, mode, radius, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
+  }, [query, mode, radius, minSize, maxSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
 
   return (
     <Card>
@@ -772,6 +799,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                     setOnlyWithEmail(false);
                     setOnlyWithOpeningHours(false);
                     setMinSize(0);
+                    setMaxSize(0);
                     setPoiTypeFilter("all");
                   }}
                   aria-label="Filter zurücksetzen"
@@ -783,7 +811,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-medium" id="scout-results-heading" aria-live="polite">
-                  Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
+                  Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}{maxSize > 0 ? `, ≤ ${maxSize.toLocaleString("de-DE")} m²` : ""}
                 </h3>
                 {(resultStats.withPhone > 0 || resultStats.withWeb > 0 || resultStats.withEmail > 0) && (
                   <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -813,9 +841,9 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" aria-label="Filter anpassen">
                         <SlidersHorizontal className="h-3.5 w-3.5" />
                         Filter
-                        {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || onlyWithOpeningHours || minSize > 0 || poiTypeFilter !== "all") && (
+                        {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || onlyWithOpeningHours || minSize > 0 || maxSize > 0 || poiTypeFilter !== "all") && (
                           <span className="ml-0.5 px-1.5 py-0 rounded text-[10px] bg-primary/20 text-primary">
-                            {(onlyWithPhone ? 1 : 0) + (onlyWithWebsite ? 1 : 0) + (onlyWithEmail ? 1 : 0) + (onlyWithOpeningHours ? 1 : 0) + (minSize > 0 ? 1 : 0) + (poiTypeFilter !== "all" ? 1 : 0)}
+                            {(onlyWithPhone ? 1 : 0) + (onlyWithWebsite ? 1 : 0) + (onlyWithEmail ? 1 : 0) + (onlyWithOpeningHours ? 1 : 0) + (minSize > 0 ? 1 : 0) + (maxSize > 0 ? 1 : 0) + (poiTypeFilter !== "all" ? 1 : 0)}
                           </span>
                         )}
                       </Button>
@@ -842,6 +870,17 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                             <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {MIN_SIZE_OPTIONS.map((o) => (
+                                <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Max. Fläche</Label>
+                          <Select value={String(maxSize)} onValueChange={(v) => setMaxSize(Number(v))}>
+                            <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {MAX_SIZE_OPTIONS.map((o) => (
                                 <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
                               ))}
                             </SelectContent>
@@ -880,7 +919,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                             </label>
                           </div>
                         </div>
-                        <Button variant="secondary" className="w-full gap-1.5" onClick={() => { setOnlyWithPhone(false); setOnlyWithWebsite(false); setOnlyWithEmail(false); setOnlyWithOpeningHours(false); setMinSize(0); setPoiTypeFilter("all"); setFilterSheetOpen(false); }} aria-label="Filter zurücksetzen">
+                        <Button variant="secondary" className="w-full gap-1.5" onClick={() => { setOnlyWithPhone(false); setOnlyWithWebsite(false); setOnlyWithEmail(false); setOnlyWithOpeningHours(false); setMinSize(0); setMaxSize(0); setPoiTypeFilter("all"); setFilterSheetOpen(false); }} aria-label="Filter zurücksetzen">
                           <RotateCcw className="h-3.5 w-3.5" /> Filter zurücksetzen
                         </Button>
                         <Button variant="outline" className="w-full gap-1.5" onClick={exportCsv} aria-label="CSV exportieren">
@@ -959,6 +998,19 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                   </Select>
                 </div>
                 <div className="flex items-center gap-1.5">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">Max. Fläche:</Label>
+                  <Select value={String(maxSize)} onValueChange={(v) => setMaxSize(Number(v))}>
+                    <SelectTrigger className="h-8 w-[100px] text-xs min-h-[36px] sm:min-h-[32px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAX_SIZE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap">Sortierung:</Label>
                   <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
                     <SelectTrigger className="h-8 w-[180px] text-xs">
@@ -975,7 +1027,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" onClick={exportCsv} aria-label="Als CSV exportieren">
                   <Download className="h-3.5 w-3.5" /> CSV
                 </Button>
-                {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || onlyWithOpeningHours || minSize > 0 || poiTypeFilter !== "all") && (
+                {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || onlyWithOpeningHours || minSize > 0 || maxSize > 0 || poiTypeFilter !== "all") && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -986,6 +1038,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       setOnlyWithEmail(false);
                       setOnlyWithOpeningHours(false);
                       setMinSize(0);
+                      setMaxSize(0);
                       setPoiTypeFilter("all");
                     }}
                     aria-label="Filter zurücksetzen"
@@ -997,7 +1050,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
             </div>
             {sortedResults.length > SCOUT_DISPLAY_CAP && (
               <p className="text-xs text-muted-foreground">
-                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail/Öffnungszeiten) nutzen, um die Liste einzugrenzen.
+                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindest-/Max. Fläche, Nur mit Telefon/Web/E-Mail/Öffnungszeiten) nutzen, um die Liste einzugrenzen.
               </p>
             )}
             <ul
@@ -1062,6 +1115,11 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       {b.estimatedGrossArea != null && b.estimatedGrossArea > 0 && (
                         <span className="flex items-center gap-0.5">
                           <Building2 className="h-3 w-3" /> ca. {b.estimatedGrossArea.toLocaleString("de-DE")} m²
+                        </span>
+                      )}
+                      {b.parcelArea != null && b.parcelArea > 0 && (
+                        <span className="flex items-center gap-0.5" title="Amtliche Grundstücksfläche (ALKIS)">
+                          Grundstück: {b.parcelArea.toLocaleString("de-DE")} m²
                         </span>
                       )}
                       {b.distance > 0 && <span>{b.distance} m</span>}

@@ -59,10 +59,18 @@ export const MobileCRMCallAction = memo(function MobileCRMCallAction({
       setCallDuration(Math.floor((Date.now() - startTimeRef.current) / 1000));
     }, 1000);
 
-    await startCall({
+    const result = await startCall({
       to: phoneNumber.replace(/\s/g, ""),
       context: leadId != null ? { leadId, record: true, toLabel: contactName } : undefined,
     });
+    if (!result?.ok && result?.error) {
+      toast.error(result.error);
+      setCalling(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
   }, [haptic, phoneNumber, leadId, contactName]);
 
   const endCall = useCallback(() => {

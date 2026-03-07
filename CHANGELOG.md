@@ -8,6 +8,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **WGH-Scout: Filter Gebäudegröße erweitert** — Zusätzliche Mindestflächen (≥ 1.500 / 2.000 / 3.000 / 5.000 m²); neuer Filter „Max. Fläche“ (≤ 500 / 1.000 / 2.000 / 5.000 / 10.000 m²). Sortierung und Filter nutzen `estimatedGrossArea ?? parcelArea` (Grundstücksfläche als Fallback). Filter-Persistenz und -Zurücksetzen inkl. Max. Fläche.
+- **Calling: Fehlerbehandlung** — CRM (Anrufen-Button) und MobileCRMCallAction zeigen bei Fehler von `startCall` einen Toast mit der Fehlermeldung; Mobile stoppt Timer und setzt calling-State zurück.
+- **OSM-Gebäudedaten (Overpass) verbessert** — roof:levels wird in fetchBuildingsInBbox/fetchBuildingsInRadius mitgezählt; building:area wird genutzt falls vorhanden; building:height → Geschossanzahl (Höhe/3 m); relation["building"] in den Overpass-Queries ergänzt (Multipolygon-Gebäude).
+- **Brandenburg ALKIS verbessert** — Flurstücksfläche (Grundstück m²) aus ALKIS; Gebäude werden mit zugehörigem Flurstück verknüpft (Punkt-in-Polygon); parcelArea an POI und CSV-Export. Doku: `docs/SCOUT_PROVIDERS.md`.
 - **Brandenburg ALKIS im WGH-Scout** — Neuer Provider für amtliche Gebäudedaten (OGC API). Suchgebiete in Brandenburg nutzen automatisch ALKIS statt OSM für Gebäudeflächen; höhere Zuverlässigkeit für Grundrisse und Geschossanzahlen. Daten: GeoBasis-DE/LGB, dl-de/by-2-0. Doku: `docs/SCOUT_PROVIDERS.md`.
 - **WGH-Scout, Retry, Synergien** — WGH-Scout: Mobile Filter-Sheet Sortierung „Nach Gebäudegröße (größte zuerst)“. Nebenkosten: Retry + handleError bei Finalisieren und Speichern als Dokument. Wartungsplaner: Retry + handleError bei Toggle und Löschen. Tilgungsplan-Schnellrechner: Link „Objektanalyse (Tilgungsplan & Szenarien)“ → Darlehen ↔ Analyse (Synergie).
 

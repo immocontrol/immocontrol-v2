@@ -9,7 +9,7 @@ Der WGH-Scout (Wohn- und Geschäftshaus) nutzt eine **Provider-Abstraktion**, da
 | **OpenStreetMap** (Nominatim + Overpass) | ✅ | ✅ Bbox + Radius | ✅ (Overpass) | Kostenfrei, 1 req/s Nominatim |
 | **Brandenburg ALKIS** (OGC API) | ❌ | ❌ | ✅ (nur Brandenburg) | Kostenfrei, Datenlizenz dl-de/by-2-0 |
 
-Brandenburg ALKIS liefert amtliche Gebäudedaten des Liegenschaftskatasters. Im WGH-Scout wird dieser Provider für Gebäudeflächen **automatisch bevorzugt**, wenn die Suche innerhalb Brandenburgs liegt (ca. 11–15°E, 51.3–53.6°N). Außerhalb Brandenburgs werden weiterhin OSM-Gebäudedaten genutzt.
+Brandenburg ALKIS liefert amtliche Gebäude- und Flurstücksdaten des Liegenschaftskatasters (OGC API). Im WGH-Scout wird dieser Provider für Gebäudeflächen **automatisch bevorzugt**, wenn die Suche innerhalb Brandenburgs liegt (ca. 11–15°E, 51.3–53.6°N). Es werden parallel Gebäude (gebaeude_bauwerk) und Flurstücke (flurstueck) geladen; pro Gebäude wird die amtliche Grundstücksfläche (parcelArea) per Punkt-in-Polygon aus dem zugehörigen Flurstück ermittelt und am POI angezeigt. Außerhalb Brandenburgs werden weiterhin OSM-Gebäudedaten genutzt.
 
 ## Alternativen (für spätere Anreicherung)
 
@@ -33,7 +33,7 @@ Diese Dienste eignen sich als weitere Provider; die Architektur ist vorbereitet.
 ## Technik
 
 - **Interface:** `ScoutProvider` in `src/lib/scoutProviders/types.ts` (geocode, geocodeToBbox, fetchPOIsByBbox, fetchPOIsByRadius, optional fetchBuildingsByBbox/ByRadius).
-- **Aggregation:** `aggregatePOIsByBbox` / `aggregatePOIsByRadius` rufen alle aktiven Provider auf, mergen die POIs, hängen Gebäudeflächen an (Brandenburg ALKIS in BB, sonst OSM) und deduplizieren nach Position.
+- **Aggregation:** `aggregatePOIsByBbox` / `aggregatePOIsByRadius` rufen alle aktiven Provider auf, mergen die POIs, hängen Gebäudeflächen an (Brandenburg ALKIS in BB, sonst OSM) und deduplizieren nach Position. Für Filter/Sortierung im Scout wird `estimatedGrossArea ?? parcelArea` verwendet (Grundstücksfläche als Fallback wenn keine Bruttofläche).
 - **Scout-Komponente:** Nutzt nur noch `@/lib/scoutProviders` (aggregateGeocode, aggregateGeocodeToBbox, aggregatePOIsByBbox, aggregatePOIsByRadius). Einzelne Karten-APIs sind nicht mehr direkt eingebunden.
 
 ## Ist OpenStreetMap die beste Lösung?
