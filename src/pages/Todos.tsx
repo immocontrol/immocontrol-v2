@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash, Target, Briefcase, FileBarChart, Store } from "lucide-react";
+import { SquareCheck as CheckSquare, Plus, Trash2, Circle, CircleCheck as CheckCircle2, Flag, Calendar, Tag, ChevronDown, ChevronRight, Inbox, Star, AlignLeft, X, Clock, Search, LayoutList, CalendarDays, MoveHorizontal as MoreHorizontal, CreditCard as Edit2, CheckCheck, Trash, Target, Briefcase, FileBarChart, Store, CalendarCheck } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import TodoStats from "@/components/TodoStats";
 import TodoCalendarSync from "@/components/TodoCalendarSync";
@@ -672,6 +672,9 @@ const Todos = () => {
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="gap-1.5 touch-target min-h-[44px]" aria-label="WGH-Scout">
                   <Store className="h-3.5 w-3.5" /> WGH finden
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Besichtigung planen">
+                  <CalendarCheck className="h-3.5 w-3.5" /> Besichtigung planen
                 </Button>
               </div>
             )}

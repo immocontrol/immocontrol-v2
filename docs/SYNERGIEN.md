@@ -29,7 +29,11 @@
 | **Besichtigungen** | Todos | Button „Todo erstellen“ – Projekt „Besichtigungen“ |
 | **Besichtigungen** | Global | Deep-Link `?id=xxx`; Share-Button (native Share API + Fallback Kopieren) |
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
-| **PropertyDetail** | Home, Nebenkosten, Besichtigungen | Links/Navigation über ROUTES |
+| **PropertyDetail** | Home, Nebenkosten, Besichtigungen, Mietübersicht | Links/Navigation über ROUTES; „Mietübersicht →“ mit ?property=id (Objektfilter) |
+| **Dashboard** | Besichtigungen | Karte „Nächste Besichtigung“ (Titel, Datum) → ROUTES.BESICHTIGUNGEN |
+| **Mietübersicht** | Objektfilter per URL | ?property=id setzt Objektfilter; Synergie PropertyDetail → Mietübersicht |
+| **Todos** | Besichtigungen | Empty State: „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN |
+| **WGH-Scout** | Teilen | Button „Teilen“ kopiert Link zur Suche (/crm?tab=scout&q=…) |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |

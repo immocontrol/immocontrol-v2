@@ -14,6 +14,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Header:** Nach Suche wird „X Treffer“ im Kartentitel angezeigt.
 - **Scroll nach Suche:** Wenn die Suche mit Treffern abgeschlossen ist, scrollt die Ergebnis-Sektion automatisch in den Blick (resultsSectionRef, smooth).
 - **Kopieren:** Pro Treffer Button „Kopieren“ – Name und Adresse (Zeilenumbruch) in die Zwischenablage; Toast „Kopiert“ / „Kopieren fehlgeschlagen“. A11y: Trefferanzahl-Überschrift mit `aria-live="polite"` für Screenreader.
+- **Teilen:** Button „Teilen“ neben der Trefferüberschrift – kopiert Link zur aktuellen Scout-Suche (`/crm?tab=scout&q=…`) in die Zwischenablage (z. B. zum Verschicken an Kollegen).
 
 ## CRM
 
@@ -28,6 +29,11 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Deals:** State `fromScout` und `fromProperty` in der Vorlagen-Logik ergänzt; Toast-Meldungen angepasst. Empty State: zusätzlicher Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN (CalendarCheck).
 - **Loans:** Empty State um Button „Verträge“ (ROUTES.CONTRACTS, FileText) ergänzt.
 - **Verträge:** Widget „Nächste Kündigungsfristen“ – zeigt die nächsten 3 Kündigungsfristen (Daten aus View `mietvertraege`, Frist = Vertragsende − notice_period_months). „Alle Fristen“ scrollt smooth zum Fristen-Tab.
+- **Dashboard:** Karte „Nächste Besichtigung“ – wenn eine Besichtigung mit Datum ≥ heute existiert: Titel, Datum, Link zu Besichtigungen (Synergie Dashboard ↔ Besichtigungen).
+- **PropertyDetail:** Link „Zur Mietübersicht“ (ROUTES.RENT?property=id) in der Finanzierungs-Sektion – Mietübersicht öffnet mit Objektfilter.
+- **Mietübersicht:** URL-Parameter `?property=id` setzt den Objektfilter beim Laden; neue Komponente **Inflation-Mietrechner** im Tab Zahlungen (Miete heute, Jahre, Inflation % → Miete in X Jahren).
+- **Todos:** Empty State um Button „Besichtigung planen“ (ROUTES.BESICHTIGUNGEN) ergänzt.
+- **Darlehen:** Bei Zinsbindung ≤ 12 Monate: Anzeige „Zinsbindung endet in X Tagen“ (statt nur „bald“), wenn Restlaufzeit ≤ 365 Tage.
 
 ## AI
 
@@ -44,6 +50,7 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Kündigungsfrist-Rechner:** Auf der Seite Verträge & Verwaltung. Eingabe: Kündigungsfrist (Monate) und gewünschtes Vertragsende. Ausgabe: „Kündigung spätestens einreichen bis [Datum]“. Relevant für Mietverträge und Kündigungsplanung. Komponente: `KuendigungsfristRechner.tsx`.
 - **Leerstands-Kosten-Rechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: Tage Leerstand, Monatsmiete (€). Ausgabe: entgangene Miete. Komponente: `LeerstandskostenRechner.tsx`. Synergie: Mietübersicht verlinkt „Verträge“ (Kündigungsfrist) in der Kopfzeile.
 - **Rendite-Schnellrechner:** Auf der Objektanalyse (Analyse-Seite). Eingabe: Kaufpreis (€), Monatsmiete (€). Ausgabe: Brutto-Mietrendite (%), Mietmultiplikator (Jahre). Komponente: `RenditeSchnellrechner.tsx`.
+- **Inflation-Mietrechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: aktuelle Monatsmiete (€), Jahre (1–30), Inflation (% p.a.). Ausgabe: geschätzte Miete in X Jahren. Komponente: `InflationMietrechner.tsx`. Relevant für Indexmiete und langfristige Planung.
 
 ## Technik
 
@@ -65,3 +72,9 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Deals:** CalendarCheck-Import; Empty-State-Link „Besichtigung planen“.
 - **Loans:** FileText-Import; Empty-State-Button „Verträge“.
 - **Vertraege:** useRef(tabsRef), useQuery „vertraege_notice_deadlines“ (mietvertraege: id, tenant_name, unit_number, contract_end, notice_period_months, is_indefinite); formatDate, formatDaysUntil; Widget nur wenn noticeDeadlines.length > 0; „Alle Fristen“-Button scrollt zu tabsRef.
+- **GewerbeScout:** Share2-Button „Teilen“ kopiert `/crm?tab=scout&q=…` in Zwischenablage.
+- **Mietuebersicht:** useSearchParams, propertyFromUrl für initialen Objektfilter; InflationMietrechner unter LeerstandskostenRechner.
+- **PropertyDetail:** Link „Mietübersicht →“ mit ROUTES.RENT + ?property=id.
+- **Dashboard:** useQuery „dashboard_next_viewing“ (property_viewings, visited_at >= heute), Link-Karte „Nächste Besichtigung“.
+- **Todos:** CalendarCheck, Button „Besichtigung planen“ im Empty State.
+- **Loans:** daysUntilFixedEnd, Anzeige „Zinsbindung endet in X Tagen“ wenn ≤ 365 Tage.

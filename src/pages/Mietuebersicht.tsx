@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp, FileText, FileBarChart, Store, FileSignature } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,15 +20,22 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { MobileQuickStats } from "@/components/mobile/MobileQuickStats";
 import { LeerstandskostenRechner } from "@/components/LeerstandskostenRechner";
+import { InflationMietrechner } from "@/components/InflationMietrechner";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
+  const [searchParams] = useSearchParams();
+  const propertyFromUrl = searchParams.get("property");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 200);
   const [statusFilter, setStatusFilter] = useState("alle");
-  const [propertyFilter, setPropertyFilter] = useState("alle");
+  const [propertyFilter, setPropertyFilter] = useState(() => propertyFromUrl || "alle");
   const [monthFilter, setMonthFilter] = useState("alle");
+
+  useEffect(() => {
+    if (propertyFromUrl && propertyFromUrl !== propertyFilter) setPropertyFilter(propertyFromUrl);
+  }, [propertyFromUrl]);
 
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ["mietuebersicht_tenants"],
@@ -297,6 +305,7 @@ const Mietuebersicht = () => {
           </div>
 
           <LeerstandskostenRechner />
+          <InflationMietrechner />
 
           {/* FUNC-22/23/24: Payment trend, top tenants, payment methods */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

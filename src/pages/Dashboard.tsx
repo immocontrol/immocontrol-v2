@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
@@ -29,7 +29,7 @@ import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
@@ -68,6 +68,24 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     },
     enabled: !!user,
   });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: nextViewing } = useQuery({
+    queryKey: ["dashboard_next_viewing", user?.id, today],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_viewings")
+        .select("id, title, visited_at")
+        .eq("user_id", user!.id)
+        .gte("visited_at", `${today}T00:00:00`)
+        .order("visited_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data as { id: string; title: string; visited_at: string } | null;
+    },
+    enabled: !!user,
+  });
+
   const [filter, setFilter] = useState<FilterType>("alle");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("alle");
   const [search, setSearch] = useState("");
@@ -500,6 +518,26 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           <p className={`text-lg font-bold currency-display ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
         </div>
       </div>
+
+      {nextViewing && (
+        <Link
+          to={ROUTES.BESICHTIGUNGEN}
+          className="gradient-card rounded-xl border border-border p-3 flex items-center gap-3 card-accent-shadow hover:border-primary/30 transition-colors block"
+          aria-label="Nächste Besichtigung"
+        >
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <CalendarDays className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nächste Besichtigung</p>
+            <p className="text-sm font-semibold truncate">{nextViewing.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {nextViewing.visited_at ? new Date(nextViewing.visited_at).toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" }) : "–"}
+            </p>
+          </div>
+          <Camera className="h-4 w-4 text-muted-foreground shrink-0" />
+        </Link>
+      )}
 
       {/* FUNC-1/2/3/5 + OPT-11: render memoized portfolio insights */}
       <div className="grid md:grid-cols-2 gap-3">

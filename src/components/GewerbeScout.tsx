@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -689,6 +689,21 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               <h3 className="text-sm font-medium" id="scout-results-heading" aria-live="polite">
                 Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
               </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
+                onClick={() => {
+                  const base = typeof window !== "undefined" ? `${window.location.origin}/crm` : "/crm";
+                  const params = new URLSearchParams({ tab: "scout" });
+                  if (query.trim()) params.set("q", query.trim());
+                  const url = `${base}?${params.toString()}`;
+                  navigator.clipboard.writeText(url).then(() => toast.success("Link kopiert"), () => toast.error("Kopieren fehlgeschlagen"));
+                }}
+                aria-label="Suche teilen (Link kopieren)"
+              >
+                <Share2 className="h-3.5 w-3.5" /> Teilen
+              </Button>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap sr-only sm:not-sr-only">Typ:</Label>

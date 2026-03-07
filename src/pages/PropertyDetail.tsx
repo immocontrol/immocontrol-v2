@@ -441,6 +441,11 @@ const PropertyDetail = () => {
             <Link to={ROUTES.NK} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
               <Receipt className="h-3 w-3" /> Nebenkostenabrechnung
             </Link>
+            {property?.id && (
+              <Link to={`${ROUTES.RENT}?property=${property.id}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]" aria-label="Mietübersicht für dieses Objekt">
+                Mietübersicht →
+              </Link>
+            )}
           </div>
         </div>
       </div>

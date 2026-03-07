@@ -912,6 +912,9 @@ const Loans = () => {
             const monthsLeft = l.fixed_interest_until
               ? Math.max(0, (new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30))
               : null;
+            const daysUntilFixedEnd = l.fixed_interest_until
+              ? Math.ceil((new Date(l.fixed_interest_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              : null;
             /* MOB-IMPROVE-1 + MOB-IMPROVE-6: Mobile card layout with swipe-to-delete */
             const loanCard = (
               <div key={l.id} className="gradient-card rounded-xl border border-border p-4 flex items-center gap-4 group property-card-hover">
@@ -926,7 +929,10 @@ const Loans = () => {
                       {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
                       {monthsLeft !== null && monthsLeft <= 12 && (
                         <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                          <AlertTriangle className="h-2.5 w-2.5" /> <span className="hidden sm:inline">Zinsbindung endet</span> bald
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          {daysUntilFixedEnd != null && daysUntilFixedEnd > 0 && daysUntilFixedEnd <= 365
+                            ? `Zinsbindung endet in ${daysUntilFixedEnd} Tag${daysUntilFixedEnd !== 1 ? "en" : ""}`
+                            : <><span className="hidden sm:inline">Zinsbindung endet</span> bald</>}
                         </span>
                       )}
                     </div>
