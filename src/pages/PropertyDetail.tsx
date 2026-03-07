@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -199,6 +199,15 @@ const PropertyDetail = () => {
               </TooltipTrigger>
               <TooltipContent>Adresse kopieren</TooltipContent>
             </Tooltip>
+            {property.address?.trim() && (
+              <Link
+                to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(property.address.trim())}`}
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0"
+                aria-label="Gewerbe in Umgebung suchen"
+              >
+                <Store className="h-3 w-3 shrink-0" /> Gewerbe in Umgebung
+              </Link>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <QuickActions onScrollTo={scrollToSection} onNavigate={(p) => navigate(p)} />

@@ -34,6 +34,17 @@ const RADIUS_OPTIONS = [
   { value: 200, label: "200 m" },
   { value: 500, label: "500 m" },
   { value: 1000, label: "1 km" },
+  { value: 2000, label: "2 km" },
+];
+
+/** POI-Typ-Filter: OSM-Werte zu Kategorien. */
+const POI_TYPE_CATEGORIES: { value: string; label: string; match: (t: string) => boolean }[] = [
+  { value: "all", label: "Alle Typen", match: () => true },
+  { value: "gastronomie", label: "Gastronomie", match: (t) => /restaurant|cafe|bar/i.test(t) },
+  { value: "laden", label: "Laden", match: (t) => /shop|supermarket|bakery|kiosk|convenience|retail|mall|clothes/i.test(t || "") },
+  { value: "buero", label: "Büro", match: (t) => /office/i.test(t) },
+  { value: "handwerk", label: "Handwerk", match: (t) => /craft/i.test(t) },
+  { value: "sonstige", label: "Sonstige", match: (t) => !/restaurant|cafe|bar|shop|office|craft/i.test(t) },
 ];
 
 const MIN_SIZE_OPTIONS = [
@@ -138,13 +149,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
       if (s) {
         const p = JSON.parse(s) as { radius?: number };
-        return [200, 500, 1000].includes(Number(p.radius)) ? Number(p.radius) : 500;
+        return [200, 500, 1000, 2000].includes(Number(p.radius)) ? Number(p.radius) : 500;
       }
     } catch { /* ignore */ }
     return 500;
   });
   const [minSize, setMinSize] = useState(0);
   const [onlyWithPhone, setOnlyWithPhone] = useState(false);
+  const [poiTypeFilter, setPoiTypeFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
@@ -163,6 +175,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     let list = [...results];
     if (minSize > 0) list = list.filter((r) => (r.estimatedGrossArea ?? 0) >= minSize);
     if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
+    const cat = POI_TYPE_CATEGORIES.find((c) => c.value === poiTypeFilter);
+    if (cat && cat.value !== "all") list = list.filter((r) => cat.match(r.type));
     if (sortBy === "size") {
       list.sort((a, b) => (b.estimatedGrossArea ?? 0) - (a.estimatedGrossArea ?? 0));
     } else if (sortBy === "distance") {
@@ -171,7 +185,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [results, minSize, onlyWithPhone, sortBy]);
+  }, [results, minSize, onlyWithPhone, poiTypeFilter, sortBy]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -314,6 +328,11 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setShowSuggestions(false);
+                    inputRef.current?.blur();
+                    return;
+                  }
                   if (e.key === "Enter") {
                     if (showSuggestions && suggestions.length > 0) pickSuggestion(suggestions[0].display_name);
                     else search();
@@ -358,7 +377,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 <div className="w-[100px] space-y-1">
                   <Label className="text-xs">Umkreis</Label>
                   <Select value={String(radius)} onValueChange={(v) => setRadius(Number(v))}>
-                    <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-9 text-xs min-h-[36px] sm:min-h-0"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {RADIUS_OPTIONS.map((r) => (
                         <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
@@ -400,7 +419,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe">
               <p className="font-medium text-foreground">Keine Gewerbe gefunden</p>
-              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 1 km).</p>
+              <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 2 km).</p>
             </div>
           </div>
         )}
@@ -408,8 +427,23 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         {results.length > 0 && (
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-medium">Gefundene Gewerbe ({sortedResults.length}{minSize > 0 ? `, ≥ ${minSize} m²` : ""})</h3>
+              <h3 className="text-sm font-medium" id="scout-results-heading">
+                Gefundene Gewerbe {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
+              </h3>
               <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap sr-only sm:not-sr-only">Typ:</Label>
+                  <Select value={poiTypeFilter} onValueChange={setPoiTypeFilter}>
+                    <SelectTrigger className="h-8 w-[120px] text-xs min-h-[36px] sm:min-h-[32px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POI_TYPE_CATEGORIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -451,7 +485,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                 </Button>
               </div>
             </div>
-            <ul className="space-y-2 max-h-[420px] overflow-y-auto" role="list">
+            <ul className="space-y-2 max-h-[420px] overflow-y-auto" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener Gewerbe">
               {sortedResults.map((b, i) => (
                 <li
                   key={`${b.name}-${b.lat}-${b.lon}-${i}`}
