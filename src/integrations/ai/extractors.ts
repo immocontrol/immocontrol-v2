@@ -359,6 +359,59 @@ Generiere genau einen kurzen Einstiegssatz (1 Satz) für den Anruf. Höflich, sa
 }
 
 /**
+ * Gesprächstranskript für CRM zusammenfassen (Stichpunkte, Vereinbarungen, nächste Schritte).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function summarizeCallTranscript(transcript: string): Promise<string> {
+  if (!transcript || transcript.trim().length < 20) {
+    return "";
+  }
+  const prompt = `Fasse das folgende Gesprächstranskript für ein CRM (Immobilien-Akquise) zusammen. Ausgabe auf Deutsch, als übersichtliche Stichpunkte:
+- Wichtigste Aussagen und Vereinbarungen
+- Nächste Schritte / To-dos
+- Offene Punkte oder Fragen
+- Optional: Stimmung/Ergebnis in einem Satz
+
+Halte die Zusammenfassung kompakt (ca. 5–10 Zeilen). Keine Einleitung wie "Zusammenfassung:". Direkt die Stichpunkte.
+
+Transkript:
+---
+${transcript.slice(0, 12000)}
+---`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Assistent für prägnante Gesprächszusammenfassungen. Antworte nur mit der geforderten Stichpunktliste.", maxTokens: 600 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Vorschlag für den nächsten Schritt bei einem CRM-Lead (Anruf, E-Mail, Besichtigung, etc.).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestLeadNextStep(lead: {
+  name: string;
+  company?: string | null;
+  status?: string;
+  notes?: string | null;
+}): Promise<string> {
+  const context = [
+    `Name: ${lead.name}`,
+    lead.company ? `Firma: ${lead.company}` : "",
+    lead.status ? `Status: ${lead.status}` : "",
+    lead.notes ? `Notizen: ${lead.notes.slice(0, 500)}` : "",
+  ].filter(Boolean).join("\n");
+  const prompt = `Als Immobilieninvestor: Was ist der sinnvollste nächste Schritt für diesen Akquise-Lead? Gib genau einen kurzen Satz (max. 15 Wörter), z. B. "Heute anrufen und Besichtigung vorschlagen" oder "E-Mail mit Exposé-Link senden". Auf Deutsch.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: `${context}\n\n${prompt}` }],
+    { systemPrompt: "Du bist ein Assistent für Akquise. Antworte nur mit dem einen Satz, ohne Anführungszeichen.", maxTokens: 80 }
+  );
+  return raw.trim();
+}
+
+/**
  * Text verbessern/formalieren (Rechtschreibung, Stil, Formulierung).
  * Für Anschreiben, Begründungen, Notizen.
  */

@@ -19,6 +19,7 @@ import TenantPortalPreview from "@/components/TenantPortalPreview";
 import { formatCurrency } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { getCallUrl } from "@/integrations/voice";
 
 interface Tenant {
   id: string;
@@ -386,7 +387,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                     </Tooltip>
                   )}
                   {t.phone && (
-                    <a href={`tel:${t.phone}`} className="flex items-center gap-0.5 hover:text-foreground transition-colors">
+                    <a href={getCallUrl(t.phone)} className="flex items-center gap-0.5 hover:text-foreground transition-colors">
                       <Phone className="h-2.5 w-2.5" /> {t.phone}
                     </a>
                   )}

@@ -299,6 +299,9 @@ export type Database = {
           lead_id: string
           notes: string | null
           outcome: string
+          recording_url: string | null
+          transcript: string | null
+          transcript_summary: string | null
           user_id: string
         }
         Insert: {
@@ -309,6 +312,9 @@ export type Database = {
           lead_id: string
           notes?: string | null
           outcome?: string
+          recording_url?: string | null
+          transcript?: string | null
+          transcript_summary?: string | null
           user_id: string
         }
         Update: {
@@ -319,6 +325,9 @@ export type Database = {
           lead_id?: string
           notes?: string | null
           outcome?: string
+          recording_url?: string | null
+          transcript?: string | null
+          transcript_summary?: string | null
           user_id?: string
         }
         Relationships: [

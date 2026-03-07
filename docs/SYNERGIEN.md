@@ -6,8 +6,11 @@
 
 | Von | Zu | Verknüpfung |
 |-----|-----|-------------|
-| **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt |
-| **CRM (Leads)** | WGH-Scout, Besichtigungen | Empty State: Buttons „WGH suchen“ (Tab Scout), „Zu Besichtigungen“ |
+| **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt; KI-Button „Nächster Schritt“ (DeepSeek) |
+| **CRM (Leads)** | WGH-Scout, Besichtigungen | Empty State: Buttons „WGH suchen“ (Tab Scout), „Zu Besichtigungen“; Export Leads als CSV |
+| **WGH-Scout** | Deals | Button „Deal“ pro Treffer – Deal-Formular mit Name/Adresse/Telefon/E-Mail vorausgefüllt (fromScout) |
+| **WGH-Scout** | CRM Suche | Empty State „Keine Treffer“: Link „Stattdessen Adresssuche im CRM“ → /crm?tab=search |
+| **PropertyDetail** | Deals | Link „Deal anlegen“ neben „WGH in Umgebung“ – Deal mit Objektname/Adresse vorausgefüllt (fromProperty) |
 | **CRM** | Besichtigungen | Empty State: Link „Zu Besichtigungen“ |
 | **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“; fromLead-Vorlage |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“; fromContact-Vorlage beim „Als Deal“-Button |

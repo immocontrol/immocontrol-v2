@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,12 +9,13 @@ import { handleError } from "@/lib/handleError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail, Edit2, Save, History, Handshake, CalendarCheck } from "lucide-react";
+import { Search, Plus, Phone, MapPin, Globe, Star, Clock, MessageSquare, ExternalLink, Loader2, Building2, Ruler, AlertTriangle, Info, Store, Mail, Edit2, Save, History, Handshake, CalendarCheck, Mic, FileText, Sparkles, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { queryKeys } from "@/lib/queryKeys";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -28,6 +29,9 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import GewerbeScout from "@/components/GewerbeScout";
 import { ROUTES } from "@/lib/routes";
+import { useVoiceCall } from "@/hooks/useVoiceCall";
+import { summarizeCallTranscript, isDeepSeekConfigured, suggestLeadNextStep } from "@/integrations/ai/extractors";
+import { CRMSkeleton } from "@/components/mobile/MobileAllPageSkeletons";
 
 /* IMP-3: Utility functions extracted to @/lib/crmUtils.ts for modularity */
 
@@ -37,6 +41,7 @@ type CRMTabValue = (typeof CRM_TAB_VALUES)[number];
 const CRM = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { startCall, getCallUrl } = useVoiceCall();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const tabFromUrl = searchParams.get("tab");
@@ -54,9 +59,12 @@ const CRM = () => {
   const [placesLoading, setPlacesLoading] = useState(false);
   const [selectedLead, setSelectedLead] = useState<string | null>(null);
   const [logDialogOpen, setLogDialogOpen] = useState(false);
-  const [logForm, setLogForm] = useState({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 });
+  const [logForm, setLogForm] = useState({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5, recording_url: "", transcript: "" });
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [editLogForm, setEditLogForm] = useState({ notes: "", outcome: "" });
+  const [summarizingLogId, setSummarizingLogId] = useState<string | null>(null);
+  const [transcribingLogId, setTranscribingLogId] = useState<string | null>(null);
+  const [leadNextStepLoading, setLeadNextStepLoading] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addForm, setAddForm] = useState({ name: "", company: "", phone: "", email: "", address: "", category: "geschaeft", notes: "" });
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -277,6 +285,8 @@ const CRM = () => {
         outcome: logForm.outcome,
         notes: logForm.notes,
         duration_minutes: logForm.duration_minutes,
+        recording_url: logForm.recording_url?.trim() || null,
+        transcript: logForm.transcript?.trim() || null,
       });
       if (error) throw error;
       // Update lead status based on outcome
@@ -294,7 +304,7 @@ const CRM = () => {
       queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
       toast.success("Gespräch geloggt");
       setLogDialogOpen(false);
-      setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 });
+      setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5, recording_url: "", transcript: "" });
     },
     onError: (e: unknown) => {
       handleError(e, { context: "supabase", details: "crm_call_logs.insert", showToast: false });
@@ -331,6 +341,62 @@ const CRM = () => {
     },
   });
 
+  // Update call log transcript / transcript_summary (z. B. nach Transkription oder KI-Zusammenfassung)
+  const updateCallLogTranscript = useMutation({
+    mutationFn: async ({ id, transcript, transcript_summary }: { id: string; transcript?: string | null; transcript_summary?: string | null }) => {
+      const updates: { transcript?: string | null; transcript_summary?: string | null } = {};
+      if (transcript !== undefined) updates.transcript = transcript;
+      if (transcript_summary !== undefined) updates.transcript_summary = transcript_summary;
+      const { error } = await supabase.from("crm_call_logs").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crm_call_logs"] });
+      toast.success("Aktualisiert");
+      setSummarizingLogId(null);
+      setTranscribingLogId(null);
+    },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "crm_call_logs.update", showToast: true });
+      setSummarizingLogId(null);
+      setTranscribingLogId(null);
+    },
+  });
+
+  const handleSummarizeLog = useCallback(async (log: { id: string; transcript?: string | null }) => {
+    if (!log.transcript?.trim()) return;
+    setSummarizingLogId(log.id);
+    try {
+      const summary = await summarizeCallTranscript(log.transcript);
+      if (summary) updateCallLogTranscript.mutate({ id: log.id, transcript_summary: summary });
+      else toast.error("Zusammenfassung konnte nicht erstellt werden.");
+    } catch (e) {
+      handleError(e, { context: "ai", details: "summarizeCallTranscript", showToast: true });
+      setSummarizingLogId(null);
+    }
+  }, [updateCallLogTranscript]);
+
+  const handleTranscribeLog = useCallback(async (log: { id: string; recording_url?: string | null }) => {
+    if (!log.recording_url?.trim()) return;
+    setTranscribingLogId(log.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("call-transcribe", {
+        body: { recording_url: log.recording_url, call_log_id: log.id },
+      });
+      if (error) throw error;
+      if (data?.transcript != null) {
+        updateCallLogTranscript.mutate({ id: log.id, transcript: data.transcript });
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        toast.error("Transkription fehlgeschlagen.");
+      }
+    } catch (e) {
+      handleError(e, { context: "functions", details: "call-transcribe", showToast: true });
+      setTranscribingLogId(null);
+    }
+  }, [updateCallLogTranscript]);
+
   // Update lead status
   const updateLeadStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -343,6 +409,34 @@ const CRM = () => {
   /* FUND-2: Memoize filtered leads to avoid recalculation on unrelated state changes */
   const filteredLeads = useMemo(() => filterStatus === "all" ? leads : leads.filter((l: { status: string }) => l.status === filterStatus), [leads, filterStatus]);
   const selectedLeadData = useMemo(() => leads.find((l: { id: string }) => l.id === selectedLead), [leads, selectedLead]);
+
+  const exportLeadsCsv = useCallback(() => {
+    if (filteredLeads.length === 0) {
+      toast.info("Keine Leads zum Exportieren");
+      return;
+    }
+    const headers = ["Name", "Firma", "Telefon", "E-Mail", "Adresse", "Status", "Notizen", "Aktualisiert"];
+    const escape = (v: string) => (/[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const rows = (filteredLeads as Array<{ name: string; company?: string | null; phone?: string | null; email?: string | null; address?: string | null; status: string; notes?: string | null; updated_at?: string }>).map((l) => [
+      l.name ?? "",
+      l.company ?? "",
+      l.phone ?? "",
+      l.email ?? "",
+      l.address ?? "",
+      statusLabels[l.status] ?? l.status,
+      (l.notes ?? "").replace(/\n/g, " "),
+      l.updated_at ? new Date(l.updated_at).toLocaleString("de-DE") : "",
+    ]);
+    const csv = [headers.join(";"), ...rows.map((r) => r.map(String).map(escape).join(";"))].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `crm-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Leads exportiert");
+  }, [filteredLeads]);
 
   /* FUNC-13: Lead scoring automation — compute a score for each lead (0..100) */
   const leadScores = useMemo(() => {
@@ -561,7 +655,7 @@ const CRM = () => {
                         <p className="text-xs text-muted-foreground truncate">{place.address}</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {place.phone && (
-                            <a href={`tel:${place.phone}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <a href={getCallUrl(place.phone)} className="text-xs text-primary hover:underline flex items-center gap-1">
                               <Phone className="h-3 w-3" /> {place.phone}
                             </a>
                           )}
@@ -648,7 +742,7 @@ const CRM = () => {
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                           {biz.phone && (
-                                            <a href={`tel:${biz.phone}`} className="text-primary hover:underline flex items-center gap-0.5">
+                                            <a href={getCallUrl(biz.phone)} className="text-primary hover:underline flex items-center gap-0.5">
                                               <Phone className="h-2.5 w-2.5" /> {biz.phone}
                                             </a>
                                           )}
@@ -688,7 +782,7 @@ const CRM = () => {
                       <div className="flex gap-1 shrink-0">
                         {place.phone && (
                           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                            <a href={`tel:${place.phone}`}><Phone className="h-3.5 w-3.5" /></a>
+                            <a href={getCallUrl(place.phone)}><Phone className="h-3.5 w-3.5" /></a>
                           </Button>
                         )}
                         <Button
@@ -724,6 +818,7 @@ const CRM = () => {
               setAddForm((prev) => ({ ...prev, name: b.name, address: b.address || "", phone: b.phone || "" }));
               setAddDialogOpen(true);
             }}
+            onAddAsDeal={(b) => navigate(ROUTES.DEALS, { state: { fromScout: { name: b.name, address: b.address ?? undefined, phone: b.phone ?? undefined, email: b.email ?? undefined } } })}
           />
         </TabsContent>
 
@@ -741,6 +836,9 @@ const CRM = () => {
                 </Button>
               );
             })}
+            <Button variant="outline" size="sm" className="shrink-0 gap-1 ml-auto" onClick={exportLeadsCsv} disabled={filteredLeads.length === 0} aria-label="Leads als CSV exportieren">
+              <Download className="h-3.5 w-3.5" /> Export
+            </Button>
           </div>
 
           {/* ANIM-1: Add card-stagger-enter animation to CRM leads grid */}
@@ -748,7 +846,7 @@ const CRM = () => {
             {/* Lead list */}
             <div className="lg:col-span-1 space-y-2 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto custom-scrollbar">
               {leadsLoading ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">Laden...</div>
+                <CRMSkeleton />
               ) : filteredLeads.length === 0 ? (
                 <EmptyState
                   icon={CalendarCheck}
@@ -833,13 +931,44 @@ const CRM = () => {
                           </SelectContent>
                         </Select>
                         {selectedLeadData.phone && (
-                          <Button size="sm" asChild>
-                            <a href={`tel:${selectedLeadData.phone}`}><Phone className="h-4 w-4 mr-1" /> Anrufen</a>
+                          <Button
+                            size="sm"
+                            onClick={() => startCall(selectedLeadData.phone!, { leadId: selectedLeadData.id, record: true, toLabel: selectedLeadData.name })}
+                          >
+                            <Phone className="h-4 w-4 mr-1" /> Anrufen
                           </Button>
                         )}
-                        <Button size="sm" variant="outline" onClick={() => { setLogDialogOpen(true); setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 }); }}>
+                        <Button size="sm" variant="outline" onClick={() => { setLogDialogOpen(true); setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5, recording_url: "", transcript: "" }); }}>
                           <MessageSquare className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Gespräch</span> loggen
                         </Button>
+                        {isDeepSeekConfigured() && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                                disabled={leadNextStepLoading}
+                                onClick={async () => {
+                                  setLeadNextStepLoading(true);
+                                  try {
+                                    const step = await suggestLeadNextStep(selectedLeadData);
+                                    if (step) toast.info(step, { duration: 6000 });
+                                  } catch (e) {
+                                    handleError(e, { context: "ai", details: "suggestLeadNextStep", showToast: true });
+                                  } finally {
+                                    setLeadNextStepLoading(false);
+                                  }
+                                }}
+                                aria-label="KI: Nächster Schritt vorschlagen"
+                              >
+                                {leadNextStepLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                <span className="hidden sm:inline">KI</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Nächsten Schritt vorschlagen lassen</TooltipContent>
+                          </Tooltip>
+                        )}
                         <Button size="sm" variant="default" onClick={() => navigate(ROUTES.DEALS, { state: { fromLead: selectedLeadData } })} className="touch-target min-h-[44px]">
                           <Handshake className="h-4 w-4 mr-1" /> Als Deal
                         </Button>
@@ -851,7 +980,7 @@ const CRM = () => {
                       {selectedLeadData.phone && (
                         <div>
                           <span className="text-muted-foreground text-xs">Telefon</span>
-                          <p><a href={`tel:${selectedLeadData.phone}`} className="text-primary hover:underline">{selectedLeadData.phone}</a></p>
+                          <p><a href={getCallUrl(selectedLeadData.phone)} className="text-primary hover:underline">{selectedLeadData.phone}</a></p>
                         </div>
                       )}
                       {selectedLeadData.email && (
@@ -888,7 +1017,7 @@ const CRM = () => {
                         <p className="text-xs text-muted-foreground py-4 text-center">Noch keine Gespräche geloggt</p>
                       ) : (
                         <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {callLogs.map((log: { id: string; outcome: string; call_date: string; duration_minutes: number; notes?: string }) => (
+                          {callLogs.map((log: { id: string; outcome: string; call_date: string; duration_minutes: number; notes?: string; recording_url?: string | null; transcript?: string | null; transcript_summary?: string | null }) => (
                             <div key={log.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-secondary/50 text-sm group">
                               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
                               <div className="flex-1 min-w-0">
@@ -967,6 +1096,61 @@ const CRM = () => {
                                         )}
                                       </div>
                                     )}
+                                    {(log.recording_url || log.transcript || log.transcript_summary) && (
+                                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                        {log.recording_url && (
+                                          <a
+                                            href={log.recording_url}
+                                            target="_blank"
+                                            rel="noreferrer noopener"
+                                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                            aria-label="Aufzeichnung abspielen"
+                                          >
+                                            <Mic className="h-3 w-3" /> Aufzeichnung
+                                          </a>
+                                        )}
+                                        {log.recording_url && !log.transcript && (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 text-xs gap-1"
+                                            disabled={transcribingLogId === log.id}
+                                            onClick={() => handleTranscribeLog(log)}
+                                          >
+                                            {transcribingLogId === log.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                                            {transcribingLogId === log.id ? "Wird erstellt…" : "Transkript erstellen"}
+                                          </Button>
+                                        )}
+                                        {log.transcript && (
+                                          <details className="group">
+                                            <summary className="inline-flex items-center gap-1 text-xs text-muted-foreground cursor-pointer hover:text-foreground list-none">
+                                              <FileText className="h-3 w-3" /> Transkript
+                                            </summary>
+                                            <p className="text-xs text-muted-foreground whitespace-pre-line mt-1 pl-4 border-l-2 border-border text-wrap-safe">{log.transcript}</p>
+                                          </details>
+                                        )}
+                                        {log.transcript && !log.transcript_summary && isDeepSeekConfigured() && (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 text-xs gap-1"
+                                            disabled={summarizingLogId === log.id}
+                                            onClick={() => handleSummarizeLog(log)}
+                                          >
+                                            {summarizingLogId === log.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                                            {summarizingLogId === log.id ? "Wird erstellt…" : "KI zusammenfassen"}
+                                          </Button>
+                                        )}
+                                        {log.transcript_summary && (
+                                          <details className="group">
+                                            <summary className="inline-flex items-center gap-1 text-xs text-muted-foreground cursor-pointer hover:text-foreground list-none">
+                                              <Sparkles className="h-3 w-3" /> Zusammenfassung
+                                            </summary>
+                                            <p className="text-xs text-muted-foreground whitespace-pre-line mt-1 pl-4 border-l-2 border-primary/30 text-wrap-safe">{log.transcript_summary}</p>
+                                          </details>
+                                        )}
+                                      </div>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -993,7 +1177,10 @@ const CRM = () => {
       {/* Log Call Dialog */}
       <Dialog open={logDialogOpen} onOpenChange={setLogDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Gespräch loggen</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Gespräch loggen</DialogTitle>
+            <p className="text-xs text-muted-foreground font-normal">Einwilligung zur Aufzeichnung holst du selbst ein – keine System-Ansage.</p>
+          </DialogHeader>
           <div className="space-y-3">
             <Select value={logForm.outcome} onValueChange={v => setLogForm(p => ({ ...p, outcome: v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1004,7 +1191,27 @@ const CRM = () => {
               </SelectContent>
             </Select>
             <Input type="number" placeholder="Dauer (Min.)" value={logForm.duration_minutes} onChange={e => setLogForm(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 0 }))} />
-            <Textarea placeholder="Gesprächsnotizen..." value={logForm.notes} onChange={e => setLogForm(p => ({ ...p, notes: e.target.value }))} rows={4} />
+            <Textarea placeholder="Gesprächsnotizen..." value={logForm.notes} onChange={e => setLogForm(p => ({ ...p, notes: e.target.value }))} rows={3} />
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Aufzeichnung (optional)</Label>
+              <Input
+                type="url"
+                placeholder="https://… (Link zur Aufnahme)"
+                value={logForm.recording_url}
+                onChange={e => setLogForm(p => ({ ...p, recording_url: e.target.value }))}
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Transkript (optional)</Label>
+              <Textarea
+                placeholder="Transkript einfügen oder später ergänzen…"
+                value={logForm.transcript}
+                onChange={e => setLogForm(p => ({ ...p, transcript: e.target.value }))}
+                rows={3}
+                className="text-sm resize-y min-h-[60px]"
+              />
+            </div>
             <Button onClick={() => logCall.mutate()} className="w-full">Gespräch speichern</Button>
           </div>
         </DialogContent>

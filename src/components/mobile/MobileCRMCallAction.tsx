@@ -1,20 +1,22 @@
 /**
  * MOB3-18: Mobile CRM Call Quick-Action
  * One-tap call button on CRM leads with automatic call-log dialog after call ends.
- * Uses tel: link for native phone call + auto-timer + post-call notes.
- * Safari-safe: uses standard tel: protocol supported by all mobile browsers.
+ * Uses Voice-Integration (tel: oder Twilio/Vonage); Timer und Log unverändert.
  */
 import { memo, useState, useCallback, useRef, useEffect } from "react";
 import { Phone, PhoneOff, Clock, MessageSquare, Save } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { startCall } from "@/integrations/voice";
 
 interface MobileCRMCallActionProps {
   /** Phone number to call */
   phoneNumber: string;
   /** Contact name */
   contactName: string;
+  /** Optional lead ID for recording/context when using VoIP provider */
+  leadId?: string;
   /** Called when call log is saved */
   onSaveLog?: (log: CallLog) => void;
   className?: string;
@@ -30,7 +32,7 @@ export interface CallLog {
 }
 
 export const MobileCRMCallAction = memo(function MobileCRMCallAction({
-  phoneNumber, contactName, onSaveLog, className,
+  phoneNumber, contactName, leadId, onSaveLog, className,
 }: MobileCRMCallActionProps) {
   const haptic = useHaptic();
   const [calling, setCalling] = useState(false);
@@ -48,19 +50,20 @@ export const MobileCRMCallAction = memo(function MobileCRMCallAction({
     };
   }, []);
 
-  const startCall = useCallback(() => {
+  const handleStartCall = useCallback(async () => {
     haptic.medium();
     setCalling(true);
     startTimeRef.current = Date.now();
 
-    // Start timer
     timerRef.current = setInterval(() => {
       setCallDuration(Math.floor((Date.now() - startTimeRef.current) / 1000));
     }, 1000);
 
-    // Open native phone dialer
-    window.location.href = `tel:${phoneNumber.replace(/\s/g, "")}`;
-  }, [haptic, phoneNumber]);
+    await startCall({
+      to: phoneNumber.replace(/\s/g, ""),
+      context: leadId != null ? { leadId, record: true, toLabel: contactName } : undefined,
+    });
+  }, [haptic, phoneNumber, leadId, contactName]);
 
   const endCall = useCallback(() => {
     haptic.tap();
@@ -107,7 +110,7 @@ export const MobileCRMCallAction = memo(function MobileCRMCallAction({
       {/* Call button */}
       {!calling ? (
         <button
-          onClick={startCall}
+          onClick={handleStartCall}
           className={cn(
             "flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-600",
             "text-xs font-medium transition-all active:scale-95",

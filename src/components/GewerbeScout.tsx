@@ -1,33 +1,33 @@
 /**
- * WGH-Scout (Wohn- und Geschäftshaus): Findet Gewerbe/Läden nach Ort oder Umkreis (OpenStreetMap/Overpass).
- * Berücksichtigt Gebäudegröße – sortierbar nach größten WGH mit Gewerbe. Ort-Autocomplete, Mindestfläche, Deduplizierung.
+ * WGH-Scout (Wohn- und Geschäftshaus): Findet Gewerbe/Läden nach Ort oder Umkreis.
+ * Nutzt Provider-Abstraktion (aktuell OpenStreetMap; erweiterbar um Google Places, Foursquare, etc.).
+ * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { searchNominatimAutocomplete } from "@/lib/crmUtils";
 import {
-  geocodeToCoord,
-  geocodePlaceToBbox,
-  searchNominatimAutocomplete,
-  fetchCommercialPOIsInRadius,
-  fetchCommercialPOIsInBbox,
-  fetchBuildingsInBbox,
-  fetchBuildingsInRadius,
-  attachBuildingSizes,
-  dedupeScoutResults,
-  type CommercialPOIWithCoord,
+  aggregateGeocode,
+  aggregateGeocodeToBbox,
+  aggregatePOIsByBbox,
+  aggregatePOIsByRadius,
+  getActiveProviders,
+  type ScoutPOI,
   type PlaceBbox,
-} from "@/lib/crmUtils";
+} from "@/lib/scoutProviders";
 import { cn } from "@/lib/utils";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { isDeepSeekConfigured, suggestColdCallOpening } from "@/integrations/ai/extractors";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useVoiceCall } from "@/hooks/useVoiceCall";
+import { Link } from "react-router-dom";
 
 type SearchMode = "ort" | "umkreis";
 
@@ -61,12 +61,25 @@ const MIN_SIZE_OPTIONS = [
 
 const SCOUT_DISPLAY_CAP = 100;
 
-type SortBy = "size" | "distance" | "name";
+/** Lesbare Namen für CSV und Badge (Quelle). */
+const SOURCE_LABELS: Record<string, string> = {
+  openstreetmap: "OpenStreetMap",
+  google: "Google Places",
+  foursquare: "Foursquare",
+  here: "HERE",
+  mapbox: "Mapbox",
+  yelp: "Yelp",
+};
+
+function sourceLabel(source: string): string {
+  return SOURCE_LABELS[source] ?? source;
+}
+
+type SortBy = "size" | "distance" | "name" | "source";
 type LoadingStep = "ort" | "gewerbe" | "gebaeude" | null;
 
-export interface ScoutResult extends CommercialPOIWithCoord {
-  estimatedGrossArea: number | null;
-}
+/** Ein Treffer im WGH-Scout (kann von OSM, Google, Foursquare etc. kommen). */
+export type ScoutResult = ScoutPOI;
 
 const SCOUT_STORAGE_KEY = "gewerbe_scout_last";
 
@@ -126,11 +139,13 @@ function ScoutAiCallPopover({ business }: { business: ScoutResult }) {
 
 export interface GewerbeScoutProps {
   onAddAsLead?: (business: { name: string; address: string | null; phone: string | null }) => void;
+  /** Als Deal anlegen (navigiert zu Deals mit vorausgefüllten Daten). */
+  onAddAsDeal?: (business: { name: string; address: string | null; phone: string | null; email?: string | null }) => void;
   /** Vorausgefüllte Suche (z. B. von Deals oder URL ?q=). */
   initialQuery?: string;
 }
 
-export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScoutProps) {
+export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }: GewerbeScoutProps) {
   const [query, setQuery] = useState(() => {
     try {
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
@@ -161,6 +176,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     } catch { /* ignore */ }
     return 500;
   });
+  const { getCallUrl } = useVoiceCall();
   const [minSize, setMinSize] = useState(() => {
     try {
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
@@ -212,13 +228,33 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     } catch { /* ignore */ }
     return false;
   });
+  const [onlyWithOpeningHours, setOnlyWithOpeningHours] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { onlyWithOpeningHours?: boolean };
+        return !!p.onlyWithOpeningHours;
+      }
+    } catch { /* ignore */ }
+    return false;
+  });
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
   const [searchLabel, setSearchLabel] = useState<string | null>(null);
   const [lastBbox, setLastBbox] = useState<PlaceBbox | null>(null);
   const [lastCenter, setLastCenter] = useState<{ lat: number; lng: number } | null>(null);
-  const [sortBy, setSortBy] = useState<SortBy>("size");
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { sortBy?: string };
+        const v = p.sortBy;
+        if (v === "size" || v === "distance" || v === "name" || v === "source") return v;
+      }
+    } catch { /* ignore */ }
+    return "size";
+  });
   const [suggestions, setSuggestions] = useState<{ display_name: string; place_id: number }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
@@ -236,17 +272,20 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
     if (onlyWithWebsite) list = list.filter((r) => r.website != null && r.website.trim() !== "");
     if (onlyWithEmail) list = list.filter((r) => r.email != null && r.email.trim() !== "");
+    if (onlyWithOpeningHours) list = list.filter((r) => r.opening_hours != null && r.opening_hours.trim() !== "");
     const cat = POI_TYPE_CATEGORIES.find((c) => c.value === poiTypeFilter);
     if (cat && cat.value !== "all") list = list.filter((r) => cat.match(r.type));
     if (sortBy === "size") {
       list.sort((a, b) => (b.estimatedGrossArea ?? 0) - (a.estimatedGrossArea ?? 0));
     } else if (sortBy === "distance") {
       list.sort((a, b) => a.distance - b.distance);
+    } else if (sortBy === "source") {
+      list.sort((a, b) => (a.source ?? "").localeCompare(b.source ?? "") || a.name.localeCompare(b.name));
     } else {
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [results, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter, sortBy]);
+  }, [results, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -292,7 +331,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
 
   const exportCsv = useCallback(() => {
     if (sortedResults.length === 0) return;
-    const headers = ["Name", "Typ", "Adresse", "Telefon", "E-Mail", "Website", "Öffnungszeiten", "ca. m²", "Entfernung (m)"];
+    const headers = ["Name", "Typ", "Adresse", "Telefon", "E-Mail", "Website", "Öffnungszeiten", "ca. m²", "Entfernung (m)", "Quelle"];
     const rows = sortedResults.map((b) => [
       b.name,
       b.type,
@@ -303,6 +342,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       b.opening_hours ?? "",
       b.estimatedGrossArea != null ? String(b.estimatedGrossArea) : "",
       b.distance > 0 ? String(b.distance) : "",
+      sourceLabel(b.source ?? ""),
     ]);
     const escape = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const csv = [headers.map(escape).join(";"), ...rows.map((r) => r.map(escape).join(";"))].join("\r\n");
@@ -333,7 +373,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     setLoadingStep("ort");
     try {
       if (mode === "ort") {
-        const bbox = await geocodePlaceToBbox(query.trim(), signal);
+        const bbox = await aggregateGeocodeToBbox(query.trim(), signal);
         if (signal.aborted) return;
         if (!bbox) {
           toast.error("Ort nicht gefunden");
@@ -345,26 +385,21 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         setLastBbox(bbox);
         setLastCenter(null);
         setLoadingStep("gewerbe");
-        const [pois, buildings] = await Promise.all([
-          fetchCommercialPOIsInBbox(bbox, signal),
-          fetchBuildingsInBbox(bbox, signal),
-        ]);
+        const { pois: deduped } = await aggregatePOIsByBbox(bbox, signal);
         if (signal.aborted) return;
         setLoadingStep("gebaeude");
-        const withSize = attachBuildingSizes(pois, buildings, 80);
-        const deduped = dedupeScoutResults(withSize);
         setResults(deduped);
         setLoadingStep(null);
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "ort", radius,
-            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter,
+            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy,
           }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Treffer in diesem Gebiet gefunden");
         else toast.success(`${deduped.length} Treffer in ${bbox.display_name} – sortiert nach Gebäudegröße`);
       } else {
-        const coord = await geocodeToCoord(query.trim(), signal);
+        const coord = await aggregateGeocode(query.trim(), signal);
         if (signal.aborted) return;
         if (!coord) {
           toast.error("Adresse nicht gefunden");
@@ -376,20 +411,15 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         setLastBbox(null);
         setLastCenter({ lat: coord.lat, lng: coord.lng });
         setLoadingStep("gewerbe");
-        const [pois, buildings] = await Promise.all([
-          fetchCommercialPOIsInRadius(coord.lat, coord.lng, radius, signal),
-          fetchBuildingsInRadius(coord.lat, coord.lng, radius, signal),
-        ]);
+        const { pois: deduped } = await aggregatePOIsByRadius(coord.lat, coord.lng, radius, signal);
         if (signal.aborted) return;
         setLoadingStep("gebaeude");
-        const withSize = attachBuildingSizes(pois, buildings, 60);
-        const deduped = dedupeScoutResults(withSize);
         setResults(deduped);
         setLoadingStep(null);
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "umkreis", radius,
-            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, poiTypeFilter,
+            minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy,
           }));
         } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Treffer im gewählten Umkreis gefunden");
@@ -403,7 +433,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     } finally {
       if (!signal.aborted) setLoading(false);
     }
-  }, [query, mode, radius]);
+  }, [query, mode, radius, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
 
   return (
     <Card>
@@ -414,6 +444,11 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         <p className="text-xs text-muted-foreground text-wrap-safe">
           Ort oder Adresse eingeben. Ganzer Ort durchsucht die Stadt; Umkreis sucht um eine Adresse. Sortierung nach Gebäudegröße – ideal für Wohn- und Geschäftshäuser (WGH) mit Gewerbe im EG.
         </p>
+        {getActiveProviders().length > 0 && (
+          <p className="text-[10px] text-muted-foreground mt-0.5" aria-label="Datenquellen">
+            Daten: {getActiveProviders().map((p) => p.name).join(", ")}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3">
@@ -520,12 +555,30 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         </div>
 
         {loading && loadingStep && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-            {loadingStep === "ort" && "Suche Ort…"}
-            {loadingStep === "gewerbe" && "Suche Objekte & Gebäude…"}
-            {loadingStep === "gebaeude" && "Ordne Gebäudegrößen zu…"}
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+              {loadingStep === "ort" && "Suche Ort…"}
+              {loadingStep === "gewerbe" && "Suche Objekte & Gebäude…"}
+              {loadingStep === "gebaeude" && "Ordne Gebäudegrößen zu…"}
+            </p>
+            {(loadingStep === "gebaeude" || (loadingStep === "gewerbe" && results.length === 0)) && (
+              <ul className="space-y-2 max-h-[280px] overflow-hidden" aria-hidden>
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <li key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 animate-pulse">
+                    <div className="flex-1 space-y-1">
+                      <div className="h-4 w-32 rounded bg-muted" />
+                      <div className="h-3 w-48 rounded bg-muted" />
+                    </div>
+                    <div className="flex gap-1.5">
+                      <div className="h-8 w-20 rounded bg-muted" />
+                      <div className="h-8 w-14 rounded bg-muted" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         {searchLabel && !loading && (
@@ -556,11 +609,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         )}
 
         {!loading && searchLabel !== null && results.length === 0 && (
-          <div className="rounded-lg border border-border bg-muted/40 p-4 flex items-start gap-2">
+          <div className="rounded-lg border border-border bg-muted/40 p-4 flex flex-col sm:flex-row sm:items-start gap-3">
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
-            <div className="text-sm text-wrap-safe">
+            <div className="text-sm text-wrap-safe flex-1">
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
               <p className="text-muted-foreground mt-1">Tipp: Bei „Ganzer Ort“ die ganze Stadt durchsuchen oder beim Umkreis-Modus den Radius vergrößern (z. B. 5 km oder 10 km).</p>
+              <p className="mt-2">
+                <Link to="/crm?tab=search" className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
+              </p>
             </div>
           </div>
         )}
@@ -578,6 +634,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                     setOnlyWithPhone(false);
                     setOnlyWithWebsite(false);
                     setOnlyWithEmail(false);
+                    setOnlyWithOpeningHours(false);
                     setMinSize(0);
                     setPoiTypeFilter("all");
                   }}
@@ -635,6 +692,16 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit E-Mail</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={onlyWithOpeningHours}
+                    onChange={(e) => setOnlyWithOpeningHours(e.target.checked)}
+                    className="rounded border-input h-4 w-4 touch-target"
+                    aria-label="Nur Einträge mit Öffnungszeiten"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Öffnungszeiten</span>
+                </label>
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap">Mind. Fläche:</Label>
                   <Select value={String(minSize)} onValueChange={(v) => setMinSize(Number(v))}>
@@ -658,13 +725,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                       <SelectItem value="size">Nach Gebäudegröße (größte zuerst)</SelectItem>
                       <SelectItem value="distance">Nach Entfernung</SelectItem>
                       <SelectItem value="name">Nach Name</SelectItem>
+                      <SelectItem value="source">Nach Quelle</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" onClick={exportCsv} aria-label="Als CSV exportieren">
                   <Download className="h-3.5 w-3.5" /> CSV
                 </Button>
-                {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || minSize > 0 || poiTypeFilter !== "all") && (
+                {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || onlyWithOpeningHours || minSize > 0 || poiTypeFilter !== "all") && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -673,6 +741,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                       setOnlyWithPhone(false);
                       setOnlyWithWebsite(false);
                       setOnlyWithEmail(false);
+                      setOnlyWithOpeningHours(false);
                       setMinSize(0);
                       setPoiTypeFilter("all");
                     }}
@@ -685,7 +754,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
             </div>
             {sortedResults.length > SCOUT_DISPLAY_CAP && (
               <p className="text-xs text-muted-foreground">
-                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail) nutzen, um die Liste einzugrenzen.
+                {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindestfläche, Nur mit Telefon/Web/E-Mail/Öffnungszeiten) nutzen, um die Liste einzugrenzen.
               </p>
             )}
             <ul className="space-y-2 max-h-[420px] overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]" role="list" aria-labelledby="scout-results-heading" aria-label="Liste gefundener WGH-Treffer">
@@ -695,7 +764,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                   className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{b.name}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium truncate">{b.name}</span>
+                      {b.source && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0" title={`Quelle: ${sourceLabel(b.source)}`}>
+                          {sourceLabel(b.source)}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                       <span>{b.type}</span>
                       {b.estimatedGrossArea != null && b.estimatedGrossArea > 0 && (
@@ -715,7 +791,7 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                   <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                     {b.phone ? (
                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
-                        <a href={`tel:${b.phone.replace(/\s/g, "")}`} aria-label={`Anrufen: ${b.name}`}>
+                        <a href={getCallUrl(b.phone.replace(/\s/g, ""))} aria-label={`Anrufen: ${b.name}`}>
                           <Phone className="h-3.5 w-3.5" /> Anrufen
                         </a>
                       </Button>
@@ -761,6 +837,20 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                         aria-label={`Als Lead: ${b.name}`}
                       >
                         <UserPlus className="h-3.5 w-3.5" /> Lead
+                      </Button>
+                    )}
+                    {onAddAsDeal && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]"
+                        onClick={() => {
+                          onAddAsDeal({ name: b.name, address: b.address, phone: b.phone, email: b.email });
+                          toast.success(`${b.name} als Deal-Vorlage – weiter zu Deals`);
+                        }}
+                        aria-label={`Als Deal: ${b.name}`}
+                      >
+                        <Handshake className="h-3.5 w-3.5" /> Deal
                       </Button>
                     )}
                   </div>

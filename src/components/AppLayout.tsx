@@ -29,6 +29,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
 import { MobileOfflineQueue, MobileSearchOverlay } from "@/components/mobile";
+import { ActiveCallBar } from "@/components/ActiveCallBar";
 // NotificationCenter import removed — duplicate bell icon with NotificationBell
 
 import {
@@ -630,6 +631,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </footer>
 
       <BackToTop />
+      <ActiveCallBar />
       <ImmoAIBubble />
 
       {/* MOB-11: Enhanced offline queue with action sync — mobile only */}

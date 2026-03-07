@@ -710,27 +710,37 @@ const Deals = () => {
     }
   }, [location.state, navigate, location.pathname]);
 
-  /* SYNERGY: Prefill deal form when navigating from CRM (fromLead) or Contacts (fromContact) */
+  /* SYNERGY: Prefill deal form when navigating from CRM (fromLead), Contacts (fromContact) or WGH-Scout (fromScout) */
   useEffect(() => {
-    const state = location.state as { fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string }; fromContact?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string } };
+    const state = location.state as {
+      fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string };
+      fromContact?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string };
+      fromScout?: { name: string; address?: string; phone?: string; email?: string };
+      fromProperty?: { title: string; address?: string };
+    };
     const fromLead = state?.fromLead;
     const fromContact = state?.fromContact;
-    const prefilled = fromLead || fromContact;
-    if (prefilled && prefilled.name) {
-      setForm(p => ({
-        ...p,
-        title: prefilled.name,
-        address: prefilled.address || "",
-        description: prefilled.notes || "",
-        contact_name: prefilled.name,
-        contact_phone: prefilled.phone || "",
-        contact_email: prefilled.email || "",
-        source: fromLead ? "CRM" : fromContact ? "Kontakte" : p.source,
-      }));
-      setEditDeal(null);
-      setAddOpen(true);
-      navigate(location.pathname, { replace: true, state: {} });
-      toast.info(fromLead ? "Deal-Vorlage aus CRM übernommen" : "Deal-Vorlage aus Kontakt übernommen");
+    const fromScout = state?.fromScout;
+    const fromProperty = state?.fromProperty;
+    const prefilled = fromLead || fromContact || fromScout || fromProperty;
+    if (prefilled) {
+      const name = "name" in prefilled ? prefilled.name : (fromProperty?.title ?? "");
+      if (name || fromProperty?.title) {
+        setForm(p => ({
+          ...p,
+          title: fromProperty ? fromProperty.title : name,
+          address: (prefilled as { address?: string }).address || "",
+          description: fromLead?.notes ?? fromContact?.notes ?? "",
+          contact_name: fromLead?.name ?? fromContact?.name ?? "",
+          contact_phone: fromLead?.phone ?? fromContact?.phone ?? fromScout?.phone ?? "",
+          contact_email: fromLead?.email ?? fromContact?.email ?? fromScout?.email ?? "",
+          source: fromLead ? "CRM" : fromContact ? "Kontakte" : fromScout ? "WGH-Scout" : fromProperty ? "Objekt" : p.source,
+        }));
+        setEditDeal(null);
+        setAddOpen(true);
+        navigate(location.pathname, { replace: true, state: {} });
+        toast.info(fromLead ? "Deal-Vorlage aus CRM übernommen" : fromContact ? "Deal-Vorlage aus Kontakt übernommen" : fromScout ? "Deal-Vorlage aus WGH-Scout übernommen" : "Deal-Vorlage aus Objekt übernommen");
+      }
     }
   }, [location.state, navigate, location.pathname]);
 
