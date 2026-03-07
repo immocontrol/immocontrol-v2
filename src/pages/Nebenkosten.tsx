@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2 } from "lucide-react";
+import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -395,9 +395,17 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
           <div className="gradient-card rounded-xl border border-border p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold">
-                  {properties.find(p => p.id === selectedBillingData.property_id)?.name || "Objekt"}
-                </h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm font-semibold">
+                    {properties.find(p => p.id === selectedBillingData.property_id)?.name || "Objekt"}
+                  </h2>
+                  <Link
+                    to={`/objekt/${selectedBillingData.property_id}`}
+                    className="text-xs text-primary hover:underline flex items-center gap-1 touch-target min-h-[44px]"
+                  >
+                    <Building2 className="h-3 w-3" /> Zum Objekt
+                  </Link>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {new Date(selectedBillingData.billing_period_start).toLocaleDateString("de-DE")} – {new Date(selectedBillingData.billing_period_end).toLocaleDateString("de-DE")}
                 </p>

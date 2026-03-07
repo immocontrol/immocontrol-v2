@@ -207,6 +207,32 @@ ${block.slice(0, 8000)}
 }
 
 /**
+ * Antwortvorschlag für Vermieter basierend auf Nachrichtenverlauf (Mieter/Vermieter).
+ */
+export async function suggestReply(
+  messages: { content: string; sender_role?: string }[]
+): Promise<string> {
+  if (messages.length === 0) return "";
+
+  const block = messages
+    .map((m) => `[${m.sender_role ?? "unbekannt"}]: ${m.content}`)
+    .join("\n");
+
+  const prompt = `Du bist der Vermieter. Basierend auf den folgenden Nachrichten schlage eine kurze, sachliche Antwort vor (2–4 Sätze). Höflich, professionell, auf Deutsch. Keine Anrede, direkt die Antwort. Keine Einleitung wie "Vorschlag:".
+
+Nachrichten:
+---
+${block.slice(0, 4000)}
+---`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { maxTokens: 256 }
+  );
+  return raw.trim();
+}
+
+/**
  * Liste von Notizen zu einer Immobilie in 2–4 Sätzen zusammenfassen.
  */
 export async function summarizeNotes(notes: { content: string; created_at?: string }[]): Promise<string> {

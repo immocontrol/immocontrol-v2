@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatDate, formatTime } from "@/lib/formatters";
-import { isDeepSeekConfigured, summarizeMessages } from "@/integrations/ai/extractors";
+import { isDeepSeekConfigured, summarizeMessages, suggestReply } from "@/integrations/ai/extractors";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -38,6 +38,7 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryText, setSummaryText] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [replyLoading, setReplyLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
@@ -165,6 +166,25 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
       setSummaryOpen(false);
     } finally {
       setSummaryLoading(false);
+    }
+  };
+
+  const handleSuggestReply = async () => {
+    if (messages.length === 0) {
+      toast.info("Keine Nachrichten – schreibe zuerst eine Nachricht oder warte auf Antwort.");
+      return;
+    }
+    setReplyLoading(true);
+    try {
+      const reply = await suggestReply(messages.map((m) => ({ content: m.content, sender_role: m.sender_role })));
+      if (reply) {
+        setNewMessage(reply);
+        toast.success("Antwortvorschlag übernommen – du kannst ihn bearbeiten.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Vorschlag fehlgeschlagen.");
+    } finally {
+      setReplyLoading(false);
     }
   };
 
@@ -302,7 +322,21 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
+                {isDeepSeekConfigured() && messages.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="self-end text-xs gap-1 touch-target min-h-[36px]"
+                    disabled={replyLoading}
+                    onClick={handleSuggestReply}
+                  >
+                    {replyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    Antwort vorschlagen
+                  </Button>
+                )}
+                <div className="flex gap-2">
                 <Input
                   placeholder="Nachricht schreiben..."
                   value={newMessage}
@@ -319,6 +353,7 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                   </TooltipTrigger>
                   <TooltipContent>Senden</TooltipContent>
                 </Tooltip>
+              </div>
               </div>
             </>
           )}

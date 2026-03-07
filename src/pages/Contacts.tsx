@@ -498,11 +498,16 @@ const ContactManagement = () => {
           <EmptyState
             icon={Contact}
             title="Noch keine Kontakte"
-            description="Lege deinen ersten Kontakt an – Handwerker, Hausverwaltung oder Partner."
+            description="Lege deinen ersten Kontakt an – Handwerker, Hausverwaltung oder Partner. Oder übernimm Kontakte aus Deals."
             action={
-              <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-                <Plus className="h-3.5 w-3.5" /> Ersten Kontakt anlegen
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
+                  <Plus className="h-3.5 w-3.5" /> Ersten Kontakt anlegen
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate("/deals")}>
+                  <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+                </Button>
+              </div>
             }
           />
         ) : (

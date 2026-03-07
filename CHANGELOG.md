@@ -8,6 +8,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **MessageCenter: suggestReply** — KI-Button „Antwort vorschlagen“ für Vermieter-Nachrichten (DeepSeek)
+- **QuickActions** — Nebenkosten und Immo-AI als Schnellaktionen (9 und 0)
+- **Nebenkosten → Objekt** — Link „Zum Objekt“ bei Abrechnungsdetail
+- **Contacts Empty State** — Button „Zu Deals“ + Touch-Targets
 - **Deals: suggestDealNextStep** — KI-Button „Nächster Schritt“ bei Notizen: Vorschlag für nächsten Deal-Schritt (Stage, Titel, Adresse, Notizen)
 - **Nebenkosten → Dokumente** — Button „Als Dokument“ speichert Nebenkostenabrechnung als PDF in Objekt-Dokumente (property_documents)
 - **BerichteInProsa** — Monatsbericht/Jahresüberblick aus Portfolio-Kennzahlen per DeepSeek (Immo-AI → PDF-Tab)
@@ -61,7 +65,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **analysis/PdfImport** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
 - **QuickActions** — Neue Aktion „Besichtigung erfassen" (navigiert zu /besichtigungen); touch-target für alle Buttons; onNavigate-Prop
 - **PropertyDetail** — Besichtigungen: Deep-Link ?id= zur Besichtigung; Link zum Deal bei deal_id
-- **MessageCenter** — Touch-Target für „KI zusammenfassen"-Button (Mobile)
+- **MessageCenter** — Touch-Target für „KI zusammenfassen"; KI-Button „Antwort vorschlagen" (suggestReply)
 - **Wartungsplaner** — Empty State: Link „Objekte öffnen" (Synergy zu Tickets)
 - **AI: PropertyNotes** — Button „Zusammenfassen" (summarizeNotes) bei DeepSeek-Konfiguration
 - **AI: TicketSystem** — Button „Vorschlag" für Beschreibung (suggestTicketDescription) aus Titel + Kategorie
@@ -79,7 +83,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Deals** — Share-Icon auf Kanban-Karte (Share2)
 - **PropertyDocuments** — AI-Kategorisierung: PDF-Upload mit suggestDocumentCategory
 - **PropertyDetail** — Share-Button nutzt useShare (native Share API + Fallback)
-- **QuickActions** — Deal erstellen, Mietübersicht (navigate)
+- **QuickActions** — Deal erstellen, Mietübersicht, Nebenkosten, Immo-AI (navigate); Shortcuts 7–0
 - **Immo-Chat** — Kontext um contacts + rent_payments erweitert
 - **Mietübersicht** — Link "Index-Mietanpassung prüfen" zum Dashboard
 - **StatCard** — optional href: Mieteinnahmen/M verlinkt auf /mietuebersicht
