@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText, FileSignature } from "lucide-react";
+import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText, FileSignature, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -380,9 +380,14 @@ const Dokumente = () => {
           title={documents.length === 0 ? "Noch keine Dokumente hochgeladen" : "Keine Dokumente gefunden"}
           description={documents.length === 0 ? "Lade Verträge, Gutachten oder Nebenkostenabrechnungen hoch." : undefined}
           action={
-            <Button variant="outline" size="sm" onClick={() => navigate("/vertraege")} className="touch-target min-h-[44px] gap-2">
-              <FileSignature className="h-4 w-4" /> Verträge verwalten
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate("/vertraege")} className="touch-target min-h-[44px] gap-2">
+                <FileSignature className="h-4 w-4" /> Verträge verwalten
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/nebenkosten")} className="touch-target min-h-[44px] gap-2">
+                <Receipt className="h-4 w-4" /> Nebenkostenabrechnung
+              </Button>
+            </div>
           }
         />
       ) : (

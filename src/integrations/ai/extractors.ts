@@ -339,6 +339,23 @@ Generiere eine kurze, sachliche Beschreibung (2–4 Sätze) als Vorschlag, die d
   return raw.trim();
 }
 
+/**
+ * Text verbessern/formalieren (Rechtschreibung, Stil, Formulierung).
+ * Für Anschreiben, Begründungen, Notizen.
+ */
+export async function improveText(text: string, context?: string): Promise<string> {
+  if (!text || text.trim().length < 10) return text;
+  const prompt = context
+    ? `Verbessere den folgenden Text: Rechtschreibung, Satzbau und Stil. Behalte die Aussage bei, mache ihn formeller und prägnanter. Kontext: ${context}\n\nText:\n${text}`
+    : `Verbessere den folgenden Text: Rechtschreibung, Satzbau und Stil. Behalte die Aussage bei, mache ihn formeller und prägnanter. Auf Deutsch.\n\nText:\n${text}`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { maxTokens: 512 }
+  );
+  return raw.trim() || text;
+}
+
 export { isDeepSeekConfigured };
 
 function parseJsonSafe<T>(raw: string): T {

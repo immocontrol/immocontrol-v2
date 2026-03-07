@@ -60,14 +60,14 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **CRM** — Empty State: Link „Zu Besichtigungen“ (Synergie); EmptyState-Komponente
 - **PWA** — Shortcuts für Deals, Besichtigungen, Darlehen, Verträge, Dokumente, Kontakte, Immo-AI
 - **Verträge** — Link „Dokumente hochladen“ in Kopfzeile; responsive Tabs (horizontal scroll auf Mobile)
-- **Dokumente** — Empty State mit EmptyState-Komponente; Link „Verträge verwalten“
+- **Dokumente** — Empty State mit EmptyState-Komponente; Links „Verträge verwalten“, „Nebenkostenabrechnung“
 - **Darlehen** — Empty State: Links „Objekt anlegen“, „Deals“
 - **PropertyDetail** — Link „Darlehen bearbeiten“ in Finanzierungs-Sektion
 - **LoanPdfImport** — Refactoring: `extractPdfText` aus exposeParser; bei DeepSeek-Konfiguration AI-Extraktion (`extractLoanFromText`) wenn Regex wenig findet
 - **DocumentOCR** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
 - **Objekte** — Empty State: Links Deals, Besichtigungen (Synergien)
 - **Besichtigungen** — Empty State: Link Dokumente hochladen
-- **Todos** — Empty State: Button „Zu CRM"
+- **Todos** — Empty State: Buttons „Zu CRM", „Zu Deals"
 - **PWA** — Shortcuts um Objekte, Aufgaben, CRM erweitert
 - **KeyboardShortcutOverlay** — Shortcut Q für Schnellaktion dokumentiert
 - **analysis/PdfImport** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
@@ -79,13 +79,13 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **AI: TicketSystem** — Button „Vorschlag" für Beschreibung (suggestTicketDescription) aus Titel + Kategorie
 - **DashboardActionCenter** — Überfällig-Kachel verlinkt auf /mietuebersicht bei überfälligen Zahlungen
 - **Nebenkosten** — Link „Dokumente" in Kopfzeile (Synergy Nebenkosten↔Dokumente)
-- **GlobalSearch** — Deep-Links: Kontakte ?highlight=, Deals ?id=, Besichtigungen ?id= für direkte Navigation
+- **GlobalSearch** — Nebenkosten und Dokumente als durchsuchbare Seiten; Deep-Links: Kontakte ?highlight=, Deals ?id=, Besichtigungen ?id=
 - **Kontakte** — Deep-Link ?highlight=: scrollt zum Kontakt und hebt ihn hervor
 - **Deals** — Deep-Link ?id=: öffnet Deal-Bearbeitungsdialog; Share-Button im Bearbeitungsdialog; fromContact-Vorlage (Kontakte → „Als Deal“)
 - **Kontakte** — Badge „X Deals“ pro Kontakt; Button „Als Deal“ (Briefcase) für Quick-Add Deal mit vorausgefüllten Kontaktdaten
 - **Besichtigungen** — Share-Button ersetzt „Link kopieren“ (native Share API + Fallback)
 - **IndexMietanpassung** — AI-Button „Begründung generieren“ (generateRentIncreaseJustification); Text wird in Zwischenablage kopiert
-- **RentIncreaseLetter** — AI-Button „KI-Begründung“ neben Begründungsfeld
+- **RentIncreaseLetter** — AI-Buttons „KI-Begründung“ und „Text verbessern“ neben Begründungsfeld (DeepSeek improveText)
 - **Kontakte** — Badge „X Deals“ klickbar: filtert Deals nach Kontakt (filterByContact)
 - **Deals** — Besichtigungs-Picker: „Besthende Besichtigung zuordnen“ bei Stage Besichtigung; KI-Button „Nächster Schritt“ bei Notizen (suggestDealNextStep)
 - **Deals** — Share-Icon auf Kanban-Karte (Share2)

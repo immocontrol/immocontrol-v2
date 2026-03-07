@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { FileText, Download, AlertTriangle, CheckCircle2, Info, Sparkles, Loader2 } from "lucide-react";
+import { FileText, Download, AlertTriangle, CheckCircle2, Info, Sparkles, Loader2, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { generateRentIncreaseJustification, isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 import jsPDF from "jspdf";
 
 /** Feature 3: Mietspiegel-Referenzdaten für größere deutsche Städte */
@@ -40,6 +41,7 @@ const BALLUNGSRAEUME = [
 export function RentIncreaseLetter() {
   const [landlord, setLandlord] = useState({ name: "", address: "" });
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiImproving, setAiImproving] = useState(false);
   const [tenantName, setTenantName] = useState("");
   const [tenantAddress, setTenantAddress] = useState("");
   const [currentRent, setCurrentRent] = useState(0);
@@ -286,16 +288,18 @@ export function RentIncreaseLetter() {
           )}
 
           <div className="space-y-1">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <Label className="text-xs">Begründung</Label>
-              {isDeepSeekConfigured() && currentRent > 0 && newRent > 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  disabled={aiGenerating}
-                  onClick={async () => {
+              {isDeepSeekConfigured() && (
+                <div className="flex gap-1">
+                  {currentRent > 0 && newRent > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    disabled={aiGenerating || aiImproving}
+                    onClick={async () => {
                     setAiGenerating(true);
                     try {
                       const text = await generateRentIncreaseJustification({
@@ -316,6 +320,32 @@ export function RentIncreaseLetter() {
                   {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                   KI-Begründung
                 </Button>
+                  )}
+                  {reason.trim().length >= 10 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      disabled={aiGenerating || aiImproving}
+                      onClick={async () => {
+                        setAiImproving(true);
+                        try {
+                          const improved = await improveText(reason, "Begründung für Mieterhöhung gemäß § 558 BGB");
+                          setReason(improved);
+                          toast.success("Text verbessert");
+                        } catch (e) {
+                          toast.error(e instanceof Error ? e.message : "Verbessern fehlgeschlagen");
+                        } finally {
+                          setAiImproving(false);
+                        }
+                      }}
+                    >
+                      {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <PenLine className="h-3 w-3" />}
+                      Verbessern
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
             <Textarea value={reason} onChange={e => setReason(e.target.value)} className="text-xs min-h-[60px]" placeholder="Anpassung an die ortsübliche Vergleichsmiete gemäß § 558 BGB" />

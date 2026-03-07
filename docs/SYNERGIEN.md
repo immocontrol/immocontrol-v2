@@ -19,11 +19,11 @@
 | **PropertyDetail** | Besichtigungen | Sektion „Besichtigungen“ wenn property_id verknüpft |
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
-| **Dokumente** | Verträge | Empty State: Link „Verträge verwalten“ |
+| **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ |
 | **Darlehen** | Objekte, Deals | Empty State: Links „Objekt anlegen“, „Deals“ |
 | **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen |
 | **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
-| **Todos** | CRM | Empty State: Button „Zu CRM“ |
+| **Todos** | CRM, Deals | Empty State: Buttons „Zu CRM“, „Zu Deals“ |
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
 | **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
@@ -33,7 +33,7 @@
 | **Mietübersicht** | Nebenkosten | Link „Nebenkostenabrechnung“ in Kopfzeile |
 | **PropertyDetail** | Nebenkosten | Link „Nebenkostenabrechnung“ in Finanzierungs-Sektion |
 | **DashboardActionCenter** | Nebenkosten | Kachel „X NK-Entwürfe“ wenn status=draft; verlinkt auf /nebenkosten |
-| **GlobalSearch** | Kontakte, Deals, Besichtigungen | Deep-Links `?highlight=xxx` (Kontakte scroll/highlight), `?id=xxx` (Deals/Besichtigungen öffnen Dialog) |
+| **GlobalSearch** | Kontakte, Deals, Besichtigungen, Nebenkosten, Dokumente | Suche und Navigation für alle Seiten; Deep-Links `?highlight=xxx`, `?id=xxx` |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |
