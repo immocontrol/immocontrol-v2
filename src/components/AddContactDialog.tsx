@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
+import { handleError } from "@/lib/handleError";
 
 const CATEGORIES = [
   { value: "Handwerker", icon: Wrench, description: "Elektriker, Klempner, Maler, …" },
@@ -104,8 +105,8 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
       onCreated?.();
-    } catch {
-      toast.error("Fehler beim Anlegen");
+    } catch (err) {
+      handleError(err, { context: "supabase", details: "contacts.insert" });
     } finally {
       setSaving(false);
     }

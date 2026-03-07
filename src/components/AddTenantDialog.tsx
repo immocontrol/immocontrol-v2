@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
+import { handleError } from "@/lib/handleError";
 
 const STEP_LABELS = ["Persönliche Daten", "Mietdetails", "Zusammenfassung"];
 
@@ -107,8 +108,8 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.tenants.byProperty(propertyId) });
       onCreated?.();
-    } catch {
-      toast.error("Fehler beim Anlegen");
+    } catch (err) {
+      handleError(err, { context: "supabase", details: "tenants.insert" });
     } finally {
       setSaving(false);
     }

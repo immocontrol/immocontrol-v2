@@ -83,7 +83,6 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
       const codes = generateBackupCodes();
       setBackupCodes(codes); setShowBackupCodes(true); setBackupCodesAcknowledged(false); setBackupConfirmText("");
       if (user) {
-        localStorage.setItem(`immocontrol_2fa_backup_codes_${user.id}`, JSON.stringify(codes));
         localStorage.setItem(`immocontrol_2fa_enabled_${user.id}`, "true");
       }
       toast.success("2FA erfolgreich aktiviert!");
@@ -100,7 +99,6 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
       if (error) throw error;
       setTotpEnabled(false); setTotpFactorId(null);
       if (user) {
-        localStorage.removeItem(`immocontrol_2fa_backup_codes_${user.id}`);
         localStorage.removeItem(`immocontrol_2fa_enabled_${user.id}`);
         localStorage.removeItem(`immocontrol_2fa_trusted_${user.id}`);
       }
@@ -204,10 +202,24 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
                 <div key={i} className="text-xs font-mono text-center py-1.5 px-2 bg-background rounded border border-border">{code}</div>
               ))}
             </div>
-            <Button variant="outline" size="sm" className="w-full gap-1.5"
-              onClick={() => { navigator.clipboard.writeText(backupCodes.join("\n")).then(() => toast.success("Backup-Codes kopiert!"), () => toast.error("Kopieren fehlgeschlagen")); }}>
-              <Copy className="h-3.5 w-3.5" /> Alle Codes kopieren
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 gap-1.5"
+                onClick={() => {
+                  const blob = new Blob([`ImmoControl 2FA Backup-Codes\n${backupCodes.join("\n")}\n\nSicher aufbewahren – nur einmal sichtbar.`], { type: "text/plain" });
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = `immocontrol-2fa-backup-${new Date().toISOString().slice(0, 10)}.txt`;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                  toast.success("Backup-Codes heruntergeladen");
+                }}>
+                <Copy className="h-3.5 w-3.5" /> Als .txt speichern
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 gap-1.5"
+                onClick={() => { navigator.clipboard.writeText(backupCodes.join("\n")).then(() => toast.success("Backup-Codes kopiert!"), () => toast.error("Kopieren fehlgeschlagen")); }}>
+                <Copy className="h-3.5 w-3.5" /> Kopieren
+              </Button>
+            </div>
             <div className="space-y-1.5 border-t border-border pt-3">
               <Label className="text-xs text-muted-foreground">Tippe "Bestätigt" um zu bestätigen</Label>
               <Input value={backupConfirmText} onChange={(e) => setBackupConfirmText(e.target.value)} placeholder="Bestätigt" className="h-9 text-sm" />

@@ -3,6 +3,7 @@
  * CRM utility functions extracted from CRM.tsx for better modularity.
  * Contains geo/building estimation, Nominatim search, and CRM helpers.
  */
+import { parseNominatimResponse } from "@/lib/apiValidation";
 
 /* ── Types ── */
 
@@ -85,24 +86,27 @@ export async function searchNominatim(query: string): Promise<SearchPlace[]> {
     headers: { "User-Agent": "ImmoControl/1.0" },
   });
   if (!res.ok) throw new Error("Nominatim-Suche fehlgeschlagen");
-  const data = await res.json();
-  return data.map((item: { place_id: number; display_name: string; lat: string; lon: string; address?: { road?: string; house_number?: string; city?: string; town?: string; village?: string; suburb?: string } }) => {
-    const addr = item.address;
+  const raw = await res.json();
+  const data = parseNominatimResponse(raw);
+  return data.map((item) => {
+    const addr = item.address ?? {};
     let displayName: string;
-    if (addr?.road) {
+    if (addr.road) {
       displayName = addr.house_number ? `${addr.road} ${addr.house_number}` : addr.road;
-      const locality = addr.city || addr.town || addr.village || addr.suburb;
+      const locality = addr.city ?? addr.town ?? addr.village ?? addr.suburb;
       if (locality) displayName += `, ${locality}`;
     } else {
       const parts = item.display_name.split(",").map(s => s.trim());
       displayName = parts.slice(0, 2).join(", ");
     }
+    const latNum = typeof item.lat === "string" ? parseFloat(item.lat) : (item.lat ?? 0);
+    const lonNum = typeof item.lon === "string" ? parseFloat(item.lon) : (item.lon ?? 0);
     return {
-      place_id: `nominatim-${item.place_id}`,
+      place_id: `nominatim-${item.place_id ?? ""}`,
       name: displayName,
       address: item.display_name,
-      lat: parseFloat(item.lat),
-      lng: parseFloat(item.lon),
+      lat: latNum,
+      lng: lonNum,
       phone: null,
       website: null,
       rating: null,
@@ -113,14 +117,19 @@ export async function searchNominatim(query: string): Promise<SearchPlace[]> {
   });
 }
 
-/** Nominatim autocomplete (debounced) */
+/** Nominatim autocomplete (debounced) — validated response */
 export async function searchNominatimAutocomplete(query: string): Promise<{ display_name: string; place_id: number }[]> {
   if (query.length < 3) return [];
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=de&accept-language=de`;
   try {
     const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
     if (!res.ok) return [];
-    return await res.json();
+    const raw = await res.json();
+    const data = parseNominatimResponse(raw);
+    return data.map(r => ({
+      display_name: r.display_name,
+      place_id: typeof r.place_id === "number" ? r.place_id : Number(r.place_id) || 0,
+    }));
   } catch {
     return [];
   }

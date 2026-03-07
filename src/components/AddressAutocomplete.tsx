@@ -20,19 +20,7 @@ interface PhotonFeature {
   };
 }
 
-interface NominatimResult {
-  display_name: string;
-  address: {
-    road?: string;
-    house_number?: string;
-    postcode?: string;
-    city?: string;
-    town?: string;
-    village?: string;
-    state?: string;
-    country?: string;
-  };
-}
+import { parseNominatimResponse } from "@/lib/apiValidation";
 
 interface AddressAutocompleteProps {
   value: string;
@@ -99,17 +87,21 @@ async function fetchNominatim(query: string): Promise<PhotonFeature[]> {
     signal: AbortSignal.timeout(5000),
   });
   if (!res.ok) throw new Error("Nominatim API error");
-  const results = (await res.json()) as NominatimResult[];
-  return results.map((r) => ({
-    properties: {
-      street: r.address.road,
-      housenumber: r.address.house_number,
-      postcode: r.address.postcode,
-      city: r.address.city || r.address.town || r.address.village,
-      state: r.address.state,
-      country: r.address.country,
-    },
-  }));
+  const raw = await res.json();
+  const results = parseNominatimResponse(raw);
+  return results.map((r) => {
+    const a = r.address ?? {};
+    return {
+      properties: {
+        street: a.road,
+        housenumber: a.house_number,
+        postcode: a.postcode,
+        city: a.city ?? a.town ?? a.village,
+        state: a.state,
+        country: a.country,
+      },
+    };
+  });
 }
 
 const AddressAutocomplete = ({

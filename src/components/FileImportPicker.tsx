@@ -105,7 +105,11 @@ export function FileImportPicker({
     if (isMobileDevice()) {
       setShowPicker(true);
     } else {
-      inputRef.current?.click();
+      if (typeof inputRef.current?.showPicker === "function") {
+        try { inputRef.current.showPicker(); } catch { inputRef.current?.click(); }
+      } else {
+        inputRef.current?.click();
+      }
     }
   }, [disabled]);
 
@@ -117,9 +121,12 @@ export function FileImportPicker({
      * the OS presents the document picker which includes
      * OneDrive, Google Drive, iCloud, Dropbox, Telegram, WhatsApp etc. */
     setShowPicker(false);
-    // Small delay to ensure dialog closes before file picker opens
     setTimeout(() => {
-      inputRef.current?.click();
+      if (typeof inputRef.current?.showPicker === "function") {
+        try { inputRef.current.showPicker(); } catch { inputRef.current?.click(); }
+      } else {
+        inputRef.current?.click();
+      }
     }, 100);
   }, []);
 
