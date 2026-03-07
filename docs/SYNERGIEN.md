@@ -48,6 +48,11 @@
 | **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile (Kennzahlen vertiefen) |
 | **Analyse** | Berichte | Button „Berichte“ in der Kopfzeile (Miet-, Objekt-, Steuerberichte) |
 | **Newsticker** | — | Fehler beim Laden: handleError + toastErrorWithRetry (Retry = Aktualisieren) |
+| **Dashboard** | Mietübersicht | StatCard „Mieteinnahmen“ verlinkt über ROUTES.RENT |
+| **OnboardingBanner** | Home, Analyse | Schritte „Objekt hinzufügen“, „Zum Rechner“ nutzen ROUTES.HOME, ROUTES.ANALYSE |
+| **PropertyMap** | Objekte | Popup-Link „Details →“ nutzt ROUTES.PROPERTY (Objekt-Detailseite) |
+| **AddTenantDialog** | — | Fehler beim Anlegen: handleError + toastErrorWithRetry (Retry = handleSave) |
+| **AddPropertyDialog** | — | Fehler beim Anlegen: handleError + toastErrorWithRetry (Retry = erneuter Submit) |
 
 ## Technische Details
 

@@ -24,6 +24,8 @@ import { useAccessibility } from "@/components/AccessibilityProvider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { focusNextField } from "@/hooks/useEnterToNext";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 type FormData = AddPropertyFormData;
 
@@ -180,7 +182,13 @@ const AddPropertyDialog = () => {
   const onSubmit = async (data: FormData) => {
     const wasFirst = properties.length === 0;
     const monthlyCashflow = data.monthlyRent - data.monthlyExpenses - data.monthlyCreditRate;
-    await addProperty({ ...data, monthlyCashflow, location: "" } as Omit<import("@/data/mockData").Property, "id">);
+    try {
+      await addProperty({ ...data, monthlyCashflow, location: "" } as Omit<import("@/data/mockData").Property, "id">);
+    } catch (e: unknown) {
+      handleError(e, { context: "supabase", details: "properties.insert", showToast: false });
+      toastErrorWithRetry("Objekt anlegen fehlgeschlagen", () => handleSubmit(onSubmit)());
+      return;
+    }
     if (wasFirst) {
       toast.success("Dein erstes Objekt ist angelegt – dein Portfolio startet hier.");
       announce("Erstes Objekt angelegt. Portfolio startet hier.");

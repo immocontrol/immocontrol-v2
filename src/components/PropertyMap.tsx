@@ -3,6 +3,7 @@ import { useProperties } from "@/context/PropertyContext";
 import { MapPin, Loader2, ChevronRight } from "lucide-react";
 
 import { formatCurrency } from "@/lib/formatters";
+import { ROUTES } from "@/lib/routes";
 
 interface GeocodedProperty {
   id: string;
@@ -180,7 +181,7 @@ const PropertyMap = () => {
             <div><div style="color:#888;font-size:10px">Cashflow/M</div><div style="font-weight:600;color:${prop.monthlyCashflow >= 0 ? '#3cb97a' : '#d94040'}">${formatCurrency(prop.monthlyCashflow)}</div></div>
             <div><div style="color:#888;font-size:10px">Typ</div><div style="font-weight:600">${prop.type} · ${prop.units} WE</div></div>
           </div>
-          <a href="/objekt/${prop.id}" style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:10px;padding:6px 0;border-radius:6px;background:#3cb97a;color:white;text-decoration:none;font-size:12px;font-weight:600">Details →</a>
+          <a href="${ROUTES.PROPERTY}/${prop.id}" style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:10px;padding:6px 0;border-radius:6px;background:#3cb97a;color:white;text-decoration:none;font-size:12px;font-weight:600">Details →</a>
         </div>
       `);
 

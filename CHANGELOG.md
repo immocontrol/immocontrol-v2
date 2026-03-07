@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (AddTenantDialog, AddPropertyDialog)** — Mieter anlegen und Objekt anlegen nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Formularverlust, Fehler getrackt)
+- **ROUTES (Dashboard, OnboardingBanner, PropertyMap)** — Mietübersicht-Link, Analyse/Home-Pfade und Karten-Popup-Link nutzen `ROUTES` (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (AnlageVExport, Newsticker, AddLoanDialog)** — AnlageVExport (PDF-Erstellung), Newsticker (Nachrichten laden), AddLoanDialog (Darlehen speichern/anlegen) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (PropertyDocuments, PropertyDescriptionGenerator, PdfImport)** — PropertyDocuments (Upload, Metadaten, Download pro Objekt), PropertyDescriptionGenerator (KI-Beschreibung), PdfImport Analyse (PDF-Extrakt) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **ROUTES durchgängig** — AppLayout, Nebenkosten, Deals, ViewingCard, Einladung, NotFound nutzen ROUTES (Home, Einstellungen, Dokumente, Mietübersicht, Objekte, CRM, Besichtigungen, Deals)
@@ -75,6 +77,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **AddTenantDialog** — Mieter anlegen: handleError + toastErrorWithRetry (Retry = handleSave)
+- **AddPropertyDialog** — Objekt anlegen: handleError + toastErrorWithRetry (Retry = erneuter Submit)
+- **Dashboard** — StatCard Mietübersicht-Link über ROUTES.RENT
+- **OnboardingBanner** — Pfade Home/Analyse über ROUTES
+- **PropertyMap** — Popup-Link „Details“ über ROUTES.PROPERTY
 - **AnlageVExport** — PDF-Erstellung: handleError + toastErrorWithRetry (Retry)
 - **Newsticker** — Nachrichten laden: handleError + toastErrorWithRetry (Retry = fetchAllNews(true))
 - **AddLoanDialog** — Speichern/Anlegen: handleError + toastErrorWithRetry (Retry handleSave)

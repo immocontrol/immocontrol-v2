@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Building2, Users, Calculator, CreditCard, CheckCircle2, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
+import { ROUTES } from "@/lib/routes";
 
 const ONBOARDING_KEY = "immocontrol_onboarding_dismissed";
 
@@ -31,7 +32,7 @@ export const OnboardingBanner = () => {
       title: "Objekt hinzufügen",
       description: "Füge dein erstes Investmentobjekt mit allen Finanzdaten hinzu.",
       action: "Objekt anlegen",
-      path: "/",
+      path: ROUTES.HOME,
       complete: properties.length > 0,
     },
     {
@@ -51,7 +52,7 @@ export const OnboardingBanner = () => {
       title: "Analyse nutzen",
       description: "Bewerte neue Objekte mit dem Investitionsrechner.",
       action: "Zum Rechner",
-      path: "/analyse",
+      path: ROUTES.ANALYSE,
       complete: false,
     },
   ];

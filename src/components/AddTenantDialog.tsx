@@ -14,6 +14,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 const STEP_LABELS = ["Persönliche Daten", "Mietdetails", "Zusammenfassung"];
 
@@ -109,7 +110,8 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
       qc.invalidateQueries({ queryKey: queryKeys.tenants.byProperty(propertyId) });
       onCreated?.();
     } catch (err) {
-      handleError(err, { context: "supabase", details: "tenants.insert" });
+      handleError(err, { context: "supabase", details: "tenants.insert", showToast: false });
+      toastErrorWithRetry("Mieter anlegen fehlgeschlagen", handleSave);
     } finally {
       setSaving(false);
     }
