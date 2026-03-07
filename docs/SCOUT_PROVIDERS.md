@@ -35,6 +35,7 @@ Diese Dienste eignen sich als weitere Provider; die Architektur ist vorbereitet.
 - **Interface:** `ScoutProvider` in `src/lib/scoutProviders/types.ts` (geocode, geocodeToBbox, fetchPOIsByBbox, fetchPOIsByRadius, optional fetchBuildingsByBbox/ByRadius).
 - **Aggregation:** `aggregatePOIsByBbox` / `aggregatePOIsByRadius` rufen alle aktiven Provider auf, mergen die POIs, hängen Gebäudeflächen an (Brandenburg ALKIS in BB, sonst OSM) und deduplizieren nach Position. Für Filter/Sortierung im Scout wird `estimatedGrossArea ?? parcelArea` verwendet (Grundstücksfläche als Fallback wenn keine Bruttofläche).
 - **Scout-Komponente:** Nutzt nur noch `@/lib/scoutProviders` (aggregateGeocode, aggregateGeocodeToBbox, aggregatePOIsByBbox, aggregatePOIsByRadius). Einzelne Karten-APIs sind nicht mehr direkt eingebunden.
+- **Warnung unrealistische Fläche:** Wenn `estimatedGrossArea` oder das Verhältnis zu `parcelArea` stark von der Norm abweicht (z. B. ≥ 25.000 m², Verhältnis Gebäude/Grundstück &gt; 15 oder &lt; 0,15), zeigt der Scout ein Warn-Icon mit Tooltip, damit Nutzer:innen Datenfehler erkennen können.
 
 ## Ist OpenStreetMap die beste Lösung?
 

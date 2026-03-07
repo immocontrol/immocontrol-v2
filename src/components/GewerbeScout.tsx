@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,6 +76,38 @@ const MAX_SIZE_OPTIONS = [
 ];
 
 const SCOUT_DISPLAY_CAP = 100;
+
+/** Schwellen für unrealistische Gebäudeflächen (Warnung anzeigen). */
+const AREA_WARN_VERY_LARGE_M2 = 25_000;
+const AREA_WARN_EXTREME_M2 = 80_000;
+const AREA_MAX_RATIO_VS_PARCEL = 15;
+const AREA_MIN_RATIO_VS_PARCEL = 0.15;
+
+/**
+ * Prüft, ob die angezeigte Fläche unrealistisch oder stark von der Norm abweicht.
+ * Gibt eine Warnung zurück, die der User angezeigt bekommt (z. B. „Ungewöhnlich groß – bitte prüfen“).
+ */
+function getAreaWarning(estimatedGrossArea: number | null | undefined, parcelArea: number | null | undefined): string | null {
+  const gross = estimatedGrossArea ?? 0;
+  if (gross < 20) return null;
+  if (gross >= AREA_WARN_EXTREME_M2) {
+    return "Unrealistisch groß – bitte in Maps/Kataster prüfen.";
+  }
+  if (gross >= AREA_WARN_VERY_LARGE_M2) {
+    return "Ungewöhnlich groß – deutliche Abweichung von der Norm, bitte prüfen.";
+  }
+  const parcel = parcelArea ?? 0;
+  if (parcel >= 50) {
+    const ratio = gross / parcel;
+    if (ratio > AREA_MAX_RATIO_VS_PARCEL) {
+      return "Gebäudefläche weicht stark vom Grundstück ab – bitte prüfen.";
+    }
+    if (ratio < AREA_MIN_RATIO_VS_PARCEL) {
+      return "Gebäudefläche deutlich kleiner als Grundstück – ggf. nur Teilfläche.";
+    }
+  }
+  return null;
+}
 
 /** Lesbare Namen für CSV und Badge (Quelle). */
 const SOURCE_LABELS: Record<string, string> = {
@@ -1112,11 +1144,19 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                     </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                       <span>{b.type}</span>
-                      {b.estimatedGrossArea != null && b.estimatedGrossArea > 0 && (
-                        <span className="flex items-center gap-0.5">
-                          <Building2 className="h-3 w-3" /> ca. {b.estimatedGrossArea.toLocaleString("de-DE")} m²
-                        </span>
-                      )}
+                      {b.estimatedGrossArea != null && b.estimatedGrossArea > 0 && (() => {
+                        const areaWarn = getAreaWarning(b.estimatedGrossArea, b.parcelArea);
+                        return (
+                          <span className="flex items-center gap-0.5">
+                            <Building2 className="h-3 w-3" /> ca. {b.estimatedGrossArea.toLocaleString("de-DE")} m²
+                            {areaWarn && (
+                              <span className="inline-flex items-center text-amber-600 dark:text-amber-500" title={areaWarn} aria-label={areaWarn}>
+                                <TriangleAlert className="h-3.5 w-3.5 shrink-0" />
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })()}
                       {b.parcelArea != null && b.parcelArea > 0 && (
                         <span className="flex items-center gap-0.5" title="Amtliche Grundstücksfläche (ALKIS)">
                           Grundstück: {b.parcelArea.toLocaleString("de-DE")} m²
