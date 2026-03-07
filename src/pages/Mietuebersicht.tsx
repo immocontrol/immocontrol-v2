@@ -16,6 +16,7 @@ import RentIncreaseWizard from "@/components/RentIncreaseWizard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { MobileQuickStats } from "@/components/mobile/MobileQuickStats";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -230,7 +231,7 @@ const Mietuebersicht = () => {
             )}
           </p>
           <RentIncreaseWizard />
-          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[36px]">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]">
             <TrendingUp className="h-3.5 w-3.5" /> Index-Mietanpassung prüfen
           </Link>
         </div>
@@ -245,6 +246,15 @@ const Mietuebersicht = () => {
         </TabsList>
 
         <TabsContent value="zahlungen" className="space-y-6 mt-4">
+          <MobileQuickStats
+            stats={[
+              { id: "soll", label: "Soll", value: formatCurrency(stats.totalDue), href: undefined },
+              { id: "eingegangen", label: "Eingegangen", value: formatCurrency(stats.totalConfirmed), color: "success", href: undefined },
+              { id: "ueberfaellig", label: "Überfällig", value: formatCurrency(stats.totalOverdue), color: "destructive", href: "/mietuebersicht" },
+              { id: "offen", label: "Offen", value: formatCurrency(stats.pendingAmount), color: "warning", href: undefined },
+            ]}
+            showTrends={false}
+          />
           {/* KPI Cards */}
           {/* UPD-1: Add stagger animation to KPI cards */}
           {/* IMP-44-8: Add aria-live region for payment stats so screen readers announce updates */}

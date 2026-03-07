@@ -4,6 +4,7 @@
  * Shows context-dependent KPIs based on current page.
  */
 import { memo, useMemo, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,8 @@ export interface QuickStat {
   suffix?: string;
   /** Prefix (e.g. "€") */
   prefix?: string;
+  /** When set, card links on click (synergy: klickbare KPIs) */
+  href?: string;
 }
 
 interface MobileQuickStatsProps {
@@ -85,10 +88,10 @@ export const MobileQuickStats = memo(function MobileQuickStats({
         const trend = showTrends ? getTrend(stat.value, stat.previousValue) : "flat";
         const trendPercent = showTrends ? getTrendPercent(stat.value, stat.previousValue) : "";
 
-        return (
+        const card = (
           <div
             key={stat.id}
-            className="bg-card border rounded-lg p-2.5 space-y-0.5"
+            className={cn("bg-card border rounded-lg p-2.5 space-y-0.5", stat.href && "cursor-pointer hover:bg-secondary/50 transition-colors")}
           >
             <div className="flex items-center gap-1">
               {stat.icon && (
@@ -123,6 +126,10 @@ export const MobileQuickStats = memo(function MobileQuickStats({
             )}
           </div>
         );
+        if (stat.href) {
+          return <Link key={stat.id} to={stat.href} className="block">{card}</Link>;
+        }
+        return card;
       })}
     </div>
   );

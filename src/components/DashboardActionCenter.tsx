@@ -119,11 +119,23 @@ const DashboardActionCenter = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <div className={`rounded-lg p-3 text-center transition-colors ${stats.openTickets > 0 ? "bg-gold/10 border border-gold/20" : "bg-secondary/50"}`}>
-          <Wrench className={`h-4 w-4 mx-auto mb-1 ${stats.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`} />
-          <div className={`text-lg font-bold ${stats.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`}>{stats.openTickets}</div>
-          <div className="text-[10px] text-muted-foreground">Offene Tickets</div>
-        </div>
+        {stats.openTickets > 0 && recentTickets.length > 0 ? (
+          <Link
+            to={`/objekt/${recentTickets[0].property_id}`}
+            className={`rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-gold/10 border border-gold/20 hover:bg-gold/15`}
+            aria-label="Offene Tickets – zum Objekt"
+          >
+            <Wrench className="h-4 w-4 mx-auto mb-1 text-gold" />
+            <div className="text-lg font-bold text-gold">{stats.openTickets}</div>
+            <div className="text-[10px] text-muted-foreground">Offene Tickets</div>
+          </Link>
+        ) : (
+          <div className={`rounded-lg p-3 text-center transition-colors ${stats.openTickets > 0 ? "bg-gold/10 border border-gold/20" : "bg-secondary/50"} touch-target min-h-[60px]`}>
+            <Wrench className={`h-4 w-4 mx-auto mb-1 ${stats.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`} />
+            <div className={`text-lg font-bold ${stats.openTickets > 0 ? "text-gold" : "text-muted-foreground"}`}>{stats.openTickets}</div>
+            <div className="text-[10px] text-muted-foreground">Offene Tickets</div>
+          </div>
+        )}
         {stats.overduePayments > 0 ? (
         <Link
           to="/mietuebersicht"
@@ -148,11 +160,23 @@ const DashboardActionCenter = () => {
           <div className="text-[10px] text-muted-foreground">Überfällig</div>
         </div>
         )}
-        <div className={`rounded-lg p-3 text-center transition-colors ${stats.unreadMessages > 0 ? "bg-primary/10 border border-primary/20" : "bg-secondary/50"}`}>
-          <MessageSquare className={`h-4 w-4 mx-auto mb-1 ${stats.unreadMessages > 0 ? "text-primary" : "text-muted-foreground"}`} />
-          <div className={`text-lg font-bold ${stats.unreadMessages > 0 ? "text-primary" : "text-muted-foreground"}`}>{stats.unreadMessages}</div>
-          <div className="text-[10px] text-muted-foreground">Ungelesen</div>
-        </div>
+        {stats.unreadMessages > 0 ? (
+          <Link
+            to="/objekte"
+            className="rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-primary/10 border border-primary/20 hover:bg-primary/15"
+            aria-label="Ungelesene Nachrichten – zu Objekten"
+          >
+            <MessageSquare className="h-4 w-4 mx-auto mb-1 text-primary" />
+            <div className="text-lg font-bold text-primary">{stats.unreadMessages}</div>
+            <div className="text-[10px] text-muted-foreground">Ungelesen</div>
+          </Link>
+        ) : (
+          <div className="rounded-lg p-3 text-center bg-secondary/50 touch-target min-h-[60px]">
+            <MessageSquare className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+            <div className="text-lg font-bold text-muted-foreground">{stats.unreadMessages}</div>
+            <div className="text-[10px] text-muted-foreground">Ungelesen</div>
+          </div>
+        )}
         {/* Synergy 5: Handworker assignment + repair cost */}
         <div className={`rounded-lg p-3 text-center transition-colors ${stats.unassigned > 0 ? "bg-gold/10 border border-gold/20" : "bg-profit/10 border border-profit/20"}`}>
           <Wrench className={`h-4 w-4 mx-auto mb-1 ${stats.unassigned > 0 ? "text-gold" : "text-profit"}`} />

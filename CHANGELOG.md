@@ -81,6 +81,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Immo-Chat** — Kontext um contacts + rent_payments erweitert
 - **Mietübersicht** — Link "Index-Mietanpassung prüfen" zum Dashboard
 - **StatCard** — optional href: Mieteinnahmen/M verlinkt auf /mietuebersicht
+- **DashboardActionCenter** — Offene Tickets klickbar → Objekt; Ungelesen klickbar → Objekte
+- **MobileQuickStats** — href-Support; Einbindung in Mietuebersicht (nur Mobile)
 
 ### Behoben
 
