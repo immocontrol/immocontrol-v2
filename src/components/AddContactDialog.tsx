@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Plus, ChevronRight, ChevronLeft, Contact2 } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, Contact2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 import { StepIndicator } from "@/components/StepIndicator";
+import { isDeepSeekConfigured, suggestContactFollowUp } from "@/integrations/ai/extractors";
 
 const STEP_LABELS = ["Kategorie", "Kontaktdaten", "Adresse & Notizen"];
 
@@ -34,6 +35,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [aiNotesLoading, setAiNotesLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: "", company: "", category: "Handwerker",
@@ -172,7 +174,37 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
                 <AddressAutocomplete value={form.address} onChange={v => setForm(f => ({ ...f, address: v }))} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Notizen</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Notizen</Label>
+                  {isDeepSeekConfigured() && form.name.trim() && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      disabled={aiNotesLoading}
+                      onClick={async () => {
+                        setAiNotesLoading(true);
+                        try {
+                          const text = await suggestContactFollowUp({
+                            name: form.name.trim(),
+                            company: form.company || null,
+                            category: form.category,
+                            notes: form.notes || null,
+                          });
+                          if (text) setForm(f => ({ ...f, notes: text }));
+                        } catch (e) {
+                          handleError(e, { context: "ai", details: "suggestContactFollowUp", showToast: true });
+                        } finally {
+                          setAiNotesLoading(false);
+                        }
+                      }}
+                    >
+                      {aiNotesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      KI Vorschlag
+                    </Button>
+                  )}
+                </div>
                 <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="text-sm min-h-[80px]" placeholder="Besonderheiten, Preise, Empfehlung, …" />
               </div>
             </div>

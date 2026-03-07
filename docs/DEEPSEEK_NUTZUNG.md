@@ -24,6 +24,11 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 | **MessageCenter** | Nachrichten | Button „Antwort vorschlagen“ (suggestReply): KI schlägt sachliche Antwort auf Mieter-Nachricht vor. |
 | **Selbstauskunft** | Finanzierungs-Cockpit → Generator, Schritt Zusammenfassung | Button „KI: Zusammenfassung prüfen“ (suggestSelbstauskunftSummary): banktauglicher Kurzabsatz zu Einnahmen, Ausgaben, Überschuss, Vermögen. |
 | **Entwicklungsplan** | Objekt-Detail → Entwicklungsplan | Button „Kurztext generieren“ (suggestEntwicklungsplanSummary): Absatz für Bankanschreiben zum Entwicklungspotenzial (Mietanpassung, Zielmiete, Maßnahmen). |
+| **Instandhaltungsplanung** | Objekt-Detail → MaintenancePlanner | Button „KI Notiz“ (suggestMaintenanceNotes): Vorschlag für Notiz zu Wartungsmaßnahme (Titel, Kategorie). |
+| **Dokumenten-Check** | Objekt-Detail → DokumentVollständigkeit | Button „Priorität: Welche zuerst?“ (suggestDocumentPriority): Empfehlung, welche fehlenden Dokumente zuerst besorgt werden sollten. |
+| **Kontakte** | Kontakte → Add/Edit | Button „KI Vorschlag“ (suggestContactFollowUp): Vorschlag für Notizen oder Follow-up (Name, Kategorie, bestehende Notizen). |
+| **Aufgaben** | Aufgaben → Bearbeiten | Button „KI Beschreibung" (suggestTodoDescription): Kurzbeschreibung aus dem Aufgabentitel (1–2 Sätze). |
+| **Darlehen** | Darlehen / AddLoanDialog | Button „Verbessern" (improveText) für Notizen: Rechtschreibung, Stil, Formulierung für Darlehensnotizen. |
 
 ---
 

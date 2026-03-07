@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 const DEFAULT_SHORTCUTS: Record<string, string> = {
   "Navigation: Portfolio": "Alt+1",
+  "Navigation: Objekte": "Alt+O",
   "Navigation: Darlehen": "Alt+2",
   "Navigation: Mieten": "Alt+3",
   "Navigation: Verträge": "Alt+4",

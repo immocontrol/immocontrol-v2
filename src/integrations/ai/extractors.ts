@@ -535,8 +535,13 @@ export async function suggestEntwicklungsplanSummary(plan: {
   kappungsgrenzePercent: number;
   angespanntMarkt?: boolean;
   massnahmenAnzahl?: number;
+  /** Optional: bereits umgesetzte Sofagespräche (einvernehmliche Mieterhöhung) */
+  sofagespraeche?: { mieteVorher: number; mieteNachher: number; increasePercent: number };
 }): Promise<string> {
   const parts = [
+    plan.sofagespraeche
+      ? `Bereits umgesetzt: Sofagespräche – einvernehmliche Mieterhöhung von ${plan.sofagespraeche.mieteVorher.toFixed(0)} € auf ${plan.sofagespraeche.mieteNachher.toFixed(0)} € (+${plan.sofagespraeche.increasePercent} %).`
+      : null,
     `Aktuelle Monatsmiete: ${plan.istMieteMonat.toFixed(2)} €`,
     `Geplante Miete (nach Maßnahmen): ${plan.zielMieteMonat.toFixed(2)} €/Monat`,
     `Kappungsgrenze §558: ${plan.kappungsgrenzePercent} % alle 3 Jahre${plan.angespanntMarkt ? " (angespannter Markt)" : ""}`,
@@ -547,6 +552,67 @@ export async function suggestEntwicklungsplanSummary(plan: {
   const raw = await completeDeepSeekChat(
     [{ role: "user", content: `${parts.join("\n")}\n\n${prompt}` }],
     { systemPrompt: "Du bist ein Assistent für Finanzierungsanträge. Antworte nur mit dem Absatz.", maxTokens: 200 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Priorität der fehlenden Dokumente für Finanzierung (welche zuerst besorgen).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestDocumentPriority(fehlendeDokumente: string[], propertyContext?: string): Promise<string> {
+  if (fehlendeDokumente.length === 0) return "";
+  const list = fehlendeDokumente.join(", ");
+  const context = propertyContext ? `Objekt: ${propertyContext}\n` : "";
+  const prompt = `Für eine Immobilien-Finanzierung fehlen folgende Dokumente: ${list}
+
+${context}Gib eine kurze Prioritätenempfehlung (2–4 Sätze): Welche Dokumente sollte man zuerst besorgen und warum? Formell, auf Deutsch.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Assistent für Finanzierungsunterlagen. Antworte nur mit der Prioritätenempfehlung.", maxTokens: 200 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Kurzer Vorschlag für Kontakt-Notizen oder Follow-up (Handwerker, Mieter, Bank, etc.).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestContactFollowUp(contact: {
+  name: string;
+  company?: string | null;
+  category?: string;
+  notes?: string | null;
+}): Promise<string> {
+  const parts = [
+    `Name: ${contact.name}`,
+    contact.company ? `Firma: ${contact.company}` : "",
+    contact.category ? `Kategorie: ${contact.category}` : "",
+    contact.notes ? `Bereits notiert: ${contact.notes.slice(0, 300)}` : "",
+  ].filter(Boolean);
+  const prompt = `Als Immobilienverwalter: Gib einen kurzen Vorschlag für Notizen oder das nächste Follow-up zu diesem Kontakt (1–3 Sätze). Z. B. Besonderheiten, Preise, Empfehlung oder nächste Schritte. Kontext: ${contact.category || "Kontakt"}. Auf Deutsch.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: `${parts.join("\n")}\n\n${prompt}` }],
+    { systemPrompt: "Du bist ein Assistent für Kontaktverwaltung. Antworte nur mit dem Notiz-Vorschlag.", maxTokens: 150 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Kurzbeschreibung für eine Aufgabe aus dem Titel vorschlagen (z. B. To-dos).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestTodoDescription(title: string): Promise<string> {
+  if (!title || title.trim().length < 2) return "";
+  const prompt = `Aufgabentitel: "${title.trim()}"
+
+Gib eine kurze, hilfreiche Beschreibung (1–2 Sätze) für diese Aufgabe: Was ist zu tun, worauf zu achten? Für Immobilienverwaltung: Mieter, Objekt, Termine, etc. Auf Deutsch. Keine Anrede.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Assistent für Aufgaben. Antworte nur mit der Beschreibung.", maxTokens: 120 }
   );
   return raw.trim();
 }

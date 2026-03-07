@@ -1,5 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -114,6 +113,7 @@ const preloadRoutes = () => {
   objekteListImport();
   besichtigungenImport();
   finanzierungsCockpitImport();
+  onboardingImport();
 };
 
 const PageLoader = () => (
@@ -325,7 +325,6 @@ const App = () => {
             {/* UI-UPDATE-1: 1s tooltip delay on all action icons */}
             <TooltipProvider delayDuration={1000}>
               <Toaster />
-              <Sonner />
               <ErrorInterceptor />
               <BrowserRouter>
                 <ScrollToTop />

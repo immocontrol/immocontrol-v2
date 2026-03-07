@@ -24,7 +24,7 @@ const CashForecast = () => {
   const { user } = useAuth();
   const { properties, stats, loading } = useProperties();
   const [forecastWeeks, setForecastWeeks] = useState<13 | 26 | 52>(13);
-  const [scenario, setScenario] = useState<"normal" | "optimistic" | "pessimistic">("normal");
+  const [scenario, setScenario] = useState<"normal" | "optimistic" | "pessimistic" | "mietanpassung">("normal");
 
   useEffect(() => { document.title = "Cashforecast – ImmoControl"; }, []);
 
@@ -40,7 +40,7 @@ const CashForecast = () => {
 
   const forecastData = useMemo(() => {
     const today = new Date();
-    const scenarioMultiplier = scenario === "optimistic" ? 1.05 : scenario === "pessimistic" ? 0.90 : 1.0;
+    const scenarioMultiplier = scenario === "optimistic" ? 1.05 : scenario === "pessimistic" ? 0.90 : scenario === "mietanpassung" ? 1.0 : 1.0;
     const expenseMultiplier = scenario === "optimistic" ? 0.95 : scenario === "pessimistic" ? 1.10 : 1.0;
     /* IMP20-16: Guard NaN — ensure multipliers produce valid numbers even with empty data */
     const rawExpenses = properties.reduce((s, p) => s + p.monthlyExpenses, 0) * expenseMultiplier;
@@ -60,7 +60,8 @@ const CashForecast = () => {
       weekEnd.setDate(weekStart.getDate() + 6);
 
       const isRentWeek = i % 4 === 0;
-      const weekIncome = isRentWeek ? stats.totalRent * scenarioMultiplier : 0;
+      const rentBoost = scenario === "mietanpassung" && i >= 24 ? 1.03 : 1.0;
+      const weekIncome = isRentWeek ? stats.totalRent * scenarioMultiplier * rentBoost : 0;
       const weekExpense = weeklyExpenses + weeklyLoanPayments;
       const weekNet = weekIncome - weekExpense;
       cumulativeCashflow += weekNet;
@@ -159,14 +160,15 @@ const CashForecast = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={scenario} onValueChange={v => setScenario(v as "normal" | "optimistic" | "pessimistic")}>
-            <SelectTrigger className="h-9 w-40 text-sm">
+          <Select value={scenario} onValueChange={v => setScenario(v as "normal" | "optimistic" | "pessimistic" | "mietanpassung")}>
+            <SelectTrigger className="h-9 w-44 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="normal">Normal</SelectItem>
               <SelectItem value="optimistic">Optimistisch (+5%)</SelectItem>
               <SelectItem value="pessimistic">Pessimistisch (-10%)</SelectItem>
+              <SelectItem value="mietanpassung">Mietanpassung (+3% ab Monat 6)</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={exportCashForecastCSV}>
@@ -188,11 +190,15 @@ const CashForecast = () => {
       {/* Improvement 5: Scenario description */}
       {scenario !== "normal" && (
         <div className={`rounded-lg border p-3 text-xs animate-fade-in ${
-          scenario === "optimistic" ? "border-profit/30 bg-profit/5 text-profit" : "border-loss/30 bg-loss/5 text-loss"
+          scenario === "optimistic" ? "border-profit/30 bg-profit/5 text-profit" :
+          scenario === "mietanpassung" ? "border-primary/30 bg-primary/5 text-primary" :
+          "border-loss/30 bg-loss/5 text-loss"
         }`}>
           <TrendingUp className="h-3.5 w-3.5 inline mr-1" />
           {scenario === "optimistic"
             ? "Optimistisch: +5% Einnahmen, -5% Ausgaben"
+            : scenario === "mietanpassung"
+            ? "Mietanpassung: +3% Miete ab ca. Monat 6 (Index/Staffelmiete)"
             : "Pessimistisch: -10% Einnahmen, +10% Ausgaben"}
         </div>
       )}

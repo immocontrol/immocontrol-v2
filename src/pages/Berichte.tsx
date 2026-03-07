@@ -14,6 +14,9 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
 import { getAnnualAfa } from "@/lib/afaSanierung";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
+import { SteuerJahresabschluss } from "@/components/SteuerJahresabschluss";
+import AfACalculator from "@/components/AfACalculator";
+import { ErtragswertRechner } from "@/components/ErtragswertRechner";
 import { EmptyState } from "@/components/EmptyState";
 import { ROUTES } from "@/lib/routes";
 
@@ -518,6 +521,12 @@ ${rows}
         </div>
       </div>
 
+      {/* IMP-53: AfA-Übersicht pro Objekt für Steuerberichterstattung */}
+      <AfACalculator />
+
+      {/* IMP-54: Ertragswertverfahren — Bewertung nach Ertragswert */}
+      <ErtragswertRechner />
+
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <Select value={year} onValueChange={setYear}>
@@ -671,8 +680,17 @@ ${rows}
         </div>
       </div>
 
-      {/* Steuerliche Jahresübersicht — moved from Dashboard */}
-      <TaxYearOverview />
+      {/* Steuer-Jahresübersicht: Zentrale Übersicht für Steuerberater */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Briefcase className="h-4 w-4 text-primary" />
+          Steuer-Jahresübersicht
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TaxYearOverview />
+          <SteuerJahresabschluss />
+        </div>
+      </div>
     </div>
   );
 };

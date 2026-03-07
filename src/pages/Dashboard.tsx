@@ -498,9 +498,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         />
       </div>
 
-      {/* Improvement 15: Quick KPI row — UI-2/UI-15/UI-42: card-stagger-enter, card-accent-shadow, currency-display */}
+      {/* Improvement 15: Quick KPI row — UI-2/UI-15/UI-42 + Eigenkapitalrendite, Jahr-zu-Jahr */}
       {/* IMP-44-11: Add aria-label to quick KPI row for screen readers */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 card-stagger-enter" aria-label="Schnell-KPIs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 card-stagger-enter" aria-label="Schnell-KPIs">
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
@@ -508,6 +508,10 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
+        </div>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow" title="Eigenkapitalrendite = Jahres-Cashflow / Eigenkapital">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">EK-Rendite</p>
+          <p className={`text-lg font-bold ${portfolioMetrics.cashOnCashReturn >= 5 ? "text-profit" : portfolioMetrics.cashOnCashReturn >= 3 ? "text-gold" : "text-muted-foreground"}`}>{portfolioMetrics.cashOnCashReturn.toFixed(1)}%</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>

@@ -21,6 +21,7 @@ import { ROUTES } from "@/lib/routes";
 import { MobileQuickStats } from "@/components/mobile/MobileQuickStats";
 import { LeerstandskostenRechner } from "@/components/LeerstandskostenRechner";
 import { InflationMietrechner } from "@/components/InflationMietrechner";
+import { IndexMietanpassung } from "@/components/IndexMietanpassung";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ const Mietuebersicht = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 200);
   const [statusFilter, setStatusFilter] = useState("alle");
+  const [dueGroupFilter, setDueGroupFilter] = useState<"alle" | "overdue" | "7d" | "30d" | "later">("alle");
   const [propertyFilter, setPropertyFilter] = useState(() => propertyFromUrl || "alle");
   const [monthFilter, setMonthFilter] = useState("alle");
 
@@ -82,8 +84,29 @@ const Mietuebersicht = () => {
     return Array.from(months).sort().reverse();
   }, [payments]);
 
+  /* IMP-50: Offene Posten nach Fälligkeit gruppieren (Überfällig | In 7 Tagen | In 30 Tagen) */
+  const { overduePayments, in7Days, in30Days, laterPayments } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+    const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+    const open = payments.filter(p => p.status === "pending" || p.status === "overdue");
+    const od: typeof payments = [];
+    const d7: typeof payments = [];
+    const d30: typeof payments = [];
+    const later: typeof payments = [];
+    open.forEach(p => {
+      const d = new Date(p.due_date); d.setHours(0, 0, 0, 0);
+      if (d < today) od.push(p);
+      else if (d <= in7) d7.push(p);
+      else if (d <= in30) d30.push(p);
+      else later.push(p);
+    });
+    return { overduePayments: od, in7Days: d7, in30Days: d30, laterPayments: later };
+  }, [payments]);
+
   const filteredPayments = useMemo(() => {
-    return payments.filter(p => {
+    let list = payments.filter(p => {
       if (statusFilter !== "alle" && p.status !== statusFilter) return false;
       if (propertyFilter !== "alle" && p.property_id !== propertyFilter) return false;
       if (monthFilter !== "alle") {
@@ -101,7 +124,22 @@ const Mietuebersicht = () => {
       }
       return true;
     });
-  }, [payments, statusFilter, propertyFilter, monthFilter, debouncedSearch, tenantMap, propertyMap]);
+    if (dueGroupFilter !== "alle") {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+      const in30 = new Date(today); in30.setDate(in30.getDate() + 30);
+      list = list.filter(p => {
+        if (p.status !== "pending" && p.status !== "overdue") return false;
+        const d = new Date(p.due_date); d.setHours(0, 0, 0, 0);
+        if (dueGroupFilter === "overdue") return d < today;
+        if (dueGroupFilter === "7d") return d >= today && d <= in7;
+        if (dueGroupFilter === "30d") return d > in7 && d <= in30;
+        if (dueGroupFilter === "later") return d > in30;
+        return true;
+      });
+    }
+    return list;
+  }, [payments, statusFilter, propertyFilter, monthFilter, debouncedSearch, tenantMap, propertyMap, dueGroupFilter]);
 
   /* FUNC-22: Year-over-year payment trend */
   const paymentTrend = useMemo(() => {
@@ -318,6 +356,7 @@ const Mietuebersicht = () => {
 
           <LeerstandskostenRechner />
           <InflationMietrechner />
+          <IndexMietanpassung />
 
           {/* FUNC-22/23/24: Payment trend, top tenants, payment methods */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -389,6 +428,31 @@ const Mietuebersicht = () => {
               </Button>
             )}
           </div>
+
+          {/* IMP-50: Fälligkeits-Gruppen für offene Posten */}
+          {(overduePayments.length > 0 || in7Days.length > 0 || in30Days.length > 0) && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs text-muted-foreground self-center">Offene Posten:</span>
+              {[
+                { key: "overdue" as const, label: "Überfällig", count: overduePayments.length, color: "bg-loss/10 text-loss" },
+                { key: "7d" as const, label: "In 7 Tagen", count: in7Days.length, color: "bg-gold/10 text-gold" },
+                { key: "30d" as const, label: "In 30 Tagen", count: in30Days.length, color: "bg-primary/10 text-primary" },
+              ].map(({ key, label, count, color }) => (
+                <button
+                  key={key}
+                  onClick={() => setDueGroupFilter(dueGroupFilter === key ? "alle" : key)}
+                  className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${dueGroupFilter === key ? color : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}
+                >
+                  {label} ({count})
+                </button>
+              ))}
+              {dueGroupFilter !== "alle" && (
+                <button onClick={() => setDueGroupFilter("alle")} className="text-xs text-muted-foreground hover:text-primary">
+                  Alle anzeigen
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">

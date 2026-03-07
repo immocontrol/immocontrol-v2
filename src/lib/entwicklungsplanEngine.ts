@@ -28,6 +28,10 @@ export interface EntwicklungsplanOptions {
   lastRentAdjustmentDate?: string | null;
   /** Planungszeitraum in Jahren (Default 10). */
   horizonYears?: number;
+  /** Optional: Miete vor Sofagespräch (€/Monat). Bei Angabe: einvernehmliche Mieterhöhung bereits umgesetzt. */
+  sofagespraecheMieteVorher?: number | null;
+  /** Optional: Durchschnittliche Steigerung durch Sofagespräche in % (Default 50). Wird berechnet falls mieteVorher gesetzt. */
+  sofagespraecheIncreasePercent?: number;
 }
 
 export interface MietanpassungStep {
@@ -41,7 +45,7 @@ export interface MietanpassungStep {
 
 export interface EntwicklungsplanMassnahme {
   id: string;
-  typ: "mietanpassung" | "pv_mieterstrom" | "daemmung" | "wohnungssanierung";
+  typ: "mietanpassung" | "sofagespraeche" | "pv_mieterstrom" | "daemmung" | "wohnungssanierung";
   title: string;
   description: string;
   /** Jahr (ab jetzt) in dem die Maßnahme sinnvoll ist. */
@@ -56,9 +60,17 @@ export interface EntwicklungsplanMassnahme {
   rentIncreaseMonthly?: number;
 }
 
+export interface SofagespraecheInfo {
+  mieteVorher: number;
+  mieteNachher: number;
+  increasePercent: number;
+}
+
 export interface EntwicklungsplanResult {
   /** Aktuelle Ist-Miete/Monat. */
   istMieteMonat: number;
+  /** Info zu bereits umgesetzten Sofagesprächen (einvernehmliche Mieterhöhung). */
+  sofagespraeche?: SofagespraecheInfo;
   /** Kappungsgrenze in % (15 oder 20). */
   kappungsgrenzePercent: number;
   /** Ob angespannter Wohnungsmarkt (Mietpreisbremse). */
@@ -141,6 +153,21 @@ export function computeEntwicklungsplan(
   // Maßnahmen-Katalog (wertsteigernd)
   const massnahmen: EntwicklungsplanMassnahme[] = [];
 
+  let sofagespraeche: EntwicklungsplanResult["sofagespraeche"];
+  const mieteVorher = options.sofagespraecheMieteVorher ?? undefined;
+  if (mieteVorher != null && mieteVorher > 0 && rentCurrent > mieteVorher) {
+    const increasePercent = Math.round(((rentCurrent - mieteVorher) / mieteVorher) * 100);
+    sofagespraeche = { mieteVorher, mieteNachher: rentCurrent, increasePercent };
+    massnahmen.unshift({
+      id: "sofagespraeche",
+      typ: "sofagespraeche",
+      title: "Sofagespräche – einvernehmliche Mieterhöhung",
+      description: `Einvernehmliche Mieterhöhung durch persönliche Gespräche: von ${mieteVorher.toLocaleString("de-DE", { maximumFractionDigits: 0 })} € auf ${rentCurrent.toLocaleString("de-DE", { maximumFractionDigits: 0 })} €/Monat (+${increasePercent} %).`,
+      yearSuggested: 0,
+      revenueAnnual: (rentCurrent - mieteVorher) * 12,
+    });
+  }
+
   const zielMieteMonat = mieteProJahr.length > 0 ? mieteProJahr[mieteProJahr.length - 1].mieteMonat : property.monthlyRent;
 
   // 1. Mietanpassungen (bereits im Zeitstrahl)
@@ -197,6 +224,7 @@ export function computeEntwicklungsplan(
 
   return {
     istMieteMonat: property.monthlyRent,
+    sofagespraeche,
     kappungsgrenzePercent,
     angespanntMarkt: angespannt,
     naechsteAnpassungInMonaten,

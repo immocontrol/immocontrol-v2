@@ -211,6 +211,9 @@ export function useBackgroundSync() {
       if (count > 0) {
         logger.info(`${count} pending mutations synced`, "OfflineSync");
         qc.invalidateQueries({ queryKey: queryKeys.properties.all });
+        qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+        qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
+        qc.invalidateQueries({ queryKey: queryKeys.deals.all });
       }
     });
   }, [qc]);

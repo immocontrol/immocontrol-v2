@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Plus, ChevronRight, ChevronLeft, Landmark, Search, Trash2 } from "lucide-react";
+import { Plus, ChevronRight, ChevronLeft, Landmark, Search, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +15,12 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { GERMAN_BANKS } from "@/data/germanBanks";
 import { StepIndicator } from "@/components/StepIndicator";
+import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 
 const LOAN_TYPE_LABELS: Record<string, string> = {
   annuity: "Annuitätendarlehen",
@@ -35,11 +37,13 @@ interface AddLoanDialogProps {
 
 const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   const { user } = useAuth();
+  const { announce } = useAccessibility();
   const { properties } = useProperties();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [aiNotesLoading, setAiNotesLoading] = useState(false);
 
   const [form, setForm] = useState({
     property_id: "", bank_name: "", loan_type: "annuity",
@@ -194,6 +198,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
         return;
       }
       toast.success("Darlehen angelegt");
+      announce("Darlehen wurde angelegt.", "polite");
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
       onCreated?.();
@@ -354,7 +359,32 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
                 <Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} className="h-9 text-sm" />
               </div>
               <div className="col-span-2 space-y-1">
-                <Label className="text-xs">Notizen</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Notizen</Label>
+                  {isDeepSeekConfigured() && form.notes && form.notes.trim().length >= 10 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      disabled={aiNotesLoading}
+                      onClick={async () => {
+                        setAiNotesLoading(true);
+                        try {
+                          const text = await improveText(form.notes || "", "Darlehensnotiz");
+                          if (text) setForm(f => ({ ...f, notes: text }));
+                        } catch (e) {
+                          handleError(e, { context: "ai", details: "improveText", showToast: true });
+                        } finally {
+                          setAiNotesLoading(false);
+                        }
+                      }}
+                    >
+                      {aiNotesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Verbessern
+                    </Button>
+                  )}
+                </div>
                 <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
               </div>
             </div>

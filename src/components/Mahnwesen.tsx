@@ -17,6 +17,8 @@ interface OverdueItem {
   days_overdue: number;
   mahnstufe: number;
   tenant_email: string | null;
+  /** Days until next escalation; null if at max stage */
+  nextMahnungInDays: number | null;
 }
 
 const Mahnwesen = () => {
@@ -50,6 +52,7 @@ const Mahnwesen = () => {
       const dueDate = new Date(p.due_date);
       const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
       const mahnstufe = daysOverdue <= 14 ? 1 : daysOverdue <= 30 ? 2 : 3;
+      const nextMahnungInDays = mahnstufe === 1 ? 15 - daysOverdue : mahnstufe === 2 ? 31 - daysOverdue : null;
       return {
         id: p.id,
         tenant_name: tenant ? `${tenant.first_name} ${tenant.last_name}` : "–",
@@ -59,6 +62,7 @@ const Mahnwesen = () => {
         days_overdue: daysOverdue,
         mahnstufe,
         tenant_email: tenant?.email || null,
+        nextMahnungInDays: nextMahnungInDays !== null && nextMahnungInDays > 0 ? nextMahnungInDays : null,
       };
     }).sort((a, b) => b.days_overdue - a.days_overdue);
   }, [payments, tenants, properties]);
@@ -167,6 +171,11 @@ ${item.mahnstufe === 1
               </div>
               <div className="text-[11px] text-muted-foreground">
                 Fällig: {formatDate(item.due_date)} · {item.days_overdue} Tage überfällig
+                {item.nextMahnungInDays !== null && item.nextMahnungInDays <= 7 && (
+                  <span className="ml-2 text-gold font-medium">
+                    · In {item.nextMahnungInDays} Tag{item.nextMahnungInDays !== 1 ? "en" : ""} nächste Mahnung fällig
+                  </span>
+                )}
               </div>
             </div>
             <div className="text-right">

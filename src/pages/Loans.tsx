@@ -35,8 +35,9 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { LoadingButton } from "@/components/LoadingButton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { GERMAN_BANKS } from "@/data/germanBanks";
-import { Download } from "lucide-react";
+import { Download, Sparkles, Loader2 } from "lucide-react";
 import { ManusFinanzierung } from "@/components/manus/ManusFinanzierung";
+import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 import { TilgungsplanSchnellrechner } from "@/components/TilgungsplanSchnellrechner";
 
 interface Loan {
@@ -90,6 +91,7 @@ const Loans = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   // Loan delete confirmation (UX: always confirm destructive action)
   const [deleteTargetLoan, setDeleteTargetLoan] = useState<string | null>(null);
+  const [aiNotesLoading, setAiNotesLoading] = useState(false);
 
   useEffect(() => {
     if (form.loan_amount > 0 && (form.interest_rate > 0 || form.repayment_rate > 0)) {
@@ -762,7 +764,32 @@ const Loans = () => {
                   <Input type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} className="h-9 text-sm" />
                 </div>
                 <div className="col-span-2 space-y-1">
-                  <Label className="text-xs">Notizen</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs">Notizen</Label>
+                    {isDeepSeekConfigured() && form.notes && form.notes.trim().length >= 10 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs"
+                        disabled={aiNotesLoading}
+                        onClick={async () => {
+                          setAiNotesLoading(true);
+                          try {
+                            const text = await improveText(form.notes || "", "Darlehensnotiz");
+                            if (text) setForm(f => ({ ...f, notes: text }));
+                          } catch (e) {
+                            handleError(e, { context: "ai", details: "improveText", showToast: true });
+                          } finally {
+                            setAiNotesLoading(false);
+                          }
+                        }}
+                      >
+                        {aiNotesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        Verbessern
+                      </Button>
+                    )}
+                  </div>
                   <Input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="h-9 text-sm" placeholder="Optional" />
                 </div>
               </div>
@@ -938,10 +965,10 @@ const Loans = () => {
                       <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
                       {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
                       {monthsLeft !== null && monthsLeft <= 12 && (
-                        <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                        <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5" title={daysUntilFixedEnd != null && daysUntilFixedEnd <= 90 ? "Anschlussfinanzierung prüfen" : undefined}>
                           <AlertTriangle className="h-2.5 w-2.5" />
                           {daysUntilFixedEnd != null && daysUntilFixedEnd > 0 && daysUntilFixedEnd <= 365
-                            ? `Zinsbindung endet in ${daysUntilFixedEnd} Tag${daysUntilFixedEnd !== 1 ? "en" : ""}`
+                            ? `Zinsbindung endet in ${daysUntilFixedEnd} Tag${daysUntilFixedEnd !== 1 ? "en" : ""}${daysUntilFixedEnd <= 90 ? " · Anschluss prüfen!" : ""}`
                             : <><span className="hidden sm:inline">Zinsbindung endet</span> bald</>}
                         </span>
                       )}

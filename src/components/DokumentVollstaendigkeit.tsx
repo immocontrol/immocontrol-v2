@@ -2,12 +2,15 @@
  * IMP20-17: Dokument-Vollständigkeitsprüfung pro Objekt
  * PropertyDetail: Checklist of standard docs (Grundbuchauszug, Teilungserklärung, Energieausweis, etc.)
  */
-import { memo, useMemo } from "react";
-import { FileCheck, CheckCircle2, Circle, AlertTriangle } from "lucide-react";
+import { memo, useMemo, useState } from "react";
+import { FileCheck, CheckCircle2, Circle, AlertTriangle, Sparkles, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { isDeepSeekConfigured, suggestDocumentPriority } from "@/integrations/ai/extractors";
+import { handleError } from "@/lib/handleError";
 
 const REQUIRED_DOCUMENTS = [
   { key: "grundbuchauszug", label: "Grundbuchauszug", category: "grundbuch" },
@@ -30,6 +33,8 @@ interface DokumentVollstaendigkeitProps {
 
 const DokumentVollstaendigkeit = memo(({ propertyId, propertyName, compact = false }: DokumentVollstaendigkeitProps) => {
   const { user } = useAuth();
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
 
   const { data: documents = [] } = useQuery({
     queryKey: ["doc_completeness", propertyId],
@@ -56,6 +61,7 @@ const DokumentVollstaendigkeit = memo(({ propertyId, propertyName, compact = fal
   const completedCount = checklist.filter(c => c.found).length;
   const totalCount = checklist.length;
   const completionPct = Math.round((completedCount / totalCount) * 100);
+  const fehlende = useMemo(() => checklist.filter(c => !c.found).map(c => c.label), [checklist]);
 
   if (compact) {
     return (
@@ -117,11 +123,41 @@ const DokumentVollstaendigkeit = memo(({ propertyId, propertyName, compact = fal
       </div>
 
       {completionPct < 100 && (
-        <div className="mt-3 p-2 rounded-lg bg-gold/10 border border-gold/20 flex items-center gap-2">
-          <AlertTriangle className="h-3 w-3 text-gold shrink-0" />
-          <p className="text-[10px] text-gold">
-            {totalCount - completedCount} Dokument{totalCount - completedCount !== 1 ? "e" : ""} fehlen noch
-          </p>
+        <div className="mt-3 space-y-2">
+          <div className="p-2 rounded-lg bg-gold/10 border border-gold/20 flex items-center gap-2">
+            <AlertTriangle className="h-3 w-3 text-gold shrink-0" />
+            <p className="text-[10px] text-gold">
+              {totalCount - completedCount} Dokument{totalCount - completedCount !== 1 ? "e" : ""} fehlen noch
+            </p>
+          </div>
+          {isDeepSeekConfigured() && fehlende.length > 0 && (
+            <div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                disabled={aiLoading}
+                onClick={async () => {
+                  setAiLoading(true);
+                  setAiSuggestion(null);
+                  try {
+                    const text = await suggestDocumentPriority(fehlende, propertyName ?? undefined);
+                    setAiSuggestion(text);
+                  } catch (e) {
+                    handleError(e, { context: "ai", details: "suggestDocumentPriority", showToast: true });
+                  } finally {
+                    setAiLoading(false);
+                  }
+                }}
+              >
+                {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                Priorität: Welche zuerst?
+              </Button>
+              {aiSuggestion && (
+                <p className="text-[10px] text-muted-foreground mt-2 p-2 rounded bg-secondary/50 text-wrap-safe">{aiSuggestion}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

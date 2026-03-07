@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck } from "lucide-react";
+import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -44,6 +44,7 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { EmptyState } from "@/components/EmptyState";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 import { ROUTES } from "@/lib/routes";
+import { isDeepSeekConfigured, suggestContactFollowUp } from "@/integrations/ai/extractors";
 
 interface ContactItem {
   id: string;
@@ -79,6 +80,7 @@ const ContactManagement = () => {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editContact, setEditContact] = useState<ContactItem | null>(null);
   const [showTrash, setShowTrash] = useState(false);
+  const [aiNotesLoading, setAiNotesLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(CONTACTS_PAGE_SIZE);
   const [form, setForm] = useState({
     name: "", company: "", category: "Handwerker",
@@ -439,7 +441,37 @@ const ContactManagement = () => {
                 <AddressAutocomplete value={form.address} onChange={(val) => setForm({ ...form, address: val })} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Notizen</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Notizen</Label>
+                  {isDeepSeekConfigured() && form.name.trim() && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      disabled={aiNotesLoading}
+                      onClick={async () => {
+                        setAiNotesLoading(true);
+                        try {
+                          const text = await suggestContactFollowUp({
+                            name: form.name.trim(),
+                            company: form.company || null,
+                            category: form.category,
+                            notes: form.notes || null,
+                          });
+                          if (text) setForm((f) => ({ ...f, notes: text }));
+                        } catch (e) {
+                          handleError(e, { context: "ai", details: "suggestContactFollowUp", showToast: true });
+                        } finally {
+                          setAiNotesLoading(false);
+                        }
+                      }}
+                    >
+                      {aiNotesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      KI Vorschlag
+                    </Button>
+                  )}
+                </div>
                 <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="text-sm min-h-[60px]" placeholder="Notizen zum Kontakt..." />
               </div>
               {/* UX-14: LoadingButton with spinner during save */}

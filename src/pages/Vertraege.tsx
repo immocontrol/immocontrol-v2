@@ -6,6 +6,7 @@ import InvoiceManagement from "@/components/InvoiceManagement";
 import ServiceContracts from "@/components/ServiceContracts";
 import { Mietvertragsverwaltung } from "@/components/Mietvertragsverwaltung";
 import ContractLifecycleManager from "@/components/ContractLifecycleManager";
+import FristenZentrale from "@/components/FristenZentrale";
 import { ContractTemplates } from "@/components/ContractTemplates";
 import { KuendigungsfristRechner } from "@/components/KuendigungsfristRechner";
 import { AfASchnellrechner } from "@/components/AfASchnellrechner";
@@ -196,6 +197,9 @@ const Vertraege = () => {
           </div>
         </div>
       </div>
+
+      {/* IMP-52: Fristen-Zentrale — zentrale Übersicht aller Fristen */}
+      <FristenZentrale />
 
       {/* Nächste Kündigungsfristen: compact widget with next 3 notice deadlines */}
       {noticeDeadlines.length > 0 && (

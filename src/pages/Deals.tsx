@@ -97,11 +97,12 @@ const isFormValid = (form: typeof emptyForm): boolean =>
 /* UPD-13: Reuse shared currency formatter */
 const fmt = (n: number) => formatCurrency(n);
 
-/* UPD-14: Memoized Kanban deal card for reduced re-renders */
+/* IMP-55: Deal-zu-Objekt One-Click — show convert button on abgeschlossen deals */
 const DealCard = memo(({
   deal,
   onClick,
   onShare,
+  onConverted,
   draggable,
   onDragStart,
   onDragEnd,
@@ -109,6 +110,7 @@ const DealCard = memo(({
   deal: DealRecord;
   onClick: () => void;
   onShare?: (deal: DealRecord) => void;
+  onConverted?: () => void;
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
@@ -165,14 +167,22 @@ const DealCard = memo(({
             <Store className="h-3 w-3 shrink-0" /> WGH in Umgebung
           </Link>
         )}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-1">
           {(deal.purchase_price ?? 0) > 0 && <span className="text-xs font-medium">{fmt(deal.purchase_price!)}</span>}
-          {(deal.expected_yield ?? 0) > 0 && <Badge variant="outline" className="text-[10px]">{deal.expected_yield!.toFixed(1)}% Rendite</Badge>}
+          {(() => {
+            const price = deal.purchase_price ?? 0;
+            const rent = deal.expected_rent ?? 0;
+            const yieldPct = price > 0 && rent > 0 ? (rent * 12 / price) * 100 : deal.expected_yield ?? 0;
+            return yieldPct > 0 ? (
+              <Badge variant="outline" className="text-[10px]">{yieldPct.toFixed(1)}% Brutto</Badge>
+            ) : null;
+          })()}
         </div>
         {(deal.purchase_price ?? 0) > 0 && (deal.sqm ?? 0) > 0 && (
-          <p className="text-[10px] text-muted-foreground">
-            {fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²
-          </p>
+          <p className="text-[10px] text-muted-foreground">{fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²</p>
+        )}
+        {(deal.expected_rent ?? 0) > 0 && !((deal.purchase_price ?? 0) > 0 && (deal.sqm ?? 0) > 0) && (
+          <p className="text-[10px] text-muted-foreground">{fmt((deal.expected_rent ?? 0) * 12)} J/Miete</p>
         )}
         {/* UPD-15: Show source badge on Kanban cards */}
         <div className="flex items-center justify-between">
@@ -189,6 +199,24 @@ const DealCard = memo(({
         <p className={cn("text-[10px] flex items-center gap-1", getDealAgeColor(dealAge))}>
           <Clock className="h-2.5 w-2.5" /> {dealAge}d
         </p>
+        {/* IMP-55: One-Click Convert for abgeschlossen deals — render inline on card */}
+        {deal.stage === "abgeschlossen" && (
+          <div className="pt-2 border-t border-border mt-2" onClick={e => e.stopPropagation()}>
+            <DealToPropertyConverter
+              deal={{
+                id: deal.id,
+                title: deal.title,
+                address: deal.address,
+                purchase_price: deal.purchase_price,
+                expected_rent: deal.expected_rent,
+                sqm: deal.sqm,
+                units: deal.units,
+                property_type: deal.property_type,
+              }}
+              onConverted={onConverted}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -985,6 +1013,7 @@ const Deals = () => {
                         deal={deal}
                         onClick={() => openEdit(deal)}
                         onShare={(d) => share({ title: d.title, text: d.address || undefined, url: `${window.location.origin}/deals?id=${d.id}` })}
+                        onConverted={() => queryClient.invalidateQueries({ queryKey: queryKeys.properties.all })}
                         draggable={!isMobile}
                         onDragStart={(e) => {
                           setDraggedDeal(deal);

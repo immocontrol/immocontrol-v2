@@ -15,12 +15,12 @@ import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/routes";
-import { calcBruttoRendite } from "@/lib/calculations";
+import { calcBruttoRendite, calcNettoRendite } from "@/lib/calculations";
 
 const VIRTUAL_LIST_THRESHOLD = 25;
 const PROPERTY_CARD_HEIGHT = 220;
 
-type SortType = "name" | "value" | "rent" | "cashflow" | "rendite";
+type SortType = "name" | "value" | "rent" | "cashflow" | "rendite" | "netto";
 
 const ObjekteList = () => {
   const { properties, loading } = useProperties();
@@ -53,6 +53,8 @@ const ObjekteList = () => {
             return (b.monthlyCashflow ?? 0) - (a.monthlyCashflow ?? 0);
           case "rendite":
             return calcBruttoRendite(b.purchasePrice, b.monthlyRent) - calcBruttoRendite(a.purchasePrice, a.monthlyRent);
+          case "netto":
+            return calcNettoRendite(b.purchasePrice, b.monthlyRent, b.monthlyExpenses ?? 0) - calcNettoRendite(a.purchasePrice, a.monthlyRent, a.monthlyExpenses ?? 0);
           default:
             return 0;
         }
@@ -114,12 +116,25 @@ const ObjekteList = () => {
             <option value="value">Wert</option>
             <option value="rent">Miete</option>
             <option value="cashflow">Cashflow</option>
-            <option value="rendite">Rendite</option>
+            <option value="rendite">Brutto-Rendite</option>
+            <option value="netto">Netto-Rendite</option>
           </select>
           <PropertyComparison />
           <AddPropertyDialog />
         </div>
       </div>
+
+      {/* IMP-51: Portfolio-Benchmark (Durchschnitts-Rendite) */}
+      {sorted.length > 0 && (() => {
+        const avgBrutto = sorted.reduce((s, p) => s + calcBruttoRendite(p.purchasePrice, p.monthlyRent), 0) / sorted.length;
+        const avgNetto = sorted.reduce((s, p) => s + calcNettoRendite(p.purchasePrice, p.monthlyRent, p.monthlyExpenses ?? 0), 0) / sorted.length;
+        return (
+          <div className="flex gap-3 text-xs text-muted-foreground">
+            <span>Ø Brutto-Rendite: <strong className="text-foreground">{avgBrutto.toFixed(1)}%</strong></span>
+            <span>Ø Netto-Rendite: <strong className="text-foreground">{avgNetto.toFixed(1)}%</strong></span>
+          </div>
+        );
+      })()}
 
       {sorted.length === 0 ? (
         <EmptyState

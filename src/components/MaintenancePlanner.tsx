@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2 } from "lucide-react";
+import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
+import { isDeepSeekConfigured, suggestMaintenanceNotes } from "@/integrations/ai/extractors";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
@@ -43,6 +44,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [suggestNotesLoading, setSuggestNotesLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", category: "Sonstiges", priority: "medium" as MaintenanceItem["priority"],
     estimated_cost: 0, planned_date: "", notes: "",
@@ -165,7 +167,25 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
                 </div>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Notiz</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Notiz</Label>
+                  {isDeepSeekConfigured() && (form.title.trim() || form.category !== "Sonstiges") && (
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={async () => {
+                      setSuggestNotesLoading(true);
+                      try {
+                        const text = await suggestMaintenanceNotes(form.title.trim() || form.category, form.category);
+                        if (text) setForm(f => ({ ...f, notes: text }));
+                      } catch (e) {
+                        handleError(e, { context: "ai", details: "suggestMaintenanceNotes", showToast: true });
+                      } finally {
+                        setSuggestNotesLoading(false);
+                      }
+                    }} disabled={suggestNotesLoading} type="button" aria-label="KI Notiz-Vorschlag">
+                      {suggestNotesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      KI Notiz
+                    </Button>
+                  )}
+                </div>
                 <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
               </div>
               <Button onClick={() => addMutation.mutate()} className="w-full" disabled={addMutation.isPending || !form.title.trim()}>

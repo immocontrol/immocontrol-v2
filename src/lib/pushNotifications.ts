@@ -152,6 +152,63 @@ export function checkDocumentExpiry(
   return notifications;
 }
 
+const PUSH_SUB_KEY = "immocontrol_web_push_subscription";
+
+/**
+ * Web-Push: Subscribe to push notifications (requires VAPID public key).
+ * VAPID public key via VITE_VAPID_PUBLIC_KEY.
+ * Returns subscription JSON or null if unavailable.
+ */
+export async function subscribeToWebPush(): Promise<PushSubscription | null> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;
+  const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  if (!vapidKey || !vapidKey.startsWith("B")) {
+    return null;
+  }
+  const perm = await requestNotificationPermission();
+  if (perm !== "granted") return null;
+  const reg = await navigator.serviceWorker.ready;
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidKey),
+  });
+  const json = subscription.toJSON();
+  try {
+    localStorage.setItem(PUSH_SUB_KEY, JSON.stringify(json));
+  } catch {
+    /* ignore */
+  }
+  return subscription;
+}
+
+function urlBase64ToUint8Array(base64: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+/** Check if Web Push is subscribed and supported */
+export function getWebPushStatus(): {
+  supported: boolean;
+  subscribed: boolean;
+  vapidConfigured: boolean;
+} {
+  const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  const vapidConfigured = !!(vapidKey && vapidKey.startsWith("B"));
+  const supported = typeof navigator !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+  let subscribed = false;
+  try {
+    const raw = localStorage.getItem(PUSH_SUB_KEY);
+    subscribed = !!(raw && raw.length > 20);
+  } catch {
+    /* ignore */
+  }
+  return { supported, subscribed, vapidConfigured };
+}
+
 /**
  * FUND-25: Check loans for upcoming Zinsbindung end.
  */

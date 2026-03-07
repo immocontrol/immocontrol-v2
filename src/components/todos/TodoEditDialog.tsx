@@ -2,12 +2,15 @@
  * TodoEditDialog — extracted from Todos.tsx (Fix 3: Split large files).
  * Edit dialog for a single todo item.
  */
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
 import { LoadingButton } from "@/components/LoadingButton";
+import { isDeepSeekConfigured, suggestTodoDescription } from "@/integrations/ai/extractors";
+import { handleError } from "@/lib/handleError";
 
 const PRIORITY_CONFIG: Record<number, { label: string; icon: string }> = {
   1: { label: "Dringend", icon: "\uD83D\uDD34" },
@@ -36,6 +39,7 @@ interface TodoEditDialogProps {
 }
 
 export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSaving }: TodoEditDialogProps) {
+  const [aiLoading, setAiLoading] = useState(false);
   return (
     <ResponsiveDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <ResponsiveDialogHeader>
@@ -50,13 +54,41 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
           autoFocus
           aria-label="Aufgabentitel"
         />
-        <Textarea
-          value={form.description}
-          onChange={(e) => onFormChange((f) => ({ ...f, description: e.target.value }))}
-          placeholder="Beschreibung (optional)"
-          className="text-sm min-h-[80px] resize-none"
-          aria-label="Aufgabenbeschreibung"
-        />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs text-muted-foreground">Beschreibung (optional)</label>
+            {isDeepSeekConfigured() && form.title.trim().length >= 2 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                disabled={aiLoading}
+                onClick={async () => {
+                  setAiLoading(true);
+                  try {
+                    const text = await suggestTodoDescription(form.title.trim());
+                    if (text) onFormChange((f) => ({ ...f, description: text }));
+                  } catch (e) {
+                    handleError(e, { context: "ai", details: "suggestTodoDescription", showToast: true });
+                  } finally {
+                    setAiLoading(false);
+                  }
+                }}
+              >
+                {aiLoading ? <span className="animate-spin">⏳</span> : "✨"}
+                KI Beschreibung
+              </Button>
+            )}
+          </div>
+          <Textarea
+            value={form.description}
+            onChange={(e) => onFormChange((f) => ({ ...f, description: e.target.value }))}
+            placeholder="Beschreibung (optional)"
+            className="text-sm min-h-[80px] resize-none"
+            aria-label="Aufgabenbeschreibung"
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Fälligkeitsdatum</label>

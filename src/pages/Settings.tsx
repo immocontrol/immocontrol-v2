@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,7 @@ import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { SystemInfoSettings } from "@/components/settings/SystemInfoSettings";
 import { ShortcutSettings } from "@/components/settings/ShortcutSettings";
 import { ManusSettings } from "@/components/settings/ManusSettings";
+import { BenachrichtigungenSettings } from "@/components/settings/BenachrichtigungenSettings";
 
 /* Settings sidebar sections for navigation */
 const SETTINGS_SECTIONS = [
@@ -46,6 +47,7 @@ const SETTINGS_SECTIONS = [
   { id: "standardseite", label: "Standardseite", icon: Home },
   { id: "ai-chat", label: "AI Chat", icon: Bot },
   { id: "backup", label: "Daten-Backup", icon: Database },
+  { id: "benachrichtigungen", label: "Benachrichtigungen", icon: Bell },
   { id: "tastenkombinationen", label: "Tasten", icon: Keyboard },
   { id: "telegram", label: "Telegram", icon: MessageSquare },
   { id: "manus-ai", label: "Manus AI", icon: Bot },
@@ -366,6 +368,7 @@ const Settings = () => {
         <DefaultPageSettings sectionRef={refFor("standardseite")} />
         <AIChatSettings sectionRef={refFor("ai-chat")} />
         <BackupSettings sectionRef={refFor("backup")} />
+        <BenachrichtigungenSettings sectionRef={refFor("benachrichtigungen")} />
         <ShortcutSettings sectionRef={refFor("tastenkombinationen")} />
         <TelegramSettings sectionRef={refFor("telegram")} />
         <ManusSettings sectionRef={refFor("manus-ai")} />

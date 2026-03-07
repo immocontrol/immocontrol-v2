@@ -21,6 +21,7 @@ import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai
 import { extractPdfText } from "@/lib/exposeParser";
 import { EmptyState } from "@/components/EmptyState";
 import { ROUTES } from "@/lib/routes";
+import { Link } from "react-router-dom";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 
@@ -266,9 +267,14 @@ const Dokumente = () => {
             {extracting && <span className="ml-2 text-primary animate-pulse">Text wird extrahiert...</span>}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2 shrink-0" aria-label="Finanzierungs-Cockpit">
-          <Wallet className="h-4 w-4" /> Finanzierungs-Cockpit
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Link to={ROUTES.CONTRACTS} className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors touch-target min-h-[44px]" aria-label="Fristen und Verträge">
+            <CalendarCheck className="h-3.5 w-3.5" /> Dokumentfristen & Verträge
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2" aria-label="Finanzierungs-Cockpit">
+            <Wallet className="h-4 w-4" /> Finanzierung
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
