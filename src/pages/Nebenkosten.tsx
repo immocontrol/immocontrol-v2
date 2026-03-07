@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2, Building2, BarChart3 } from "lucide-react";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
 import { AutoNebenkosten } from "@/components/AutoNebenkosten";
@@ -38,6 +40,8 @@ const Nebenkosten = () => {
     prepayments: "0",
   });
   const [itemForm, setItemForm] = useState({ category: "Grundsteuer", description: "", total_amount: "", distribution_key: "Fläche", tenant_amount: "" });
+  const lastDeletedItemIdRef = useRef<string | null>(null);
+  const lastDeletedBillingIdRef = useRef<string | null>(null);
 
   const { data: billings = [] } = useQuery({
     queryKey: ["utility_billings"],
@@ -90,7 +94,10 @@ const Nebenkosten = () => {
       setCreateOpen(false);
       qc.invalidateQueries({ queryKey: ["utility_billings"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "utility_billings.insert", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Erstellen", () => createBilling.mutate());
+    },
   });
 
   const addItem = useMutation({
@@ -113,7 +120,10 @@ const Nebenkosten = () => {
       qc.invalidateQueries({ queryKey: ["utility_billing_items", selectedBilling] });
       updateBillingTotals();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "utility_billing_items.insert", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Hinzufügen", () => addItem.mutate());
+    },
   });
 
   const deleteItem = useMutation({
@@ -125,7 +135,10 @@ const Nebenkosten = () => {
       qc.invalidateQueries({ queryKey: ["utility_billing_items", selectedBilling] });
       updateBillingTotals();
     },
-    onError: () => toast.error("Fehler beim Löschen"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "utility_billing_items.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => { if (lastDeletedItemIdRef.current) deleteItem.mutate(lastDeletedItemIdRef.current); });
+    },
   });
 
   const deleteBilling = useMutation({
@@ -140,7 +153,10 @@ const Nebenkosten = () => {
       setSelectedBilling(null);
       qc.invalidateQueries({ queryKey: ["utility_billings"] });
     },
-    onError: () => toast.error("Fehler beim Löschen der Abrechnung"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "utility_billings/items.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen der Abrechnung", () => { if (lastDeletedBillingIdRef.current) deleteBilling.mutate(lastDeletedBillingIdRef.current); });
+    },
   });
 
   const updateBillingTotals = async () => {
@@ -463,7 +479,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                       <span className="text-xs text-muted-foreground">{formatCurrency(Number(item.total_amount))}</span>
                       <span className="font-medium">{formatCurrency(Number(item.tenant_amount))}</span>
                       {selectedBillingData.status === "draft" && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteItem.mutate(item.id)} aria-label="Position löschen">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { lastDeletedItemIdRef.current = item.id; deleteItem.mutate(item.id); }} aria-label="Position löschen">
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
@@ -566,7 +582,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                           Gesamt: {formatCurrency(Number(b.total_costs))}
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); deleteBilling.mutate(b.id); }} aria-label="Abrechnung löschen">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); lastDeletedBillingIdRef.current = b.id; deleteBilling.mutate(b.id); }} aria-label="Abrechnung löschen">
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>

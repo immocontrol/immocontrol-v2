@@ -222,6 +222,10 @@ const Deals = () => {
   /* FUNC-12: Kanban Drag & Drop between stages */
   const [draggedDeal, setDraggedDeal] = useState<DealRecord | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  const lastLinkViewingRef = useRef<{ viewingId: string } | null>(null);
+  const lastDeletedDealIdRef = useRef<string | null>(null);
+  const lastMoveDealRef = useRef<{ id: string; stage: string; deal?: DealRecord } | null>(null);
+  const lastBatchImportRef = useRef<(typeof emptyForm)[] | null>(null);
 
   /* SYNERGY: Load contacts for contact picker */
   const { data: contacts = [] } = useQuery({
@@ -259,7 +263,10 @@ const Deals = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.viewings.all });
       toast.success("Besichtigung zugeordnet");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "property_viewings.update (deal_id)", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Zuordnen", () => { if (lastLinkViewingRef.current) linkViewingToDeal.mutate(lastLinkViewingRef.current); });
+    },
   });
 
   /* UPD-20: Use centralised query keys */
@@ -305,7 +312,10 @@ const Deals = () => {
       setEditDeal(null);
       clearDealDraft();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "deals.insert/update", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Speichern", () => saveDeal.mutate());
+    },
   });
 
   const deleteDeal = useMutation({
@@ -321,9 +331,9 @@ const Deals = () => {
       toast.success("Deal gelöscht");
       setDeleteTarget(null);
     },
-    /* UPD-22: Error handler for delete mutation */
-    onError: (e: Error) => {
-      toast.error(`L\u00f6schen fehlgeschlagen: ${e.message}`);
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "deals.delete", showToast: false });
+      toastErrorWithRetry("Löschen fehlgeschlagen", () => { if (lastDeletedDealIdRef.current) deleteDeal.mutate(lastDeletedDealIdRef.current); });
       setDeleteTarget(null);
     },
   });
@@ -378,8 +388,10 @@ const Deals = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.viewings.all });
       }
     },
-    /* UPD-23: Error handler for move mutation */
-    onError: (e: Error) => toast.error(`Verschieben fehlgeschlagen: ${e.message}`),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "deals.update (stage)", showToast: false });
+      toastErrorWithRetry("Verschieben fehlgeschlagen", () => { if (lastMoveDealRef.current) moveDeal.mutate(lastMoveDealRef.current); });
+    },
   });
 
   const exposePdfFileRef = useRef<File | null>(null);
@@ -481,7 +493,10 @@ const Deals = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.deals.all });
       toast.success(`${count} Deal${count > 1 ? "s" : ""} aus Telegram importiert`);
     },
-    onError: (e: Error) => toast.error(`Import fehlgeschlagen: ${e.message}`),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "deals.insert (batch)", showToast: false });
+      toastErrorWithRetry("Import fehlgeschlagen", () => { if (lastBatchImportRef.current?.length) batchImport.mutate(lastBatchImportRef.current); });
+    },
   });
 
   /* TELEGRAM-AUTO-1: Auto-import deals from Telegram Bot API (no manual paste required) */
@@ -756,6 +771,7 @@ const Deals = () => {
 
   /* UPD-34: Handle Telegram bulk import */
   const handleTelegramImport = useCallback((dealForms: (typeof emptyForm)[]) => {
+    lastBatchImportRef.current = dealForms;
     batchImport.mutate(dealForms);
   }, [batchImport]);
 
@@ -909,7 +925,9 @@ const Deals = () => {
                   e.preventDefault();
                   if (!draggedDeal) return;
                   if (draggedDeal.stage !== stage.key) {
-                    moveDeal.mutate({ id: draggedDeal.id, stage: stage.key, deal: draggedDeal });
+                    const payload = { id: draggedDeal.id, stage: stage.key, deal: draggedDeal };
+                    lastMoveDealRef.current = payload;
+                    moveDeal.mutate(payload);
                     toast.success(`Verschoben: ${stage.label}`);
                   }
                   setDraggedDeal(null);
@@ -932,7 +950,9 @@ const Deals = () => {
                       currentStage={deal.stage}
                       stages={STAGES.map(s => ({ key: s.key, label: s.label, color: s.color }))}
                       onStageChange={(newStage) => {
-                        moveDeal.mutate({ id: deal.id, stage: newStage, deal });
+                        const payload = { id: deal.id, stage: newStage, deal };
+                        lastMoveDealRef.current = payload;
+                        moveDeal.mutate(payload);
                         toast.success(`Verschoben: ${stageMap[newStage]?.label || newStage}`);
                       }}
                     >
@@ -1250,7 +1270,7 @@ const Deals = () => {
                 {viewings.length > 0 && (
                   <Select
                     value="__link__"
-                    onValueChange={(v) => { if (v !== "__link__") linkViewingToDeal.mutate({ viewingId: v }); }}
+                    onValueChange={(v) => { if (v !== "__link__") { const payload = { viewingId: v }; lastLinkViewingRef.current = payload; linkViewingToDeal.mutate(payload); } }}
                   >
                     <SelectTrigger className="h-8 text-xs" aria-label="Besthende Besichtigung zuordnen">
                       <SelectValue placeholder="Besthende Besichtigung zuordnen…" />
@@ -1281,7 +1301,9 @@ const Deals = () => {
                 <span className="text-xs text-muted-foreground mr-1 mt-1">Verschieben:</span>
                 {STAGES.filter(s => s.key !== form.stage).map(s => (
                   <Button key={s.key} variant="outline" size="sm" className="text-xs h-7" onClick={() => {
-                    moveDeal.mutate({ id: editDeal.id, stage: s.key, deal: editDeal });
+                    const payload = { id: editDeal.id, stage: s.key, deal: editDeal };
+                    lastMoveDealRef.current = payload;
+                    moveDeal.mutate(payload);
                     setForm(p => ({ ...p, stage: s.key }));
                   }}>
                     <div className={cn("w-2 h-2 rounded-full mr-1", s.color)} /> {s.label}
@@ -1307,7 +1329,7 @@ const Deals = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 if (deleteTarget) {
-                  deleteDeal.mutate(deleteTarget);
+                  lastDeletedDealIdRef.current = deleteTarget; deleteDeal.mutate(deleteTarget);
                   if (addOpen) { setAddOpen(false); setEditDeal(null); }
                 }
               }}

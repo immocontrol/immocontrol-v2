@@ -52,6 +52,8 @@ const CRM = () => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const autocompleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const lastPlaceRef = useRef<SearchPlace | null>(null);
+  const lastEditCallLogRef = useRef<{ id: string; notes: string; outcome: string } | null>(null);
 
   useEffect(() => { document.title = "CRM & Akquise - ImmoControl"; }, []);
 
@@ -223,7 +225,10 @@ const CRM = () => {
       queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
       toast.success("Lead gespeichert");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "crm_leads.insert (place)", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Speichern", () => { if (lastPlaceRef.current) savePlaceLead.mutate(lastPlaceRef.current); });
+    },
   });
 
   // Add manual lead
@@ -241,7 +246,10 @@ const CRM = () => {
       setAddDialogOpen(false);
       setAddForm({ name: "", company: "", phone: "", email: "", address: "", category: "geschaeft", notes: "" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "crm_leads.insert (manual)", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Anlegen", () => addManualLead.mutate());
+    },
   });
 
   // Log a call
@@ -273,7 +281,10 @@ const CRM = () => {
       setLogDialogOpen(false);
       setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5 });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "crm_call_logs.insert", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Loggen", () => logCall.mutate());
+    },
   });
 
   // Edit a call log entry
@@ -299,7 +310,10 @@ const CRM = () => {
       setEditingLogId(null);
       setEditLogForm({ notes: "", outcome: "" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "crm_call_logs.update", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Aktualisieren", () => { if (lastEditCallLogRef.current) editCallLog.mutate(lastEditCallLogRef.current); });
+    },
   });
 
   // Update lead status
@@ -665,7 +679,7 @@ const CRM = () => {
                           variant="outline"
                           size="sm"
                           className="text-xs"
-                          onClick={() => savePlaceLead.mutate(place)}
+                          onClick={() => { lastPlaceRef.current = place; savePlaceLead.mutate(place); }}
                         >
                           <Plus className="h-3 w-3 mr-1" /> Speichern
                         </Button>
@@ -864,7 +878,7 @@ const CRM = () => {
                                       placeholder="Notizen bearbeiten..."
                                     />
                                     <div className="flex gap-1">
-                                      <Button size="sm" className="h-6 text-xs" onClick={() => editCallLog.mutate({ id: log.id, notes: editLogForm.notes, outcome: editLogForm.outcome })}>
+                                      <Button size="sm" className="h-6 text-xs" onClick={() => { const payload = { id: log.id, notes: editLogForm.notes, outcome: editLogForm.outcome }; lastEditCallLogRef.current = payload; editCallLog.mutate(payload); }}>
                                         <Save className="h-3 w-3 mr-1" /> Speichern
                                       </Button>
                                       <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setEditingLogId(null)}>

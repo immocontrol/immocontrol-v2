@@ -71,6 +71,9 @@
 | **MeterManagement** | — | Zähler anlegen, Ablesung erfassen, Zähler löschen: handleError + toastErrorWithRetry (Retry mit lastMeterIdRef/lastDeletedMeterIdRef) |
 | **PropertyNotes** | — | Notiz anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedNoteIdRef) |
 | **TenantManagement** | — | Mieter speichern/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedTenantIdRef) |
+| **Nebenkosten** | — | Abrechnung/Position anlegen, Position/Abrechnung löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedItemIdRef/lastDeletedBillingIdRef) |
+| **CRM** | — | Lead speichern (Ort/manuel), Gespräch loggen, Gespräch bearbeiten: handleError + toastErrorWithRetry (Retry mit lastPlaceRef/lastEditCallLogRef) |
+| **Deals** | Besichtigungen | Speichern, Löschen, Verschieben, Besichtigung zuordnen, Batch-Import: handleError + toastErrorWithRetry (Retry mit lastDeletedDealIdRef/lastMoveDealRef/lastBatchImportRef) |
 
 ## Technische Details
 
