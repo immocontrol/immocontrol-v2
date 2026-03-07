@@ -719,6 +719,7 @@ const CRM = () => {
         {/* Gewerbe-Scout Tab: MFH mit Gewerbe finden, anrufen, als Lead übernehmen */}
         <TabsContent value="scout" className="space-y-4">
           <GewerbeScout
+            initialQuery={searchParams.get("q") ?? undefined}
             onAddAsLead={(b) => {
               setAddForm((prev) => ({ ...prev, name: b.name, address: b.address || "", phone: b.phone || "" }));
               setAddDialogOpen(true);

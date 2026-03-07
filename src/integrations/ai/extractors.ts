@@ -340,6 +340,25 @@ Generiere eine kurze, sachliche Beschreibung (2–4 Sätze) als Vorschlag, die d
 }
 
 /**
+ * Kurzer Einstiegssatz für Kaltakquise-Anruf (Gewerbe-Scout).
+ * Ein Satz, höflich, mit Namen/Branche, ohne Werbung.
+ */
+export async function suggestColdCallOpening(name: string, type: string, address?: string | null): Promise<string> {
+  const prompt = `Du bist ein Immobilieninvestor. Du rufst ein Gewerbe an (Kaltakquise), um nach dem Gebäude/Objekt zu fragen.
+Name: ${name}
+Branche/Typ: ${type}
+${address ? `Adresse: ${address}` : ""}
+
+Generiere genau einen kurzen Einstiegssatz (1 Satz) für den Anruf. Höflich, sachlich, kein Werbesprache. Du stellst dich kurz vor und sagst, dass du dich für das Objekt/Gebäude interessierst. Keine Anrede wie "Guten Tag". Direkt der Satz. Auf Deutsch.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Assistent für kurze, professionelle Formulierungen. Antworte nur mit dem einen Satz.", maxTokens: 80 }
+  );
+  return raw.trim();
+}
+
+/**
  * Text verbessern/formalieren (Rechtschreibung, Stil, Formulierung).
  * Für Anschreiben, Begründungen, Notizen.
  */

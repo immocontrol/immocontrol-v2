@@ -137,9 +137,12 @@ export async function searchNominatimAutocomplete(query: string): Promise<{ disp
 
 /* ── OSM Overpass API: building size estimation ── */
 
+const OVERPASS_TIMEOUT_RADIUS = 15;
+const OVERPASS_TIMEOUT_BBOX = 25;
+
 export async function estimateBuildingSize(lat: number, lng: number): Promise<BuildingInfo | null> {
   const radius = 20;
-  const query = `[out:json][timeout:15];
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
 (
   way["building"](around:${radius},${lat},${lng});
   relation["building"](around:${radius},${lat},${lng});
@@ -375,7 +378,7 @@ export interface BuildingWithSize {
 /** Fetch buildings in bbox with geometry; return centroid + estimated gross area. */
 export async function fetchBuildingsInBbox(bbox: PlaceBbox): Promise<BuildingWithSize[]> {
   const { south, north, west, east } = bbox;
-  const query = `[out:json][timeout:25];
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
 way["building"](${south},${west},${north},${east});
 out body geom;`;
   try {
@@ -456,7 +459,7 @@ export interface CommercialPOIWithCoord extends NearbyBusiness {
 /** Fetch commercial POIs in bbox (for whole-place search). */
 export async function fetchCommercialPOIsInBbox(bbox: PlaceBbox): Promise<CommercialPOIWithCoord[]> {
   const { south, north, west, east } = bbox;
-  const query = `[out:json][timeout:25];
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
 (
   node["shop"](${south},${west},${north},${east});
   node["office"](${south},${west},${north},${east});
@@ -542,7 +545,7 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; estimat
 
 /** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Returns POIs with coords for building-size matching. */
 export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number): Promise<CommercialPOIWithCoord[]> {
-  const query = `[out:json][timeout:15];
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
 (
   node["shop"](around:${radiusM},${lat},${lng});
   node["office"](around:${radiusM},${lat},${lng});

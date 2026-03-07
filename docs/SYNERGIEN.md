@@ -77,10 +77,13 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
-| **GewerbeScout** | CRM, Leads | Ort (ganzes Gebiet) oder Adresse + Umkreis; Gebäudegröße aus OSM; Sortierung nach Größe/Entfernung/Name; Anrufen, Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog); Autocomplete, Mindestfläche-Filter, Deduplizierung, CSV-Export |
-| **CRM** | URL-Tab | `?tab=scout` öffnet direkt den Gewerbe-Scout-Tab (Deep-Link von Dashboard, QuickActions) |
+| **GewerbeScout** | CRM, Leads | Ort (ganzes Gebiet) oder Adresse + Umkreis; Gebäudegröße aus OSM; Sortierung nach Größe/Entfernung/Name; Anrufen, Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog); Autocomplete, Mindestfläche-Filter, „Nur mit Telefon“, Deduplizierung, CSV-Export; sessionStorage für letzte Suche; KI „Anruf-Einstieg“ (DeepSeek) pro Treffer; initialQuery z. B. von ?q= |
+| **CRM** | URL-Tab, Scout | `?tab=scout` öffnet Gewerbe-Scout; `?q=…` wird als initialQuery an GewerbeScout übergeben (Synergie Deals) |
+| **Deals** | CRM (Scout) | Bei Deal mit Adresse: Link „Gewerbe in Umgebung“ / „Scout“ → CRM?tab=scout&q=Adresse |
 | **DashboardActionCenter** | CRM (Scout) | Link „Gewerbe finden“ → CRM mit Tab Scout (Synergie Akquise) |
 | **QuickActions** | CRM (Scout) | Schnellaktion „Gewerbe-Scout“ → CRM?tab=scout |
+| **SpotlightSearch / MobileSearchOverlay** | CRM (Scout) | Eintrag „Gewerbe-Scout“ → CRM?tab=scout (Suche „gewerbe scout“) |
+| **Immo-AI** | — | Vorschlagsfrage „Wo finde ich Gewerbe für die Akquise?“ (Antwort verweist auf Gewerbe-Scout) |
 | **EnergyCertificateTracker** | — | Energieausweis anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedCertIdRef) |
 | **CrmFollowUpReminder** | Todos | Follow-Up-Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastContactRef) |
 | **InsuranceTracker** | — | Versicherung anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedInsuranceIdRef); Touch-Target für Löschen-Button (Mobile) |
@@ -91,4 +94,4 @@
 - **Deep-Links**: `useSearchParams()` liest `?id=xxx` (Deals, Besichtigungen) bzw. `?highlight=xxx` (Kontakte). Kontakte scrollt zum hervorgehobenen Kontakt, Deals/Besichtigungen öffnen den Bearbeitungsdialog.
 - **Share-Buttons**: Deals und Besichtigungen nutzen `useShare()` für native Share API (Mobile) oder Kopieren in Zwischenablage.
 - **Todos**: `project: "Besichtigungen"`, `title: "Besichtigung nachbereiten: …"`.
-- **Gewerbe-Scout**: Modus „Ganzer Ort“ nutzt Nominatim-Boundingbox und durchsucht das gesamte Gebiet; Gebäudegröße aus Overpass (way["building"] + geom), POIs werden dem nächsten Gebäude zugeordnet; Sortierung nach geschätzter Bruttogeschossfläche.
+- **Gewerbe-Scout**: Modus „Ganzer Ort“ nutzt Nominatim-Boundingbox und durchsucht das gesamte Gebiet; Gebäudegröße aus Overpass (way["building"] + geom), POIs werden dem nächsten Gebäude zugeordnet; Sortierung nach geschätzter Bruttogeschossfläche. Overpass-Timeouts zentral in crmUtils (OVERPASS_TIMEOUT_BBOX/RADIUS). KI-Anruf-Einstieg über suggestColdCallOpening (DeepSeek) in integrations/ai/extractors.

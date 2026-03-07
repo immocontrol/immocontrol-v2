@@ -33,6 +33,7 @@ const SUGGESTIONS = [
   "Fasse meine letzten Besichtigungen kurz zusammen",
   "Wie viele offene Tickets habe ich?",
   "Gibt es offene Nebenkostenabrechnungen oder Entwürfe?",
+  "Wo finde ich Gewerbe für die Akquise?",
 ];
 
 export default function ImmoAI() {

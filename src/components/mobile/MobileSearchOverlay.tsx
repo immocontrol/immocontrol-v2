@@ -4,7 +4,7 @@
  * recent searches, and live suggestions while typing. Similar to Spotlight on iOS.
  */
 import { memo, useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Search, X, Clock, Building2, Users, FileText, Handshake, ArrowRight, Trash2, TrendingUp, Mic, MicOff } from "lucide-react";
+import { Search, X, Clock, Building2, Users, FileText, Handshake, ArrowRight, Trash2, TrendingUp, Mic, MicOff, Store } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProperties } from "@/context/PropertyContext";
@@ -126,6 +126,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
       { id: "page-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.TODOS },
       { id: "page-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.DOKUMENTE },
       { id: "page-crm", title: "CRM", subtitle: "Leads & Akquise", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: ROUTES.CRM },
+      { id: "page-scout", title: "Gewerbe-Scout", subtitle: "Gewerbe nach Ort/Umkreis", category: "Seiten", categoryIcon: <Store className="h-4 w-4" />, path: `${ROUTES.CRM}?tab=scout` },
       { id: "page-deals", title: "Deals", subtitle: "Deal Pipeline", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: ROUTES.DEALS },
     ].filter(p => normalizeString(`${p.title} ${p.subtitle}`).includes(q));
 

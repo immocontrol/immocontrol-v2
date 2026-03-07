@@ -4,7 +4,7 @@
  * Mit Ort-Autocomplete, Mindest-Gebäudefläche, Deduplizierung und klaren Lade-/Leer-Zuständen.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download } from "lucide-react";
+import { MapPin, Phone, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ import {
 } from "@/lib/crmUtils";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { isDeepSeekConfigured, suggestColdCallOpening } from "@/integrations/ai/extractors";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type SearchMode = "ort" | "umkreis";
 
@@ -48,15 +50,101 @@ export interface ScoutResult extends CommercialPOIWithCoord {
   estimatedGrossArea: number | null;
 }
 
-export interface GewerbeScoutProps {
-  onAddAsLead?: (business: { name: string; address: string | null; phone: string | null }) => void;
+const SCOUT_STORAGE_KEY = "gewerbe_scout_last";
+
+function ScoutAiCallPopover({ business }: { business: ScoutResult }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setText(null);
+    try {
+      const result = await suggestColdCallOpening(business.name, business.type, business.address);
+      setText(result || "Kein Vorschlag erhalten.");
+    } catch {
+      setText("Fehler beim Generieren.");
+    } finally {
+      setLoading(false);
+    }
+  }, [business.name, business.type, business.address]);
+
+  useEffect(() => {
+    if (open && text === null && !loading) load();
+  }, [open, load, loading, text]);
+
+  const copy = useCallback(() => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("In Zwischenablage kopiert");
+    setTimeout(() => setCopied(false), 2000);
+  }, [text]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" aria-label={`KI Anruf-Einstieg: ${business.name}`}>
+          <Sparkles className="h-3.5 w-3.5" /> KI Einstieg
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] max-w-[calc(100vw-2rem)] p-3" align="end">
+        <p className="text-xs font-medium mb-2">Anruf-Einstieg (KI)</p>
+        {loading && <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Wird generiert…</p>}
+        {!loading && text && (
+          <>
+            <p className="text-sm text-wrap-safe mb-2">{text}</p>
+            <Button size="sm" variant="secondary" className="w-full gap-1" onClick={copy}>
+              {copied ? "Kopiert!" : "Kopieren"}
+            </Button>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
-export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
-  const [query, setQuery] = useState("");
-  const [mode, setMode] = useState<SearchMode>("ort");
-  const [radius, setRadius] = useState(500);
+export interface GewerbeScoutProps {
+  onAddAsLead?: (business: { name: string; address: string | null; phone: string | null }) => void;
+  /** Vorausgefüllte Suche (z. B. von Deals oder URL ?q=). */
+  initialQuery?: string;
+}
+
+export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScoutProps) {
+  const [query, setQuery] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { query?: string; mode?: SearchMode; radius?: number };
+        return p.query ?? "";
+      }
+    } catch { /* ignore */ }
+    return "";
+  });
+  const [mode, setMode] = useState<SearchMode>(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { mode?: SearchMode };
+        return p.mode === "umkreis" ? "umkreis" : "ort";
+      }
+    } catch { /* ignore */ }
+    return "ort";
+  });
+  const [radius, setRadius] = useState(() => {
+    try {
+      const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
+      if (s) {
+        const p = JSON.parse(s) as { radius?: number };
+        return [200, 500, 1000].includes(Number(p.radius)) ? Number(p.radius) : 500;
+      }
+    } catch { /* ignore */ }
+    return 500;
+  });
   const [minSize, setMinSize] = useState(0);
+  const [onlyWithPhone, setOnlyWithPhone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [results, setResults] = useState<ScoutResult[]>([]);
@@ -67,9 +155,14 @@ export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
   const suggestionRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (initialQuery != null && initialQuery.trim()) setQuery(initialQuery.trim());
+  }, [initialQuery]);
+
   const sortedResults = useMemo(() => {
     let list = [...results];
     if (minSize > 0) list = list.filter((r) => (r.estimatedGrossArea ?? 0) >= minSize);
+    if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
     if (sortBy === "size") {
       list.sort((a, b) => (b.estimatedGrossArea ?? 0) - (a.estimatedGrossArea ?? 0));
     } else if (sortBy === "distance") {
@@ -78,7 +171,7 @@ export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
     return list;
-  }, [results, minSize, sortBy]);
+  }, [results, minSize, onlyWithPhone, sortBy]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -160,6 +253,9 @@ export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
         const deduped = dedupeScoutResults(withSize);
         setResults(deduped);
         setLoadingStep(null);
+        try {
+          sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({ query: query.trim(), mode: "ort", radius }));
+        } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Gewerbe in diesem Gebiet gefunden");
         else toast.success(`${deduped.length} Gewerbe in ${bbox.display_name} – sortiert nach Gebäudegröße`);
       } else {
@@ -181,6 +277,9 @@ export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
         const deduped = dedupeScoutResults(withSize);
         setResults(deduped);
         setLoadingStep(null);
+        try {
+          sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({ query: query.trim(), mode: "umkreis", radius }));
+        } catch { /* ignore */ }
         if (deduped.length === 0) toast.info("Keine Gewerbe im gewählten Umkreis gefunden");
         else toast.success(`${deduped.length} Gewerbe gefunden`);
       }
@@ -311,10 +410,20 @@ export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-medium">Gefundene Gewerbe ({sortedResults.length}{minSize > 0 ? `, ≥ ${minSize} m²` : ""})</h3>
               <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={onlyWithPhone}
+                    onChange={(e) => setOnlyWithPhone(e.target.checked)}
+                    className="rounded border-input h-4 w-4 touch-target"
+                    aria-label="Nur Einträge mit Telefonnummer"
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Nur mit Telefon</span>
+                </label>
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap">Mind. Fläche:</Label>
                   <Select value={String(minSize)} onValueChange={(v) => setMinSize(Number(v))}>
-                    <SelectTrigger className="h-8 w-[100px] text-xs">
+                    <SelectTrigger className="h-8 w-[100px] text-xs min-h-[36px] sm:min-h-[32px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -381,6 +490,9 @@ export default function GewerbeScout({ onAddAsLead }: GewerbeScoutProps) {
                         <ExternalLink className="h-3.5 w-3.5" /> Maps
                       </a>
                     </Button>
+                    {isDeepSeekConfigured() && (
+                      <ScoutAiCallPopover business={b} />
+                    )}
                     {onAddAsLead && (
                       <Button
                         variant="secondary"

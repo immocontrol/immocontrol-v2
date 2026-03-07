@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
@@ -154,6 +154,16 @@ const DealCard = memo(({
           <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
             <MapPin className="h-3 w-3 shrink-0" /> {deal.address}
           </p>
+        )}
+        {deal.address && (
+          <Link
+            to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(deal.address)}`}
+            className="text-[10px] text-primary hover:underline flex items-center gap-1 w-fit"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Gewerbe in Umgebung suchen"
+          >
+            <Store className="h-3 w-3 shrink-0" /> Gewerbe in Umgebung
+          </Link>
         )}
         <div className="flex items-center justify-between">
           {(deal.purchase_price ?? 0) > 0 && <span className="text-xs font-medium">{fmt(deal.purchase_price!)}</span>}
@@ -1047,15 +1057,27 @@ const Deals = () => {
                         </td>
                         <td className="p-3 text-xs text-muted-foreground">{new Date(deal.created_at).toLocaleDateString("de-DE")}</td>
                         <td className="p-3">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            aria-label="Deal l\u00f6schen"
-                            onClick={e => { e.stopPropagation(); setDeleteTarget(deal.id); }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            {deal.address && (
+                              <Link
+                                to={`${ROUTES.CRM}?tab=scout&q=${encodeURIComponent(deal.address)}`}
+                                className="text-xs text-primary hover:underline flex items-center gap-0.5 px-1.5 py-1 rounded hover:bg-secondary"
+                                onClick={e => e.stopPropagation()}
+                                aria-label="Gewerbe in Umgebung suchen"
+                              >
+                                <Store className="h-3 w-3" /> Scout
+                              </Link>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              aria-label="Deal l\u00f6schen"
+                              onClick={e => { e.stopPropagation(); setDeleteTarget(deal.id); }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
