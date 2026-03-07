@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Gewerbe-Scout: Abort + Tastatur** — Suche bricht vorherige Anfragen ab (AbortController); Geo/Overpass in crmUtils unterstützen optionales AbortSignal. Autocomplete-Vorschläge: Pfeiltasten hoch/runter, Enter wählt aus; aria-activedescendant + Scroll-into-View.
+- **Synergien: Darlehen, Objekte, Berichte** — Darlehen Empty State: Button „Gewerbe finden“ → CRM Scout. Objekte Empty State: Button „Gewerbe-Scout“. Berichte Empty State: Button „Zur Analyse“. Deals-Tabelle: aria-label für horizontalen Scroll (A11y). Immo-AI: Vorschlagsfrage „Welche Darlehen haben die längste Zinsbindung?“.
 - **Gewerbe-Scout: Filter „Nur mit Web“, 3 km, CSV E-Mail** — Checkbox „Nur mit Web“ filtert Treffer mit Website; Umkreis-Option 3 km; CSV-Export um Spalte „E-Mail“ ergänzt.
 - **Deals Tabelle: €/m²** — In der Tabellenansicht wird unter dem Kaufpreis der Preis pro m² angezeigt, wenn Kaufpreis und Fläche vorhanden sind.
 - **Gewerbe-Scout: Website, CSV erweitert** — Pro Treffer Link „Web“ wenn Website von OSM vorhanden (öffnet in neuem Tab); CSV-Export um Spalten „Website“ und „Öffnungszeiten“ ergänzt.

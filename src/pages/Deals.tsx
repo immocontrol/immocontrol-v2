@@ -1020,7 +1020,7 @@ const Deals = () => {
                 </Button>
               ))}
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" role="region" aria-label="Deals-Tabelle (horizontal scrollbar auf kleinen Bildschirmen)">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">

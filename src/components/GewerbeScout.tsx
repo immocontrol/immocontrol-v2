@@ -24,6 +24,7 @@ import {
   type CommercialPOIWithCoord,
   type PlaceBbox,
 } from "@/lib/crmUtils";
+import { cn } from "@/lib/utils";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { isDeepSeekConfigured, suggestColdCallOpening } from "@/integrations/ai/extractors";
@@ -171,8 +172,10 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
   const [sortBy, setSortBy] = useState<SortBy>("size");
   const [suggestions, setSuggestions] = useState<{ display_name: string; place_id: number }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
   const suggestionRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (initialQuery != null && initialQuery.trim()) setQuery(initialQuery.trim());
@@ -200,18 +203,32 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
       setSuggestions([]);
       return;
     }
+    const ac = new AbortController();
     const t = setTimeout(() => {
-      searchNominatimAutocomplete(query.trim()).then(setSuggestions);
+      searchNominatimAutocomplete(query.trim(), ac.signal)
+        .then((list) => { if (!ac.signal.aborted) setSuggestions(list); })
+        .catch(() => { /* ignore abort */ });
     }, 400);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); ac.abort(); };
   }, [query]);
 
   const pickSuggestion = useCallback((display_name: string) => {
     setQuery(display_name);
     setSuggestions([]);
     setShowSuggestions(false);
+    setSuggestionIndex(0);
     inputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    setSuggestionIndex(0);
+  }, [suggestions]);
+
+  useEffect(() => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    const el = suggestionRef.current?.querySelector(`#scout-suggestion-${suggestionIndex}`);
+    (el as HTMLElement)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [suggestionIndex, showSuggestions, suggestions.length]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -249,11 +266,15 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     toast.success("CSV exportiert");
   }, [sortedResults, searchLabel]);
 
-  const search = async () => {
+  const search = useCallback(async () => {
     if (!query.trim()) {
       toast.error("Bitte Ort oder Adresse eingeben");
       return;
     }
+    searchAbortRef.current?.abort();
+    const ac = new AbortController();
+    searchAbortRef.current = ac;
+    const signal = ac.signal;
     setLoading(true);
     setResults([]);
     setSearchLabel(null);
@@ -262,7 +283,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
     setLoadingStep("ort");
     try {
       if (mode === "ort") {
-        const bbox = await geocodePlaceToBbox(query.trim());
+        const bbox = await geocodePlaceToBbox(query.trim(), signal);
+        if (signal.aborted) return;
         if (!bbox) {
           toast.error("Ort nicht gefunden");
           setLoading(false);
@@ -274,9 +296,10 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         setLastCenter(null);
         setLoadingStep("gewerbe");
         const [pois, buildings] = await Promise.all([
-          fetchCommercialPOIsInBbox(bbox),
-          fetchBuildingsInBbox(bbox),
+          fetchCommercialPOIsInBbox(bbox, signal),
+          fetchBuildingsInBbox(bbox, signal),
         ]);
+        if (signal.aborted) return;
         setLoadingStep("gebaeude");
         const withSize = attachBuildingSizes(pois, buildings, 80);
         const deduped = dedupeScoutResults(withSize);
@@ -288,7 +311,8 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         if (deduped.length === 0) toast.info("Keine Gewerbe in diesem Gebiet gefunden");
         else toast.success(`${deduped.length} Gewerbe in ${bbox.display_name} – sortiert nach Gebäudegröße`);
       } else {
-        const coord = await geocodeToCoord(query.trim());
+        const coord = await geocodeToCoord(query.trim(), signal);
+        if (signal.aborted) return;
         if (!coord) {
           toast.error("Adresse nicht gefunden");
           setLoading(false);
@@ -300,9 +324,10 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         setLastCenter({ lat: coord.lat, lng: coord.lng });
         setLoadingStep("gewerbe");
         const [pois, buildings] = await Promise.all([
-          fetchCommercialPOIsInRadius(coord.lat, coord.lng, radius),
-          fetchBuildingsInRadius(coord.lat, coord.lng, radius),
+          fetchCommercialPOIsInRadius(coord.lat, coord.lng, radius, signal),
+          fetchBuildingsInRadius(coord.lat, coord.lng, radius, signal),
         ]);
+        if (signal.aborted) return;
         setLoadingStep("gebaeude");
         const withSize = attachBuildingSizes(pois, buildings, 60);
         const deduped = dedupeScoutResults(withSize);
@@ -315,13 +340,14 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
         else toast.success(`${deduped.length} Gewerbe gefunden`);
       }
     } catch (e: unknown) {
+      if ((e as { name?: string }).name === "AbortError") return;
       handleError(e, { context: "general", details: "GewerbeScout.search", showToast: false });
       toastErrorWithRetry("Suche fehlgeschlagen", search);
       setLoadingStep(null);
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setLoading(false);
     }
-  };
+  }, [query, mode, radius]);
 
   return (
     <Card>
@@ -350,27 +376,48 @@ export default function GewerbeScout({ onAddAsLead, initialQuery }: GewerbeScout
                     inputRef.current?.blur();
                     return;
                   }
-                  if (e.key === "Enter") {
-                    if (showSuggestions && suggestions.length > 0) pickSuggestion(suggestions[0].display_name);
-                    else search();
+                  if (showSuggestions && suggestions.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setSuggestionIndex((i) => (i + 1) % suggestions.length);
+                      return;
+                    }
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setSuggestionIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
+                      return;
+                    }
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      pickSuggestion(suggestions[suggestionIndex].display_name);
+                      return;
+                    }
                   }
+                  if (e.key === "Enter") search();
                 }}
                 className="h-9 text-sm min-w-0"
                 aria-label="Ort oder Adresse für Gewerbesuche"
                 aria-autocomplete="list"
                 aria-expanded={showSuggestions && suggestions.length > 0}
+                aria-activedescendant={showSuggestions && suggestions.length > 0 ? `scout-suggestion-${suggestionIndex}` : undefined}
               />
               {showSuggestions && suggestions.length > 0 && (
                 <ul
                   ref={suggestionRef}
                   className="absolute z-50 top-full left-0 right-0 mt-0.5 rounded-md border border-border bg-popover text-popover-foreground shadow-md max-h-[220px] overflow-y-auto"
                   role="listbox"
+                  id="scout-suggestions-listbox"
                 >
-                  {suggestions.map((s) => (
+                  {suggestions.map((s, i) => (
                     <li
                       key={s.place_id}
+                      id={`scout-suggestion-${i}`}
                       role="option"
-                      className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground text-wrap-safe"
+                      aria-selected={i === suggestionIndex}
+                      className={cn(
+                        "px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground text-wrap-safe",
+                        i === suggestionIndex && "bg-accent text-accent-foreground"
+                      )}
                       onMouseDown={() => pickSuggestion(s.display_name)}
                     >
                       {s.display_name}

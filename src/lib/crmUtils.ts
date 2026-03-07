@@ -117,12 +117,12 @@ export async function searchNominatim(query: string): Promise<SearchPlace[]> {
   });
 }
 
-/** Nominatim autocomplete (debounced) — validated response */
-export async function searchNominatimAutocomplete(query: string): Promise<{ display_name: string; place_id: number }[]> {
+/** Nominatim autocomplete (debounced) — validated response. Optional signal to cancel. */
+export async function searchNominatimAutocomplete(query: string, signal?: AbortSignal): Promise<{ display_name: string; place_id: number }[]> {
   if (query.length < 3) return [];
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=de&accept-language=de`;
   try {
-    const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
+    const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" }, ...(signal && { signal }) });
     if (!res.ok) return [];
     const raw = await res.json();
     const data = parseNominatimResponse(raw);
@@ -325,10 +325,10 @@ out body;`;
   }
 }
 
-/** Geocode address to lat/lng via Nominatim (for Gewerbe-Scout). Returns null if not found. */
-export async function geocodeToCoord(query: string): Promise<{ lat: number; lng: number; display_name: string } | null> {
+/** Geocode address to lat/lng via Nominatim (for Gewerbe-Scout). Returns null if not found. Optional signal to cancel. */
+export async function geocodeToCoord(query: string, signal?: AbortSignal): Promise<{ lat: number; lng: number; display_name: string } | null> {
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
-  const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
+  const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" }, ...(signal && { signal }) });
   if (!res.ok) return null;
   const raw = await res.json();
   const data = parseNominatimResponse(Array.isArray(raw) ? raw : []);
@@ -348,9 +348,9 @@ export interface PlaceBbox {
   display_name: string;
 }
 
-export async function geocodePlaceToBbox(query: string): Promise<PlaceBbox | null> {
+export async function geocodePlaceToBbox(query: string, signal?: AbortSignal): Promise<PlaceBbox | null> {
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
-  const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
+  const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" }, ...(signal && { signal }) });
   if (!res.ok) return null;
   const raw = await res.json();
   const arr = Array.isArray(raw) ? raw : [];
@@ -375,8 +375,8 @@ export interface BuildingWithSize {
   footprintArea: number;
 }
 
-/** Fetch buildings in bbox with geometry; return centroid + estimated gross area. */
-export async function fetchBuildingsInBbox(bbox: PlaceBbox): Promise<BuildingWithSize[]> {
+/** Fetch buildings in bbox with geometry; return centroid + estimated gross area. Optional signal to cancel. */
+export async function fetchBuildingsInBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<BuildingWithSize[]> {
   const { south, north, west, east } = bbox;
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
 way["building"](${south},${west},${north},${east});
@@ -386,6 +386,7 @@ out body geom;`;
       method: "POST",
       body: `data=${encodeURIComponent(query)}`,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -413,8 +414,8 @@ out body geom;`;
   }
 }
 
-/** Fetch buildings in radius (for Umkreis mode) with centroid + area. */
-export async function fetchBuildingsInRadius(lat: number, lng: number, radiusM: number): Promise<BuildingWithSize[]> {
+/** Fetch buildings in radius (for Umkreis mode) with centroid + area. Optional signal to cancel. */
+export async function fetchBuildingsInRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<BuildingWithSize[]> {
   const query = `[out:json][timeout:20];
 way["building"](around:${radiusM},${lat},${lng});
 out body geom;`;
@@ -423,6 +424,7 @@ out body geom;`;
       method: "POST",
       body: `data=${encodeURIComponent(query)}`,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -456,8 +458,8 @@ export interface CommercialPOIWithCoord extends NearbyBusiness {
   lon: number;
 }
 
-/** Fetch commercial POIs in bbox (for whole-place search). */
-export async function fetchCommercialPOIsInBbox(bbox: PlaceBbox): Promise<CommercialPOIWithCoord[]> {
+/** Fetch commercial POIs in bbox (for whole-place search). Optional signal to cancel. */
+export async function fetchCommercialPOIsInBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
   const { south, north, west, east } = bbox;
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
 (
@@ -475,6 +477,7 @@ out body center;`;
       method: "POST",
       body: `data=${encodeURIComponent(query)}`,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -543,8 +546,8 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; estimat
   return Array.from(grid.values());
 }
 
-/** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Returns POIs with coords for building-size matching. */
-export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number): Promise<CommercialPOIWithCoord[]> {
+/** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Returns POIs with coords for building-size matching. Optional signal to cancel. */
+export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
 (
   node["shop"](around:${radiusM},${lat},${lng});
@@ -561,6 +564,7 @@ out body center;`;
       method: "POST",
       body: `data=${encodeURIComponent(query)}`,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
     });
     if (!res.ok) return [];
     const data = await res.json();

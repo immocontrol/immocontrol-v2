@@ -457,6 +457,9 @@ ${rows}
               <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.DEALS)}>
                 <Briefcase className="h-3.5 w-3.5" /> Zu Deals
               </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
+                <BarChart3 className="h-3.5 w-3.5" /> Zur Analyse
+              </Button>
             </div>
           }
         />

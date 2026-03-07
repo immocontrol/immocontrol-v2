@@ -34,6 +34,7 @@ const SUGGESTIONS = [
   "Wie viele offene Tickets habe ich?",
   "Gibt es offene Nebenkostenabrechnungen oder Entwürfe?",
   "Wo finde ich Gewerbe für die Akquise?",
+  "Welche Darlehen haben die längste Zinsbindung?",
 ];
 
 export default function ImmoAI() {

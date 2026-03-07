@@ -21,8 +21,9 @@
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
-| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte (ROUTES)
-| **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen (ROUTES, aria-label) |
+| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, Gewerbe-Scout | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, Gewerbe finden (ROUTES, CRM?tab=scout) |
+| **Objekte** | Deals, Besichtigungen, Gewerbe-Scout | Empty State: Buttons Deals, Besichtigungen, Gewerbe-Scout (ROUTES, CRM?tab=scout, aria-label) |
+| **Berichte** | Objekte, Deals, Analyse | Empty State: Buttons Objekte, Zu Deals, Zur Analyse (ROUTES) |
 | **Besichtigungen** | Deals, Dokumente | Empty State: Links „Zu Deals“, „Dokumente“ (ROUTES) |
 | **Todos** | CRM, Deals, Berichte | Empty State: Buttons „Zu CRM“, „Zu Deals“, „Berichte“ (ROUTES, Touch-Target)
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
@@ -44,8 +45,7 @@
 | **Verträge** | Mietübersicht, Berichte, Dokumente | Links „Mietübersicht“, „Berichte“, „Dokumente hochladen“ in Kopfzeile (ROUTES, Touch-Target 44px) |
 | **Dashboard** | Deals | Empty State (keine Objekte): Button „Zu Deals“ |
 | **Dashboard** | Analyse | Link „Zur Analyse“ in Kopfzeile (Personal + Portfolio); Empty State: Button „Zur Analyse“ |
-| **Berichte** | Objekte, Deals | Empty State (keine Objekte): Buttons „Objekte“, „Zu Deals“ |
-| **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile (Kennzahlen vertiefen) |
+| **Berichte** | Analyse | Link „Zur Analyse“ in der Kopfzeile; Empty State zusätzlich Button „Zur Analyse“ |
 | **Analyse** | Berichte | Button „Berichte“ in der Kopfzeile (Miet-, Objekt-, Steuerberichte) |
 | **Newsticker** | — | Fehler beim Laden: handleError + toastErrorWithRetry (Retry = Aktualisieren) |
 | **Dashboard** | Mietübersicht | StatCard „Mieteinnahmen“ verlinkt über ROUTES.RENT |
