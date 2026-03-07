@@ -819,6 +819,7 @@ const CRM = () => {
               setAddDialogOpen(true);
             }}
             onAddAsDeal={(b) => navigate(ROUTES.DEALS, { state: { fromScout: { name: b.name, address: b.address ?? undefined, phone: b.phone ?? undefined, email: b.email ?? undefined } } })}
+            onAddAsViewing={(b) => navigate(ROUTES.BESICHTIGUNGEN, { state: { fromScout: { title: b.name, address: b.address ?? "" } } })}
           />
         </TabsContent>
 

@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **WGH-Scout → Besichtigungen** — Pro Scout-Treffer Button „Besichtigung“ (nur wenn im CRM eingebunden). Navigiert zu Besichtigungen mit vorausgefülltem Titel/Adresse (state fromScout); Besichtigungen öffnet Anlege-Dialog und zeigt Toast „Vorlage aus WGH-Scout übernommen“. Neue Prop `onAddAsViewing` am GewerbeScout.
 - **Scout UX, Rendite-Schnellrechner, Synergien** — WGH-Scout: Nach Suche scrollt die Ergebnis-Sektion automatisch in den Blick. Neue Komponente Rendite-Schnellrechner auf der Analyse-Seite (Kaufpreis + Monatsmiete → Brutto-Rendite %, Mietmultiplikator). Dashboard Empty State: Button „Verträge“. ViewingCard: Link „WGH in Umgebung“ bei Adresse → Scout mit vorausgefüllter Suche.
 - **WGH-Scout, Synergien, AI, Leerstand** — Scout: Empty State „Besichtigung planen“ → Besichtigungen; Trefferanzahl im Header nach Suche. Mietübersicht: Leerstands-Kosten-Rechner (Tage + Monatsmiete → entgangene Miete), Link „Verträge“ in Kopfzeile. PropertyDetail: KI Kurzbewertung (suggestPropertySummary, DeepSeek) per Sparkles-Button, Ergebnis im Toast. Neue Komponente LeerstandskostenRechner.tsx.
 - **WGH-Scout: Tastatur & Mobile** — Ergebnisliste mit Tastatur-Navigation (Pfeil hoch/runter, Enter für erste Aktion); roving tabindex, listbox/option A11y; Filter-Checkboxen mit größeren Touch-Zielen auf Mobile (min-h 44px).

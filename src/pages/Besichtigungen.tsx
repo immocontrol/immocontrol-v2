@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import {
   Camera,
@@ -135,6 +135,8 @@ const Besichtigungen = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const haptic = useHaptic();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { announce } = useAccessibility();
   const { share } = useShare();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -187,6 +189,18 @@ const Besichtigungen = () => {
 
   // Deep-Link: ?id=xxx öffnet diese Besichtigung
   const viewingIdFromUrl = searchParams.get("id");
+
+  // Synergy: fromScout – WGH-Scout „Als Besichtigung“ → Form vorausgefüllt, Dialog öffnen
+  useEffect(() => {
+    const fromScout = (location.state as { fromScout?: { title: string; address?: string } })?.fromScout;
+    if (fromScout?.title) {
+      setForm((f) => ({ ...f, title: fromScout.title.trim(), address: (fromScout.address ?? "").trim() }));
+      setEditViewing(null);
+      setAddOpen(true);
+      toast.success("Vorlage aus WGH-Scout übernommen");
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const createTodoFromViewing = useCallback(
     async (v: ViewingRecord) => {

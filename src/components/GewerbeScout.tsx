@@ -142,11 +142,13 @@ export interface GewerbeScoutProps {
   onAddAsLead?: (business: { name: string; address: string | null; phone: string | null }) => void;
   /** Als Deal anlegen (navigiert zu Deals mit vorausgefüllten Daten). */
   onAddAsDeal?: (business: { name: string; address: string | null; phone: string | null; email?: string | null }) => void;
+  /** Als Besichtigung anlegen (navigiert zu Besichtigungen mit Titel/Adresse vorausgefüllt). */
+  onAddAsViewing?: (business: { name: string; address: string | null }) => void;
   /** Vorausgefüllte Suche (z. B. von Deals oder URL ?q=). */
   initialQuery?: string;
 }
 
-export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }: GewerbeScoutProps) {
+export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing, initialQuery }: GewerbeScoutProps) {
   const [query, setQuery] = useState(() => {
     try {
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
@@ -926,6 +928,20 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, initialQuery }:
                         aria-label={`Als Deal: ${b.name}`}
                       >
                         <Handshake className="h-3.5 w-3.5" /> Deal
+                      </Button>
+                    )}
+                    {onAddAsViewing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]"
+                        onClick={() => {
+                          onAddAsViewing({ name: b.name, address: b.address });
+                          toast.success(`${b.name} als Besichtigung – weiter zu Besichtigungen`);
+                        }}
+                        aria-label={`Als Besichtigung: ${b.name}`}
+                      >
+                        <CalendarCheck className="h-3.5 w-3.5" /> Besichtigung
                       </Button>
                     )}
                   </div>

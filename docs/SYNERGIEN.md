@@ -9,6 +9,7 @@
 | **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt; KI-Button „Nächster Schritt“ (DeepSeek) |
 | **CRM (Leads)** | WGH-Scout, Besichtigungen | Empty State: Buttons „WGH suchen“ (Tab Scout), „Zu Besichtigungen“; Export Leads als CSV |
 | **WGH-Scout** | Deals | Button „Deal“ pro Treffer – Deal-Formular mit Name/Adresse/Telefon/E-Mail vorausgefüllt (fromScout) |
+| **WGH-Scout** | Besichtigungen | Button „Besichtigung“ pro Treffer – Besichtigungs-Formular mit Titel/Adresse vorausgefüllt (fromScout); nur im CRM-Tab Scout |
 | **WGH-Scout** | CRM Suche | Empty State „Keine Treffer“: Link „Stattdessen Adresssuche im CRM“ → /crm?tab=search |
 | **WGH-Scout** | Besichtigungen | Empty State „Keine Treffer“: Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN |
 | **Verträge** | Fristen | Kündigungsfrist-Rechner auf der Seite Verträge: gewünschtes Enddatum + Frist in Monaten → spätestes Kündigungsdatum |
