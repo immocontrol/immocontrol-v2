@@ -3,7 +3,7 @@
  * If CRM contact not contacted for X days → auto-create todo.
  * Configurable per contact category.
  */
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useRef } from "react";
 import { Users, Clock, Bell, Plus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface CrmContact {
   id: string;
@@ -35,6 +37,7 @@ const CrmFollowUpReminder = memo(() => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [createdIds, setCreatedIds] = useState<Set<string>>(new Set());
+  const lastContactRef = useRef<(CrmContact & { daysSince: number }) | null>(null);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ["crm_followup_contacts"],
@@ -85,7 +88,10 @@ const CrmFollowUpReminder = memo(() => {
       setCreatedIds(prev => new Set([...prev, contact.id]));
       toast.success(`Todo erstellt: ${contact.name} kontaktieren`);
     },
-    onError: () => toast.error("Fehler beim Erstellen"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "todos.insert (follow-up)", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen", () => { if (lastContactRef.current) createFollowUpTodo.mutate(lastContactRef.current); });
+    },
   });
 
   if (overdueContacts.length === 0) return null;
@@ -115,7 +121,7 @@ const CrmFollowUpReminder = memo(() => {
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 shrink-0"
-                onClick={() => createFollowUpTodo.mutate(c)}
+                onClick={() => { lastContactRef.current = c; createFollowUpTodo.mutate(c); }}
               >
                 <Bell className="h-3 w-3" />
               </Button>

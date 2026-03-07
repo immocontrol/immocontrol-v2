@@ -322,6 +322,64 @@ out body;`;
   }
 }
 
+/** Geocode address to lat/lng via Nominatim (for Gewerbe-Scout). Returns null if not found. */
+export async function geocodeToCoord(query: string): Promise<{ lat: number; lng: number; display_name: string } | null> {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`;
+  const res = await fetch(url, { headers: { "User-Agent": "ImmoControl/1.0" } });
+  if (!res.ok) return null;
+  const raw = await res.json();
+  const data = parseNominatimResponse(Array.isArray(raw) ? raw : []);
+  if (data.length === 0) return null;
+  const item = data[0];
+  const lat = typeof item.lat === "string" ? parseFloat(item.lat) : (item.lat ?? 0);
+  const lon = typeof item.lon === "string" ? parseFloat(item.lon) : (item.lon ?? 0);
+  return { lat, lng: lon, display_name: item.display_name ?? "" };
+}
+
+/** Fetch commercial POIs in configurable radius (Gewerbe-Scout). Same structure as fetchNearbyBusinesses. */
+export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number): Promise<NearbyBusiness[]> {
+  const query = `[out:json][timeout:15];
+(
+  node["shop"](around:${radiusM},${lat},${lng});
+  node["office"](around:${radiusM},${lat},${lng});
+  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+  node["craft"](around:${radiusM},${lat},${lng});
+  way["shop"](around:${radiusM},${lat},${lng});
+  way["office"](around:${radiusM},${lat},${lng});
+  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+);
+out body;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pois = data.elements?.filter((e: { tags?: Record<string, string> }) => e.tags?.name) || [];
+    return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number }) => {
+      const tags = poi.tags || {};
+      const poiLat = poi.lat || 0;
+      const poiLon = poi.lon || 0;
+      const dist = Math.round(Math.sqrt(Math.pow((poiLat - lat) * 111320, 2) + Math.pow((poiLon - lng) * 111320 * Math.cos(lat * Math.PI / 180), 2)));
+      const type = tags.shop || tags.office || tags.amenity || tags.craft || "Geschäft";
+      return {
+        name: tags.name || "Unbekannt",
+        type,
+        phone: tags.phone || tags["contact:phone"] || null,
+        website: tags.website || tags["contact:website"] || null,
+        email: tags.email || tags["contact:email"] || null,
+        distance: dist,
+        address: tags["addr:street"] ? `${tags["addr:street"]} ${tags["addr:housenumber"] || ""}`.trim() : (tags["addr:full"] || null),
+        opening_hours: tags.opening_hours || null,
+      };
+    }).sort((a: NearbyBusiness, b: NearbyBusiness) => a.distance - b.distance);
+  } catch {
+    return [];
+  }
+}
+
 /* ── CRM display helpers ── */
 
 export function getBuildingSizeLabel(info: BuildingInfo): string {

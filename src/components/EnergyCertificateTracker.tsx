@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Zap, Plus, AlertTriangle, CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 const ENERGY_CLASSES = ["A+", "A", "B", "C", "D", "E", "F", "G", "H"];
 
@@ -50,6 +52,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
     expiry_date: "",
     issuer: "",
   });
+  const lastDeletedCertIdRef = useRef<string | null>(null);
 
   const { data: certs = [], isLoading } = useQuery({
     queryKey: ["energy_certificates", propertyId],
@@ -84,7 +87,10 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
       setOpen(false);
       toast.success("Energieausweis hinzugefügt");
     },
-    onError: () => toast.error("Fehler"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "energy_certificates.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Hinzufügen", () => addMutation.mutate());
+    },
   });
 
   const deleteMutation = useMutation({
@@ -95,6 +101,10 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["energy_certificates"] });
       toast.success("Gelöscht");
+    },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "energy_certificates.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => { if (lastDeletedCertIdRef.current) deleteMutation.mutate(lastDeletedCertIdRef.current); });
     },
   });
 
@@ -176,7 +186,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
                   ) : (
                     <Badge className="bg-profit/15 text-profit border-profit/30"><CheckCircle className="h-3 w-3 mr-1" /> Gültig</Badge>
                   )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(cert.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { lastDeletedCertIdRef.current = cert.id; deleteMutation.mutate(cert.id); }} aria-label="Energieausweis löschen">
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 </div>

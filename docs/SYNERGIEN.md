@@ -77,6 +77,10 @@
 | **Contacts** | — | Kontakt speichern/aktualisieren: handleError + toastErrorWithRetry (Retry = saveMutation.mutate) |
 | **MaintenancePlanner** | — | Maßnahme planen: handleError + toastErrorWithRetry (Retry = addMutation.mutate) |
 | **OwnerMeetings** | — | Eigentümerversammlung anlegen: handleError + toastErrorWithRetry (Retry = addMeeting.mutate) |
+| **GewerbeScout** | CRM, Leads | Adresse + Umkreis (200–1000 m) → Gewerbe/Läden via OpenStreetMap/Overpass; Anrufen (tel:), Google Maps, „Als Lead übernehmen“ (öffnet Lead-Dialog mit vorausgefüllten Daten) |
+| **EnergyCertificateTracker** | — | Energieausweis anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedCertIdRef) |
+| **CrmFollowUpReminder** | Todos | Follow-Up-Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastContactRef) |
+| **InsuranceTracker** | — | Versicherung anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedInsuranceIdRef); Touch-Target für Löschen-Button (Mobile) |
 
 ## Technische Details
 

@@ -26,6 +26,7 @@ import {
   calculateLeadScore, LEAD_STATUS_OPTIONS, calcCRMStats, CRM_SEARCH_DEBOUNCE,
 } from "@/lib/crmUtils";
 import { EmptyState } from "@/components/EmptyState";
+import GewerbeScout from "@/components/GewerbeScout";
 import { ROUTES } from "@/lib/routes";
 
 /* IMP-3: Utility functions extracted to @/lib/crmUtils.ts for modularity */
@@ -404,8 +405,9 @@ const CRM = () => {
 
       <Tabs defaultValue="search" className="space-y-4">
         <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="search" className="flex-1 sm:flex-none">Suche & Akquise</TabsTrigger>
-          <TabsTrigger value="leads" className="flex-1 sm:flex-none">Meine Leads ({leads.length})</TabsTrigger>
+          <TabsTrigger value="search" className="flex-1 sm:flex-none nav-label-responsive">Suche & Akquise</TabsTrigger>
+          <TabsTrigger value="scout" className="flex-1 sm:flex-none nav-label-responsive">Gewerbe-Scout</TabsTrigger>
+          <TabsTrigger value="leads" className="flex-1 sm:flex-none nav-label-responsive">Meine Leads ({leads.length})</TabsTrigger>
         </TabsList>
 
         {/* Search Tab */}
@@ -698,6 +700,16 @@ const CRM = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Gewerbe-Scout Tab: MFH mit Gewerbe finden, anrufen, als Lead übernehmen */}
+        <TabsContent value="scout" className="space-y-4">
+          <GewerbeScout
+            onAddAsLead={(b) => {
+              setAddForm((prev) => ({ ...prev, name: b.name, address: b.address || "", phone: b.phone || "" }));
+              setAddDialogOpen(true);
+            }}
+          />
         </TabsContent>
 
         {/* Leads Tab */}

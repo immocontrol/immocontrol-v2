@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Shield, Plus, AlertTriangle, Check, Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +44,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
     type: "Gebäudeversicherung", provider: "", annual_premium: 0,
     renewal_date: "", policy_number: "", notes: "",
   });
+  const lastDeletedInsuranceIdRef = useRef<string | null>(null);
 
   const { data: insurances = [] } = useQuery({
     queryKey: ["insurances", propertyId],
@@ -76,12 +79,22 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["insurances", propertyId] });
     },
-    onError: () => toast.error("Fehler"),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "property_insurances.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Speichern", () => addMutation.mutate());
+    },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => { await fromTable("property_insurances").delete().eq("id", id); },
+    mutationFn: async (id: string) => {
+      const { error } = await fromTable("property_insurances").delete().eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["insurances", propertyId] }),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "property_insurances.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => { if (lastDeletedInsuranceIdRef.current) deleteMutation.mutate(lastDeletedInsuranceIdRef.current); });
+    },
   });
 
   const totalAnnual = insurances.reduce((s, i) => s + (i.annual_premium || 0), 0);
@@ -184,7 +197,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
                     {ins.policy_number && <span>Nr: {ins.policy_number}</span>}
                   </div>
                 </div>
-                <button onClick={() => deleteMutation.mutate(ins.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
+                <button onClick={() => { lastDeletedInsuranceIdRef.current = ins.id; deleteMutation.mutate(ins.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 touch-target min-h-[44px] sm:min-h-0" aria-label="Versicherung löschen">
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
