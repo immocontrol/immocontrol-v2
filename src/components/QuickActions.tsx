@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText } from "lucide-react";
+import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface QuickActionsProps {
   onScrollTo: (section: string) => void;
+  onNavigate?: (path: string) => void;
 }
 
-const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
+const QuickActions = ({ onScrollTo, onNavigate }: QuickActionsProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,11 +34,12 @@ const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
   }, []);
 
   const actions = [
-    { id: "tickets", label: "Ticket erstellen", icon: Wrench, color: "text-gold", shortcut: "1" },
-    { id: "messages", label: "Nachricht senden", icon: MessageSquare, color: "text-primary", shortcut: "2" },
-    { id: "payments", label: "Zahlung erfassen", icon: CreditCard, color: "text-profit", shortcut: "3" },
-    { id: "notes", label: "Notiz hinzufügen", icon: StickyNote, color: "text-muted-foreground", shortcut: "4" },
-    { id: "documents", label: "Dokument hochladen", icon: FileText, color: "text-accent-foreground", shortcut: "5" },
+    { id: "tickets", label: "Ticket erstellen", icon: Wrench, color: "text-gold", shortcut: "1", navigate: false },
+    { id: "messages", label: "Nachricht senden", icon: MessageSquare, color: "text-primary", shortcut: "2", navigate: false },
+    { id: "payments", label: "Zahlung erfassen", icon: CreditCard, color: "text-profit", shortcut: "3", navigate: false },
+    { id: "notes", label: "Notiz hinzufügen", icon: StickyNote, color: "text-muted-foreground", shortcut: "4", navigate: false },
+    { id: "documents", label: "Dokument hochladen", icon: FileText, color: "text-accent-foreground", shortcut: "5", navigate: false },
+    { id: "viewings", label: "Besichtigung erfassen", icon: Camera, color: "text-accent", shortcut: "6", navigate: true, path: "/besichtigungen" },
   ];
 
   return (
@@ -48,7 +50,7 @@ const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
         <TooltipTrigger asChild>
           <button
             onClick={() => setOpen(!open)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-primary/20 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-primary/20 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary transition-colors touch-target min-h-[44px]"
           >
             <Plus className="h-3.5 w-3.5" /> Schnellaktion
             <kbd className="hidden sm:inline text-[10px] ml-1 px-1 py-0.5 rounded bg-primary/10 text-primary/70">Q</kbd>
@@ -60,11 +62,19 @@ const QuickActions = ({ onScrollTo }: QuickActionsProps) => {
         <div className="absolute right-0 top-full mt-1 w-52 p-1 bg-popover border border-border rounded-lg shadow-lg z-[9999] animate-fade-in">
           {actions.map(action => {
             const Icon = action.icon;
+            const navAction = "navigate" in action && action.navigate && onNavigate;
             return (
               <button
                 key={action.id}
-                onClick={() => { onScrollTo(action.id); setOpen(false); }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors cursor-pointer group"
+                onClick={() => {
+                  if (navAction && "path" in action && action.path) {
+                    onNavigate(action.path);
+                  } else {
+                    onScrollTo(action.id);
+                  }
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors cursor-pointer group touch-target min-h-[44px]`}
               >
                 <Icon className={`h-4 w-4 ${action.color}`} />
                 <span className="flex-1 text-left">{action.label}</span>

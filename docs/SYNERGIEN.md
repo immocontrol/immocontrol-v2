@@ -23,6 +23,8 @@
 | **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen |
 | **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
 | **Todos** | CRM | Empty State: Button „Zu CRM“ |
+| **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
+| **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |
 | **Immo-Chat** | Deals, Besichtigungen, Tickets | System-Kontext um Tickets erweitert; vorgeschlagene Frage „Wie viele offene Tickets?“ |

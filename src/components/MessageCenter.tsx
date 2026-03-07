@@ -234,6 +234,7 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
                     disabled={summaryLoading}
                     onClick={handleSummarize}
                     aria-label="Nachrichten mit KI zusammenfassen"
+                    className="touch-target min-h-[44px]"
                   >
                     {summaryLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
                     KI zusammenfassen

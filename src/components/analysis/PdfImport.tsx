@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { AnalysisInputState } from "@/hooks/useAnalysisCalculations";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
 import { saveExposeHistoryEntry } from "./ExposeHistory";
+import { extractPdfText } from "@/lib/exposeParser";
 
 interface Props {
   onImport: (updates: Partial<AnalysisInputState>) => void;
@@ -37,30 +38,6 @@ const formatValue = (key: string, value: unknown): string => {
   return String(value);
 };
 
-async function extractTextFromPdf(file: File): Promise<string> {
-  const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
-  GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).toString();
-
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await getDocument({ data: arrayBuffer }).promise;
-  const textParts: string[] = [];
-
-  for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      /* FIX-50: Replace `any` with proper TextItem type */
-      .map((item: { str?: string }) => (item.str || ""))
-      .join(" ");
-    textParts.push(pageText);
-  }
-
-  return textParts.join("\n");
-}
-
 const PdfImport = ({ onImport }: Props) => {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<"reading" | "analyzing">("reading");
@@ -87,7 +64,7 @@ const PdfImport = ({ onImport }: Props) => {
     setResult(null);
 
     try {
-      const pdfText = await extractTextFromPdf(file);
+      const pdfText = await extractPdfText(file);
 
       if (!pdfText.trim()) {
         setError("Kein Text im PDF gefunden. Bitte prüfe, ob das PDF lesbar ist.");

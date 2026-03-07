@@ -198,7 +198,7 @@ const PropertyDetail = () => {
             </Tooltip>
           </div>
           <div className="flex items-center gap-1">
-            <QuickActions onScrollTo={scrollToSection} />
+            <QuickActions onScrollTo={scrollToSection} onNavigate={(p) => navigate(p)} />
             <EditPropertyDialog property={property} />
             {/* Share/Copy property summary */}
             {/* UI-UPDATE-44: Tooltip on share property action */}
@@ -419,16 +419,26 @@ const PropertyDetail = () => {
           </h2>
           <div className="space-y-2">
             {synergy.viewings.map(v => (
-              <Link
-                key={v.id}
-                to="/besichtigungen"
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/80 transition-colors group"
-              >
-                <span className="text-sm font-medium truncate">{v.title}</span>
-                <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                  {v.visited_at ? new Date(v.visited_at).toLocaleDateString("de-DE") : "–"}
-                </span>
-              </Link>
+              <div key={v.id} className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-secondary/80 transition-colors group">
+                <Link
+                  to={`/besichtigungen?id=${v.id}`}
+                  className="flex-1 flex items-center justify-between min-w-0"
+                >
+                  <span className="text-sm font-medium truncate">{v.title}</span>
+                  <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                    {v.visited_at ? new Date(v.visited_at).toLocaleDateString("de-DE") : "–"}
+                  </span>
+                </Link>
+                {v.deal_id && (
+                  <Link
+                    to={`/deals?id=${v.deal_id}`}
+                    className="text-xs text-primary hover:underline shrink-0"
+                    aria-label="Zum Deal"
+                  >
+                    Deal
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
           <Link to="/besichtigungen" className="text-xs text-primary hover:underline mt-2 inline-block">

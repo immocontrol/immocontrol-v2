@@ -56,6 +56,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Todos** — Empty State: Button „Zu CRM"
 - **PWA** — Shortcuts um Objekte, Aufgaben, CRM erweitert
 - **KeyboardShortcutOverlay** — Shortcut Q für Schnellaktion dokumentiert
+- **analysis/PdfImport** — Refactoring: `extractPdfText` aus exposeParser statt eigener Implementierung
+- **QuickActions** — Neue Aktion „Besichtigung erfassen" (navigiert zu /besichtigungen); touch-target für alle Buttons; onNavigate-Prop
+- **PropertyDetail** — Besichtigungen: Deep-Link ?id= zur Besichtigung; Link zum Deal bei deal_id
+- **MessageCenter** — Touch-Target für „KI zusammenfassen"-Button (Mobile)
+- **Wartungsplaner** — Empty State: Link „Objekte öffnen" (Synergy zu Tickets)
 
 ### Behoben
 

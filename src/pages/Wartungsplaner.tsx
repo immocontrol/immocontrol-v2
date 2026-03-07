@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -98,6 +99,7 @@ const getDueStatus = (item: MaintenanceItem): "overdue" | "due-soon" | "ok" | "c
 };
 
 const Wartungsplaner = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();
@@ -520,9 +522,14 @@ const Wartungsplaner = () => {
             {allItems.length === 0 ? "Plane Wartungsarbeiten und behalte Fristen, Kosten und Pflichtprüfungen im Blick." : "Keine Einträge für diese Filterauswahl gefunden."}
           </p>
           {allItems.length === 0 && (
-            <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-              <Plus className="h-3.5 w-3.5" /> Ersten Eintrag anlegen
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Ersten Eintrag anlegen
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate("/objekte")}>
+                Objekte öffnen
+              </Button>
+            </div>
           )}
           <p className="text-xs text-muted-foreground mt-1">Nutze die Vorlagen oben oder erstelle eine eigene Wartung</p>
         </div>
