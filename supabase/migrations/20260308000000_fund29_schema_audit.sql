@@ -24,20 +24,20 @@ CREATE INDEX IF NOT EXISTS idx_contacts_name ON public.contacts(name);
 CREATE INDEX IF NOT EXISTS idx_deals_user_id ON public.deals(user_id);
 CREATE INDEX IF NOT EXISTS idx_deals_stage ON public.deals(stage);
 
--- Todos: user_id and status for filtering
+-- Todos: user_id and completed for filtering
 CREATE INDEX IF NOT EXISTS idx_todos_user_id ON public.todos(user_id);
-CREATE INDEX IF NOT EXISTS idx_todos_status ON public.todos(status);
+CREATE INDEX IF NOT EXISTS idx_todos_completed ON public.todos(completed);
 
--- Documents: user_id and property_id
-CREATE INDEX IF NOT EXISTS idx_documents_user_id ON public.documents(user_id);
-CREATE INDEX IF NOT EXISTS idx_documents_property_id ON public.documents(property_id);
+-- Property documents: user_id and property_id
+CREATE INDEX IF NOT EXISTS idx_property_documents_user_id ON public.property_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_property_documents_property_id ON public.property_documents(property_id);
 
 -- CRM Leads: user_id for filtering
 CREATE INDEX IF NOT EXISTS idx_crm_leads_user_id ON public.crm_leads(user_id);
 
 -- Maintenance Items: property_id and due_date for scheduling
 CREATE INDEX IF NOT EXISTS idx_maintenance_items_property_id ON public.maintenance_items(property_id);
-CREATE INDEX IF NOT EXISTS idx_maintenance_items_due_date ON public.maintenance_items(due_date);
+CREATE INDEX IF NOT EXISTS idx_maintenance_items_planned_date ON public.maintenance_items(planned_date);
 
 -- =====================================================
 -- FUND-14: Enable RLS on all tables (idempotent)
@@ -49,7 +49,7 @@ ALTER TABLE IF EXISTS public.loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.deals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.todos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.property_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.crm_leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.maintenance_items ENABLE ROW LEVEL SECURITY;
 

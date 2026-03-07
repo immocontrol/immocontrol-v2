@@ -270,7 +270,7 @@ CREATE TABLE public.team_members (
   member_email TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'viewer',
   status TEXT NOT NULL DEFAULT 'pending',
-  invitation_token TEXT DEFAULT encode(gen_random_bytes(32), 'hex'),
+  invitation_token TEXT DEFAULT md5(gen_random_uuid()::text || random()::text),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   UNIQUE(owner_id, member_email)
