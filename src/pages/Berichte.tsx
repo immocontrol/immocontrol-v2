@@ -9,6 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
 import { getAnnualAfa } from "@/lib/afaSanierung";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
@@ -150,7 +152,8 @@ const Berichte = () => {
     setLastReportGenerated(new Date().toLocaleString("de-DE"));
     toast.success(`${title} als PDF gespeichert!`);
     } catch (e) {
-      toast.error("PDF konnte nicht erstellt werden");
+      handleError(e, { context: "pdf", details: "exportPDF", showToast: false });
+      toastErrorWithRetry("PDF konnte nicht erstellt werden", () => exportPDF(title, sections));
     }
   }, [year, trackReport]);
 

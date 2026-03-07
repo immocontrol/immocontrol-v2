@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { PasswordStrength } from "@/components/PasswordStrength";
 
 interface PasswordSettingsProps {
@@ -84,7 +86,8 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
         if (isRecoverySession) clearRecoverySession();
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Ändern des Passworts");
+      handleError(err, { context: "auth", details: "password-change", showToast: false });
+      toastErrorWithRetry(err instanceof Error ? err.message : "Fehler beim Ändern des Passworts", () => handleChangePassword({ preventDefault: () => {} } as React.FormEvent));
     } finally {
       setLoading(false);
     }

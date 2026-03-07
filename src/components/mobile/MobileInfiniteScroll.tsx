@@ -7,6 +7,7 @@ import { useRef, useEffect, useCallback, useState, memo, type ReactNode } from "
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { handleError } from "@/lib/handleError";
 
 interface MobileInfiniteScrollProps {
   /** Content to render */
@@ -125,6 +126,7 @@ export function useInfiniteScroll<T>(
       setHasMore(result.hasMore);
       setPage(prev => prev + 1);
     } catch (err) {
+      handleError(err, { context: "network", details: "useInfiniteScroll", showToast: false });
       setError(err instanceof Error ? err.message : "Fehler beim Laden");
     } finally {
       setIsLoading(false);
