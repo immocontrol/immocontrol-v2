@@ -8,6 +8,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Scout/Brandenburg: Lint-Fix** — Funktionen `useBrandenburgBuildings` / `useBrandenburgBuildingsForPoint` in `isBboxInBrandenburg` / `isPointInBrandenburgForBuildings` umbenannt (keine React-Hooks); Aggregator nutzt die neuen Namen. Alte Namen als deprecated exportiert.
+- **Wartungsplaner: KI Notiz-Vorschlag** — Im Dialog „Wartung planen“ Button „KI Notiz“ (DeepSeek): generiert Vorschlag für das Notizfeld aus Titel und Kategorie (Prüfpunkte, rechtliche Hinweise). Nur bei gesetztem VITE_DEEPSEEK_API_KEY.
+- **Synergie PropertyDetail → Wartungsplaner** — Im Tab Wartung Link „Alle Wartungen im Wartungsplaner“ zur zentralen Wartungsplaner-Seite. Doku: docs/SYNERGIEN.md.
 - **WGH-Scout: Filter Gebäudegröße erweitert** — Zusätzliche Mindestflächen (≥ 1.500 / 2.000 / 3.000 / 5.000 m²); neuer Filter „Max. Fläche“ (≤ 500 / 1.000 / 2.000 / 5.000 / 10.000 m²). Sortierung und Filter nutzen `estimatedGrossArea ?? parcelArea` (Grundstücksfläche als Fallback). Filter-Persistenz und -Zurücksetzen inkl. Max. Fläche.
 - **Calling: Fehlerbehandlung** — CRM (Anrufen-Button) und MobileCRMCallAction zeigen bei Fehler von `startCall` einen Toast mit der Fehlermeldung; Mobile stoppt Timer und setzt calling-State zurück.
 - **OSM-Gebäudedaten (Overpass) verbessert** — roof:levels wird in fetchBuildingsInBbox/fetchBuildingsInRadius mitgezählt; building:area wird genutzt falls vorhanden; building:height → Geschossanzahl (Höhe/3 m); relation["building"] in den Overpass-Queries ergänzt (Multipolygon-Gebäude).

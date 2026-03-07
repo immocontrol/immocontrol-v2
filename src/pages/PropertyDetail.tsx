@@ -670,6 +670,11 @@ const PropertyDetail = () => {
                   <LandlordTickets propertyId={property.id} />
                 </div>
                 <MaintenancePlanner propertyId={property.id} />
+                <div className="flex flex-wrap gap-2">
+                  <Link to={ROUTES.WARTUNG} className="text-xs text-primary hover:underline">
+                    Alle Wartungen im Wartungsplaner →
+                  </Link>
+                </div>
                 <ServiceContracts propertyId={property.id} />
               </div>
             ),

@@ -6,7 +6,7 @@
 import type { ScoutPOI, PlaceBbox, BuildingWithSize, GeocodeResult } from "./types";
 import type { ScoutProvider } from "./types";
 import { distanceMeters, dedupeScoutResults } from "@/lib/crmUtils";
-import { useBrandenburgBuildings, useBrandenburgBuildingsForPoint } from "./brandenburgProvider";
+import { isBboxInBrandenburg, isPointInBrandenburgForBuildings } from "./brandenburgProvider";
 
 const MAX_BUILDING_DIST_M = 60;
 
@@ -30,6 +30,7 @@ export function attachBuildingSizesToScoutPOIs(
     return {
       ...poi,
       estimatedGrossArea: best ? best.estimatedGrossArea : null,
+      parcelArea: best?.parcelArea ?? null,
     };
   });
 }
@@ -88,7 +89,7 @@ export async function aggregatePOIsByBbox(
 
   let buildings: BuildingWithSize[] = [];
   const buildingProviders = providers.filter((p) => p.fetchBuildingsByBbox);
-  const preferBrandenburg = useBrandenburgBuildings(bbox);
+  const preferBrandenburg = isBboxInBrandenburg(bbox);
   const buildingProvider = preferBrandenburg && buildingProviders.some((p) => p.id === "brandenburg")
     ? buildingProviders.find((p) => p.id === "brandenburg") ?? buildingProviders[0]
     : buildingProviders[0];
@@ -120,7 +121,7 @@ export async function aggregatePOIsByRadius(
 
   let buildings: BuildingWithSize[] = [];
   const buildingProviders = providers.filter((p) => p.fetchBuildingsByRadius);
-  const preferBrandenburg = useBrandenburgBuildingsForPoint(lat, lng);
+  const preferBrandenburg = isPointInBrandenburgForBuildings(lat, lng);
   const buildingProvider = preferBrandenburg && buildingProviders.some((p) => p.id === "brandenburg")
     ? buildingProviders.find((p) => p.id === "brandenburg") ?? buildingProviders[0]
     : buildingProviders[0];

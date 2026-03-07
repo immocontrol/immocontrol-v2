@@ -27,7 +27,7 @@ export function AfASchnellrechner() {
           <TrendingDown className="h-4 w-4" /> AfA-Schnellrechner
         </CardTitle>
         <p className="text-xs text-muted-foreground text-wrap-safe">
-          Jährliche Abschreibung (AfA) für Immobilien – Gebäudeanteil linear über Nutzungsdauer. Typisch: 50 Jahre Wohnimmobilie, 70–80 % Gebäudeanteil.
+          Jährliche Abschreibung (AfA) für Immobilien – Gebäudeanteil linear über Nutzungsdauer. Typisch: 50 Jahre Wohnimmobilie, 70–80 % Gebäudeanteil.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

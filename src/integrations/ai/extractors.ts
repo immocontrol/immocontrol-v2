@@ -325,6 +325,24 @@ Schlage den nächsten konkreten Schritt vor (1–2 Sätze). Auf Deutsch. Kein Bu
   return raw.trim();
 }
 
+/**
+ * Vorschlag für Notizen zu einer Wartungsmaßnahme (Titel + Kategorie).
+ * Nutzt DeepSeek. Nur nutzbar wenn VITE_DEEPSEEK_API_KEY gesetzt ist.
+ */
+export async function suggestMaintenanceNotes(title: string, category: string): Promise<string> {
+  const prompt = `Der Nutzer plant eine Wartungsmaßnahme für eine Immobilie.
+Titel: "${title}"
+Kategorie: ${category}
+
+Generiere 2–4 kurze Sätze als Notiz-Vorschlag: was zu prüfen ist, ggf. rechtliche Hinweise (z. B. Fristen, Pflichten), und praktische Tipps. Auf Deutsch. Keine Anrede. Kompakt.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Assistent für Immobilienwartung. Antworte nur mit dem Notiz-Vorschlag.", maxTokens: 256 }
+  );
+  return raw.trim();
+}
+
 export async function suggestTicketDescription(title: string, category: string): Promise<string> {
   const prompt = `Der Nutzer erstellt ein Ticket für Vermieter/Handwerker.
 Titel: "${title}"

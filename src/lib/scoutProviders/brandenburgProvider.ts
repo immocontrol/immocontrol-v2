@@ -32,6 +32,25 @@ interface MultiPolygonGeom {
   coordinates: [number, number][][][];
 }
 
+function ringToCoords(ring: [number, number][]): { lat: number; lon: number }[] {
+  return ring.map(([lon, lat]) => ({ lat, lon }));
+}
+
+/** Punkt-in-Polygon (Ray-Casting) – ring als [lon,lat][]. */
+function pointInPolygon(lon: number, lat: number, ring: [number, number][]): boolean {
+  const n = ring.length;
+  let inside = false;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+    const intersect = yi > lat !== yj > lat && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
 /** Fläche aus GeoJSON MultiPolygon (Außenring des ersten Polygons). */
 function polygonAreaFromGeoJSON(geom: MultiPolygonGeom): number {
   const coords = geom.coordinates;
@@ -72,6 +91,46 @@ interface AlkisFeatureCollection {
   features?: AlkisFeature[];
 }
 
+interface FlurstueckFeature {
+  type: "Feature";
+  id: string;
+  geometry: MultiPolygonGeom;
+  properties?: { flaeche?: number };
+}
+
+interface FlurstueckCollection {
+  type: "FeatureCollection";
+  features?: FlurstueckFeature[];
+}
+
+/** Flurstücke in BBox laden – amtliche Fläche (flaeche) in m². */
+async function fetchFlurstuecke(
+  bbox: { west: number; south: number; east: number; north: number },
+  limit: number,
+  signal?: AbortSignal
+): Promise<FlurstueckFeature[]> {
+  const { west, south, east, north } = bbox;
+  const bboxParam = `${west},${south},${east},${north}`;
+  const url = `${OGC_BASE}/collections/flurstueck/items?bbox=${encodeURIComponent(bboxParam)}&limit=${limit}&f=json`;
+  const res = await fetch(url, { headers: { Accept: "application/geo+json" }, ...(signal && { signal }) });
+  if (!res.ok) return [];
+  const data = (await res.json()) as FlurstueckCollection;
+  return data.features ?? [];
+}
+
+/** Parzelle finden, die den Punkt enthält; flaeche zurückgeben. */
+function findParcelArea(lat: number, lon: number, parcels: FlurstueckFeature[]): number | null {
+  for (const p of parcels) {
+    const geom = p.geometry;
+    if (!geom?.coordinates?.[0]?.[0]?.length) continue;
+    const ring = geom.coordinates[0][0] as [number, number][];
+    if (pointInPolygon(lon, lat, ring) && typeof p.properties?.flaeche === "number") {
+      return Math.round(p.properties.flaeche);
+    }
+  }
+  return null;
+}
+
 async function fetchBuildingsFromOGC(
   bbox: { west: number; south: number; east: number; north: number },
   limit: number,
@@ -81,16 +140,17 @@ async function fetchBuildingsFromOGC(
   const bboxParam = `${west},${south},${east},${north}`;
   const url = `${OGC_BASE}/collections/gebaeude_bauwerk/items?bbox=${encodeURIComponent(bboxParam)}&limit=${limit}&f=json`;
 
-  const res = await fetch(url, {
-    headers: { Accept: "application/geo+json" },
-    ...(signal && { signal }),
-  });
-  if (!res.ok) return [];
+  const [buildingsRes, parcels] = await Promise.all([
+    fetch(url, { headers: { Accept: "application/geo+json" }, ...(signal && { signal }) }),
+    fetchFlurstuecke(bbox, Math.min(limit * 2, 500), signal),
+  ]);
 
-  const data = (await res.json()) as AlkisFeatureCollection;
+  if (!buildingsRes.ok) return [];
+
+  const data = (await buildingsRes.json()) as AlkisFeatureCollection;
   const features = data.features ?? [];
-  const result: BuildingWithSize[] = [];
 
+  const result: BuildingWithSize[] = [];
   for (const f of features) {
     const geom = f.geometry;
     if (!geom || geom.type !== "MultiPolygon") continue;
@@ -103,12 +163,14 @@ async function fetchBuildingsFromOGC(
 
     const levels = f.properties?.anzahlgs ?? 2;
     const estimatedGrossArea = footprintArea * Math.max(1, levels);
+    const parcelArea = findParcelArea(cent.lat, cent.lon, parcels);
 
     result.push({
       lat: cent.lat,
       lon: cent.lon,
       estimatedGrossArea,
       footprintArea,
+      parcelArea: parcelArea ?? undefined,
     });
   }
   return result;
@@ -140,12 +202,18 @@ export const brandenburgScoutProvider: ScoutProvider = {
   },
 };
 
-/** Prüfen, ob für eine BBox Brandenburg-Daten verwendet werden sollen. */
-export function useBrandenburgBuildings(bbox: PlaceBbox): boolean {
+/** Prüfen, ob für eine BBox Brandenburg-Daten verwendet werden sollen. (Kein React-Hook, reine Funktion.) */
+export function isBboxInBrandenburg(bbox: PlaceBbox): boolean {
   return isInBrandenburg(bbox);
 }
 
-/** Prüfen, ob für einen Punkt Brandenburg-Daten verwendet werden sollen. */
-export function useBrandenburgBuildingsForPoint(lat: number, lon: number): boolean {
+/** Prüfen, ob für einen Punkt Brandenburg-Daten verwendet werden sollen. (Kein React-Hook, reine Funktion.) */
+export function isPointInBrandenburgForBuildings(lat: number, lon: number): boolean {
   return isPointInBrandenburg(lat, lon);
 }
+
+/** @deprecated Nutze isBboxInBrandenburg (kein Hook). */
+export const useBrandenburgBuildings = isBboxInBrandenburg;
+
+/** @deprecated Nutze isPointInBrandenburgForBuildings (kein Hook). */
+export const useBrandenburgBuildingsForPoint = isPointInBrandenburgForBuildings;

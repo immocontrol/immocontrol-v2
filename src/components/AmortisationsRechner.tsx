@@ -26,7 +26,7 @@ export function AmortisationsRechner() {
           <Clock className="h-4 w-4" /> Amortisations-Rechner
         </CardTitle>
         <p className="text-xs text-muted-foreground text-wrap-safe">
-          Einmalige Investition und jährlicher Überschuss (z. B. Mieteinnahmen − Kosten) → Jahre bis die Investition sich rechnet.
+          Einmalige Investition und jährlicher Überschuss (z. B. Mieteinnahmen minus Kosten) – Jahre bis die Investition sich rechnet.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

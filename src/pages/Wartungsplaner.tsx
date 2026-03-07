@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X, FileBarChart, Store, CalendarCheck } from "lucide-react";
+import { Wrench, Plus, TriangleAlert as AlertTriangle, Clock, Check, Trash2, Bell, RefreshCw, Calendar, Filter, Building2, ChevronDown, ChevronRight, X, FileBarChart, Store, CalendarCheck, Sparkles, Loader2 } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -20,6 +20,7 @@ import { formatCurrency, formatDate } from "@/lib/formatters";
 import MaintenanceCalendar from "@/components/MaintenanceCalendar";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { isDeepSeekConfigured, suggestMaintenanceNotes } from "@/integrations/ai/extractors";
 
 interface MaintenanceItem {
   id: string;
@@ -115,6 +116,7 @@ const Wartungsplaner = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [overdueOpen, setOverdueOpen] = useState(true);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
+  const [suggestNotesLoading, setSuggestNotesLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", category: "Sonstiges", priority: "medium" as MaintenanceItem["priority"],
     estimated_cost: 0, planned_date: "", notes: "", property_id: "",
@@ -382,7 +384,7 @@ const Wartungsplaner = () => {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Geplant für</Label>
-                  <input type="date" value={form.planned_date} onChange={e => setForm(f => ({ ...f, planned_date: e.target.value }))} className="h-9 text-sm w-full rounded-md border border-input bg-background px-3 py-1" />
+                  <input type="date" value={form.planned_date} onChange={e => setForm(f => ({ ...f, planned_date: e.target.value }))} className="h-9 text-sm w-full rounded-md border border-input bg-background px-3 py-1" aria-label="Geplantes Datum" />
                 </div>
               </div>
               <div className="space-y-1">
@@ -393,7 +395,25 @@ const Wartungsplaner = () => {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Notiz</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Notiz</Label>
+                  {isDeepSeekConfigured() && (form.title.trim() || form.category !== "Sonstiges") && (
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs touch-target min-h-[32px]" onClick={async () => {
+                      setSuggestNotesLoading(true);
+                      try {
+                        const text = await suggestMaintenanceNotes(form.title.trim() || form.category, form.category);
+                        if (text) setForm(f => ({ ...f, notes: text }));
+                      } catch (e) {
+                        handleError(e, { context: "ai", details: "suggestMaintenanceNotes", showToast: true });
+                      } finally {
+                        setSuggestNotesLoading(false);
+                      }
+                    }} disabled={suggestNotesLoading} type="button" aria-label="KI Notiz-Vorschlag">
+                      {suggestNotesLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      KI Notiz
+                    </Button>
+                  )}
+                </div>
                 <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
               </div>
               <Button onClick={() => addMutation.mutate()} className="w-full" disabled={addMutation.isPending || !form.title.trim() || !form.property_id}>
