@@ -13,6 +13,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { normalizeString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ROUTES } from "@/lib/routes";
 
 const RECENT_KEY = "immo-mobile-search-recent";
 const MAX_RECENT = 8;
@@ -112,20 +113,20 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
         subtitle: `${p.address || p.location} · ${p.type}`,
         category: "Objekte",
         categoryIcon: <Building2 className="h-4 w-4" />,
-        path: `/objekt/${p.id}`,
+        path: `${ROUTES.PROPERTY}/${p.id}`,
       }));
 
     // Static page results
     const pages: SearchResult[] = [
-      { id: "page-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: "/" },
-      { id: "page-darlehen", title: "Darlehen", subtitle: "Kredite verwalten", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: "/darlehen" },
-      { id: "page-mieten", title: "Mietübersicht", subtitle: "Mieten & Zahlungen", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: "/mietuebersicht" },
-      { id: "page-vertraege", title: "Verträge", subtitle: "Mietverträge", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: "/vertraege" },
-      { id: "page-kontakte", title: "Kontakte", subtitle: "Handwerker & Partner", category: "Seiten", categoryIcon: <Users className="h-4 w-4" />, path: "/kontakte" },
-      { id: "page-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: "/aufgaben" },
-      { id: "page-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: "/dokumente" },
-      { id: "page-crm", title: "CRM", subtitle: "Leads & Akquise", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: "/crm" },
-      { id: "page-deals", title: "Deals", subtitle: "Deal Pipeline", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: "/deals" },
+      { id: "page-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.HOME },
+      { id: "page-darlehen", title: "Darlehen", subtitle: "Kredite verwalten", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.LOANS },
+      { id: "page-mieten", title: "Mietübersicht", subtitle: "Mieten & Zahlungen", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.RENT },
+      { id: "page-vertraege", title: "Verträge", subtitle: "Mietverträge", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.CONTRACTS },
+      { id: "page-kontakte", title: "Kontakte", subtitle: "Handwerker & Partner", category: "Seiten", categoryIcon: <Users className="h-4 w-4" />, path: ROUTES.CONTACTS },
+      { id: "page-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.TODOS },
+      { id: "page-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.DOKUMENTE },
+      { id: "page-crm", title: "CRM", subtitle: "Leads & Akquise", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: ROUTES.CRM },
+      { id: "page-deals", title: "Deals", subtitle: "Deal Pipeline", category: "Seiten", categoryIcon: <Handshake className="h-4 w-4" />, path: ROUTES.DEALS },
     ].filter(p => normalizeString(`${p.title} ${p.subtitle}`).includes(q));
 
     return [...propertyResults, ...pages];

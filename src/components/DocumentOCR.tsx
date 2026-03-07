@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { extractPdfText } from "@/lib/exposeParser";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface DocumentOCRProps {
   onTextExtracted?: (text: string) => void;
@@ -59,6 +61,7 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const prevUrlRef = useRef<string | null>(null);
+  const lastFileRef = useRef<File | null>(null);
 
   /* FIX-4: Revoke previous Object URL when a new one is set, and on unmount */
   useEffect(() => {
@@ -72,6 +75,7 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
   }, [previewUrl]);
 
   const handleFile = useCallback(async (file: File) => {
+    lastFileRef.current = file;
     setLoading(true);
     setExtractedText("");
     setPreviewUrl(null);
@@ -102,7 +106,8 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error(`Fehler: ${msg}`);
+      handleError(err, { context: "file", details: "document-ocr", showToast: false });
+      toastErrorWithRetry(`Fehler: ${msg}`, () => lastFileRef.current && handleFile(lastFileRef.current));
       setExtractedText(`Fehler beim Lesen: ${msg}`);
     } finally {
       setLoading(false);

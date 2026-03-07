@@ -25,6 +25,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { normalizeString } from "@/lib/formatters";
+import { ROUTES } from "@/lib/routes";
 
 interface SpotlightResult {
   id: string;
@@ -98,28 +99,28 @@ export default function SpotlightSearch() {
 
   /** SPOTLIGHT-3: Quick actions */
   const quickActions = useMemo<SpotlightResult[]>(() => [
-    { id: "qa-add-property", title: "Neues Objekt anlegen", subtitle: "Immobilie hinzufügen", category: "Schnellaktionen", icon: <Plus className="h-4 w-4" />, action: () => { go("/"); setTimeout(() => document.querySelector<HTMLButtonElement>("[data-add-property]")?.click(), 300); }, keywords: "objekt immobilie anlegen erstellen neu" },
-    { id: "qa-export-csv", title: "Portfolio als CSV exportieren", subtitle: "Alle Objekte exportieren", category: "Schnellaktionen", icon: <Download className="h-4 w-4" />, action: () => go("/"), keywords: "export csv download" },
-    { id: "qa-hockey-stick", title: "Hockey Stick Simulator", subtitle: "Rendite-Prognose berechnen", category: "Schnellaktionen", icon: <Calculator className="h-4 w-4" />, action: () => go("/analyse"), keywords: "rechner simulation hockey stick prognose" },
-    { id: "qa-settings", title: "Einstellungen öffnen", subtitle: "Theme, Profil, Shortcuts", category: "Schnellaktionen", icon: <Settings className="h-4 w-4" />, action: () => go("/einstellungen"), keywords: "einstellungen settings profil theme" },
+    { id: "qa-add-property", title: "Neues Objekt anlegen", subtitle: "Immobilie hinzufügen", category: "Schnellaktionen", icon: <Plus className="h-4 w-4" />, action: () => { go(ROUTES.HOME); setTimeout(() => document.querySelector<HTMLButtonElement>("[data-add-property]")?.click(), 300); }, keywords: "objekt immobilie anlegen erstellen neu" },
+    { id: "qa-export-csv", title: "Portfolio als CSV exportieren", subtitle: "Alle Objekte exportieren", category: "Schnellaktionen", icon: <Download className="h-4 w-4" />, action: () => go(ROUTES.HOME), keywords: "export csv download" },
+    { id: "qa-hockey-stick", title: "Hockey Stick Simulator", subtitle: "Rendite-Prognose berechnen", category: "Schnellaktionen", icon: <Calculator className="h-4 w-4" />, action: () => go(ROUTES.ANALYSE), keywords: "rechner simulation hockey stick prognose" },
+    { id: "qa-settings", title: "Einstellungen öffnen", subtitle: "Theme, Profil, Shortcuts", category: "Schnellaktionen", icon: <Settings className="h-4 w-4" />, action: () => go(ROUTES.SETTINGS), keywords: "einstellungen settings profil theme" },
   ], [go]);
 
   /** SPOTLIGHT-4: Navigation items */
   const navResults = useMemo<SpotlightResult[]>(() => {
     const items = [
-      { id: "nav-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", path: "/", icon: <BarChart3 className="h-4 w-4" />, keywords: "dashboard portfolio übersicht home" },
-      { id: "nav-finanzen", title: "Darlehen & Finanzen", subtitle: "Kredite verwalten", path: "/darlehen", icon: <Landmark className="h-4 w-4" />, keywords: "darlehen kredit finanzen bank" },
-      { id: "nav-mieten", title: "Mietübersicht", subtitle: "Mieten & Zahlungen", path: "/mietuebersicht", icon: <Receipt className="h-4 w-4" />, keywords: "miete mieten zahlung mietübersicht" },
-      { id: "nav-vertraege", title: "Verträge", subtitle: "Miet- & Dienstleisterverträge", path: "/vertraege", icon: <FileText className="h-4 w-4" />, keywords: "vertrag verträge mietvertrag" },
-      { id: "nav-kontakte", title: "Kontakte", subtitle: "Handwerker & Partner", path: "/kontakte", icon: <Users className="h-4 w-4" />, keywords: "kontakte handwerker partner telefon" },
-      { id: "nav-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", path: "/aufgaben", icon: <CheckSquare className="h-4 w-4" />, keywords: "aufgaben todo projekt" },
-      { id: "nav-berichte", title: "Berichte", subtitle: "Auswertungen & Reports", path: "/berichte", icon: <BarChart3 className="h-4 w-4" />, keywords: "berichte report auswertung" },
-      { id: "nav-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", path: "/dokumente", icon: <FolderOpen className="h-4 w-4" />, keywords: "dokumente dateien upload ocr" },
-      { id: "nav-wartung", title: "Wartungsplaner", subtitle: "Instandhaltung", path: "/wartungsplaner", icon: <Wrench className="h-4 w-4" />, keywords: "wartung instandhaltung reparatur" },
-      { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: "/crm", icon: <Target className="h-4 w-4" />, keywords: "crm leads akquise" },
-      { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: "/deals", icon: <Handshake className="h-4 w-4" />, keywords: "deals pipeline" },
-      { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: "/besichtigungen", icon: <Camera className="h-4 w-4" />, keywords: "besichtigung besichtigungen notizen fotos videos immo viewing" },
-      { id: "nav-analyse", title: "Rechner & Analyse", subtitle: "Kalkulatoren", path: "/analyse", icon: <Calculator className="h-4 w-4" />, keywords: "rechner analyse kalkulator berechnung" },
+      { id: "nav-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", path: ROUTES.HOME, icon: <BarChart3 className="h-4 w-4" />, keywords: "dashboard portfolio übersicht home" },
+      { id: "nav-finanzen", title: "Darlehen & Finanzen", subtitle: "Kredite verwalten", path: ROUTES.LOANS, icon: <Landmark className="h-4 w-4" />, keywords: "darlehen kredit finanzen bank" },
+      { id: "nav-mieten", title: "Mietübersicht", subtitle: "Mieten & Zahlungen", path: ROUTES.RENT, icon: <Receipt className="h-4 w-4" />, keywords: "miete mieten zahlung mietübersicht" },
+      { id: "nav-vertraege", title: "Verträge", subtitle: "Miet- & Dienstleisterverträge", path: ROUTES.CONTRACTS, icon: <FileText className="h-4 w-4" />, keywords: "vertrag verträge mietvertrag" },
+      { id: "nav-kontakte", title: "Kontakte", subtitle: "Handwerker & Partner", path: ROUTES.CONTACTS, icon: <Users className="h-4 w-4" />, keywords: "kontakte handwerker partner telefon" },
+      { id: "nav-aufgaben", title: "Aufgaben", subtitle: "Todos & Projekte", path: ROUTES.TODOS, icon: <CheckSquare className="h-4 w-4" />, keywords: "aufgaben todo projekt" },
+      { id: "nav-berichte", title: "Berichte", subtitle: "Auswertungen & Reports", path: ROUTES.REPORTS, icon: <BarChart3 className="h-4 w-4" />, keywords: "berichte report auswertung" },
+      { id: "nav-dokumente", title: "Dokumente", subtitle: "Dateien & OCR", path: ROUTES.DOKUMENTE, icon: <FolderOpen className="h-4 w-4" />, keywords: "dokumente dateien upload ocr" },
+      { id: "nav-wartung", title: "Wartungsplaner", subtitle: "Instandhaltung", path: ROUTES.WARTUNG, icon: <Wrench className="h-4 w-4" />, keywords: "wartung instandhaltung reparatur" },
+      { id: "nav-crm", title: "CRM", subtitle: "Leads & Akquise", path: ROUTES.CRM, icon: <Target className="h-4 w-4" />, keywords: "crm leads akquise" },
+      { id: "nav-deals", title: "Deals", subtitle: "Deal Pipeline", path: ROUTES.DEALS, icon: <Handshake className="h-4 w-4" />, keywords: "deals pipeline" },
+      { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: ROUTES.BESICHTIGUNGEN, icon: <Camera className="h-4 w-4" />, keywords: "besichtigung besichtigungen notizen fotos videos immo viewing" },
+      { id: "nav-analyse", title: "Rechner & Analyse", subtitle: "Kalkulatoren", path: ROUTES.ANALYSE, icon: <Calculator className="h-4 w-4" />, keywords: "rechner analyse kalkulator berechnung" },
     ];
     return items.map(i => ({
       id: i.id, title: i.title, subtitle: i.subtitle, category: "Seiten",
@@ -163,7 +164,7 @@ export default function SpotlightSearch() {
       subtitle: `${p.address || p.location} · ${p.type} · ${p.units} Einheiten`,
       category: "Objekte",
       icon: <Building2 className="h-4 w-4" />,
-      action: () => go(`/objekt/${p.id}`, `prop-${p.id}`),
+      action: () => go(`${ROUTES.PROPERTY}/${p.id}`, `prop-${p.id}`),
       keywords: `${p.name} ${p.address} ${p.location} ${p.type}`.toLowerCase(),
     }));
   }, [properties, go]);
@@ -200,7 +201,7 @@ export default function SpotlightSearch() {
           id: `tenant-${t.id}`, title: `${t.first_name} ${t.last_name}`,
           subtitle: [t.email, t.phone].filter(Boolean).join(" · "),
           category: "Mieter", icon: <Users className="h-4 w-4" />,
-          action: () => go(`/objekt/${t.property_id}`, `tenant-${t.id}`),
+          action: () => go(`${ROUTES.PROPERTY}/${t.property_id}`, `tenant-${t.id}`),
         });
       });
 

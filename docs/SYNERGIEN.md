@@ -59,6 +59,9 @@
 | **LoanPdfImport** | — | Fehler beim PDF-Lesen: handleError + toastErrorWithRetry (Retry mit letzter Datei) |
 | **ContractManagement** | — | Fehler bei Vertrag-PDF-Extraktion: handleError + toastErrorWithRetry (Retry mit letzter Datei) |
 | **QuickActions** | Besichtigungen, Deals, Mietübersicht, Nebenkosten, Immo-AI | Schnellaktionen nutzen ROUTES (BESICHTIGUNGEN, DEALS, RENT, NK, AI) |
+| **DocumentOCR** | — | Fehler beim Datei/PDF-Lesen: handleError + toastErrorWithRetry (Retry mit letzter Datei) |
+| **SpotlightSearch** | Alle Seiten, Objekte, Mieter | Nav, Quick Actions und Objekt-Links nutzen ROUTES (Cmd+K) |
+| **MobileSearchOverlay** | Alle Seiten, Objekte | Mobile Suche: Seiten- und Objekt-Links über ROUTES (Usability) |
 
 ## Technische Details
 

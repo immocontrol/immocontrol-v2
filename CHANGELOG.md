@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (DocumentOCR)** — PDF/Bild-Text-Extraktion nutzt `toastErrorWithRetry` und `handleError` (Retry mit letzter Datei, Fehler getrackt)
+- **SpotlightSearch + MobileSearchOverlay an ROUTES** — Spotlight (Nav, Quick Actions, Objekt-Links) und Mobile Suche (Seiten, Objekt-Links) nutzen ROUTES (Single Source of Truth, Mobile Usability)
 - **Retry-Toast + Fehleranalyse (LoanPdfImport, ContractManagement PDF)** — Darlehen-PDF-Import und Vertrag-PDF-Extraktion nutzen `toastErrorWithRetry` und `handleError` (Retry mit letzter Datei, Fehler getrackt)
 - **QuickActions an ROUTES** — Schnellaktionen Besichtigung, Deals, Mietübersicht, Nebenkosten, Immo-AI nutzen ROUTES (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (AddContactDialog, DealToPropertyConverter)** — Kontakt anlegen und Deal→Objekt-Konvertierung nutzen `toastErrorWithRetry` und `handleError` (Retry ohne Formularverlust, Fehler getrackt)
@@ -81,6 +83,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **DocumentOCR** — Datei/PDF lesen: handleError + toastErrorWithRetry (Retry mit lastFileRef)
+- **SpotlightSearch** — Nav, Quick Actions, Objekt-Links über ROUTES (HOME, LOANS, RENT, CONTRACTS, CONTACTS, TODOS, REPORTS, DOKUMENTE, WARTUNG, CRM, DEALS, BESICHTIGUNGEN, ANALYSE, SETTINGS, PROPERTY)
+- **MobileSearchOverlay** — Seiten- und Objekt-Links über ROUTES (Mobile Usability)
 - **LoanPdfImport** — PDF lesen: handleError + toastErrorWithRetry (Retry mit lastFileRef)
 - **ContractManagement** — PDF-Extraktion Vertrag: handleError + toastErrorWithRetry (Retry mit lastPdfFileRef)
 - **QuickActions** — Pfade Besichtigung, Deals, Mietübersicht, Nebenkosten, Immo-AI über ROUTES
