@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import { completeDeepSeekChat, isDeepSeekConfigured } from "@/integrations/ai/deepseek";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface ViewingAISummaryProps {
   title: string;
@@ -49,8 +51,9 @@ export function ViewingAISummary({
         { systemPrompt: "Du bist Assistent für Immobilien-Besichtigungen. Antworte auf Deutsch, sachlich.", maxTokens: 512 }
       );
       setSummary(answer.trim() || "Keine Zusammenfassung erhalten.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "KI-Fehler");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "KI-Fehler", run);
     } finally {
       setLoading(false);
     }

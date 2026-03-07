@@ -13,6 +13,8 @@ import { formatDate, formatTime } from "@/lib/formatters";
 import { isDeepSeekConfigured, summarizeMessages, suggestReply } from "@/integrations/ai/extractors";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface Tenant {
   id: string;
@@ -160,8 +162,9 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
         messages.map((m) => ({ content: m.content, sender_role: m.sender_role }))
       );
       setSummaryText(summary || "Keine Zusammenfassung möglich.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Zusammenfassung fehlgeschlagen.");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Zusammenfassung fehlgeschlagen.", handleSummary);
       setSummaryText("");
       setSummaryOpen(false);
     } finally {
@@ -181,8 +184,9 @@ const MessageCenter = ({ propertyId }: { propertyId: string }) => {
         setNewMessage(reply);
         toast.success("Antwortvorschlag übernommen – du kannst ihn bearbeiten.");
       }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Vorschlag fehlgeschlagen.");
+    } catch (e: unknown) {
+      handleError(e, { context: "general", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Vorschlag fehlgeschlagen.", handleSuggestReply);
     } finally {
       setReplyLoading(false);
     }

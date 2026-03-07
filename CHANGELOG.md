@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Loans, MessageCenter, ViewingAISummary)** — Darlehen (Benutzer-Banken hinzufügen/löschen), MessageCenter (KI-Zusammenfassung, Antwortvorschlag), ViewingAISummary (KI-Zusammenfassung Besichtigung) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
+- **Synergie Besichtigungen → ROUTES** — Links „Zu Deals“ und „Dokumente“ nutzen ROUTES (Single Source of Truth)
 - **Retry-Toast + Fehleranalyse (Dokumente, PaymentTracking, PdfWithAI)** — Dokumente (Upload, Metadaten, Download), PaymentTracking (automatische Zahlungserstellung, Überfällig markieren), PdfWithAI (PDF extrahieren, KI-Auswertung) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (FinanceExport, Deals)** — FinanceExport (Steuer-Export, Jahresbericht), Deals (Exposé-Analyse, KI Verbessern, Nächster Schritt) nutzen `toastErrorWithRetry` und `handleError` (Retry, Fehler getrackt)
 - **ROUTES-Synergie** — ObjekteList, Contacts, CRM, Dokumente, Einladung, Settings nutzen `ROUTES` statt Hardcode-Pfade (Single Source of Truth)
@@ -68,6 +70,10 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Loans (Darlehen)** — addCustomBank/deleteCustomBank: handleError + toastErrorWithRetry (Retry)
+- **MessageCenter** — KI-Zusammenfassung und Antwortvorschlag: handleError + toastErrorWithRetry (Retry)
+- **ViewingAISummary** — KI-Zusammenfassung: handleError + toastErrorWithRetry (Retry)
+- **Besichtigungen** — Links „Zu Deals“, „Dokumente“ über ROUTES
 - **Dokumente** — Bei Upload-, Metadaten- und Download-Fehler: handleError + toastErrorWithRetry (Retry); Löschen: handleError + Toast
 - **PaymentTracking** — autoGenerate und markOverdue: handleError + toastErrorWithRetry (Retry)
 - **PdfWithAI** — PDF-Text extrahieren und KI-Auswertung: handleError + toastErrorWithRetry (Retry, lastPromptRef für KI)

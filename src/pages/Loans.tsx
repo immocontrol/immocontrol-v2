@@ -30,6 +30,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { LoadingButton } from "@/components/LoadingButton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { GERMAN_BANKS } from "@/data/germanBanks";
@@ -191,7 +193,8 @@ const Loans = () => {
     if (error && error.code === "23505") {
       toast.info("Diese Bank existiert bereits");
     } else if (error) {
-      toast.error("Fehler beim Hinzufügen");
+      handleError(error, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Fehler beim Hinzufügen", addCustomBank);
       return;
     }
     const addedName = newBankName.trim();
@@ -208,7 +211,11 @@ const Loans = () => {
     const bank = userBanks.find(b => b.name === bankName);
     if (!bank) return;
     const { error } = await supabase.from("user_banks").delete().eq("id", bank.id);
-    if (error) { toast.error("Fehler beim Löschen"); return; }
+    if (error) {
+      handleError(error, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => deleteCustomBank(bankName));
+      return;
+    }
     // If the deleted bank was selected, clear it
     if (form.bank_name === bankName) {
       setForm({ ...form, bank_name: "" });

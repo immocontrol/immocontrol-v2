@@ -22,7 +22,7 @@
 | **Dokumente** | Verträge, Nebenkosten | Empty State: Links „Verträge verwalten“, „Nebenkostenabrechnung“ (ROUTES) |
 | **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte (ROUTES)
 | **Objekte** | Deals, Besichtigungen | Empty State: Buttons Deals, Besichtigungen (ROUTES, aria-label) |
-| **Besichtigungen** | Dokumente | Empty State: Link Dokumente hochladen |
+| **Besichtigungen** | Deals, Dokumente | Empty State: Links „Zu Deals“, „Dokumente“ (ROUTES) |
 | **Todos** | CRM, Deals, Berichte | Empty State: Buttons „Zu CRM“, „Zu Deals“, „Berichte“ (ROUTES, Touch-Target)
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
 | **Wartungsplaner** | Objekte, Berichte | Empty State: Buttons „Objekte öffnen“, „Berichte“ (ROUTES, Touch-Target)
