@@ -7,6 +7,7 @@
 | Von | Zu | Verknüpfung |
 |-----|-----|-------------|
 | **CRM** | Deals | Button „Als Deal“ – Lead-Daten vorausgefüllt |
+| **Deals** | CRM | Empty State: Link „Leads aus CRM übernehmen“ |
 | **Deals** | Besichtigungen | Bei Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt |
 | **Deals** | Kontakte | Dropdown „Kontakt übernehmen“ – Name, Tel, E-Mail |
 | **Deals** | Besichtigungen | Link „Zu Besichtigungen“ bei Stage Besichtigung |

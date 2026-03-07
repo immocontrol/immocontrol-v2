@@ -187,7 +187,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
             label={uploading ? "Lädt..." : "Hochladen"}
             variant="outline"
             size="sm"
-            className="h-9 gap-1.5"
+            className="h-9 gap-1.5 touch-target min-h-[44px]"
             icon={<Upload className="h-3.5 w-3.5" />}
             disabled={uploading}
           />

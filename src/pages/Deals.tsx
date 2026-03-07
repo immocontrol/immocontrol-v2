@@ -922,9 +922,14 @@ const Deals = () => {
                   <Building2 className="h-8 w-8 mx-auto mb-3 opacity-30" />
                   {search ? `Keine Deals f\u00fcr "${search}" gefunden` : "Noch keine Deals angelegt"}
                   {!search && (
-                    <p className="text-xs mt-2">
-                      Erstelle einen Deal mit dem Button oben oder importiere aus Telegram
-                    </p>
+                    <>
+                      <p className="text-xs mt-2">
+                        Erstelle einen Deal mit dem Button oben oder importiere aus Telegram
+                      </p>
+                      <Link to="/crm" className="text-xs text-primary hover:underline mt-2 inline-block">
+                        Leads aus CRM übernehmen →
+                      </Link>
+                    </>
                   )}
                 </div>
               )}
