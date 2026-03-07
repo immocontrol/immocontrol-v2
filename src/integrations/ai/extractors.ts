@@ -257,6 +257,48 @@ export async function generateRentIncreaseJustification(adj: {
   return raw.trim();
 }
 
+/** Stage-Namen für Deal-Next-Step */
+const DEAL_STAGES: Record<string, string> = {
+  recherche: "Recherche",
+  kontaktiert: "Kontaktiert",
+  besichtigung: "Besichtigung",
+  angebot: "Angebot",
+  verhandlung: "Verhandlung",
+  abgeschlossen: "Abgeschlossen",
+  abgelehnt: "Abgelehnt",
+};
+
+/**
+ * Nächsten Deal-Schritt vorschlagen (AI).
+ * Basierend auf Stage, Notizen und Alter.
+ */
+export async function suggestDealNextStep(ctx: {
+  stage: string;
+  title?: string;
+  address?: string;
+  notes?: string;
+  createdAt?: string;
+}): Promise<string> {
+  const stageLabel = DEAL_STAGES[ctx.stage] || ctx.stage;
+  const days = ctx.createdAt
+    ? Math.floor((Date.now() - new Date(ctx.createdAt).getTime()) / 86400000)
+    : null;
+  const prompt = `Du bist ein Immobilien-Experte. Der Nutzer bearbeitet einen Deal.
+- Stage: ${stageLabel}
+- Titel: ${ctx.title || "–"}
+- Adresse: ${ctx.address || "–"}
+- Notizen: ${(ctx.notes || "").slice(0, 300)}
+${days != null ? `- Alter: ${days} Tage` : ""}
+
+Schlage den nächsten konkreten Schritt vor (1–2 Sätze). Auf Deutsch. Kein Bullet. Beispiel: "Angebot erstellen und per E-Mail versenden" oder "Besichtigung planen und Mieter kontaktieren".`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { maxTokens: 120 }
+  );
+  return raw.trim();
+}
+
 export async function suggestTicketDescription(title: string, category: string): Promise<string> {
   const prompt = `Der Nutzer erstellt ein Ticket für Vermieter/Handwerker.
 Titel: "${title}"

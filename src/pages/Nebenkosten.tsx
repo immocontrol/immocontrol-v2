@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen } from "lucide-react";
+import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { queryKeys } from "@/lib/queryKeys";
 import { AutoNebenkosten } from "@/components/AutoNebenkosten";
 import { EmptyState } from "@/components/EmptyState";
+import jsPDF from "jspdf";
 
 const NK_CATEGORIES = [
   "Grundsteuer", "Wasserversorgung", "Entwässerung", "Heizkosten", "Warmwasser",
@@ -197,6 +199,89 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
     if (w) { w.document.write(html); w.document.close(); w.print(); }
   };
 
+  /** SYNERGY: Nebenkostenabrechnung als Dokument speichern (PDF → property_documents) */
+  const generateBillingPdfBlob = useCallback((
+    billing: { property_id: string; tenant_id: string | null; billing_period_start: string; billing_period_end: string; prepayments: number; total_costs: number; tenant_share: number; balance: number },
+    property: { name: string; address?: string } | undefined,
+    tenant: { first_name: string; last_name: string } | undefined,
+    items: Array<{ category: string; description: string; distribution_key: string; total_amount: number; tenant_amount: number }>
+  ): Blob => {
+    const doc = new jsPDF({ format: "a4" });
+    const m = 20;
+    let y = m;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Nebenkostenabrechnung", m, y); y += 10;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Objekt: ${property?.name || "–"} ${property?.address || ""}`, m, y); y += 6;
+    if (tenant) { doc.text(`Mieter: ${tenant.first_name} ${tenant.last_name}`, m, y); y += 6; }
+    doc.text(`Zeitraum: ${new Date(billing.billing_period_start).toLocaleDateString("de-DE")} – ${new Date(billing.billing_period_end).toLocaleDateString("de-DE")}`, m, y); y += 12;
+    doc.setFont("helvetica", "bold");
+    doc.text("Kostenart", m, y);
+    doc.text("Beschreibung", m + 40, y);
+    doc.text("Mieteranteil", m + 120, y); y += 6;
+    doc.setFont("helvetica", "normal");
+    items.forEach(i => {
+      doc.text(i.category, m, y);
+      doc.text((i.description || "").slice(0, 25), m + 40, y);
+      doc.text(formatCurrency(Number(i.tenant_amount)), m + 120, y); y += 6;
+    });
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.text("Summe Mieteranteil", m, y);
+    doc.text(formatCurrency(Number(billing.tenant_share)), m + 120, y); y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.text("Vorauszahlungen", m, y);
+    doc.text(`-${formatCurrency(Number(billing.prepayments))}`, m + 120, y); y += 8;
+    doc.setFont("helvetica", "bold");
+    doc.text(Number(billing.balance) >= 0 ? "Nachzahlung" : "Guthaben", m, y);
+    doc.text(formatCurrency(Math.abs(Number(billing.balance))), m + 120, y);
+    doc.setFontSize(8);
+    doc.text(`ImmoControl · Erstellt am ${new Date().toLocaleDateString("de-DE")}`, m, 285);
+    return doc.output("blob");
+  }, []);
+
+  const [savingAsDoc, setSavingAsDoc] = useState(false);
+  const saveBillingAsDocument = useCallback(async () => {
+    if (!user || !selectedBillingData) return;
+    setSavingAsDoc(true);
+    try {
+      const property = properties.find(p => p.id === selectedBillingData.property_id);
+      const tenant = selectedBillingData.tenant_id ? tenants.find(t => t.id === selectedBillingData.tenant_id) : undefined;
+      const items = billingItems.map(i => ({
+        category: i.category,
+        description: i.description || "",
+        distribution_key: i.distribution_key,
+        total_amount: Number(i.total_amount || 0),
+        tenant_amount: Number(i.tenant_amount || 0),
+      }));
+      const blob = generateBillingPdfBlob(selectedBillingData, property, tenant, items);
+      const fileName = `Nebenkostenabrechnung_${property?.name || "Objekt"}_${new Date(selectedBillingData.billing_period_end).getFullYear()}.pdf`.replace(/[^a-zA-Z0-9äöüÄÖÜß_\-\.]/g, "_");
+      const filePath = `${user.id}/${selectedBillingData.property_id}/${Date.now()}_${fileName}`;
+      const { error: uploadError } = await supabase.storage.from("property-documents").upload(filePath, blob, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+      const { error: insertError } = await supabase.from("property_documents").insert({
+        property_id: selectedBillingData.property_id,
+        user_id: user.id,
+        file_name: fileName,
+        file_path: filePath,
+        file_size: blob.size,
+        file_type: "application/pdf",
+        category: "Nebenkostenabrechnung",
+      });
+      if (insertError) throw insertError;
+      qc.invalidateQueries({ queryKey: queryKeys.documents.byProperty(selectedBillingData.property_id) });
+      qc.invalidateQueries({ queryKey: ["all_documents"] });
+      qc.invalidateQueries({ queryKey: queryKeys.timeline.byProperty(selectedBillingData.property_id) });
+      toast.success("Nebenkostenabrechnung als Dokument gespeichert");
+    } catch (e: unknown) {
+      toast.error((e as Error).message || "Speichern fehlgeschlagen");
+    } finally {
+      setSavingAsDoc(false);
+    }
+  }, [user, selectedBillingData, properties, tenants, billingItems, generateBillingPdfBlob, qc]);
+
   /* FUNC-34: NK per sqm calculation */
   /* STRONG-17: NaN/Infinity guard on NK per sqm — prevents broken display if sqm data is missing */
   const nkPerSqm = useMemo(() => {
@@ -261,7 +346,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" /> Neue Abrechnung</Button>
+            <Button size="sm" className="gap-1.5 touch-target min-h-[44px]"><Plus className="h-3.5 w-3.5" /> Neue Abrechnung</Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Neue Nebenkostenabrechnung</DialogTitle></DialogHeader>
@@ -296,7 +381,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                 <Label className="text-xs">Vorauszahlungen (gesamt)</Label>
                 <Input type="number" value={form.prepayments} onChange={e => setForm({ ...form, prepayments: e.target.value })} className="h-9 text-sm" />
               </div>
-              <Button onClick={() => createBilling.mutate()} className="w-full" disabled={createBilling.isPending}>Abrechnung erstellen</Button>
+              <Button onClick={() => createBilling.mutate()} className="w-full touch-target min-h-[44px]" disabled={createBilling.isPending}>Abrechnung erstellen</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -305,7 +390,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       {/* UPD-21: Stagger animation for billing summary cards */}
       {selectedBilling && selectedBillingData ? (
         <div className="space-y-4">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedBilling(null)} className="text-xs">← Zurück zur Übersicht</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedBilling(null)} className="text-xs touch-target min-h-[44px]">← Zurück zur Übersicht</Button>
           
           <div className="gradient-card rounded-xl border border-border p-5 space-y-4">
             <div className="flex items-center justify-between">
@@ -319,12 +404,15 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
               </div>
               <div className="flex items-center gap-2">
                 {selectedBillingData.status === "draft" && (
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => finalizeBilling(selectedBillingData.id)}>
+                  <Button variant="outline" size="sm" className="touch-target min-h-[44px] text-xs" onClick={() => finalizeBilling(selectedBillingData.id)}>
                     <CheckCircle className="h-3 w-3 mr-1" /> Finalisieren
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => exportBillingPDF(selectedBillingData)}>
+                <Button variant="outline" size="sm" className="touch-target min-h-[44px] text-xs" onClick={() => exportBillingPDF(selectedBillingData)}>
                   <Download className="h-3 w-3 mr-1" /> PDF
+                </Button>
+                <Button variant="outline" size="sm" className="touch-target min-h-[44px] text-xs" disabled={savingAsDoc} onClick={saveBillingAsDocument}>
+                  {savingAsDoc ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />} Als Dokument
                 </Button>
               </div>
             </div>

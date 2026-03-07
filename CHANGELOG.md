@@ -8,6 +8,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Deals: suggestDealNextStep** — KI-Button „Nächster Schritt“ bei Notizen: Vorschlag für nächsten Deal-Schritt (Stage, Titel, Adresse, Notizen)
+- **Nebenkosten → Dokumente** — Button „Als Dokument“ speichert Nebenkostenabrechnung als PDF in Objekt-Dokumente (property_documents)
 - **BerichteInProsa** — Monatsbericht/Jahresüberblick aus Portfolio-Kennzahlen per DeepSeek (Immo-AI → PDF-Tab)
 - **Besichtigungen** — Neuer Bereich unter Akquise: Notizen, Bilder & Videos zu Immobilien-Besichtigungen
 - **Deal → Besichtigung** — Beim Verschieben eines Deals in Stage „Besichtigung“ wird automatisch ein Besichtigungseintrag angelegt
@@ -73,7 +75,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **IndexMietanpassung** — AI-Button „Begründung generieren“ (generateRentIncreaseJustification); Text wird in Zwischenablage kopiert
 - **RentIncreaseLetter** — AI-Button „KI-Begründung“ neben Begründungsfeld
 - **Kontakte** — Badge „X Deals“ klickbar: filtert Deals nach Kontakt (filterByContact)
-- **Deals** — Besichtigungs-Picker: „Besthende Besichtigung zuordnen“ bei Stage Besichtigung
+- **Deals** — Besichtigungs-Picker: „Besthende Besichtigung zuordnen“ bei Stage Besichtigung; KI-Button „Nächster Schritt“ bei Notizen (suggestDealNextStep)
 - **Deals** — Share-Icon auf Kanban-Karte (Share2)
 - **PropertyDocuments** — AI-Kategorisierung: PDF-Upload mit suggestDocumentCategory
 - **PropertyDetail** — Share-Button nutzt useShare (native Share API + Fallback)

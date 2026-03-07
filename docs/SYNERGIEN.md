@@ -27,7 +27,7 @@
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
 | **Wartungsplaner** | Objekte | Empty State: Link „Objekte öffnen“ |
 | **DashboardActionCenter** | Mietübersicht | „Überfällig“-Kachel verlinkt bei überfälligen Zahlungen |
-| **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile |
+| **Nebenkosten** | Dokumente | Link „Dokumente“ in Kopfzeile; Button „Als Dokument“ speichert Abrechnung als PDF in Objekt-Dokumente |
 | **GlobalSearch** | Kontakte, Deals, Besichtigungen | Deep-Links `?highlight=xxx` (Kontakte scroll/highlight), `?id=xxx` (Deals/Besichtigungen öffnen Dialog) |
 | **Dashboard** | Deals, Besichtigungen | Links zu „Deals in Besichtigung“ und „Besichtigungen“ |
 | **GlobalSearch** | Besichtigungen | Suche in property_viewings; Seiten-Navigation |

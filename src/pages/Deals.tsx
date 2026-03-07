@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2 } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
@@ -34,7 +34,7 @@ import { DealToPropertyConverter } from "@/components/DealToPropertyConverter";
 import { MobileSwipeableDealCard } from "@/components/mobile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractPdfText } from "@/lib/exposeParser";
-import { extractDealFromExposeText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
+import { extractDealFromExposeText, isDeepSeekConfigured, suggestDealNextStep } from "@/integrations/ai/extractors";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { sanitizeFormData } from "@/lib/sanitize";
 import { useShare } from "@/components/mobile/MobileShareSheet";
@@ -212,6 +212,8 @@ const Deals = () => {
   const [exposeAnalyzing, setExposeAnalyzing] = useState(false);
   const [dealScore, setDealScore] = useState<number | null>(null);
   const [scoreReason, setScoreReason] = useState<string | null>(null);
+  /* AI: Nächster Deal-Schritt (suggestDealNextStep) */
+  const [nextStepLoading, setNextStepLoading] = useState(false);
 
   /* FUNC-12: Kanban Drag & Drop between stages */
   const [draggedDeal, setDraggedDeal] = useState<DealRecord | null>(null);
@@ -1131,7 +1133,43 @@ const Deals = () => {
             </div>
             {/* UPD-42: Source field with Telegram preset hint */}
             <Input placeholder="Quelle (z.B. ImmoScout, Makler, Telegram)" value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value }))} aria-label="Quelle" />
-            <Textarea placeholder="Notizen" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} aria-label="Notizen" />
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-xs text-muted-foreground">Notizen</span>
+                {isDeepSeekConfigured() && (editDeal || form.title || form.address) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    disabled={nextStepLoading}
+                    onClick={async () => {
+                      setNextStepLoading(true);
+                      try {
+                        const step = await suggestDealNextStep({
+                          stage: form.stage,
+                          title: form.title || undefined,
+                          address: form.address || undefined,
+                          notes: form.notes || undefined,
+                          createdAt: editDeal?.created_at,
+                        });
+                        const prefix = form.notes?.trim() ? "\n\n" : "";
+                        setForm(p => ({ ...p, notes: (p.notes || "").trimEnd() + prefix + step }));
+                        toast.success("KI-Vorschlag übernommen");
+                      } catch (e) {
+                        toast.error((e as Error).message || "KI-Vorschlag fehlgeschlagen");
+                      } finally {
+                        setNextStepLoading(false);
+                      }
+                    }}
+                  >
+                    {nextStepLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    Nächster Schritt
+                  </Button>
+                )}
+              </div>
+              <Textarea placeholder="Notizen" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} aria-label="Notizen" />
+            </div>
             {form.stage === "abgelehnt" && (
               <Input placeholder="Grund f\u00fcr Absage" value={form.lost_reason} onChange={e => setForm(p => ({ ...p, lost_reason: e.target.value }))} aria-label="Absagegrund" />
             )}

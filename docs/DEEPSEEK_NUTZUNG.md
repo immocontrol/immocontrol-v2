@@ -19,6 +19,7 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 | **IndexMietanpassung** | Mietübersicht / Verträge | Button „Begründung generieren" (Sparkles) – KI erstellt formelle Begründung; Text wird in Zwischenablage kopiert. |
 | **RentIncreaseLetter** | Verträge (Mieterhöhungsschreiben) | Button „KI-Begründung" neben Begründungsfeld – nutzt `generateRentIncreaseJustification`. |
 | **PropertyDocuments** | Objekt-Dokumente | Beim PDF-Upload: KI schlägt Kategorie vor (suggestDocumentCategory) bei DeepSeek-Konfiguration. |
+| **Deals** | Deal bearbeiten | Button „Nächster Schritt“ (suggestDealNextStep): KI schlägt nächsten konkreten Deal-Schritt vor (Stage, Titel, Adresse, Notizen). |
 
 ---
 
