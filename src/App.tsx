@@ -235,7 +235,10 @@ const RoleRouter = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading || roleLoading || onboardingDone === null) {
+  /* When already on onboarding URL, skip loading screen so we don’t flash "Laden…" and then black;
+     let the route render Onboarding immediately. Otherwise we’d briefly show onboarding then re-show loading. */
+  const isOnOnboardingPage = pathname === ROUTES.ONBOARDING;
+  if (!isOnOnboardingPage && (loading || roleLoading || onboardingDone === null)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-live="polite" aria-label="Laden">
         <div className="animate-pulse text-muted-foreground">Laden...</div>
