@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2 } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,9 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { isDeepSeekConfigured, suggestColdCallOpening, suggestScoutInterest } from "@/integrations/ai/extractors";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useVoiceCall } from "@/hooks/useVoiceCall";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ROUTES } from "@/lib/routes";
 
 type SearchMode = "ort" | "umkreis";
@@ -223,6 +225,8 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     return 500;
   });
   const { getCallUrl } = useVoiceCall();
+  const isMobile = useIsMobile();
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [minSize, setMinSize] = useState(() => {
     try {
       const s = sessionStorage.getItem(SCOUT_STORAGE_KEY);
@@ -318,28 +322,6 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     if (initialQuery != null && initialQuery.trim()) setQuery(initialQuery.trim());
   }, [initialQuery]);
 
-  /* Reset focused result when results change; scroll focused row into view */
-  const visibleResults = useMemo(() => sortedResults.slice(0, SCOUT_DISPLAY_CAP), [sortedResults]);
-  useEffect(() => {
-    if (visibleResults.length === 0) {
-      setFocusedResultIndex(null);
-      return;
-    }
-    setFocusedResultIndex((prev) => (prev === null ? 0 : Math.min(prev, visibleResults.length - 1)));
-  }, [visibleResults.length]);
-  useEffect(() => {
-    focusedResultRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [focusedResultIndex]);
-
-  /* Scroll results section into view when search completes with results (UX: user sees results without manual scroll) */
-  useEffect(() => {
-    const wasLoading = prevLoadingRef.current;
-    prevLoadingRef.current = loading;
-    if (wasLoading && !loading && results.length > 0) {
-      resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }, [loading, results.length]);
-
   const sortedResults = useMemo(() => {
     let list = [...results];
     if (minSize > 0) list = list.filter((r) => (r.estimatedGrossArea ?? 0) >= minSize);
@@ -360,6 +342,28 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     }
     return list;
   }, [results, minSize, onlyWithPhone, onlyWithWebsite, onlyWithEmail, onlyWithOpeningHours, poiTypeFilter, sortBy]);
+
+  /* Reset focused result when results change; scroll focused row into view */
+  const visibleResults = useMemo(() => sortedResults.slice(0, SCOUT_DISPLAY_CAP), [sortedResults]);
+  useEffect(() => {
+    if (visibleResults.length === 0) {
+      setFocusedResultIndex(null);
+      return;
+    }
+    setFocusedResultIndex((prev) => (prev === null ? 0 : Math.min(prev, visibleResults.length - 1)));
+  }, [visibleResults.length]);
+  useEffect(() => {
+    focusedResultRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focusedResultIndex]);
+
+  /* Scroll results into view when search completes */
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current;
+    prevLoadingRef.current = loading;
+    if (wasLoading && !loading && results.length > 0) {
+      resultsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [loading, results.length]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -735,22 +739,107 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               <h3 className="text-sm font-medium" id="scout-results-heading" aria-live="polite">
                 Gefundene Treffer {results.length !== sortedResults.length ? `(${sortedResults.length} von ${results.length})` : `(${sortedResults.length})`}{sortedResults.length > SCOUT_DISPLAY_CAP ? ` – erste ${SCOUT_DISPLAY_CAP} angezeigt` : ""}{minSize > 0 ? `, ≥ ${minSize} m²` : ""}
               </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
-                onClick={() => {
-                  const base = typeof window !== "undefined" ? `${window.location.origin}/crm` : "/crm";
-                  const params = new URLSearchParams({ tab: "scout" });
-                  if (query.trim()) params.set("q", query.trim());
-                  const url = `${base}?${params.toString()}`;
-                  navigator.clipboard.writeText(url).then(() => toast.success("Link kopiert"), () => toast.error("Kopieren fehlgeschlagen"));
-                }}
-                aria-label="Suche teilen (Link kopieren)"
-              >
-                <Share2 className="h-3.5 w-3.5" /> Teilen
-              </Button>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
+                  onClick={() => {
+                    const base = typeof window !== "undefined" ? `${window.location.origin}/crm` : "/crm";
+                    const params = new URLSearchParams({ tab: "scout" });
+                    if (query.trim()) params.set("q", query.trim());
+                    const url = `${base}?${params.toString()}`;
+                    navigator.clipboard.writeText(url).then(() => toast.success("Link kopiert"), () => toast.error("Kopieren fehlgeschlagen"));
+                  }}
+                  aria-label="Suche teilen (Link kopieren)"
+                >
+                  <Share2 className="h-3.5 w-3.5" /> Teilen
+                </Button>
+                {isMobile && (
+                  <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" aria-label="Filter anpassen">
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        Filter
+                        {(onlyWithPhone || onlyWithWebsite || onlyWithEmail || onlyWithOpeningHours || minSize > 0 || poiTypeFilter !== "all") && (
+                          <span className="ml-0.5 px-1.5 py-0 rounded text-[10px] bg-primary/20 text-primary">
+                            {(onlyWithPhone ? 1 : 0) + (onlyWithWebsite ? 1 : 0) + (onlyWithEmail ? 1 : 0) + (onlyWithOpeningHours ? 1 : 0) + (minSize > 0 ? 1 : 0) + (poiTypeFilter !== "all" ? 1 : 0)}
+                          </span>
+                        )}
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+                      <SheetHeader>
+                        <SheetTitle>Filter</SheetTitle>
+                      </SheetHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Typ</Label>
+                          <Select value={poiTypeFilter} onValueChange={setPoiTypeFilter}>
+                            <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {POI_TYPE_CATEGORIES.map((c) => (
+                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Mindestfläche</Label>
+                          <Select value={String(minSize)} onValueChange={(v) => setMinSize(Number(v))}>
+                            <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {MIN_SIZE_OPTIONS.map((o) => (
+                                <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Sortierung</Label>
+                          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                            <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="size">Nach Gebäudegröße</SelectItem>
+                              <SelectItem value="distance">Nach Entfernung</SelectItem>
+                              <SelectItem value="name">Nach Name</SelectItem>
+                              <SelectItem value="source">Nach Quelle</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-3">
+                          <Label className="text-xs">Nur mit</Label>
+                          <div className="flex flex-col gap-3">
+                            <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                              <input type="checkbox" checked={onlyWithPhone} onChange={(e) => setOnlyWithPhone(e.target.checked)} className="rounded h-4 w-4" />
+                              <span className="text-sm">Telefon</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                              <input type="checkbox" checked={onlyWithWebsite} onChange={(e) => setOnlyWithWebsite(e.target.checked)} className="rounded h-4 w-4" />
+                              <span className="text-sm">Website</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                              <input type="checkbox" checked={onlyWithEmail} onChange={(e) => setOnlyWithEmail(e.target.checked)} className="rounded h-4 w-4" />
+                              <span className="text-sm">E-Mail</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                              <input type="checkbox" checked={onlyWithOpeningHours} onChange={(e) => setOnlyWithOpeningHours(e.target.checked)} className="rounded h-4 w-4" />
+                              <span className="text-sm">Öffnungszeiten</span>
+                            </label>
+                          </div>
+                        </div>
+                        <Button variant="secondary" className="w-full gap-1.5" onClick={() => { setOnlyWithPhone(false); setOnlyWithWebsite(false); setOnlyWithEmail(false); setOnlyWithOpeningHours(false); setMinSize(0); setPoiTypeFilter("all"); setFilterSheetOpen(false); }} aria-label="Filter zurücksetzen">
+                          <RotateCcw className="h-3.5 w-3.5" /> Filter zurücksetzen
+                        </Button>
+                        <Button variant="outline" className="w-full gap-1.5" onClick={exportCsv} aria-label="CSV exportieren">
+                          <Download className="h-3.5 w-3.5" /> CSV exportieren
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                )}
+              </div>
+              <div className={cn("flex flex-wrap items-center gap-2", isMobile && "hidden")}>
                 <div className="flex items-center gap-1.5">
                   <Label className="text-xs text-muted-foreground whitespace-nowrap sr-only sm:not-sr-only">Typ:</Label>
                   <Select value={poiTypeFilter} onValueChange={setPoiTypeFilter}>

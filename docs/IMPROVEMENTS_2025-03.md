@@ -64,6 +64,15 @@ Kurzüberblick der umgesetzten Änderungen in einem Durchgang: WGH-Scout, CRM, S
 - **Rendite-Schnellrechner:** Auf der Objektanalyse (Analyse-Seite). Eingabe: Kaufpreis (€), Monatsmiete (€). Ausgabe: Brutto-Mietrendite (%), Mietmultiplikator (Jahre). Komponente: `RenditeSchnellrechner.tsx`.
 - **Inflation-Mietrechner:** Auf der Mietübersicht (Tab Zahlungen). Eingabe: aktuelle Monatsmiete (€), Jahre (1–30), Inflation (% p.a.). Ausgabe: geschätzte Miete in X Jahren. Komponente: `InflationMietrechner.tsx`. Relevant für Indexmiete und langfristige Planung.
 - **AfA-Schnellrechner:** Auf der Seite Verträge & Verwaltung. Eingabe: Kaufpreis (€), Gebäudeanteil (%), Nutzungsdauer (Jahre). Ausgabe: jährliche AfA (Absetzung für Abnutzung) in €. Komponente: `AfASchnellrechner.tsx`. Relevant für Steuerplanung (Anlage V).
+- **Kaufpreisfaktor-Rechner:** Auf der Objektanalyse-Seite. Eingabe: Jahreskaltmiete (€), Kaufpreisfaktor (8–35, Slider). Ausgabe: maximaler Kaufpreis. Komponente: `KaufpreisfaktorRechner.tsx`. Relevant für Preisbewertung (typisch 12–25 für Bestandsimmobilien).
+
+## WGH-Scout: Mobile Filter-Drawer
+
+- **Filter-Sheet auf Mobile:** Auf kleinen Screens öffnet ein „Filter“-Button einen Bottom-Sheet mit Typ, Mindestfläche, Sortierung und Checkboxen (Nur mit Telefon/Web/E-Mail/Öffnungszeiten). Desktop: weiterhin Inline-Filter. Badge zeigt Anzahl aktiver Filter.
+
+## GewerbeScout: Code-Refactor
+
+- **sortedResults/visibleResults:** Reihenfolge korrigiert – `sortedResults` vor `visibleResults`, um TDZ-Fehler zu vermeiden.
 
 ## Technik
 

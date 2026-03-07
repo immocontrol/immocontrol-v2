@@ -41,6 +41,7 @@ const SUGGESTIONS = [
   "Welche Objekte haben den höchsten Verkehrswert?",
   "Wann endet die Zinsbindung bei meinen Darlehen?",
   "Welche Objekte haben die höchste Brutto-Mietrendite?",
+  "Welcher Kaufpreisfaktor ist für meine Objekte typisch?",
 ];
 
 export default function ImmoAI() {

@@ -12,6 +12,7 @@
 | **WGH-Scout** | Besichtigungen | Button „Besichtigung“ pro Treffer – Besichtigungs-Formular mit Titel/Adresse vorausgefüllt (fromScout); nur im CRM-Tab Scout |
 | **WGH-Scout** | CRM Suche | Empty State „Keine Treffer“: Link „Stattdessen Adresssuche im CRM“ → /crm?tab=search |
 | **WGH-Scout** | Besichtigungen | Empty State „Keine Treffer“: Link „Besichtigung planen“ → ROUTES.BESICHTIGUNGEN |
+| **Objektanalyse** | Kaufpreisfaktor | Kaufpreisfaktor-Rechner: Jahresmiete × Faktor → max. Kaufpreis (Synergie zu Rendite-Schnellrechner) |
 | **Verträge** | Fristen | Kündigungsfrist-Rechner auf der Seite Verträge: gewünschtes Enddatum + Frist in Monaten → spätestes Kündigungsdatum |
 | **Mietübersicht** | Verträge | Link „Verträge“ in der Kopfzeile (ROUTES.CONTRACTS); Leerstands-Kosten-Rechner im Tab Zahlungen |
 | **PropertyDetail** | AI | Button „KI Kurzbewertung“ (suggestPropertySummary) – 1–2 Sätze Bewertung bei DeepSeek |
