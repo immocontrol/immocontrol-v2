@@ -3,7 +3,7 @@
  * From DocumentExpiryTracker, MaintenancePlanner, ContractLifecycle.
  * Auto-create todos in Todo system.
  */
-import { memo, useMemo } from "react";
+import { memo, useMemo, useRef } from "react";
 import { ListTodo, FileWarning, Wrench, FileText, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface GeneratedTodo {
   title: string;
@@ -23,6 +25,7 @@ interface GeneratedTodo {
 const AutoTodoGenerator = memo(() => {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const lastTodoRef = useRef<GeneratedTodo | null>(null);
 
   // Fetch expiring documents
   const { data: expiringDocs = [] } = useQuery({
@@ -99,7 +102,10 @@ const AutoTodoGenerator = memo(() => {
       qc.invalidateQueries({ queryKey: ["todos"] });
       toast.success("Todo erstellt");
     },
-    onError: () => toast.error("Fehler beim Erstellen"),
+    onError: (err: unknown) => {
+      handleError(err, { context: "supabase", details: "todos.insert", showToast: false });
+      toastErrorWithRetry("Fehler beim Erstellen", () => { if (lastTodoRef.current) createTodoMutation.mutate(lastTodoRef.current); });
+    },
   });
 
   const createAllTodos = async () => {
@@ -165,7 +171,7 @@ const AutoTodoGenerator = memo(() => {
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5"
-                onClick={() => createTodoMutation.mutate(todo)}
+                onClick={() => { lastTodoRef.current = todo; createTodoMutation.mutate(todo); }}
               >
                 <Plus className="h-3 w-3" />
               </Button>

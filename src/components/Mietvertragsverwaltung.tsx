@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText, Plus, AlertTriangle, Clock, Calendar, Bell, Trash2, TrendingUp, CheckCircle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, formatDate, formatDaysUntil } from "@/lib/formatters";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 /**
  * MIETVERTRAG-1: Mietvertragsverwaltung mit Fristen-Erinnerungen
@@ -144,6 +146,7 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
     rent_increase_type: "mietspiegel",
     notes: "",
   });
+  const lastDeletedIdRef = useRef<string | null>(null);
 
   /* MIETVERTRAG-4: Fetch all contracts */
   const { data: contracts = [], isLoading } = useQuery({
@@ -177,7 +180,10 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
       setOpen(false);
       toast.success("Mietvertrag angelegt");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "mietvertraege.insert", showToast: false });
+      toastErrorWithRetry(e instanceof Error ? e.message : "Fehler beim Anlegen", () => addMutation.mutate());
+    },
   });
 
   /* MIETVERTRAG-6: Delete contract */
@@ -189,6 +195,10 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["mietvertraege"] });
       toast.success("Vertrag gelöscht");
+    },
+    onError: (e: unknown) => {
+      handleError(e, { context: "supabase", details: "mietvertraege.delete", showToast: false });
+      toastErrorWithRetry("Fehler beim Löschen", () => { if (lastDeletedIdRef.current) deleteMutation.mutate(lastDeletedIdRef.current); });
     },
   });
 
@@ -439,7 +449,7 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(c.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => { lastDeletedIdRef.current = c.id; deleteMutation.mutate(c.id); }}>
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </TableCell>

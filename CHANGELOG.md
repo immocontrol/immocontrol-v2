@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Retry-Toast + Fehleranalyse (Mietvertragsverwaltung, AutoTodoGenerator, BulkRentAdjustment)** — Mietvertrag anlegen/löschen, Auto-Todo erstellen und Bulk-Mietanpassung nutzen handleError + toastErrorWithRetry (Retry ohne Datenverlust, Fehler getrackt)
 - **navConfig + MobileBottomTabBar an ROUTES** — Gesamte App-Navigation (Sidebar + Shortcuts + Mobile Tabs) nutzt ROUTES (Single Source of Truth, Mobile Usability)
 - **Retry-Toast + Fehleranalyse (GesellschaftSelector)** — Gesellschaft hinzufügen/löschen nutzt handleError + toastErrorWithRetry (Retry mit letzter Aktion, Fehler getrackt)
 - **Retry-Toast + Fehleranalyse (DocumentOCR)** — PDF/Bild-Text-Extraktion nutzt `toastErrorWithRetry` und `handleError` (Retry mit letzter Datei, Fehler getrackt)
@@ -85,6 +86,9 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Mietvertragsverwaltung** — Anlegen: handleError + toastErrorWithRetry (Retry = erneuter Submit); Löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedIdRef)
+- **AutoTodoGenerator** — Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastTodoRef)
+- **BulkRentAdjustment** — Mietanpassung anwenden: handleError + toastErrorWithRetry (Retry = applyAdjustments)
 - **navConfig (appLayout)** — navEntries und ACTION_TO_PATH nutzen ROUTES (Portfolio, Dashboard, Finanzen, Verwaltung, Akquise)
 - **MobileBottomTabBar** — Alle Tab- und Unter-Pfade über ROUTES (Mobile Usability)
 - **GesellschaftSelector** — Hinzufügen/Löschen: handleError + toastErrorWithRetry (Retry mit lastAddedNameRef/lastDeletedIdRef)

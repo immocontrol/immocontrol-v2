@@ -65,6 +65,9 @@
 | **navConfig (AppLayout)** | Alle Bereiche | Sidebar-Navigation und Shortcut-Map nutzen ROUTES (Single Source of Truth) |
 | **MobileBottomTabBar** | Alle Tabs | Mobile Tab-Navigation nutzt ROUTES (Finanzen, Verwaltung, Akquise, Mehr) |
 | **GesellschaftSelector** | — | Fehler beim Hinzufügen/Löschen: handleError + toastErrorWithRetry (Retry mit letzter Aktion) |
+| **Mietvertragsverwaltung** | — | Vertrag anlegen/löschen: handleError + toastErrorWithRetry (Retry ohne Formularverlust / mit lastDeletedIdRef) |
+| **AutoTodoGenerator** | Todos | Todo aus Vorschlag erstellen: handleError + toastErrorWithRetry (Retry mit lastTodoRef) |
+| **BulkRentAdjustment** | Mieter, Mietübersicht | Bulk-Mietanpassung: handleError + toastErrorWithRetry (Retry = applyAdjustments) |
 
 ## Technische Details
 

@@ -10,6 +10,8 @@ import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, safeDivide } from "@/lib/formatters";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 interface Tenant {
   id: string;
@@ -104,8 +106,9 @@ export function BulkRentAdjustment() {
       setSelectedIds(new Set());
       setShowPreview(false);
       setAdjustmentValue("");
-    } catch {
-      toast.error("Fehler bei der Mietanpassung");
+    } catch (e: unknown) {
+      handleError(e, { context: "supabase", details: "bulk-rent-adjustment", showToast: false });
+      toastErrorWithRetry("Fehler bei der Mietanpassung", applyAdjustments);
     } finally {
       setIsApplying(false);
     }
