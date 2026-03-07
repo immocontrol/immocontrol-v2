@@ -76,6 +76,11 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Deals** — Besichtigungs-Picker: „Besthende Besichtigung zuordnen“ bei Stage Besichtigung
 - **Deals** — Share-Icon auf Kanban-Karte (Share2)
 - **PropertyDocuments** — AI-Kategorisierung: PDF-Upload mit suggestDocumentCategory
+- **PropertyDetail** — Share-Button nutzt useShare (native Share API + Fallback)
+- **QuickActions** — Deal erstellen, Mietübersicht (navigate)
+- **Immo-Chat** — Kontext um contacts + rent_payments erweitert
+- **Mietübersicht** — Link "Index-Mietanpassung prüfen" zum Dashboard
+- **StatCard** — optional href: Mieteinnahmen/M verlinkt auf /mietuebersicht
 
 ### Behoben
 

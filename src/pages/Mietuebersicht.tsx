@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download } from "lucide-react";
+import { Receipt, Search, X, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle, Filter, Download, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -15,6 +15,7 @@ import MietTrendChart from "@/components/MietTrendChart";
 import RentIncreaseWizard from "@/components/RentIncreaseWizard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -229,6 +230,9 @@ const Mietuebersicht = () => {
             )}
           </p>
           <RentIncreaseWizard />
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[36px]">
+            <TrendingUp className="h-3.5 w-3.5" /> Index-Mietanpassung prüfen
+          </Link>
         </div>
       </div>
 

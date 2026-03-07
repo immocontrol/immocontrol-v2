@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera } from "lucide-react";
+import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera, Landmark, BarChart3 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface QuickActionsProps {
@@ -40,6 +40,8 @@ const QuickActions = ({ onScrollTo, onNavigate }: QuickActionsProps) => {
     { id: "notes", label: "Notiz hinzufügen", icon: StickyNote, color: "text-muted-foreground", shortcut: "4", navigate: false },
     { id: "documents", label: "Dokument hochladen", icon: FileText, color: "text-accent-foreground", shortcut: "5", navigate: false },
     { id: "viewings", label: "Besichtigung erfassen", icon: Camera, color: "text-accent", shortcut: "6", navigate: true, path: "/besichtigungen" },
+    { id: "deals", label: "Deal erstellen", icon: Landmark, color: "text-blue-500", shortcut: "7", navigate: true, path: "/deals" },
+    { id: "rent", label: "Mietübersicht", icon: BarChart3, color: "text-amber-500", shortcut: "8", navigate: true, path: "/mietuebersicht" },
   ];
 
   return (

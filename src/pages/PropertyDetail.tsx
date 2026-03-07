@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
+import { useShare } from "@/components/mobile/MobileShareSheet";
 
 // Property detail page
 
@@ -56,6 +57,7 @@ const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { share } = useShare();
   const { getProperty, deleteProperty, duplicateProperty } = useProperties();
   const property = getProperty(id || "");
   const [tenantVersion, setTenantVersion] = useState(0);
@@ -211,10 +213,7 @@ const PropertyDetail = () => {
                   aria-label="Objektdaten teilen"
                   onClick={() => {
                     const summary = `📊 ${property.name}\n📍 ${property.address}\n💰 Wert: ${formatCurrency(property.currentValue)}\n🏠 Miete: ${formatCurrency(property.monthlyRent)}/M\n📈 Cashflow: ${formatCurrency(property.monthlyCashflow)}/M\n📊 Brutto-Rendite: ${bruttoRendite.toFixed(1)}%\n🏦 Restschuld: ${formatCurrency(property.remainingDebt)}`;
-                    navigator.clipboard.writeText(summary).then(
-                      () => toast.success("Objektzusammenfassung kopiert!"),
-                      () => toast.error("Kopieren fehlgeschlagen")
-                    );
+                    share({ title: property.name, text: summary, url: window.location.href });
                   }}
                 >
                   <Share2 className="h-4 w-4" />

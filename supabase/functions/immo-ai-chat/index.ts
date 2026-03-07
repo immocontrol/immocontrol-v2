@@ -104,7 +104,7 @@ serve(async (req) => {
     const { messages } = (await req.json()) as { messages: ChatMessage[] };
 
     // Fetch user's portfolio data for context
-    const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes, dealsRes, viewingsRes] = await Promise.all([
+    const [propertiesRes, tenantsRes, loansRes, todosRes, ticketsRes, dealsRes, viewingsRes, contactsRes, rentPaymentsRes] = await Promise.all([
       supabase.from("properties").select("*").order("name"),
       supabase.from("tenants").select("*, properties(name, address)").order("last_name"),
       supabase.from("loans").select("*, properties(name)").order("created_at", { ascending: false }),
@@ -112,6 +112,8 @@ serve(async (req) => {
       supabase.from("tickets").select("*, properties(name), tenants(first_name, last_name)").order("created_at", { ascending: false }).limit(20),
       supabase.from("deals").select("id, title, address, stage, purchase_price, expected_rent, sqm, units").order("created_at", { ascending: false }).limit(20),
       supabase.from("property_viewings").select("id, title, address, rating, notes, pro_points, contra_points, visited_at").order("visited_at", { ascending: false, nullsFirst: false }).limit(15),
+      supabase.from("contacts").select("id, name, company, category").is("deleted_at", null).order("name").limit(50),
+      supabase.from("rent_payments").select("id, amount, status, due_date, tenant_id, property_id").in("status", ["pending", "overdue"]).order("due_date", { ascending: true }).limit(30),
     ]);
 
     const properties = (propertiesRes.data || []) as PropertyRow[];
@@ -121,6 +123,8 @@ serve(async (req) => {
     const tickets = (ticketsRes.data || []) as TicketRow[];
     const deals = (dealsRes.data || []) as Array<{ title?: string; address?: string; stage?: string; purchase_price?: number; expected_rent?: number }>;
     const viewings = (viewingsRes.data || []) as Array<{ title?: string; address?: string; rating?: number; notes?: string; pro_points?: string; contra_points?: string }>;
+    const contacts = (contactsRes.data || []) as Array<{ name?: string; company?: string | null; category?: string }>;
+    const rentPayments = (rentPaymentsRes.data || []) as Array<{ amount?: number; status?: string; due_date?: string; tenant_id?: string; property_id?: string }>;
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -186,6 +190,12 @@ ${deals.map((d) => `- ${d.title ?? "k.A."} | ${d.address ?? ""} | Stage: ${d.sta
 
 ## Besichtigungen (${viewings.length})
 ${viewings.map((v) => `- ${v.title ?? "k.A."} | Bewertung: ${v.rating ?? "–"}/5 | Pro: ${(v.pro_points ?? "").slice(0, 80)} | Kontra: ${(v.contra_points ?? "").slice(0, 80)}`).join("\n")}
+
+## Kontakte (${contacts.length})
+${contacts.map((c) => `- ${c.name ?? "k.A."} | ${c.company ?? ""} | ${c.category ?? ""}`).join("\n")}
+
+## Offene/Überfällige Mietzahlungen (${rentPayments.length})
+${rentPayments.map((p) => `- ${Number(p.amount ?? 0).toLocaleString("de-DE")} € | Fällig: ${p.due_date ?? "k.A."} | Status: ${p.status ?? "?"}`).join("\n")}
 `.trim();
 
     const systemPrompt = `Du bist "Immo AI", ein intelligenter Immobilien-Assistent für einen deutschen Immobilieninvestor. Du hast Zugriff auf das komplette Portfolio des Nutzers.

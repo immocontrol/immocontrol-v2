@@ -434,6 +434,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           trend="up"
           icon={<Wallet className="h-4 w-4" />}
           delay={100}
+          href="/mietuebersicht"
         />
         <StatCard
           label="Cashflow/M"

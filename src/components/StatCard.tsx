@@ -1,5 +1,6 @@
 import React from "react";
 import { ReactNode, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { TrendingUp, TrendingDown, Check } from "lucide-react";
 
 interface StatCardProps {
@@ -10,9 +11,11 @@ interface StatCardProps {
   trend?: "up" | "down" | "neutral";
   delay?: number;
   tooltip?: string;
+  /** When set, card navigates on click instead of copying */
+  href?: string;
 }
 
-const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip }: StatCardProps) => {
+const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip, href }: StatCardProps) => {
   const [copied, setCopied] = useState(false);
 
   const copyValue = useCallback(() => {
@@ -22,16 +25,16 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip }: S
     );
   }, [value]);
 
-  return (
+  const content = (
     <div
-      role="button"
-      tabIndex={0}
-      className="gradient-card rounded-xl border border-border p-4 animate-fade-in hover-lift group relative overflow-hidden cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+      className={`gradient-card rounded-xl border border-border p-4 animate-fade-in hover-lift group relative overflow-hidden cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${href ? "block" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
-      title={tooltip || `${label}: ${value} – Klicken zum Kopieren`}
-      onClick={copyValue}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copyValue(); } }}
-      aria-label={`${label}: ${value}. Klicken zum Kopieren`}
+      title={tooltip || (href ? `${label}: ${value} – Zur Seite` : `${label}: ${value} – Klicken zum Kopieren`)}
+      onClick={href ? undefined : copyValue}
+      onKeyDown={href ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copyValue(); } }}
+      aria-label={href ? `${label}: ${value}. Zur Seite navigieren` : `${label}: ${value}. Klicken zum Kopieren`}
+      role={href ? "link" : "button"}
+      tabIndex={0}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/[0.03] group-hover:to-transparent transition-all duration-500" />
       {trend && (
@@ -61,13 +64,18 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip }: S
           </div>
         )}
       </div>
-      {copied && (
+      {copied && !href && (
         <div className="absolute bottom-2 right-2 text-[9px] text-profit font-medium animate-fade-in">
           Kopiert
         </div>
       )}
     </div>
   );
+
+  if (href) {
+    return <Link to={href} className="block">{content}</Link>;
+  }
+  return content;
 };
 
 /* IMP-51: Memoize StatCard to prevent unnecessary re-renders */
