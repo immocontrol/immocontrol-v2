@@ -18,6 +18,7 @@ import { SteuerJahresabschluss } from "@/components/SteuerJahresabschluss";
 import AfACalculator from "@/components/AfACalculator";
 import { ErtragswertRechner } from "@/components/ErtragswertRechner";
 import { EmptyState } from "@/components/EmptyState";
+import { BerichteInProsa } from "@/components/BerichteInProsa";
 import { ROUTES } from "@/lib/routes";
 
 const Berichte = () => {
@@ -520,6 +521,9 @@ ${rows}
           <p className={`text-lg font-bold ${reportMetrics.totalCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(reportMetrics.totalCashflow)}</p>
         </div>
       </div>
+
+      {/* KI Quartals-/Jahresberichte in Prosa */}
+      <BerichteInProsa />
 
       {/* IMP-53: AfA-Übersicht pro Objekt für Steuerberichterstattung */}
       <AfACalculator />

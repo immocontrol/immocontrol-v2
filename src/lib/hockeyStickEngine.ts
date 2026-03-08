@@ -67,6 +67,27 @@ export const DEFAULT_PARAMS: SimParams = {
   renovationBudgetPct: 0,
 };
 
+/** Beispiel-Parameter für Erstnutzer (Immobilien-fokussiert) */
+export const EXAMPLE_PARAMS: SimParams = {
+  startCapital: 50_000,
+  monthlyInvestment: 1_200,
+  annualReturn: 4,
+  annualAppreciation: 2,
+  inflationRate: 2,
+  taxRate: 26.375,
+  years: 20,
+  rentYield: 4,
+  leverageRatio: 75,
+  maintenancePct: 1,
+  vacancyRate: 3,
+  rentGrowthRate: 1.5,
+  managementFee: 5,
+  insurancePct: 0.3,
+  additionalProperties: 2,
+  propertyPurchaseInterval: 3,
+  renovationBudgetPct: 0.5,
+};
+
 /**
  * IMP20-3: Generate default params from real portfolio data.
  * Loads current portfolio values (totalValue, cashflow, debt, property count) as starting parameters

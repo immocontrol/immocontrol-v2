@@ -21,7 +21,6 @@ import { queryKeys } from "@/lib/queryKeys";
 import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
-import { OnboardingTour } from "@/components/OnboardingTour";
 import { NotificationPreferencesProvider } from "@/context/NotificationPreferencesContext";
 import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
 
@@ -341,7 +340,6 @@ const App = () => {
                 <ScrollToTop />
                 <CommandPalette />
                   <KeyboardShortcutOverlay />
-                  <OnboardingTour />
                   <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>

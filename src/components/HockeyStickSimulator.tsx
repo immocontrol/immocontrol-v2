@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import {
   type SimParams, type DataPoint, type ChartView, type SavedProfile, type Scenario,
-  DEFAULT_PARAMS, SCENARIOS, simulate, sensitivityAnalysis,
+  DEFAULT_PARAMS, EXAMPLE_PARAMS, SCENARIOS, simulate, sensitivityAnalysis,
   loadProfiles, saveProfilesStore, defaultParamsFromPortfolio,
 } from "@/lib/hockeyStickEngine";
 import { parseAiPrompt } from "@/lib/hockeyStickAiParser";
@@ -29,15 +29,20 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
   const { stats: portfolioStats } = useProperties();
   const [open, setOpen] = useState(false);
   const [params, setParams] = useState<SimParams>(DEFAULT_PARAMS);
-  /* IMP20-3: Seed simulator from real portfolio data once loaded */
-  const hasAppliedPortfolio = useRef(false);
+  /* IMP20-3: Seed simulator from real portfolio or example values */
+  const hasSeeded = useRef(false);
   useEffect(() => {
-    if (!hasAppliedPortfolio.current && portfolioStats.propertyCount > 0) {
+    if (hasSeeded.current) return;
+    if (portfolioStats.propertyCount > 0) {
       const portfolioDefaults = defaultParamsFromPortfolio(portfolioStats);
       if (Object.keys(portfolioDefaults).length > 0) {
         setParams(prev => ({ ...prev, ...portfolioDefaults }));
-        hasAppliedPortfolio.current = true;
+        hasSeeded.current = true;
       }
+    } else {
+      /* Ohne Portfolio: Beispielwerte (Immobilien-fokussiert) */
+      setParams(EXAMPLE_PARAMS);
+      hasSeeded.current = true;
     }
   }, [portfolioStats]);
   const [chartView, setChartView] = useState<ChartView>("growth");
@@ -78,7 +83,10 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
     setParams(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const reset = useCallback(() => setParams(DEFAULT_PARAMS), []);
+  const reset = useCallback(() => {
+    setParams(portfolioStats.propertyCount > 0 ? { ...DEFAULT_PARAMS, ...defaultParamsFromPortfolio(portfolioStats) } : EXAMPLE_PARAMS);
+    toast.success(portfolioStats.propertyCount > 0 ? "Portfolio-Werte wiederhergestellt" : "Beispielwerte wiederhergestellt");
+  }, [portfolioStats]);
   const last = data[data.length - 1];
   const first = data[0];
 
@@ -320,8 +328,8 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
 
   /* FEAT-36: Basic parameter sliders */
   const basicSliders: { key: keyof SimParams; label: string; min: number; max: number; step: number; unit: string; fmt?: (v: number) => string }[] = [
-    { key: "startCapital", label: "Startkapital", min: 10000, max: 1000000, step: 5000, unit: "\u20ac", fmt: v => formatCurrency(v) },
-    { key: "monthlyInvestment", label: "Monatliche Investition", min: 100, max: 10000, step: 100, unit: "\u20ac", fmt: v => formatCurrency(v) },
+    { key: "startCapital", label: "Eigenkapital (erste Immobilie)", min: 10000, max: 1000000, step: 5000, unit: "\u20ac", fmt: v => formatCurrency(v) },
+    { key: "monthlyInvestment", label: "Investitionsrate pro Monat (Tilgung + neue Käufe)", min: 100, max: 10000, step: 100, unit: "\u20ac", fmt: v => formatCurrency(v) },
     { key: "annualAppreciation", label: "Wertsteigerung p.a.", min: 0, max: 10, step: 0.5, unit: "%" },
     { key: "rentYield", label: "Mietrendite p.a.", min: 1, max: 12, step: 0.5, unit: "%" },
     { key: "annualReturn", label: "Zinssatz (Darlehen)", min: 1, max: 10, step: 0.25, unit: "%" },
@@ -338,8 +346,8 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
     { key: "rentGrowthRate", label: "Mietsteigerung p.a.", min: 0, max: 5, step: 0.25, unit: "%" },
     { key: "managementFee", label: "Verwaltungskosten", min: 0, max: 15, step: 0.5, unit: "%" },
     { key: "insurancePct", label: "Versicherung p.a.", min: 0, max: 2, step: 0.1, unit: "%" },
-    { key: "additionalProperties", label: "Zus\u00e4tzliche Immobilien", min: 0, max: 10, step: 1, unit: "" },
-    { key: "propertyPurchaseInterval", label: "Kaufintervall (Jahre)", min: 1, max: 10, step: 1, unit: " J." },
+    { key: "additionalProperties", label: "Zusätzliche Immobilien (Portfolio-Ausbau)", min: 0, max: 10, step: 1, unit: "" },
+    { key: "propertyPurchaseInterval", label: "Immobilien alle … Jahre kaufen", min: 1, max: 10, step: 1, unit: " J." },
     { key: "renovationBudgetPct", label: "Renovierungsbudget p.a.", min: 0, max: 5, step: 0.25, unit: "%" },
   ];
 
@@ -411,6 +419,9 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
               <p className="text-sm font-bold mt-1">{formatCurrencyCompact(last.portfolioValue)}</p>
               <p className="text-[9px] text-muted-foreground">
                 {last.numberOfProperties} Immobilie{last.numberOfProperties > 1 ? "n" : ""}
+                {params.additionalProperties > 0 && params.propertyPurchaseInterval > 0 && (
+                  <> · ~{(params.additionalProperties / params.propertyPurchaseInterval).toFixed(2)}/Jahr</>
+                )}
               </p>
             </div>
             <div className="gradient-card rounded-lg border border-border p-3 text-center">

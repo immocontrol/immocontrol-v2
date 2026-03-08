@@ -1,10 +1,10 @@
 /**
  * Fristen-Zentrale — zentrale Übersicht aller relevanten Fristen für Immobilieninvestoren.
- * Bündelt: Mietvertragsende, Kündigungsfrist, Zinsbindung, Dokumente, Versicherungen, Service-Verträge.
+ * Bündelt: Mietvertragsende, Kündigungsfrist, Zinsbindung, Mieterhöhung §558 BGB, Dokumente, Versicherungen, Service-Verträge.
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, FileText, Landmark, Shield, Wrench, AlertTriangle, ChevronRight } from "lucide-react";
+import { Calendar, FileText, Landmark, Shield, Wrench, AlertTriangle, ChevronRight, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import { ROUTES } from "@/lib/routes";
 import { formatDate } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 
-type DeadlineType = "vertrag" | "kuendigung" | "zinsbindung" | "dokument" | "versicherung" | "service";
+type DeadlineType = "vertrag" | "kuendigung" | "zinsbindung" | "mieterhoehung" | "dokument" | "versicherung" | "service";
 
 interface DeadlineItem {
   id: string;
@@ -88,6 +88,21 @@ export default function FristenZentrale() {
         .not("renewal_date", "is", null)
         .order("renewal_date");
       return (data || []) as Array<{ id: string; property_id: string; provider: string; type: string; renewal_date: string }>;
+    },
+    enabled: !!user,
+  });
+
+  const { data: mietvertraege = [] } = useQuery({
+    queryKey: ["fristen_mietvertraege"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("mietvertraege")
+        .select("id, property_id, tenant_name, unit_number, contract_start, last_rent_increase, rent_increase_type")
+        .order("contract_start");
+      return (data || []) as Array<{
+        id: string; property_id: string; tenant_name?: string; unit_number?: string;
+        contract_start: string; last_rent_increase: string | null; rent_increase_type: string;
+      }>;
     },
     enabled: !!user,
   });
@@ -196,6 +211,35 @@ export default function FristenZentrale() {
       }
     });
 
+    // Mieterhöhung §558 BGB — 15 Monate seit letzter Erhöhung (oder 12 Monate seit Vertragsbeginn)
+    const COOLDOWN_MONTHS = 15;
+    const INCREASE_HORIZON_DAYS = 120;
+    mietvertraege.forEach((m) => {
+      let nextDate: Date;
+      if (m.last_rent_increase) {
+        nextDate = new Date(m.last_rent_increase);
+        nextDate.setMonth(nextDate.getMonth() + COOLDOWN_MONTHS);
+      } else {
+        nextDate = new Date(m.contract_start);
+        nextDate.setMonth(nextDate.getMonth() + 12);
+      }
+      const dateStr = nextDate.toISOString().slice(0, 10);
+      const d = daysLeft(dateStr);
+      if (d > -30 && d <= INCREASE_HORIZON_DAYS) {
+        const prop = getProperty(m.property_id);
+        list.push({
+          id: `mh-${m.id}`,
+          type: "mieterhoehung",
+          label: "Mieterhöhung möglich (§558 BGB)",
+          subLabel: [prop?.name ?? m.property_id, m.tenant_name, m.unit_number].filter(Boolean).join(" · ") || (prop?.name ?? m.property_id),
+          date: dateStr,
+          daysLeft: d,
+          link: ROUTES.RENT,
+          propertyId: m.property_id,
+        });
+      }
+    });
+
     serviceContracts.forEach((s) => {
       const d = daysLeft(s.end_date);
       if (d > -30 && d <= HORIZON_DAYS) {
@@ -216,12 +260,13 @@ export default function FristenZentrale() {
     return list
       .sort((a, b) => a.daysLeft - b.daysLeft)
       .slice(0, LIMIT);
-  }, [contracts, loans, docExpiries, insurances, serviceContracts, getProperty]);
+  }, [contracts, loans, mietvertraege, docExpiries, insurances, serviceContracts, getProperty]);
 
   const typeIcon: Record<DeadlineType, React.ReactNode> = {
     vertrag: <FileText className="h-3.5 w-3.5 shrink-0" />,
     kuendigung: <AlertTriangle className="h-3.5 w-3.5 shrink-0" />,
     zinsbindung: <Landmark className="h-3.5 w-3.5 shrink-0" />,
+    mieterhoehung: <TrendingUp className="h-3.5 w-3.5 shrink-0" />,
     dokument: <FileText className="h-3.5 w-3.5 shrink-0" />,
     versicherung: <Shield className="h-3.5 w-3.5 shrink-0" />,
     service: <Wrench className="h-3.5 w-3.5 shrink-0" />,
@@ -254,7 +299,7 @@ export default function FristenZentrale() {
         <Calendar className="h-4 w-4 text-muted-foreground" /> Fristen-Zentrale
       </h3>
       <p className="text-[10px] text-muted-foreground mb-3">
-        Nächste {items.length} Fristen (Verträge, Zinsbindung, Dokumente, Versicherungen)
+        Nächste {items.length} Fristen (Verträge, Zinsbindung, Mieterhöhung §558, Dokumente, Versicherungen)
       </p>
       <ul className="space-y-2">
         {items.map((item) => {

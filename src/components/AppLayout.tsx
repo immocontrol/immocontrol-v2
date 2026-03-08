@@ -559,7 +559,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 style={dotStyle}
               />
             </nav>
-            <div className="flex items-center gap-1.5 ml-2">
+            <div className="flex items-center gap-1.5 ml-2 min-w-0">
               <GlobalSearch />
               {/* Quick theme toggle */}
               <Button
@@ -648,6 +648,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* MOB-15: Mobile search overlay */}
       <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
+
+      {/* Mobile submenu backdrop — close submenu on outside click */}
+      {mobileActiveGroup && (
+        <div
+          className="fixed inset-0 z-[199] md:hidden bg-black/20"
+          onClick={() => setMobileActiveGroup(null)}
+          aria-hidden
+        />
+      )}
 
       {/* Mobile nav — 5 grouped tabs with expandable sub-items */}
       {/* MOBILE-FIX-3: Added menu tab animation when switching between tabs */}

@@ -30,6 +30,7 @@ import { CallButton } from "@/components/CallButton";
 import { MobileCRMCallAction } from "@/components/mobile/MobileCRMCallAction";
 import { EmptyState } from "@/components/EmptyState";
 import GewerbeScout from "@/components/GewerbeScout";
+import { ColdOutreachTemplates } from "@/components/ColdOutreachTemplates";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { ROUTES } from "@/lib/routes";
 import { summarizeCallTranscript, isDeepSeekConfigured, suggestLeadNextStep } from "@/integrations/ai/extractors";
@@ -859,6 +860,7 @@ const CRM = () => {
               onAddAsViewing={(b) => navigate(ROUTES.BESICHTIGUNGEN, { state: { fromScout: { title: b.name, address: b.address ?? "" } } })}
             />
           </WidgetErrorBoundary>
+          <ColdOutreachTemplates />
         </TabsContent>
 
         {/* Leads Tab */}

@@ -4,16 +4,24 @@
  * See docs/BENACHRICHTIGUNGEN.md for full documentation.
  */
 import { useState, useEffect } from "react";
-import { Bell, MessageSquare, Monitor, Inbox, Smartphone } from "lucide-react";
+import { Bell, MessageSquare, Monitor, Inbox, Smartphone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { subscribeToWebPush, getWebPushStatus } from "@/lib/pushNotifications";
 import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BenachrichtigungenSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
 }
+
+const DIGEST_KEY = "immo_digest_frequency";
+const DIGEST_OPTIONS = [
+  { value: "off", label: "Aus" },
+  { value: "daily", label: "Täglich (Empfehlung)" },
+  { value: "weekly", label: "Wöchentlich" },
+];
 
 const TOPICS: { key: "overdue" | "contract_expiry" | "tickets" | "loan_milestone"; label: string }[] = [
   { key: "overdue", label: "Überfällige Mieten" },
@@ -24,6 +32,13 @@ const TOPICS: { key: "overdue" | "contract_expiry" | "tickets" | "loan_milestone
 
 export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSettingsProps) {
   const [pushStatus, setPushStatus] = useState(() => getWebPushStatus());
+  const [digestFreq, setDigestFreq] = useState<string>(() => {
+    try { return localStorage.getItem(DIGEST_KEY) ?? "off"; } catch { return "off"; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(DIGEST_KEY, digestFreq); } catch { /* noop */ }
+  }, [digestFreq]);
   const [pushLoading, setPushLoading] = useState(false);
   const { prefs, setInApp } = useNotificationPreferences();
 
@@ -79,6 +94,25 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
               </label>
             ))}
           </div>
+        </div>
+        <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="flex items-center gap-3">
+            <Mail className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              <p className="text-xs font-medium">E-Mail/Telegram-Digest</p>
+              <p className="text-[11px] text-muted-foreground">Zusammenfassung: Fristen, offene Mieten, Zinsbindung</p>
+            </div>
+          </div>
+          <Select value={digestFreq} onValueChange={setDigestFreq}>
+            <SelectTrigger className="h-8 w-[160px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DIGEST_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
           <Monitor className="h-5 w-5 text-primary shrink-0" />

@@ -25,6 +25,8 @@ import DocumentExpiryTracker from "@/components/DocumentExpiryTracker";
 import MeterManagement from "@/components/MeterManagement";
 import AfACalculator from "@/components/AfACalculator";
 import { Entwicklungsplan } from "@/components/Entwicklungsplan";
+import { PropertyFinancingChecklist } from "@/components/PropertyFinancingChecklist";
+import { PropertyRenditeTracking } from "@/components/PropertyRenditeTracking";
 import KautionsOverview from "@/components/KautionsOverview";
 import { HandoverProtocol } from "@/components/HandoverProtocol";
 import ContractManagement from "@/components/ContractManagement";
@@ -461,8 +463,18 @@ const PropertyDetail = () => {
               </Link>
             )}
           </div>
+          <PropertyFinancingChecklist propertyId={property.id} propertyName={property.name} compact />
         </div>
       </div>
+
+      <PropertyRenditeTracking
+        propertyId={property.id}
+        propertyName={property.name}
+        purchasePrice={property.purchasePrice}
+        monthlyRent={property.monthlyRent}
+        sqm={property.sqm}
+        compact
+      />
 
       {/* AfA & 15%-Sanierungsregel */}
       {property.purchasePrice > 0 && (() => {

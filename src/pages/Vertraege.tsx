@@ -16,12 +16,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency, formatDate, formatDaysUntil } from "@/lib/formatters";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Vertraege = () => {
   const { user } = useAuth();
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   // Summary stats across all contract types
-  const { data: contractStats } = useQuery({
+  const { data: contractStats, isPending: statsPending } = useQuery({
     queryKey: ["vertraege_stats"],
     queryFn: async () => {
       const [contracts, invoices, services] = await Promise.all([
@@ -152,6 +154,12 @@ const Vertraege = () => {
       {/* Improvement 9: Quick Stats with card-hover-glow */}
       {/* UPD-2: Add stagger animation to contract stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 card-stagger-enter">
+        {statsPending ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="rounded-xl h-[88px]" />
+          ))
+        ) : (
+        <>
         <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <FileText className="h-4 w-4 text-primary" />
@@ -196,6 +204,8 @@ const Vertraege = () => {
             <p className="text-sm font-bold">{formatCurrency(totalMonthlyBurn)}</p>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* IMP-52: Fristen-Zentrale — zentrale Übersicht aller Fristen */}
@@ -229,9 +239,9 @@ const Vertraege = () => {
       <KuendigungsfristRechner />
       <AfASchnellrechner />
 
-      <div ref={tabsRef}>
+      <div ref={tabsRef} className="scroll-mt-20">
       <Tabs defaultValue="mietvertraege" className="w-full">
-        <TabsList className="flex w-full overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible">
+        <TabsList className="flex w-full overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible overscroll-x-contain">
           <TabsTrigger value="mietvertraege" className="flex items-center gap-1.5 text-xs">
             <FileText className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Miet</span>verträge
           </TabsTrigger>

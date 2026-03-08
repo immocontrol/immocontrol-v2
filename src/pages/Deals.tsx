@@ -35,6 +35,8 @@ import { MobileSwipeableDealCard } from "@/components/mobile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractPdfText } from "@/lib/exposeParser";
 import { extractDealFromExposeText, isDeepSeekConfigured, suggestDealNextStep, improveText } from "@/integrations/ai/extractors";
+import { calculateDealScore } from "@/lib/dealScoring";
+import { DealPipelineChecklist } from "@/components/DealPipelineChecklist";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { sanitizeFormData } from "@/lib/sanitize";
 import { useShare } from "@/components/mobile/MobileShareSheet";
@@ -99,6 +101,9 @@ const DealCard = memo(({
         <div className="flex items-center justify-between gap-1">
           <p className="font-medium text-sm truncate flex-1" title={deal.title}>{deal.title}</p>
           <div className="flex items-center gap-1 shrink-0">
+            <Badge variant="outline" className="text-[9px] h-5 px-1" title="Deal-Score (Priorisierung)">
+              {calculateDealScore(deal)}%
+            </Badge>
             {onShare && (
               <button
                 type="button"
@@ -1198,6 +1203,8 @@ const Deals = () => {
                   <SelectItem value="ETW">ETW</SelectItem>
                   <SelectItem value="MFH">MFH</SelectItem>
                   <SelectItem value="EFH">EFH</SelectItem>
+                  <SelectItem value="Sanierungsfall">Sanierungsfall</SelectItem>
+                  <SelectItem value="Neubau">Neubau</SelectItem>
                   <SelectItem value="Gewerbe">Gewerbe</SelectItem>
                   <SelectItem value="Grundst\u00fcck">Grundst\u00fcck</SelectItem>
                 </SelectContent>
@@ -1278,6 +1285,14 @@ const Deals = () => {
               </div>
               <Textarea placeholder="Notizen" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} aria-label="Notizen" />
             </div>
+            {editDeal && (
+              <DealPipelineChecklist
+                dealId={editDeal.id}
+                stage={form.stage}
+                propertyType={form.property_type}
+                compact
+              />
+            )}
             {form.stage === "abgelehnt" && (
               <Input placeholder="Grund f\u00fcr Absage" value={form.lost_reason} onChange={e => setForm(p => ({ ...p, lost_reason: e.target.value }))} aria-label="Absagegrund" />
             )}

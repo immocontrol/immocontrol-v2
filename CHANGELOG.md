@@ -8,6 +8,15 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Pipeline-Checklisten & Deal-Score** — DealPipelineChecklist mit phasenbasierten Checklisten in Deals. dealScoring.ts berechnet Deal-Score (0–100). Score-Badge auf Deal-Karten. Zusätzliche Objekttypen: Sanierungsfall, Neubau.
+- **Objekt-Roadmap & Rendite-Tracking** — PropertyFinancingChecklist pro Objekt (Finanzierungs-Vorbereitung). PropertyRenditeTracking: Soll- vs. Ist-Rendite pro Objekt.
+- **Leerstands-Szenarien-Rechner** — VacancyScenarios: Kosten-Szenarien für 1/2/3/12 Monate Leerstand.
+- **Ein- und Auszug-Checklisten** — MoveInOutChecklist für Ein- und Auszug.
+- **Cold-Outreach-Vorlagen** — ColdOutreachTemplates im CRM-Scout-Tab für Kaltakquise.
+- **Fristen-Zentrale: Mieterhöhung §558 BGB** — Neuer Fristentyp aus Mietverträgen (Mieterhöhung §558 BGB).
+- **BerichteInProsa** — KI-Berichte (Monats-/Jahresüberblick) aus Portfolio-Kennzahlen.
+- **Benachrichtigungen: Digest-Frequenz** — Tägliche/Wöchentliche/Ein-Push-Einstellung speichert in localStorage.
+- **Exposé-Import: Text einfügen & KI-Bewertung** — Modus „Text einfügen“; extractDealFromExposeText; KI-Deal-Score mit Begründung.
 - **KI-Funktionen: Aufgaben, Darlehen** — Aufgaben (TodoEditDialog): Button „KI Beschreibung" (suggestTodoDescription) für Kurzbeschreibung aus Titel. Darlehen (Loans, AddLoanDialog): Button „Verbessern" für Notizen (improveText).
 - **KI-Funktionen: Neue AI-Integrationen** — MaintenancePlanner: Button „KI Notiz“ für Notiz-Vorschlag (suggestMaintenanceNotes). DokumentVollständigkeit: Button „Priorität: Welche zuerst?“ für fehlende Dokumente (suggestDocumentPriority). Kontakte/AddContactDialog: Button „KI Vorschlag“ für Notizen (suggestContactFollowUp). DEEPSEEK_NUTZUNG.md ergänzt.
 - **Entwicklungsplan: Graph Einnahmen/Ausgaben** — Neuer Graph zeigt Mieteinnahmen (Jahr), Kreditrate (Jahr) und Instandhaltungskosten (€/m² · Jahr, frei einstellbar, Standard 20) pro Jahr. Tabelle ebenfalls im PDF.
@@ -169,6 +178,16 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Geändert
 
+- **Settings (Mobile)** — Tab-Bar-Layout angepasst; Fade-Indikator rechts für horizontales Scrollen.
+- **AppLayout** — Mobile Submenu: Backdrop zum Schließen bei Klick außerhalb; min-w-0 am Header.
+- **Vertraege** — tabsRef hinzugefügt (Bugfix); scroll-mt-20, overscroll-x-contain; Lade-Skeleton für Stat-Karten.
+- **OnboardingTour entfernt** — Komponente gelöscht; Imports aus App.tsx entfernt.
+- **Hockey Stick** — Beispielwerte (EXAMPLE_PARAMS) beim ersten Besuch; Fokus auf Immobilien („Immobilien pro Jahr“, Soll pro Jahr statt Sparen/Monat); Reset nutzt Beispielwerte statt Nullen.
+- **FristenZentrale** — Fix: `??` vs `||` Vorrang bei `prop?.name ?? m.property_id`.
+- **PropertyDetail** — PropertyFinancingChecklist, PropertyRenditeTracking integriert.
+- **Mietuebersicht** — MoveInOutChecklist, VacancyScenarios integriert.
+- **CRM** — ColdOutreachTemplates im Scout-Tab.
+- **Deals** — DealPipelineChecklist im Deal-Dialog; calculateDealScore; Score-Badge auf Karten.
 - **Mietvertragsverwaltung** — Anlegen: handleError + toastErrorWithRetry (Retry = erneuter Submit); Löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedIdRef)
 - **AutoTodoGenerator** — Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastTodoRef)
 - **BulkRentAdjustment** — Mietanpassung anwenden: handleError + toastErrorWithRetry (Retry = applyAdjustments)
@@ -307,6 +326,8 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Behoben
 
+- **Vertraege** — tabsRef war undefined; useRef ergänzt.
+- **FristenZentrale** — Operator-Vorrang `??` vs `||` bei property_id/name.
 - MediaThumb: Korrektes Laden der signed URLs für Bilder/Videos
 
 ### Dokumentation

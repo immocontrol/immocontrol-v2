@@ -20,6 +20,8 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { MobileQuickStats } from "@/components/mobile/MobileQuickStats";
 import { LeerstandskostenRechner } from "@/components/LeerstandskostenRechner";
+import { MoveInOutChecklist } from "@/components/MoveInOutChecklist";
+import { VacancyScenarios } from "@/components/VacancyScenarios";
 import { InflationMietrechner } from "@/components/InflationMietrechner";
 import { IndexMietanpassung } from "@/components/IndexMietanpassung";
 
@@ -355,6 +357,11 @@ const Mietuebersicht = () => {
           </div>
 
           <LeerstandskostenRechner />
+          <VacancyScenarios />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <MoveInOutChecklist type="einzug" tenantOrUnitId="global" label="Nächster Mieter" />
+            <MoveInOutChecklist type="auszug" tenantOrUnitId="global" label="Nächster Auszug" />
+          </div>
           <InflationMietrechner />
           <IndexMietanpassung />
 

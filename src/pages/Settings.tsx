@@ -200,8 +200,10 @@ const Settings = () => {
     <div className="flex gap-6" role="main" aria-label="Einstellungen">
       {/* MOB-IMPROVE-3: Mobile horizontal scrollable section tabs */}
       {isMobile && (
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border -mx-4 px-4 py-2 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-1 min-w-max">
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border w-full max-w-[100vw] overflow-x-auto scrollbar-hide overscroll-x-contain relative">
+          {/* Fade-Indikator rechts, wenn scrollbar */}
+          <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
+          <div className="flex gap-1 min-w-max justify-start pl-4 pr-4 py-2">
             {SETTINGS_SECTIONS.map((section) => {
               const SectionIcon = section.icon;
               const isActive = activeSection === section.id;
