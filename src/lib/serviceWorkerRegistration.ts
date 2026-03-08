@@ -3,6 +3,7 @@
  * Registers a service worker for caching API responses and static assets.
  * Uses Cache-First strategy for static assets and Network-First for API calls.
  */
+import { logger } from "@/lib/logger";
 
 const SW_URL = "/sw.js";
 
@@ -29,17 +30,17 @@ export function registerServiceWorker(config?: ServiceWorkerConfig) {
             if (navigator.serviceWorker.controller) {
               // New content available — notify user
               config?.onUpdate?.(registration);
-              console.log("[SW] New content available; please refresh.");
+              logger.info("[SW] New content available; please refresh.");
             } else {
               // Content cached for offline use
               config?.onSuccess?.(registration);
-              console.log("[SW] Content cached for offline use.");
+              logger.info("[SW] Content cached for offline use.");
             }
           }
         };
       };
     } catch (error) {
-      console.error("[SW] Registration failed:", error);
+      logger.error("[SW] Registration failed", "ServiceWorker", error);
     }
   });
 }

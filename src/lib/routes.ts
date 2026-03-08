@@ -68,3 +68,8 @@ export function documentsWithId(id: string): string {
 export function loansWithId(id: string): string {
   return `${ROUTES.LOANS}?id=${encodeURIComponent(id)}`;
 }
+
+/** Helper: CRM page with leads tab and optional lead highlight */
+export function crmWithLeadId(id: string): string {
+  return `${ROUTES.CRM}?tab=leads&lead=${encodeURIComponent(id)}`;
+}

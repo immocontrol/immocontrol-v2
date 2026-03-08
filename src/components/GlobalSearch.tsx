@@ -7,7 +7,7 @@ import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
-import { ROUTES, dealsWithId, propertyDetail, contactsWithHighlight, viewingsWithId } from "@/lib/routes";
+import { ROUTES, dealsWithId, propertyDetail, contactsWithHighlight, viewingsWithId, loansWithId, crmWithLeadId } from "@/lib/routes";
 
 interface SearchResult {
   id: string;
@@ -121,7 +121,7 @@ export const GlobalSearch = () => {
           subtitle: [t.email, t.phone].filter(Boolean).join(" · "),
           category: "Mieter",
           icon: <Users className="h-4 w-4" />,
-          action: () => go(`${ROUTES.PROPERTY}/${t.property_id}`),
+          action: () => go(propertyDetail(t.property_id)),
         });
       });
 
@@ -157,7 +157,7 @@ export const GlobalSearch = () => {
           subtitle: [l.company, l.phone].filter(Boolean).join(" · "),
           category: "CRM Leads",
           icon: <MapPin className="h-4 w-4" />,
-          action: () => go(ROUTES.CRM),
+          action: () => go(crmWithLeadId(l.id)),
         });
       });
 
@@ -211,7 +211,7 @@ export const GlobalSearch = () => {
           subtitle: "Darlehen",
           category: "Darlehen",
           icon: <Landmark className="h-4 w-4" />,
-          action: () => go(ROUTES.LOANS),
+          action: () => go(loansWithId(l.id)),
         });
       });
     } catch (e) {

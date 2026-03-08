@@ -81,6 +81,12 @@ const CRM = () => {
 
   useEffect(() => { document.title = "CRM & Akquise - ImmoControl"; }, []);
 
+  /* Deep-link: ?lead=id from GlobalSearch — select lead when URL has lead param */
+  const leadFromUrl = searchParams.get("lead");
+  useEffect(() => {
+    if (leadFromUrl) setSelectedLead(leadFromUrl);
+  }, [leadFromUrl]);
+
   // Debounced autocomplete
   const handleSearchInput = useCallback((value: string) => {
     setSearchQuery(value);

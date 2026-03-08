@@ -13,7 +13,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { normalizeString } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 
 const RECENT_KEY = "immo-mobile-search-recent";
 const MAX_RECENT = 8;
@@ -113,7 +113,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
         subtitle: `${p.address || p.location} · ${p.type}`,
         category: "Objekte",
         categoryIcon: <Building2 className="h-4 w-4" />,
-        path: `${ROUTES.PROPERTY}/${p.id}`,
+        path: propertyDetail(p.id),
       }));
 
     // Static page results
