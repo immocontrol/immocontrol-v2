@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
+import { ROUTES } from "@/lib/routes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
@@ -17,7 +18,7 @@ const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const isHidden = location.pathname === "/aufgaben";
+  const isHidden = location.pathname === ROUTES.TODOS;
   if (isHidden) return null;
 
   const handleSave = async () => {

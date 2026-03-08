@@ -4,6 +4,7 @@
  */
 import { Link } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 
 interface BreadcrumbItem {
   label: string;
@@ -23,7 +24,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
       <ol className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
         <li>
           <Link
-            to="/"
+            to={ROUTES.HOME}
             className="flex items-center gap-1 hover:text-foreground transition-colors"
             aria-label="Startseite"
           >

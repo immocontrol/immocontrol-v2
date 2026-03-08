@@ -247,7 +247,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
 
   if (!open) return null;
 
-  // Desktop: don't show (use SpotlightSearch instead)
+  // Desktop: Cmd+K opens CommandPalette
   if (!isMobile) return null;
 
   const hasResults = debouncedQuery && results.length > 0;

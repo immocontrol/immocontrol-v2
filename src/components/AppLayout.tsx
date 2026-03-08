@@ -508,7 +508,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       }`}>
                         {entry.items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
-                          const navAttr = item.path === "/darlehen" ? { "data-nav-loans": "" } : item.path === "/mietuebersicht" ? { "data-nav-rent": "" } : item.path === "/kontakte" ? { "data-nav-contacts": "" } : {};
+                          const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
                           return (
                             <Link
                               key={item.path}
@@ -669,7 +669,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
                     {group.items.map((item, idx) => {
                       const isActive = isRouteActive(item.path, location.pathname);
-                      const navAttr = item.path === "/darlehen" ? { "data-nav-loans": "" } : item.path === "/mietuebersicht" ? { "data-nav-rent": "" } : item.path === "/kontakte" ? { "data-nav-contacts": "" } : {};
+                      const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
                       return (
                         <Link
                           key={item.path}

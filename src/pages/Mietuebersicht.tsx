@@ -322,7 +322,7 @@ const Mietuebersicht = () => {
             stats={[
               { id: "soll", label: "Soll", value: formatCurrency(stats.totalDue), href: undefined },
               { id: "eingegangen", label: "Eingegangen", value: formatCurrency(stats.totalConfirmed), color: "success", href: undefined },
-              { id: "ueberfaellig", label: "Überfällig", value: formatCurrency(stats.totalOverdue), color: "destructive", href: "/mietuebersicht" },
+              { id: "ueberfaellig", label: "Überfällig", value: formatCurrency(stats.totalOverdue), color: "destructive", href: ROUTES.RENT },
               { id: "offen", label: "Offen", value: formatCurrency(stats.pendingAmount), color: "warning", href: undefined },
             ]}
             showTrends={false}

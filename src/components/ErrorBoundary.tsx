@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
 import { trackError } from "@/lib/errorTracking";
+import { ROUTES } from "@/lib/routes";
 
 interface Props {
   children: ReactNode;
@@ -89,7 +90,7 @@ class ErrorBoundary extends Component<Props, State> {
             }}>
               Fehler kopieren
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => window.location.href = "/"}>
+            <Button variant="ghost" size="sm" onClick={() => { window.location.href = ROUTES.HOME; }}>
               Zur Startseite
             </Button>
           </div>

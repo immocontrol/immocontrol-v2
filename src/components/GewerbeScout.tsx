@@ -812,7 +812,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                   size="sm"
                   className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground"
                   onClick={() => {
-                    const base = typeof window !== "undefined" ? `${window.location.origin}/crm` : "/crm";
+                    const base = typeof window !== "undefined" ? `${window.location.origin}${ROUTES.CRM}` : ROUTES.CRM;
                     const params = new URLSearchParams({ tab: "scout" });
                     if (query.trim()) params.set("q", query.trim());
                     const url = `${base}?${params.toString()}`;

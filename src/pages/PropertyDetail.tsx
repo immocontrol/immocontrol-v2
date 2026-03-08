@@ -56,6 +56,7 @@ import { getGebaeudeAnteil, getGrundUndBoden, getAnnualAfa, getAfaRatePercent, g
 import { useShare } from "@/components/mobile/MobileShareSheet";
 import { isDeepSeekConfigured, suggestPropertySummary } from "@/integrations/ai/extractors";
 import { handleError } from "@/lib/handleError";
+import { logger } from "@/lib/logger";
 
 // Property detail page
 
@@ -92,7 +93,7 @@ const PropertyDetail = () => {
         confirmedRevenue: payments.filter(p => p.status === "confirmed").reduce((s, p) => s + Number(p.amount), 0),
         viewings: viewings.map(v => ({ id: v.id, title: v.title, visited_at: v.visited_at, deal_id: v.deal_id })),
       });
-    }).catch(() => {});
+    }).catch((e) => { logger.warn("PropertyDetail synergy fetch failed", "PropertyDetail", { error: e }); });
   }, [property?.id, tenantVersion]);
 
   const scrollToSection = useCallback((section: string) => {

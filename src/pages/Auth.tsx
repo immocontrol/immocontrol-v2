@@ -134,7 +134,7 @@ const Auth = () => {
               const invitationToken = sessionStorage.getItem("invitation_token");
               if (invitationToken) {
                 sessionStorage.removeItem("invitation_token");
-                navigate(`/einladung?token=${invitationToken}`, { replace: true });
+                navigate(`${ROUTES.INVITATION}?token=${invitationToken}`, { replace: true });
               } else {
                 navigate(getReturnUrl(), { replace: true });
               }
@@ -158,7 +158,7 @@ const Auth = () => {
         const invitationToken = sessionStorage.getItem("invitation_token");
         if (invitationToken) {
           sessionStorage.removeItem("invitation_token");
-          navigate(`/einladung?token=${invitationToken}`, { replace: true });
+          navigate(`${ROUTES.INVITATION}?token=${invitationToken}`, { replace: true });
         } else {
           navigate(getReturnUrl(), { replace: true });
         }
@@ -200,7 +200,7 @@ const Auth = () => {
       const invitationToken = sessionStorage.getItem("invitation_token");
       if (invitationToken) {
         sessionStorage.removeItem("invitation_token");
-        navigate(`/einladung?token=${invitationToken}`, { replace: true });
+        navigate(`${ROUTES.INVITATION}?token=${invitationToken}`, { replace: true });
       } else {
         navigate(getReturnUrl(), { replace: true });
       }
@@ -253,7 +253,7 @@ const Auth = () => {
       const invitationToken = sessionStorage.getItem("invitation_token");
       if (invitationToken) {
         sessionStorage.removeItem("invitation_token");
-        navigate(`/einladung?token=${invitationToken}`, { replace: true });
+        navigate(`${ROUTES.INVITATION}?token=${invitationToken}`, { replace: true });
       } else {
         navigate(getReturnUrl(), { replace: true });
       }
@@ -303,7 +303,7 @@ const Auth = () => {
             const invitationToken = sessionStorage.getItem("invitation_token");
             if (invitationToken) {
               sessionStorage.removeItem("invitation_token");
-              navigate(`/einladung?token=${invitationToken}`, { replace: true });
+              navigate(`${ROUTES.INVITATION}?token=${invitationToken}`, { replace: true });
             } else {
               navigate(getReturnUrl(), { replace: true });
             }
@@ -324,7 +324,7 @@ const Auth = () => {
         const invitationToken = sessionStorage.getItem("invitation_token");
         if (invitationToken) {
           sessionStorage.removeItem("invitation_token");
-          navigate(`/einladung?token=${invitationToken}`, { replace: true });
+          navigate(`${ROUTES.INVITATION}?token=${invitationToken}`, { replace: true });
         } else {
           navigate(getReturnUrl(), { replace: true });
         }
@@ -344,7 +344,7 @@ const Auth = () => {
           const invToken = sessionStorage.getItem("invitation_token");
           if (invToken) {
             sessionStorage.removeItem("invitation_token");
-            navigate(`/einladung?token=${invToken}`, { replace: true });
+            navigate(`${ROUTES.INVITATION}?token=${invToken}`, { replace: true });
           } else {
             navigate(getReturnUrl(), { replace: true });
           }

@@ -617,7 +617,7 @@ const Besichtigungen = () => {
                 Mit Deal verknüpft
               </span>
               <Link
-                to="/deals"
+                to={ROUTES.DEALS}
                 className="text-sm text-primary hover:underline flex items-center gap-1"
                 onClick={() => { setAddOpen(false); setEditViewing(null); }}
               >

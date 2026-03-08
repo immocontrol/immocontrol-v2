@@ -157,7 +157,7 @@ export const GlobalSearch = () => {
           subtitle: [l.company, l.phone].filter(Boolean).join(" · "),
           category: "CRM Leads",
           icon: <MapPin className="h-4 w-4" />,
-          action: () => go("/crm"),
+          action: () => go(ROUTES.CRM),
         });
       });
 
