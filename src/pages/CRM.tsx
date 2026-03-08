@@ -912,12 +912,12 @@ const CRM = () => {
                     <CardContent className="p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{lead.name}</p>
-                          {lead.company && <p className="text-xs text-muted-foreground truncate">{lead.company}</p>}
+                          <p className="font-medium text-sm truncate" title={lead.name}>{lead.name}</p>
+                          {lead.company && <p className="text-xs text-muted-foreground truncate" title={lead.company}>{lead.company}</p>}
                           {lead.phone && (
                             <div className="flex items-center gap-1 mt-0.5" onClick={e => e.stopPropagation()}>
                               <CallButton phone={lead.phone} toLabel={lead.name} leadId={lead.id} record className="text-xs text-primary hover:underline flex items-center gap-0.5 shrink-0" variant="link" ariaLabel={`${lead.name} anrufen`}>
-                                <Phone className="h-3 w-3" /> <span className="truncate">{lead.phone}</span>
+                                <Phone className="h-3 w-3" /> <span className="truncate" title={lead.phone}>{lead.phone}</span>
                               </CallButton>
                             </div>
                           )}

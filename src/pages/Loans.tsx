@@ -210,7 +210,7 @@ const Loans = () => {
     setNewBankName("");
     setAddingNewBank(false);
     setBankPopoverOpen(false);
-    await qc.invalidateQueries({ queryKey: ["user_banks"] });
+    await qc.invalidateQueries({ queryKey: queryKeys.userBanks.all });
     toast.success(`"${addedName}" hinzugefügt`);
   };
 
@@ -230,7 +230,7 @@ const Loans = () => {
     }
     setDeletingBank(null);
     setDeleteConfirmText("");
-    qc.invalidateQueries({ queryKey: ["user_banks"] });
+    qc.invalidateQueries({ queryKey: queryKeys.userBanks.all });
     toast.success(`"${bankName}" gelöscht`);
   };
 

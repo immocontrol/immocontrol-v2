@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useProperties } from "@/context/PropertyContext";
 import {
   LayoutDashboard, Calculator, Users, Landmark, CalendarDays, CheckSquare,
-  Settings, Building2, Search, Command,
+  Settings, Building2, Search, Command, Handshake, Camera, FileText, Store,
 } from "lucide-react";
 import {
   Dialog, DialogContent,
@@ -57,6 +57,10 @@ export const CommandPalette = () => {
       { id: "nav-todos", label: "Aufgaben", sublabel: "Todos & Projekte", icon: <CheckSquare className="h-4 w-4" />, action: () => go(ROUTES.TODOS), category: "Navigation" },
       { id: "nav-analysis", label: "Analyse", sublabel: "Objektanalyse-Rechner", icon: <Calculator className="h-4 w-4" />, action: () => go(ROUTES.ANALYSE), category: "Navigation" },
       { id: "nav-settings", label: "Einstellungen", sublabel: "Profil & Theme", icon: <Settings className="h-4 w-4" />, action: () => go(ROUTES.SETTINGS), category: "Navigation" },
+      { id: "nav-deals", label: "Deals", sublabel: "Deal Pipeline", icon: <Handshake className="h-4 w-4" />, action: () => go(ROUTES.DEALS), category: "Navigation" },
+      { id: "nav-besichtigungen", label: "Besichtigungen", sublabel: "Notizen, Bilder & Videos", icon: <Camera className="h-4 w-4" />, action: () => go(ROUTES.BESICHTIGUNGEN), category: "Navigation" },
+      { id: "nav-crm", label: "CRM", sublabel: "Leads & Akquise", icon: <Store className="h-4 w-4" />, action: () => go(ROUTES.CRM), category: "Navigation" },
+      { id: "nav-dokumente", label: "Dokumente", sublabel: "Dokumentenverwaltung", icon: <FileText className="h-4 w-4" />, action: () => go(ROUTES.DOKUMENTE), category: "Navigation" },
     ];
 
     const propertyItems: PaletteItem[] = properties.map(p => ({
