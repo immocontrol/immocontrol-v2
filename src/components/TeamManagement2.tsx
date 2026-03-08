@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ROUTES } from "@/lib/routes";
 
 interface TeamMember {
   id: string;
@@ -61,7 +62,7 @@ export const TeamManagement = () => {
 
   /** Generate a shareable invite link */
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/einladung?ref=${user?.id || ""}`;
+    const link = `${window.location.origin}${ROUTES.INVITATION}?ref=${user?.id || ""}`;
     navigator.clipboard.writeText(link).then(
       () => toast.success("Einladungslink kopiert!"),
       () => toast.error("Kopieren fehlgeschlagen — kein Clipboard-Zugriff")

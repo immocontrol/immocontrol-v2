@@ -56,6 +56,7 @@ import { FileImportPicker } from "@/components/FileImportPicker";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
 import { handleError } from "@/lib/handleError";
+import { logger } from "@/lib/logger";
 import { fromTable } from "@/lib/typedSupabase";
 import { ViewingAISummary } from "@/components/ViewingAISummary";
 import { ViewingCard } from "@/components/besichtigungen/ViewingCard";
@@ -944,7 +945,10 @@ function MediaThumb({
   useEffect(() => {
     getSignedUrl(record.file_path)
       .then(setUrl)
-      .catch(() => setLoadError(true));
+      .catch((e) => {
+        logger.warn("Viewing media load failed", "Besichtigungen", { path: record.file_path, error: e });
+        setLoadError(true);
+      });
   }, [record.file_path]);
 
   const isVideo = record.file_type === "video";

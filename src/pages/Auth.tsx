@@ -45,12 +45,12 @@ const isLoginLocked = (): boolean => {
 const getReturnUrl = (): string => {
   try {
     const url = sessionStorage.getItem("immocontrol_return_url");
-    if (url && url.startsWith("/") && url !== "/auth") {
+    if (url && url.startsWith("/") && url !== ROUTES.AUTH) {
       sessionStorage.removeItem("immocontrol_return_url");
       return url;
     }
   } catch { /* ignore */ }
-  return "/";
+  return ROUTES.HOME;
 };
 
 const Auth = () => {
