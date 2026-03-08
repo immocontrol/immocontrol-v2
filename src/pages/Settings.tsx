@@ -224,8 +224,8 @@ const Settings = () => {
         </div>
       )}
 
-      {/* Settings sidebar navigation – scrolls with content */}
-      <aside className="hidden lg:flex w-48 shrink-0 self-start">
+      {/* Settings sidebar navigation – sticky, always visible while scrolling */}
+      <aside className="hidden lg:flex w-48 shrink-0 self-start sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
         <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
           {/* Single vertical track + progress fill */}
           {(() => {
