@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,7 @@ const CONTACTS_PAGE_SIZE = 50;
 
 const ContactManagement = () => {
   const { user } = useAuth();
+  const { announce } = useAccessibility();
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -258,6 +260,7 @@ const ContactManagement = () => {
       const c = contacts.find(x => x.id === id);
       logAudit("delete", "contact", { entityId: id, entityName: c?.name, details: "In Papierkorb verschoben", userId: user?.id });
       haptic.medium();
+      announce("Kontakt gelöscht", "polite");
       invalidate();
       showUndo({
         message: "Kontakt gelöscht",

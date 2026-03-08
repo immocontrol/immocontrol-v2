@@ -13,11 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
+import { contactFormSchema } from "@/lib/schemas";
 import { StepIndicator } from "@/components/StepIndicator";
 import { isDeepSeekConfigured, suggestContactFollowUp } from "@/integrations/ai/extractors";
 
@@ -59,23 +59,30 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
     : true;
 
   const handleSave = async () => {
-    if (!user || !form.name.trim()) return;
-    if (form.email && !isValidEmail(form.email)) { toast.error("Ungültige E-Mail-Adresse"); return; }
+    if (!user) return;
+    const parsed = contactFormSchema.safeParse(form);
+    if (!parsed.success) {
+      const first = parsed.error.flatten().fieldErrors;
+      const msg = first.name?.[0] ?? first.email?.[0] ?? first.phone?.[0] ?? "Bitte Pflichtfelder prüfen.";
+      toast.error(msg);
+      return;
+    }
     setSaving(true);
+    const data = parsed.data;
     try {
       const { error } = await supabase.from("contacts").insert({
         user_id: user.id,
-        name: form.name.trim(),
-        company: form.company || null,
-        category: form.category,
-        email: form.email || null,
-        phone: form.phone || null,
-        address: form.address || null,
-        notes: form.notes || null,
+        name: data.name.trim(),
+        company: data.company || null,
+        category: data.category,
+        email: data.email || null,
+        phone: data.phone || null,
+        address: data.address || null,
+        notes: data.notes || null,
       });
       if (error) throw error;
-      toast.success(`${form.name} angelegt`);
-      announce(`${form.name} wurde als Kontakt angelegt.`);
+      toast.success(`${data.name} angelegt`);
+      announce(`${data.name} wurde als Kontakt angelegt.`);
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
       onCreated?.();

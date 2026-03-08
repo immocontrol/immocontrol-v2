@@ -17,6 +17,7 @@ import { formatDate } from "@/lib/formatters";
  * Exports all user data from Supabase tables into downloadable files.
  * Supports JSON (full backup) and CSV (Excel-compatible) formats.
  * Column names match Supabase table definitions (see integrations/supabase/types.ts).
+ * Spaltenlisten siehe EXPORT_TABLES; bei Schema-Änderungen hier und in types.ts anpassen.
  */
 
 interface ExportTable {

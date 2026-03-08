@@ -222,32 +222,30 @@ const Settings = () => {
         </div>
       )}
 
-      {/* Settings sidebar navigation with progress lines */}
-      <aside className="hidden lg:flex lg:items-center w-48 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide">
+      {/* Settings sidebar navigation – scrolls with content */}
+      <aside className="hidden lg:flex w-48 shrink-0 self-start">
         <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
+          {/* Single vertical track + progress fill */}
+          {(() => {
+            const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
+            const fillPercent = Math.min(100, (SETTINGS_SECTIONS.length > 1 ? (activeIdx + 0.5) / (SETTINGS_SECTIONS.length - 1) : 0) * 100);
+            return (
+              <div className="absolute left-[17px] top-2 bottom-2 w-[2px] rounded-full bg-border overflow-hidden" aria-hidden="true">
+                <div
+                  className="absolute left-0 top-0 w-full rounded-full bg-primary transition-all duration-500 ease-out"
+                  style={{ height: `${fillPercent}%` }}
+                />
+              </div>
+            );
+          })()}
           {(() => {
             const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
             return SETTINGS_SECTIONS.map((section, idx) => {
               const SectionIcon = section.icon;
               const isPast = idx < activeIdx;
               const isActive = idx === activeIdx;
-              const isLast = idx === SETTINGS_SECTIONS.length - 1;
               return (
                 <div key={section.id} className="relative">
-                  {/* Connecting line between items */}
-                  {!isLast && (
-                    <div className="absolute left-[17px] top-[32px] w-[2px] h-[calc(100%-16px)] z-0 overflow-hidden">
-                      <div
-                        className="w-full rounded-full transition-[height,background-color] duration-700 ease-out"
-                        style={{
-                          height: isPast ? "100%" : isActive ? "50%" : "0%",
-                          backgroundColor: isPast || isActive ? "hsl(var(--primary))" : "hsl(var(--border))",
-                        }}
-                      />
-                      {/* Background track */}
-                      <div className="absolute inset-0 w-full h-full rounded-full bg-border -z-10" />
-                    </div>
-                  )}
                   <button
                     data-settings-nav={section.id}
                     onClick={() => scrollToSection(section.id)}

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { searchNominatimAutocomplete } from "@/lib/crmUtils";
+import { fetchAddressSuggestions } from "@/integrations/addressSuggestions";
 import {
   aggregateGeocode,
   aggregateGeocodeToBbox,
@@ -291,7 +291,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     const v = getScoutStorage()?.sortBy as string | undefined;
     return v === "size" || v === "distance" || v === "name" || v === "source" ? v : "size";
   });
-  const [suggestions, setSuggestions] = useState<{ display_name: string; place_id: number }[]>([]);
+  const [suggestions, setSuggestions] = useState<{ formatted: string; subtitle?: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const suggestionRef = useRef<HTMLUListElement>(null);
@@ -371,15 +371,15 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     }
     const ac = new AbortController();
     const t = setTimeout(() => {
-      searchNominatimAutocomplete(query.trim(), ac.signal)
+      fetchAddressSuggestions(query.trim(), ac.signal)
         .then((list) => { if (!ac.signal.aborted) setSuggestions(list); })
         .catch(() => { /* ignore abort */ });
     }, 400);
     return () => { clearTimeout(t); ac.abort(); };
   }, [query]);
 
-  const pickSuggestion = useCallback((display_name: string) => {
-    setQuery(display_name);
+  const pickSuggestion = useCallback((formatted: string) => {
+    setQuery(formatted);
     setSuggestions([]);
     setShowSuggestions(false);
     setSuggestionIndex(0);
@@ -582,7 +582,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                     }
                     if (showSuggestions && suggestions.length > 0) {
                       e.preventDefault();
-                      pickSuggestion(suggestions[suggestionIndex].display_name);
+                      pickSuggestion(suggestions[suggestionIndex].formatted);
                       return;
                     }
                     search();
@@ -617,7 +617,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 >
                   {suggestions.map((s, i) => (
                     <li
-                      key={s.place_id}
+                      key={`${s.formatted}-${i}`}
                       id={`scout-suggestion-${i}`}
                       role="option"
                       aria-selected={i === suggestionIndex}
@@ -625,9 +625,9 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                         "px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground text-wrap-safe",
                         i === suggestionIndex && "bg-accent text-accent-foreground"
                       )}
-                      onMouseDown={() => pickSuggestion(s.display_name)}
+                      onMouseDown={() => pickSuggestion(s.formatted)}
                     >
-                      {s.display_name}
+                      {s.formatted}
                     </li>
                   ))}
                 </ul>

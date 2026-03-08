@@ -1,3 +1,7 @@
+/**
+ * Legacy Radix-based toast hook. For new code prefer: import { toast } from "sonner".
+ * App uses Sonner (see App.tsx <Toaster /> from @/components/ui/sonner).
+ */
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";

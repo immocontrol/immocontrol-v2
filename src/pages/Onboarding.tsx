@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { Building2, User, Briefcase, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { Building2, Briefcase, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,10 +20,9 @@ const STRATEGIES = [
   { value: "mixed", label: "Gemischt", description: "Kombination mehrerer Strategien" },
 ];
 
-/* FUNC-42: Onboarding step labels */
+/* FUNC-42: Onboarding step labels — name is already collected at signup, so only investor type + strategy */
 const ONBOARDING_STEPS = [
-  { key: "welcome", label: "Willkommen" },
-  { key: "profile", label: "Profil" },
+  { key: "investor_type", label: "Investoren-Typ" },
   { key: "strategy", label: "Strategie" },
 ] as const;
 
@@ -39,7 +36,6 @@ const isOnboardingComplete = (): boolean =>
 
 const Onboarding = () => {
   const [step, setStep] = useState(0);
-  const [displayName, setDisplayName] = useState("");
   const [investorType, setInvestorType] = useState("");
   const [strategy, setStrategy] = useState("");
   const [saving, setSaving] = useState(false);
@@ -66,11 +62,12 @@ const Onboarding = () => {
   const handleComplete = useCallback(async () => {
     if (!user || saving) return;
     setSaving(true);
+    const displayNameFromSignup = (user.user_metadata?.display_name as string) || undefined;
     try {
       const { error } = await supabase
         .from("profiles")
         .update({
-          display_name: displayName || undefined,
+          display_name: displayNameFromSignup,
           investor_type: investorType || undefined,
           strategy: strategy || undefined,
           onboarding_completed: true,
@@ -88,7 +85,7 @@ const Onboarding = () => {
       toastErrorWithRetry(msg, () => handleComplete());
       setSaving(false);
     }
-  }, [user, saving, displayName, investorType, strategy]);
+  }, [user, saving, investorType, strategy]);
 
   const handleSkip = useCallback(async () => {
     if (!user) return;
@@ -106,9 +103,9 @@ const Onboarding = () => {
   }, [user]);
 
   // Current options list for keyboard nav
-  const currentOptions = step === 1 ? INVESTOR_TYPES : step === 2 ? STRATEGIES : [];
-  const currentValue = step === 1 ? investorType : strategy;
-  const setCurrentValue = step === 1 ? setInvestorType : setStrategy;
+  const currentOptions = step === 0 ? INVESTOR_TYPES : step === 1 ? STRATEGIES : [];
+  const currentValue = step === 0 ? investorType : strategy;
+  const setCurrentValue = step === 0 ? setInvestorType : setStrategy;
 
   // Keyboard navigation
   useEffect(() => {
@@ -175,35 +172,9 @@ const Onboarding = () => {
           ))}
         </div>
 
-        {/* Step Content */}
+        {/* Step Content — name already collected at signup, only investor type + strategy */}
         <div className="gradient-card rounded-xl border border-border p-6 space-y-5">
           {step === 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold">Wie heißt du?</h2>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-xs text-muted-foreground">Anzeigename</Label>
-                <Input
-                  id="name"
-                  placeholder="Max Mustermann"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="h-10"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      nextStep();
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 1 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-primary" />
@@ -233,7 +204,7 @@ const Onboarding = () => {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 1 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />

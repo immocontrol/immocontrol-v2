@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccessibility } from "@/components/AccessibilityProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
@@ -19,6 +20,7 @@ interface PasswordSettingsProps {
 
 export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
   const { user, isRecoverySession, clearRecoverySession } = useAuth();
+  const { announce } = useAccessibility();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -81,13 +83,17 @@ export function PasswordSettings({ sectionRef }: PasswordSettingsProps) {
           toast.error(error.message);
         }
       } else {
-        toast.success(isRecoverySession ? "Neues Passwort gesetzt! Du kannst dich jetzt damit anmelden." : "Passwort geändert!");
+        const msg = isRecoverySession ? "Neues Passwort gesetzt! Du kannst dich jetzt damit anmelden." : "Passwort geändert!";
+        toast.success(msg);
+        announce(msg, "polite");
         setOldPassword(""); setNewPassword(""); setConfirmPassword("");
         if (isRecoverySession) clearRecoverySession();
       }
     } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Fehler beim Ändern des Passworts";
       handleError(err, { context: "auth", details: "password-change", showToast: false });
-      toastErrorWithRetry(err instanceof Error ? err.message : "Fehler beim Ändern des Passworts", () => handleChangePassword({ preventDefault: () => {} } as React.FormEvent));
+      announce(msg, "assertive");
+      toastErrorWithRetry(msg, () => handleChangePassword({ preventDefault: () => {} } as React.FormEvent));
     } finally {
       setLoading(false);
     }

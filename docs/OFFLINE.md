@@ -21,6 +21,12 @@ Kurzbeschreibung, welche Aktionen offline gequeuet werden und wie der Sync funkt
 3. **Wieder online:** `useOfflineCache` / Background-Sync verarbeitet die Queue in Reihenfolge. Bei Fehler (z. B. 409) wird die Mutation übersprungen oder gemeldet; der Rest läuft weiter.
 4. Nach Sync: entsprechende Query-Keys werden invalidiert (z. B. `queryKeys.properties.all`).
 
+## Konflikthandling nach Reconnect
+
+- **Reihenfolge:** Pending Mutations werden in der Reihenfolge `createdAt` abgearbeitet.
+- **Fehler:** Schlägt eine Mutation fehl (z. B. 409 Conflict, Validierung), wird sie übersprungen; der Rest läuft weiter.
+- **Duplikate:** Wird dasselbe Objekt zweimal offline angelegt, erzeugt Supabase zwei Einträge (keine Merge-Logik).
+
 ## Geplante Erweiterungen
 
 - **Kontakte:** Offline-Queue für Anlegen/Bearbeiten/Löschen (analog zu Objekten).

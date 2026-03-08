@@ -3,9 +3,8 @@
  * Kostenfrei, keine API-Key-Pflicht; Datenqualität und Vollständigkeit variieren.
  */
 import type { ScoutProvider, GeocodeResult, PlaceBbox, ScoutPOI, BuildingWithSize } from "./types";
+import { geocodeToCoord, geocodePlaceToBbox } from "@/integrations/geocoding";
 import {
-  geocodeToCoord,
-  geocodePlaceToBbox,
   fetchCommercialPOIsInBbox,
   fetchCommercialPOIsInRadius,
   fetchBuildingsInBbox,

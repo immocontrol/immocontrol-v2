@@ -2,3 +2,9 @@ project_id = "ifydeirxdpcqnnidleky"
 
 [functions.immo-ai-chat]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.telegram-set-webhook]
+verify_jwt = true

@@ -102,6 +102,19 @@ export const contactSchema = z.object({
 
 export type ContactFormData = z.infer<typeof contactSchema>;
 
+/** Add/Edit Contact form (DB category values). Use for validation before submit. */
+export const contactFormSchema = z.object({
+  name: requiredString,
+  email: z.string().email("Ungültige E-Mail-Adresse").or(z.literal("")).default(""),
+  phone: germanPhone.default(""),
+  category: z.enum(["Handwerker", "Hausverwaltung", "Versicherung", "Sonstiges"]),
+  company: z.string().default(""),
+  address: z.string().default(""),
+  notes: z.string().default(""),
+});
+
+export type ContactFormDataUI = z.infer<typeof contactFormSchema>;
+
 /* ── Loan form schema ───────────────────────────────────── */
 
 export const loanSchema = z.object({

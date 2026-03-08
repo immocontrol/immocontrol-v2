@@ -6,7 +6,7 @@
 
 - **In-App:** Hinweise im Dashboard (z. B. überfällige Mieten, Vertragsende, offene Tickets). Nutzung von `useNotifications` und einzelnen Bannern (OverduePaymentBanner, LoanFixedInterestCountdown, etc.).
 - **Browser:** Browser-Notification-API (optional, nach Berechtigung) — z. B. in `useNotifications`; Benachrichtigungen erscheinen auch bei geöffnetem Tab.
-- **Telegram:** Einstellungen unter **Einstellungen → Telegram** (`TelegramSettings`). Bot verknüpfen für Benachrichtigungen per Telegram.
+- **Telegram:** Einstellungen unter **Einstellungen → Telegram** (`TelegramSettings`). Bot verknüpfen für Benachrichtigungen per Telegram. **ImmoMetrica Direktimport:** Webhook aktivieren – Deals aus dem ImmoMetrica-Kanal landen automatisch in der Deals-Liste, auch wenn die App geschlossen ist.
 
 ## Wo einstellen
 

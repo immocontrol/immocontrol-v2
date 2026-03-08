@@ -140,6 +140,13 @@ export async function searchNominatimAutocomplete(query: string, signal?: AbortS
 const OVERPASS_TIMEOUT_RADIUS = 15;
 const OVERPASS_TIMEOUT_BBOX = 25;
 
+function buildingCentroidFromGeom(geom: { lat: number; lon: number }[]): { lat: number; lon: number } | null {
+  if (!geom || geom.length < 3) return null;
+  const sumLat = geom.reduce((s, c) => s + c.lat, 0);
+  const sumLon = geom.reduce((s, c) => s + c.lon, 0);
+  return { lat: sumLat / geom.length, lon: sumLon / geom.length };
+}
+
 export async function estimateBuildingSize(lat: number, lng: number): Promise<BuildingInfo | null> {
   const radius = 20;
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
@@ -147,9 +154,7 @@ export async function estimateBuildingSize(lat: number, lng: number): Promise<Bu
   way["building"](around:${radius},${lat},${lng});
   relation["building"](around:${radius},${lat},${lng});
 );
-out body;
->;
-out skel qt;`;
+out body geom;`;
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
@@ -158,32 +163,29 @@ out skel qt;`;
     });
     if (!res.ok) return null;
     const data = await res.json();
-    const allBuildings = data.elements?.filter((e: { type: string; tags?: Record<string, string> }) =>
+    const allBuildings = data.elements?.filter((e: { type: string; tags?: Record<string, string>; geometry?: { lat: number; lon: number }[]; center?: { lat: number; lon: number } }) =>
       (e.type === "way" || e.type === "relation") && e.tags?.building
     ) || [];
     if (allBuildings.length === 0) return null;
-
-    const nodes = data.elements?.filter((e: { type: string }) => e.type === "node") || [];
-    const nodeMap = new Map<number, { lat: number; lon: number }>();
-    nodes.forEach((n: { id: number; lat: number; lon: number }) => nodeMap.set(n.id, { lat: n.lat, lon: n.lon }));
 
     const target = { lat, lon: lng };
     let nearestBuilding = allBuildings[0];
     let nearestDist = Infinity;
     for (const b of allBuildings) {
-      if (b.nodes) {
-        const cent = buildingCentroid(b.nodes, nodeMap);
-        if (cent) {
-          const d = distanceMeters(target, cent);
-          if (d < nearestDist) { nearestDist = d; nearestBuilding = b; }
-        }
+      const geom = b.geometry;
+      const cent = geom?.length >= 3 ? buildingCentroidFromGeom(geom) : (b.center ? { lat: b.center.lat, lon: b.center.lon } : null);
+      if (cent) {
+        const d = distanceMeters(target, cent);
+        if (d < nearestDist) { nearestDist = d; nearestBuilding = b; }
       }
     }
 
+    const getCentroid = (b: { geometry?: { lat: number; lon: number }[]; center?: { lat: number; lon: number } }) =>
+      b.geometry?.length >= 3 ? buildingCentroidFromGeom(b.geometry) : (b.center ? { lat: b.center.lat, lon: b.center.lon } : null);
     const refTags = nearestBuilding.tags || {};
     const refStreet = refTags["addr:street"] || "";
     const refNumber = refTags["addr:housenumber"] || "";
-    let plotBuildings;
+    let plotBuildings: typeof allBuildings;
     if (refStreet && refNumber) {
       plotBuildings = allBuildings.filter((b: { tags?: Record<string, string> }) => {
         const t = b.tags || {};
@@ -191,12 +193,11 @@ out skel qt;`;
       });
       for (const b of allBuildings) {
         const t = b.tags || {};
-        if (!t["addr:street"] && b.nodes) {
-          const cent = buildingCentroid(b.nodes, nodeMap);
+        if (!t["addr:street"]) {
+          const cent = getCentroid(b);
           if (cent) {
-            const nearestPlotBuilding = plotBuildings.some((pb: { nodes?: number[] }) => {
-              if (!pb.nodes) return false;
-              const pCent = buildingCentroid(pb.nodes, nodeMap);
+            const nearestPlotBuilding = plotBuildings.some((pb) => {
+              const pCent = getCentroid(pb);
               return pCent && distanceMeters(cent, pCent) < 15;
             });
             if (nearestPlotBuilding && !plotBuildings.includes(b)) {
@@ -206,9 +207,8 @@ out skel qt;`;
         }
       }
     } else {
-      plotBuildings = allBuildings.filter((b: { nodes?: number[] }) => {
-        if (!b.nodes) return false;
-        const cent = buildingCentroid(b.nodes, nodeMap);
+      plotBuildings = allBuildings.filter((b) => {
+        const cent = getCentroid(b);
         return cent && distanceMeters(target, cent) < 15;
       });
       if (plotBuildings.length === 0) plotBuildings = [nearestBuilding];
@@ -227,13 +227,9 @@ out skel qt;`;
       if (totalLevels) hasLevelData = true;
 
       let bArea = 0;
-      if (building.nodes && building.nodes.length > 2) {
-        const coords = building.nodes
-          .map((id: number) => nodeMap.get(id))
-          .filter(Boolean) as { lat: number; lon: number }[];
-        if (coords.length > 2) {
-          bArea = Math.round(calculatePolygonArea(coords));
-        }
+      const geom = building.geometry;
+      if (geom && geom.length > 2) {
+        bArea = Math.round(calculatePolygonArea(geom.map((g) => ({ lat: g.lat, lon: g.lon }))));
       }
 
       if (bArea > 0) {
