@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
+import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 import FileImportPicker from "@/components/FileImportPicker";
 /* IMP-2: Extracted parsing utilities to reduce component size */
 import {
@@ -297,6 +298,7 @@ const BankMatching = () => {
       if (e2) throw e2;
     },
     onSuccess: () => { invalidateAll(); toast.success("Zugeordnet & bestätigt"); },
+    onError: createMutationErrorHandler("Bank-Zuordnung", "Fehler beim Zuweisen"),
   });
 
   const unmatchMutation = useMutation({
@@ -313,6 +315,7 @@ const BankMatching = () => {
       if (e2) throw e2;
     },
     onSuccess: () => { invalidateAll(); toast.success("Zuordnung aufgehoben"); },
+    onError: createMutationErrorHandler("Bank-Zuordnung", "Fehler beim Aufheben"),
   });
 
   const addAccountMutation = useMutation({
@@ -333,6 +336,7 @@ const BankMatching = () => {
       setAccountForm({ name: "", iban: "", bic: "", bank_name: "" });
       toast.success("Konto hinzugefügt");
     },
+    onError: createMutationErrorHandler("Bank-Konto", "Fehler beim Hinzufügen"),
   });
 
   const deleteAccountMutation = useMutation({
@@ -365,6 +369,7 @@ const BankMatching = () => {
       setRuleForm({ name: "", match_type: "iban", match_value: "", tenant_id: "", property_id: "" });
       toast.success("Regel erstellt");
     },
+    onError: createMutationErrorHandler("Bank-Regel", "Fehler beim Erstellen"),
   });
 
   const deleteRuleMutation = useMutation({
@@ -376,6 +381,7 @@ const BankMatching = () => {
       queryClient.invalidateQueries({ queryKey: ["bank_matching_rules"] });
       toast.success("Regel gelöscht");
     },
+    onError: createMutationErrorHandler("Bank-Regel", "Fehler beim Löschen"),
   });
 
   // ── IMP20-1: Auto-match all — enhanced: also invalidates MieteingangsTracker so rent tracker shows confirmed payments instantly ──

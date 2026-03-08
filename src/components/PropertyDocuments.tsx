@@ -242,7 +242,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
               <div className="flex items-center gap-3 min-w-0">
                 {getFileIcon(doc.file_type, doc.file_name)}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{doc.file_name}</p>
+                  <p className="text-sm font-medium truncate" title={doc.file_name}>{doc.file_name}</p>
                   <p className="text-xs text-muted-foreground">
                     {doc.category} · {formatFileSize(doc.file_size)} · {formatDate(doc.created_at)}
                   </p>

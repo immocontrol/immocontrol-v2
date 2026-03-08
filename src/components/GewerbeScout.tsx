@@ -31,7 +31,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, crmWithTab } from "@/lib/routes";
 
 type SearchMode = "ort" | "umkreis";
 
@@ -756,7 +756,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
               <p className="text-muted-foreground mt-1">Tipps: Bei „Ganzer Ort“ den Stadtnamen genau prüfen. Bei „Umkreis“ den Radius vergrößern (5 km, 10 km). Mindestfläche-Filter entfernen, falls gesetzt.</p>
               <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <Link to={`${ROUTES.CRM}?tab=search`} className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
+                <Link to={crmWithTab("search")} className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
                 <Link to={ROUTES.BESICHTIGUNGEN} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Besichtigung planen">
                   <CalendarCheck className="h-3 w-3" /> Besichtigung planen →
                 </Link>

@@ -73,3 +73,8 @@ export function loansWithId(id: string): string {
 export function crmWithLeadId(id: string): string {
   return `${ROUTES.CRM}?tab=leads&lead=${encodeURIComponent(id)}`;
 }
+
+/** Helper: CRM page with specific tab */
+export function crmWithTab(tab: string): string {
+  return `${ROUTES.CRM}?tab=${encodeURIComponent(tab)}`;
+}

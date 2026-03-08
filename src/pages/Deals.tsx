@@ -97,7 +97,7 @@ const DealCard = memo(({
     >
       <CardContent className="p-3 space-y-1.5">
         <div className="flex items-center justify-between gap-1">
-          <p className="font-medium text-sm truncate flex-1">{deal.title}</p>
+          <p className="font-medium text-sm truncate flex-1" title={deal.title}>{deal.title}</p>
           <div className="flex items-center gap-1 shrink-0">
             {onShare && (
               <button
