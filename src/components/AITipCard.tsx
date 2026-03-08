@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { completeDeepSeekChat, isDeepSeekConfigured } from "@/integrations/ai/deepseek";
+import { logger } from "@/lib/logger";
 
 const SYSTEM_PROMPT = `Du bist ein Experte für Immobilien-Investments in Deutschland.
 Antworte mit genau einem kurzen, konkreten Tipp (1–3 Sätze) für private Immobilien-Investoren.
@@ -28,8 +29,10 @@ export function AITipCard() {
       );
       setTip(text.trim() || "Kein Tipp erhalten.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Fehler beim Laden");
+      const msg = e instanceof Error ? e.message : "Fehler beim Laden";
+      setError(msg);
       setTip(null);
+      logger.warn("AITipCard fetch failed", { error: e });
     } finally {
       setLoading(false);
     }

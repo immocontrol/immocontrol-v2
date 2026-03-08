@@ -7,6 +7,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { useUndoToast } from "./useUndoToast";
 
 type SupabaseTable = "properties" | "contacts" | "loans" | "todos" | "tickets" | "deals";
@@ -78,7 +79,7 @@ export function useSoftDelete({ table, itemLabel = "Eintrag", onDeleted, onResto
       .lt("deleted_at", cutoffDate.toISOString());
 
     if (error) {
-      console.error(`Purge error for ${table}:`, error.message);
+      logger.error(`Purge error for ${table}`, error.message);
     }
   }, [table]);
 

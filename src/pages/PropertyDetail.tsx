@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { ROUTES, dealsWithId } from "@/lib/routes";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
@@ -62,6 +62,7 @@ import { handleError } from "@/lib/handleError";
 const PropertyDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const { share } = useShare();
   const { getProperty, deleteProperty, duplicateProperty } = useProperties();
@@ -97,6 +98,15 @@ const PropertyDetail = () => {
   const scrollToSection = useCallback((section: string) => {
     sectionRefs.current[section]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  /* Deep-link: scroll to section when URL hash is #tickets (e.g. from notification) */
+  useEffect(() => {
+    const hash = location.hash.slice(1);
+    if (hash && sectionRefs.current[hash]) {
+      const t = setTimeout(() => scrollToSection(hash), 100);
+      return () => clearTimeout(t);
+    }
+  }, [location.hash, scrollToSection]);
 
   /* STR-5: Dynamic document title for PropertyDetail — shows property name in browser tab */
   useEffect(() => {

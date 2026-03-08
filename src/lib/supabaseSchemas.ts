@@ -3,6 +3,7 @@
  * Validates data coming FROM the database to catch schema mismatches early.
  */
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 /* ── Property row from Supabase ─────────────────────────── */
 export const propertyRowSchema = z.object({
@@ -221,10 +222,7 @@ export function safeParseRows<T>(
     const result = schema.safeParse(row);
     if (result.success) return result.data;
     // Log validation error but don't crash — return row as-is with defaults applied
-    console.warn(
-      `[Zod] ${tableName}[${idx}] validation warning:`,
-      result.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join(", ")
-    );
+    logger.warn(`[Zod] ${tableName}[${idx}] validation warning`, result.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join(", "));
     // safeParse failed — return row as-is (parse would fail identically)
     return row as T;
   });

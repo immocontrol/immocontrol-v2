@@ -3,6 +3,7 @@
  * loan milestones, and maintenance schedules.
  * Uses the Web Push API (service worker based).
  */
+import { logger } from "@/lib/logger";
 
 export interface AppNotification {
   id: string;
@@ -28,7 +29,7 @@ const STORAGE_KEY = "immocontrol_notifications";
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!("Notification" in window)) {
-    console.warn("FUND-25: Browser does not support notifications");
+    logger.warn("FUND-25: Browser does not support notifications");
     return "denied";
   }
   if (Notification.permission === "granted") return "granted";

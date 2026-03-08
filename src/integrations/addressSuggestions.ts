@@ -3,6 +3,7 @@
  * Uses Google Places API (New) when VITE_GOOGLE_PLACES_API_KEY is set,
  * otherwise Photon (Komoot) + Nominatim (OSM) fallback.
  */
+import { logger } from "@/lib/logger";
 
 export interface AddressSuggestion {
   formatted: string;
@@ -38,7 +39,7 @@ async function fetchGoogleSuggestions(
 
   if (!res.ok) {
     const err = await res.text();
-    console.warn("[addressSuggestions] Google Places autocomplete error:", res.status, err);
+    logger.warn("[addressSuggestions] Google Places autocomplete error", { status: res.status, err });
     return [];
   }
 
