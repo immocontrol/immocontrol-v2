@@ -53,3 +53,18 @@ export function dealsWithId(id: string): string {
 export function contactsWithHighlight(id: string): string {
   return `${ROUTES.CONTACTS}?highlight=${encodeURIComponent(id)}`;
 }
+
+/** Helper: Besichtigungen page with ID filter */
+export function viewingsWithId(id: string): string {
+  return `${ROUTES.BESICHTIGUNGEN}?id=${encodeURIComponent(id)}`;
+}
+
+/** Helper: Dokumente page with ID filter */
+export function documentsWithId(id: string): string {
+  return `${ROUTES.DOKUMENTE}?id=${encodeURIComponent(id)}`;
+}
+
+/** Helper: Darlehen page with ID filter */
+export function loansWithId(id: string): string {
+  return `${ROUTES.LOANS}?id=${encodeURIComponent(id)}`;
+}

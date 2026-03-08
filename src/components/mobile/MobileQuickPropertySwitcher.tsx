@@ -11,6 +11,7 @@ import { Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHaptic } from "@/hooks/useHaptic";
 import { formatCurrency } from "@/lib/formatters";
+import { propertyDetail } from "@/lib/routes";
 
 interface MobileQuickPropertySwitcherProps {
   /** Currently selected property ID */
@@ -62,7 +63,7 @@ export const MobileQuickPropertySwitcher = memo(function MobileQuickPropertySwit
   const handleSelect = useCallback((propertyId: string) => {
     if (propertyId === activeId) return;
     haptic.tap();
-    navigate(`/immobilien/${propertyId}`);
+    navigate(propertyDetail(propertyId));
   }, [activeId, haptic, navigate]);
 
   const scrollBy = useCallback((direction: "left" | "right") => {

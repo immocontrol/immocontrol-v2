@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { ROUTES, dealsWithId } from "@/lib/routes";
+import { ROUTES, dealsWithId, viewingsWithId } from "@/lib/routes";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
@@ -448,7 +448,7 @@ const PropertyDetail = () => {
             <span>{formatCurrency(property.purchasePrice - property.remainingDebt)}</span>
           </div>
           <div className="flex flex-wrap gap-3 mt-2">
-            <Link to={`/darlehen${property?.id ? `?property=${property.id}` : ""}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
+            <Link to={property?.id ? `${ROUTES.LOANS}?property=${property.id}` : ROUTES.LOANS} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
               Darlehen bearbeiten →
             </Link>
             <Link to={ROUTES.NK} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]">
@@ -543,7 +543,7 @@ const PropertyDetail = () => {
             {synergy.viewings.map(v => (
               <div key={v.id} className="flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-secondary/80 transition-colors group">
                 <Link
-                  to={`/besichtigungen?id=${v.id}`}
+                  to={viewingsWithId(v.id)}
                   className="flex-1 flex items-center justify-between min-w-0"
                 >
                   <span className="text-sm font-medium truncate">{v.title}</span>

@@ -4,6 +4,7 @@ import { useProperties } from "@/context/PropertyContext";
 import { Building2, ChevronDown, ArrowRight } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatCurrency } from "@/lib/formatters";
+import { propertyDetail } from "@/lib/routes";
 
 interface Props {
   currentPropertyId: string;
@@ -34,7 +35,7 @@ const PropertyQuickSwitcher = ({ currentPropertyId }: Props) => {
           {others.map(p => (
             <button
               key={p.id}
-              onClick={() => { navigate(`/objekt/${p.id}`); setOpen(false); }}
+              onClick={() => { navigate(propertyDetail(p.id)); setOpen(false); }}
               className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-secondary transition-colors text-left"
             >
               <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center shrink-0">

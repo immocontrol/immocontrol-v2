@@ -6,7 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ROUTES, dealsWithId } from "@/lib/routes";
+import { logger } from "@/lib/logger";
+import { ROUTES, dealsWithId, propertyDetail, contactsWithHighlight, viewingsWithId } from "@/lib/routes";
 
 interface SearchResult {
   id: string;
@@ -95,7 +96,7 @@ export const GlobalSearch = () => {
       subtitle: p.address || p.location,
       category: "Objekte",
       icon: <Building2 className="h-4 w-4" />,
-      action: () => go(`${ROUTES.PROPERTY}/${p.id}`),
+      action: () => go(propertyDetail(p.id)),
     }));
   }, [properties, go]);
 
@@ -138,7 +139,7 @@ export const GlobalSearch = () => {
           subtitle: [c.company, c.phone, c.email].filter(Boolean).join(" · "),
           category: "Kontakte",
           icon: <Phone className="h-4 w-4" />,
-          action: () => go(`/kontakte?highlight=${c.id}`),
+          action: () => go(contactsWithHighlight(c.id)),
         });
       });
 
@@ -192,7 +193,7 @@ export const GlobalSearch = () => {
           subtitle: [v.address, v.visited_at ? new Date(v.visited_at).toLocaleDateString("de-DE") : null].filter(Boolean).join(" · "),
           category: "Besichtigungen",
           icon: <Camera className="h-4 w-4" />,
-          action: () => go(`/besichtigungen?id=${v.id}`),
+          action: () => go(viewingsWithId(v.id)),
         });
       });
 
@@ -210,11 +211,11 @@ export const GlobalSearch = () => {
           subtitle: "Darlehen",
           category: "Darlehen",
           icon: <Landmark className="h-4 w-4" />,
-          action: () => go("/darlehen"),
+          action: () => go(ROUTES.LOANS),
         });
       });
-    } catch {
-      // silently fail
+    } catch (e) {
+      logger.warn("GlobalSearch DB search failed", "GlobalSearch", { error: e });
     }
 
     return dbResults;

@@ -1,5 +1,6 @@
 import { memo, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { propertyDetail } from "@/lib/routes";
 import { MapPin, Home, TrendingUp, ChevronRight, Percent, Wallet, Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { calcBruttoRendite, calcNettoRendite, calcDSCR } from "@/lib/calculations";
@@ -59,7 +60,7 @@ const PropertyCard = memo(({
 
   return (
     <Link
-      to={`/objekt/${id}`}
+      to={propertyDetail(id)}
       data-testid="property-card"
       className="block gradient-card rounded-xl border border-border p-4 hover:border-primary/30 hover-lift group animate-fade-in transition-all duration-300 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
       style={{ animationDelay: `${delay}ms` }}

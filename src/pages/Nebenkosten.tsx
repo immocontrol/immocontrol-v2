@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 import { FileText, Plus, Trash2, Download, CheckCircle, Clock, AlertCircle, FolderOpen, Save, Loader2, Building2, BarChart3, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -426,7 +426,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                     {properties.find(p => p.id === selectedBillingData.property_id)?.name || "Objekt"}
                   </h2>
                   <Link
-                    to={`/objekt/${selectedBillingData.property_id}`}
+                    to={propertyDetail(selectedBillingData.property_id)}
                     className="text-xs text-primary hover:underline flex items-center gap-1 touch-target min-h-[44px]"
                   >
                     <Building2 className="h-3 w-3" /> Zum Objekt

@@ -4,6 +4,7 @@
  * Uses the Web Push API (service worker based).
  */
 import { logger } from "@/lib/logger";
+import { documentsWithId, loansWithId } from "@/lib/routes";
 
 export interface AppNotification {
   id: string;
@@ -143,7 +144,7 @@ export function checkDocumentExpiry(
         title: "Dokument läuft ab",
         body: `"${doc.name}" läuft in ${daysLeft} Tagen ab.`,
         category: "document",
-        url: `/dokumente?id=${doc.id}`,
+        url: documentsWithId(doc.id),
         tag: `doc-expiry-${doc.id}`,
       });
       notifications.push(notification);
@@ -230,7 +231,7 @@ export function checkLoanMilestones(
         title: "Zinsbindung endet bald",
         body: `${loan.bankName ?? "Darlehen"}: Zinsbindung endet in ${daysLeft} Tagen.`,
         category: "loan",
-        url: `/darlehen?id=${loan.id}`,
+        url: loansWithId(loan.id),
         tag: `loan-milestone-${loan.id}`,
       });
       notifications.push(notification);

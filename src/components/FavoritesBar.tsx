@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Star, X, Building2 } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useNavigate } from "react-router-dom";
+import { propertyDetail } from "@/lib/routes";
 
 interface Favorite {
   id: string;
@@ -87,7 +88,7 @@ export function FavoritesBar() {
           {availableProperties.slice(0, 5).map(p => (
             <button
               key={p.id}
-              onClick={() => addFavorite({ id: p.id, type: "property", label: p.name, path: `/objekt/${p.id}` })}
+              onClick={() => addFavorite({ id: p.id, type: "property", label: p.name, path: propertyDetail(p.id) })}
               className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
             >
               <Building2 className="h-3 w-3 text-muted-foreground" />
@@ -118,7 +119,7 @@ export function useIsFavorite(id: string): { isFavorite: boolean; toggle: () => 
     setFavorites(prev => {
       const next = prev.some(f => f.id === id)
         ? prev.filter(f => f.id !== id)
-        : [...prev, { id, type: "property" as const, label: "", path: `/objekt/${id}` }];
+        : [...prev, { id, type: "property" as const, label: "", path: propertyDetail(id) }];
       saveFavorites(next);
       return next;
     });

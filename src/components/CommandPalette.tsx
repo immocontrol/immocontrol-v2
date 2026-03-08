@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 
 interface PaletteItem {
   id: string;
@@ -49,13 +50,13 @@ export const CommandPalette = () => {
 
   const items = useMemo<PaletteItem[]>(() => {
     const navItems: PaletteItem[] = [
-      { id: "nav-dashboard", label: "Portfolio", sublabel: "Dashboard & Übersicht", icon: <LayoutDashboard className="h-4 w-4" />, action: () => go("/"), category: "Navigation" },
-      { id: "nav-loans", label: "Darlehen", sublabel: "Finanzierungen verwalten", icon: <Landmark className="h-4 w-4" />, action: () => go("/darlehen"), category: "Navigation" },
-      { id: "nav-forecast", label: "Cashforecast", sublabel: "Liquiditätsplanung", icon: <CalendarDays className="h-4 w-4" />, action: () => go("/forecast"), category: "Navigation" },
-      { id: "nav-contacts", label: "Kontakte", sublabel: "Handwerker & Partner", icon: <Users className="h-4 w-4" />, action: () => go("/kontakte"), category: "Navigation" },
-      { id: "nav-todos", label: "Aufgaben", sublabel: "Todos & Projekte", icon: <CheckSquare className="h-4 w-4" />, action: () => go("/aufgaben"), category: "Navigation" },
-      { id: "nav-analysis", label: "Analyse", sublabel: "Objektanalyse-Rechner", icon: <Calculator className="h-4 w-4" />, action: () => go("/analyse"), category: "Navigation" },
-      { id: "nav-settings", label: "Einstellungen", sublabel: "Profil & Theme", icon: <Settings className="h-4 w-4" />, action: () => go("/einstellungen"), category: "Navigation" },
+      { id: "nav-dashboard", label: "Portfolio", sublabel: "Dashboard & Übersicht", icon: <LayoutDashboard className="h-4 w-4" />, action: () => go(ROUTES.HOME), category: "Navigation" },
+      { id: "nav-loans", label: "Darlehen", sublabel: "Finanzierungen verwalten", icon: <Landmark className="h-4 w-4" />, action: () => go(ROUTES.LOANS), category: "Navigation" },
+      { id: "nav-forecast", label: "Cashforecast", sublabel: "Liquiditätsplanung", icon: <CalendarDays className="h-4 w-4" />, action: () => go(ROUTES.FORECAST), category: "Navigation" },
+      { id: "nav-contacts", label: "Kontakte", sublabel: "Handwerker & Partner", icon: <Users className="h-4 w-4" />, action: () => go(ROUTES.CONTACTS), category: "Navigation" },
+      { id: "nav-todos", label: "Aufgaben", sublabel: "Todos & Projekte", icon: <CheckSquare className="h-4 w-4" />, action: () => go(ROUTES.TODOS), category: "Navigation" },
+      { id: "nav-analysis", label: "Analyse", sublabel: "Objektanalyse-Rechner", icon: <Calculator className="h-4 w-4" />, action: () => go(ROUTES.ANALYSE), category: "Navigation" },
+      { id: "nav-settings", label: "Einstellungen", sublabel: "Profil & Theme", icon: <Settings className="h-4 w-4" />, action: () => go(ROUTES.SETTINGS), category: "Navigation" },
     ];
 
     const propertyItems: PaletteItem[] = properties.map(p => ({
@@ -63,7 +64,7 @@ export const CommandPalette = () => {
       label: p.name,
       sublabel: p.address || p.location,
       icon: <Building2 className="h-4 w-4" />,
-      action: () => go(`/objekt/${p.id}`),
+      action: () => go(propertyDetail(p.id)),
       category: "Objekte",
     }));
 

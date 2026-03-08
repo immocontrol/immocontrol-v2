@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, memo, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/routes";
 
 interface MobilePageTransitionProps {
   children: ReactNode;
@@ -18,15 +19,16 @@ interface MobilePageTransitionProps {
 
 // Route order for determining slide direction
 const ROUTE_ORDER = [
-  "/", "/portfolio", "/dashboard", "/immobilien",
-  "/deals", "/crm", "/kontakte", "/todos",
-  "/dokumente", "/darlehen", "/nebenkosten", "/mietuebersicht",
-  "/berichte", "/cashflow", "/wartung", "/newsticker",
-  "/schnellbewertung", "/einstellungen",
+  ROUTES.HOME, ROUTES.PERSONAL_DASHBOARD, ROUTES.OBJEKTE, ROUTES.PROPERTY,
+  ROUTES.DEALS, ROUTES.CRM, ROUTES.CONTACTS, ROUTES.TODOS,
+  ROUTES.DOKUMENTE, ROUTES.LOANS, ROUTES.NK, ROUTES.RENT,
+  ROUTES.REPORTS, ROUTES.FORECAST, ROUTES.WARTUNG, ROUTES.NEWSTICKER,
+  ROUTES.BEWERTUNG, ROUTES.SETTINGS,
 ];
 
 function getRouteIndex(path: string): number {
-  const idx = ROUTE_ORDER.indexOf(path);
+  const normalized = path.startsWith(`${ROUTES.PROPERTY}/`) ? ROUTES.PROPERTY : path;
+  const idx = ROUTE_ORDER.indexOf(normalized);
   return idx >= 0 ? idx : ROUTE_ORDER.length;
 }
 
