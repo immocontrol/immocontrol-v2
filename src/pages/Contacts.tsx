@@ -124,15 +124,6 @@ const ContactManagement = () => {
     purgeExpired();
   }, [user, showTrash]);
 
-  /* SYNERGY: Deep-Link ?highlight= – scroll and highlight contact from GlobalSearch */
-  useEffect(() => {
-    if (!highlightId || filtered.length === 0) return;
-    const el = contactRefs.current[highlightId];
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [highlightId, filtered.length]);
-
   /* STR-13: Keyboard shortcut Ctrl+N to open new contact dialog */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -321,6 +312,15 @@ const ContactManagement = () => {
     }
     return true;
   }), [sortedContacts, catFilter, debouncedSearch]);
+
+  /* SYNERGY: Deep-Link ?highlight= – scroll and highlight contact from GlobalSearch (after filtered is defined) */
+  useEffect(() => {
+    if (!highlightId || filtered.length === 0) return;
+    const el = contactRefs.current[highlightId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, filtered.length]);
 
   // Improvement 9: Contact summary stats
   const handworkerCount = contacts.filter(c => c.category === "Handwerker").length;

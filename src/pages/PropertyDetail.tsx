@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, dealsWithId } from "@/lib/routes";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
@@ -543,7 +543,7 @@ const PropertyDetail = () => {
                 </Link>
                 {v.deal_id && (
                   <Link
-                    to={`/deals?id=${v.deal_id}`}
+                    to={dealsWithId(v.deal_id)}
                     className="text-xs text-primary hover:underline shrink-0"
                     aria-label="Zum Deal"
                   >

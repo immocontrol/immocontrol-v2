@@ -38,3 +38,18 @@ export const ROUTES = {
   /** Finanzierungs-Cockpit: Objektübersicht, Kredite, Konten, Selbstauskunft, Unterlagen-Checkliste */
   FINANZIERUNG: "/finanzierung",
 } as const;
+
+/** Helper: Property detail URL */
+export function propertyDetail(id: string): string {
+  return `${ROUTES.PROPERTY}/${id}`;
+}
+
+/** Helper: Deals page with highlight */
+export function dealsWithId(id: string): string {
+  return `${ROUTES.DEALS}?id=${encodeURIComponent(id)}`;
+}
+
+/** Helper: Contacts page with highlight */
+export function contactsWithHighlight(id: string): string {
+  return `${ROUTES.CONTACTS}?highlight=${encodeURIComponent(id)}`;
+}

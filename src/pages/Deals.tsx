@@ -40,7 +40,7 @@ import { sanitizeFormData } from "@/lib/sanitize";
 import { useShare } from "@/components/mobile/MobileShareSheet";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, dealsWithId } from "@/lib/routes";
 import { DealRecord, STAGES, stageMap, emptyForm } from "./deals/DealTypes";
 
 /* UPD-11: Deal age color helper */
@@ -972,7 +972,7 @@ const Deals = () => {
                       <DealCard
                         deal={deal}
                         onClick={() => openEdit(deal)}
-                        onShare={(d) => share({ title: d.title, text: d.address || undefined, url: `${window.location.origin}/deals?id=${d.id}` })}
+                        onShare={(d) => share({ title: d.title, text: d.address || undefined, url: `${window.location.origin}${dealsWithId(d.id)}` })}
                         onConverted={() => queryClient.invalidateQueries({ queryKey: queryKeys.properties.all })}
                         draggable={!isMobile}
                         onDragStart={(e) => {
@@ -1140,7 +1140,7 @@ const Deals = () => {
                   className="h-8 w-8 shrink-0"
                   aria-label="Deal teilen"
                   onClick={() => {
-                    const url = `${window.location.origin}/deals?id=${editDeal.id}`;
+                    const url = `${window.location.origin}${dealsWithId(editDeal.id)}`;
                     share({ title: editDeal.title, text: editDeal.address || undefined, url });
                   }}
                 >

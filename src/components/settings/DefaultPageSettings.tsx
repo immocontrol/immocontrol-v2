@@ -5,20 +5,21 @@ import { useState } from "react";
 import { Home } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ROUTES } from "@/lib/routes";
 
 const DEFAULT_PAGE_OPTIONS = [
-  { value: "/", label: "Portfolio" },
-  { value: "/dashboard", label: "Dashboard" },
-  { value: "/darlehen", label: "Darlehen" },
-  { value: "/mietuebersicht", label: "Mieten" },
-  { value: "/vertraege", label: "Vertr\u00e4ge" },
-  { value: "/kontakte", label: "Kontakte" },
-  { value: "/aufgaben", label: "Aufgaben" },
-  { value: "/berichte", label: "Berichte" },
-  { value: "/deals", label: "Deals" },
-  { value: "/crm", label: "CRM" },
-  { value: "/dokumente", label: "Dokumente" },
-  { value: "/wartungsplaner", label: "Wartung" },
+  { value: ROUTES.HOME, label: "Portfolio" },
+  { value: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard" },
+  { value: ROUTES.LOANS, label: "Darlehen" },
+  { value: ROUTES.RENT, label: "Mieten" },
+  { value: ROUTES.CONTRACTS, label: "Verträge" },
+  { value: ROUTES.CONTACTS, label: "Kontakte" },
+  { value: ROUTES.TODOS, label: "Aufgaben" },
+  { value: ROUTES.REPORTS, label: "Berichte" },
+  { value: ROUTES.DEALS, label: "Deals" },
+  { value: ROUTES.CRM, label: "CRM" },
+  { value: ROUTES.DOKUMENTE, label: "Dokumente" },
+  { value: ROUTES.WARTUNG, label: "Wartung" },
 ] as const;
 
 interface DefaultPageSettingsProps {

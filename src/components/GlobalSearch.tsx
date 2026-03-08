@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, dealsWithId } from "@/lib/routes";
 
 interface SearchResult {
   id: string;
@@ -174,7 +174,7 @@ export const GlobalSearch = () => {
           subtitle: [d.address, d.stage].filter(Boolean).join(" · "),
           category: "Deals",
           icon: <Landmark className="h-4 w-4" />,
-          action: () => go(`/deals?id=${d.id}`),
+          action: () => go(dealsWithId(d.id)),
         });
       });
 

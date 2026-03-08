@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ROUTES } from "@/lib/routes";
 
 interface AppNotification {
   id: string;
@@ -111,7 +112,7 @@ export function useNotifications() {
             severity: "high",
             createdAt: p.due_date,
             read: readIds.has(id),
-            link: "/mietuebersicht",
+            link: ROUTES.RENT,
           });
         }
       }
@@ -138,15 +139,15 @@ export function useNotifications() {
             severity: daysLeft <= 7 ? "high" : "medium",
             createdAt: today,
             read: readIds.has(id),
-            link: "/vertraege",
+            link: ROUTES.CONTRACTS,
           });
         }
       }
 
-      /* Check open tickets */
+      /* Check open tickets — include property_id for link to property */
       const { data: openTickets } = await supabase
         .from("tickets")
-        .select("id, title, priority, created_at")
+        .select("id, title, priority, created_at, property_id")
         .eq("status", "open")
         .order("created_at", { ascending: true })
         .limit(10);
@@ -154,6 +155,7 @@ export function useNotifications() {
       if (openTickets) {
         for (const t of openTickets) {
           const id = `ticket-${t.id}`;
+          const link = t.property_id ? `${ROUTES.PROPERTY}/${t.property_id}` : ROUTES.OBJEKTE;
           notifications.push({
             id,
             type: "open_ticket",
@@ -162,6 +164,7 @@ export function useNotifications() {
             severity: t.priority === "high" ? "high" : "low",
             createdAt: t.created_at,
             read: readIds.has(id),
+            link,
           });
         }
       }

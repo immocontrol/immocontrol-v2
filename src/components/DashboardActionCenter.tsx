@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "@/lib/formatters";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 
 interface ActionStats {
   openTickets: number;
@@ -127,7 +127,7 @@ const DashboardActionCenter = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         {stats.openTickets > 0 && recentTickets.length > 0 ? (
           <Link
-            to={`/objekt/${recentTickets[0].property_id}`}
+            to={propertyDetail(recentTickets[0].property_id)}
             className={`rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-gold/10 border border-gold/20 hover:bg-gold/15`}
             aria-label="Offene Tickets – zum Objekt"
           >
@@ -144,7 +144,7 @@ const DashboardActionCenter = () => {
         )}
         {stats.overduePayments > 0 ? (
         <Link
-          to="/mietuebersicht"
+          to={ROUTES.RENT}
           className="rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-loss/10 border border-loss/20 hover:bg-loss/15"
           aria-label="Überfällige Zahlungen – zur Mietübersicht"
         >
@@ -168,7 +168,7 @@ const DashboardActionCenter = () => {
         )}
         {stats.unreadMessages > 0 ? (
           <Link
-            to="/objekte"
+            to={ROUTES.OBJEKTE}
             className="rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-primary/10 border border-primary/20 hover:bg-primary/15"
             aria-label="Ungelesene Nachrichten – zu Objekten"
           >
@@ -201,7 +201,7 @@ const DashboardActionCenter = () => {
         <div className="flex flex-wrap gap-2 mb-4">
           {dealsInBesichtigung > 0 && (
             <Link
-              to="/deals"
+              to={ROUTES.DEALS}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors text-sm font-medium"
             >
               <Landmark className="h-4 w-4 text-primary" />
@@ -211,7 +211,7 @@ const DashboardActionCenter = () => {
           )}
           {recentViewings.length > 0 && (
             <Link
-              to="/besichtigungen"
+              to={ROUTES.BESICHTIGUNGEN}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/80 hover:bg-secondary transition-colors text-sm font-medium"
             >
               <Camera className="h-4 w-4 text-muted-foreground" />
@@ -221,7 +221,7 @@ const DashboardActionCenter = () => {
           )}
           {draftBillings > 0 && (
             <Link
-              to="/nebenkosten"
+              to={ROUTES.NK}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gold/10 border border-gold/20 hover:bg-gold/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
               aria-label="Entwürfe Nebenkostenabrechnung"
             >
@@ -252,7 +252,7 @@ const DashboardActionCenter = () => {
           {recentTickets.map(ticket => (
             <Link
               key={ticket.id}
-              to={`/objekt/${ticket.property_id}`}
+              to={propertyDetail(ticket.property_id)}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/80 transition-colors group"
             >
               <span className="text-sm">{categoryIcons[ticket.category] || "📋"}</span>
