@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, viewingsWithId } from "@/lib/routes";
 import {
   Camera,
   MapPin,
@@ -599,7 +599,7 @@ const Besichtigungen = () => {
                 size="sm"
                 className="text-xs gap-1.5"
                 onClick={() => {
-                  const url = `${window.location.origin}/besichtigungen?id=${editViewing.id}`;
+                  const url = `${window.location.origin}${viewingsWithId(editViewing.id)}`;
                   share({
                     title: editViewing.title,
                     text: editViewing.address || undefined,

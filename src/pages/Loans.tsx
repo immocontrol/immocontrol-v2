@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
 import { Landmark, Building2, Calendar, TriangleAlert as AlertTriangle, CreditCard as Edit2, Trash2, Search, X, Plus, Handshake, Receipt, BarChart3, FileBarChart, Store, FileText, CalendarCheck, Calculator } from "lucide-react";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 import AddLoanDialog from "@/components/AddLoanDialog";
 import LoanPayoffSimulator from "@/components/LoanPayoffSimulator";
 import LoanFixedInterestAlerts from "@/components/LoanFixedInterestAlerts";
@@ -451,7 +451,7 @@ const Loans = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-none">{l.bank_name}</span>
             <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
-            {prop && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">· {prop.name}</span>}
+            {prop && <Link to={propertyDetail(prop.id)} className="text-[10px] text-muted-foreground truncate hidden sm:inline hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()}>· {prop.name}</Link>}
             {monthsLeft !== null && monthsLeft <= 12 && (
               <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5" title={daysUntilFixedEnd != null && daysUntilFixedEnd <= 90 ? "Anschlussfinanzierung prüfen" : undefined}>
                 <AlertTriangle className="h-2.5 w-2.5" />

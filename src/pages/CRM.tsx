@@ -252,7 +252,7 @@ const CRM = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.leads(user?.id) });
       toast.success("Lead gespeichert");
     },
     onError: (e: unknown) => {
@@ -271,7 +271,7 @@ const CRM = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.leads(user?.id) });
       toast.success("Lead angelegt");
       setAddDialogOpen(false);
       setAddForm({ name: "", company: "", phone: "", email: "", address: "", category: "geschaeft", notes: "" });
@@ -307,8 +307,8 @@ const CRM = () => {
       await supabase.from("crm_leads").update({ status: statusMap[logForm.outcome] || "kontaktiert" }).eq("id", selectedLead);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crm_call_logs"] });
-      queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.callLogs(selectedLead ?? undefined) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.leads(user?.id) });
       toast.success("Gespräch geloggt");
       setLogDialogOpen(false);
       setLogForm({ outcome: "kein_ergebnis", notes: "", duration_minutes: 5, recording_url: "", transcript: "" });
@@ -370,7 +370,7 @@ const CRM = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crm_call_logs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.callLogs(selectedLead ?? undefined) });
       toast.success("Gesprächsnotiz aktualisiert");
       setEditingLogId(null);
       setEditLogForm({ notes: "", outcome: "" });
@@ -391,7 +391,7 @@ const CRM = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crm_call_logs"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crm.callLogs(selectedLead ?? undefined) });
       toast.success("Aktualisiert");
       setSummarizingLogId(null);
       setTranscribingLogId(null);

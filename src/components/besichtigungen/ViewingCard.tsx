@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, dealsWithId } from "@/lib/routes";
 import { MapPin, Calendar, Star, Image, Link2, Store } from "lucide-react";
 import { formatDate, relativeTime } from "@/lib/formatters";
 
@@ -54,7 +54,7 @@ export function ViewingCard({ viewing, mediaCount, onClick }: ViewingCardProps) 
               {score}/10
             </span>
             {viewing.deal_id && (
-              <Link to={ROUTES.DEALS} onClick={(e) => e.stopPropagation()} className="shrink-0">
+              <Link to={dealsWithId(viewing.deal_id)} onClick={(e) => e.stopPropagation()} className="shrink-0">
                 <Badge variant="outline" className="text-[10px] gap-0.5 hover:bg-primary/10 cursor-pointer" title="Zum Deal">
                   <Link2 className="h-2.5 w-2.5" />
                   Deal

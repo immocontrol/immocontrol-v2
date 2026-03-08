@@ -27,7 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -313,7 +313,7 @@ export default function FinanzierungsCockpit() {
                 {objekteMitMiete.map((p) => (
                   <tr key={p.id} className="border-b border-border/50">
                     <td className="py-2">
-                      <Link to={`${ROUTES.PROPERTY}/${p.id}`} className="text-primary hover:underline font-medium">
+                      <Link to={propertyDetail(p.id)} className="text-primary hover:underline font-medium">
                         {p.name}
                       </Link>
                     </td>
@@ -511,7 +511,7 @@ export default function FinanzierungsCockpit() {
                 <span>{u.label}</span>
                 {u.hasDoc && (
                   <Link
-                    to={`${ROUTES.PROPERTY}/${selectedPropertyId}`}
+                    to={propertyDetail(selectedPropertyId)}
                     className="ml-auto text-xs text-primary hover:underline flex items-center gap-0.5"
                   >
                     Vorhanden <ExternalLink className="h-3 w-3" />
@@ -524,7 +524,7 @@ export default function FinanzierungsCockpit() {
           <p className="text-sm text-muted-foreground">Objekt auswählen, um den Unterlagen-Stand zu prüfen.</p>
         )}
         <Button variant="outline" size="sm" className="mt-3" asChild>
-          <Link to={selectedPropertyId ? `${ROUTES.PROPERTY}/${selectedPropertyId}` : ROUTES.OBJEKTE}>
+          <Link to={selectedPropertyId ? propertyDetail(selectedPropertyId) : ROUTES.OBJEKTE}>
             <FileText className="h-3.5 w-3.5 mr-1" />
             {selectedPropertyId ? "Dokumente zum Objekt" : "Zu den Objekten"}
           </Link>
