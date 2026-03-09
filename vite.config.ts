@@ -33,7 +33,13 @@ async function getPlugins(mode: string) {
   return plugins.filter(Boolean);
 }
 
+/** Build-Zeitstempel für Anzeige in Einstellungen (z. B. "Version / Build") */
+const APP_BUILD_TIME = new Date().toISOString().slice(0, 19).replace("T", " ");
+
 export default defineConfig(async ({ mode }) => ({
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(APP_BUILD_TIME),
+  },
   server: {
     host: "::",
     port: 8080,
