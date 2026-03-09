@@ -64,7 +64,7 @@ const STEP_LABELS = ["Grunddaten", "Finanzen", "Details (optional)"];
 
 /** Nur die Felder validieren, die der User wirklich ausfüllen muss. Rest wird berechnet. */
 const STEP_FIELDS: (keyof FormData)[][] = [
-  ["name", "address", "type", "ownership", "units"],
+  ["name", "address", "type", "ownership", "units", "sqm", "commercialSqm"],
   ["purchasePrice", "monthlyRent"],
   [],
 ];
@@ -87,11 +87,17 @@ const FORM_DEFAULTS: FormData = {
   remainingDebt: 0,
   interestRate: 0,
   sqm: 0,
+  commercialSqm: 0,
   yearBuilt: 0,
   restnutzungsdauer: undefined,
   buildingSharePercent: 80,
   monthlyCashflow: 0,
   instandhaltungProSqm: 20,
+  parkingUnderground: 0,
+  parkingStellplatz: 0,
+  parkingGarage: 0,
+  gardenSqm: 0,
+  otherRentableNotes: "",
 };
 
 const AddPropertyDialog = () => {
@@ -143,17 +149,18 @@ const AddPropertyDialog = () => {
     setValue("monthlyCashflow", calcMonthlyCashflow(Number(monthlyRent), Number(monthlyExpenses), Number(monthlyCreditRate)), { shouldValidate: false });
   }, [monthlyRent, monthlyExpenses, monthlyCreditRate, setValue]);
 
-  /* Instandhaltungsrücklage: Kosten/M = (sqm * €/qm · Jahr) / 12 wenn sqm > 0 */
+  /* Instandhaltungsrücklage: Kosten/M = (Wohnfläche + Gewerbefläche) * €/qm·Jahr / 12 */
   const sqm = watch("sqm");
+  const commercialSqm = watch("commercialSqm");
   const instandhaltungProSqm = watch("instandhaltungProSqm");
   useEffect(() => {
-    const s = Number(sqm) || 0;
+    const totalSqm = (Number(sqm) || 0) + (Number(commercialSqm) || 0);
     const eurPerSqm = Number(instandhaltungProSqm) || 20;
-    if (s > 0 && eurPerSqm >= 0) {
-      const cost = Math.round((s * eurPerSqm) / 12 * 100) / 100;
+    if (totalSqm > 0 && eurPerSqm >= 0) {
+      const cost = Math.round((totalSqm * eurPerSqm) / 12 * 100) / 100;
       setValue("monthlyExpenses", cost, { shouldValidate: false });
     }
-  }, [sqm, instandhaltungProSqm, setValue]);
+  }, [sqm, commercialSqm, instandhaltungProSqm, setValue]);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -300,6 +307,11 @@ const AddPropertyDialog = () => {
                 </div>
                 <Field label="Einheiten *" name="units" type="number" placeholder="1" register={register} errors={errors} />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Wohnfläche (m²) *" name="sqm" type="number" placeholder="z.B. 120" register={register} errors={errors} />
+                <Field label="Gewerbefläche (m²)" name="commercialSqm" type="number" placeholder="0" register={register} errors={errors} />
+              </div>
+              <p className="text-[11px] text-muted-foreground">Wohnfläche + Gewerbefläche = vermietete Fläche (für Kaltmiete/qm und Kostenberechnung).</p>
             </div>
           </div>
 
@@ -325,6 +337,15 @@ const AddPropertyDialog = () => {
                       },
                     })}
                   />
+                  <div className="text-[10px] text-muted-foreground bg-muted/50 rounded px-2 py-1" title="Durchschnittliche Kaltmiete pro m² vermieteter Fläche (Wohnfläche + Gewerbefläche)">
+                    Kaltmiete/qm: {(() => {
+                      const kalt = Number(watch("monthlyRent")) || 0;
+                      const w = Number(watch("sqm")) || 0;
+                      const g = Number(watch("commercialSqm")) || 0;
+                      const total = w + g;
+                      return total > 0 && kalt >= 0 ? `${(kalt / total).toFixed(2)} €/m²` : "–";
+                    })()}
+                  </div>
                   {errors.monthlyRent && <p className="text-xs text-destructive">{errors.monthlyRent.message}</p>}
                 </div>
                 <div className="space-y-1.5">
@@ -375,10 +396,29 @@ const AddPropertyDialog = () => {
           </div>
 
           <div className={step === 2 ? "block" : "hidden"}>
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">Alle Angaben optional – verbessern Rendite, AfA und Kostenberechnung.</p>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Wohnfläche (m²)" name="sqm" type="number" placeholder="0 oder z.B. 120" register={register} errors={errors} />
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">Parkplätze, Gärten und sonstiges separat Vermietbares (optional).</p>
+              <div className="rounded-lg border border-border p-3 space-y-3">
+                <p className="text-xs font-medium text-muted-foreground">Parkplätze / Stellplätze</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="Tiefgarage (Anz.)" name="parkingUnderground" type="number" placeholder="0" register={register} errors={errors} />
+                  <Field label="Stellplatz (Anz.)" name="parkingStellplatz" type="number" placeholder="0" register={register} errors={errors} />
+                  <Field label="Garage (Anz.)" name="parkingGarage" type="number" placeholder="0" register={register} errors={errors} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Garten (m² oder Anz.)" name="gardenSqm" type="number" placeholder="0" register={register} errors={errors} />
+                <div className="space-y-1.5">
+                  <Label htmlFor="otherRentableNotes" className="text-xs text-muted-foreground">Sonstiges separat vermietbar</Label>
+                  <Input
+                    id="otherRentableNotes"
+                    placeholder="z.B. Keller, Dachterrasse"
+                    className="h-9 text-sm"
+                    {...register("otherRentableNotes")}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
                 <Field label="Baujahr" name="yearBuilt" type="number" placeholder="0 oder z.B. 1975" register={register} errors={errors} />
               </div>
               <details className="text-sm">

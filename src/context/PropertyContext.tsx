@@ -48,8 +48,10 @@ const FIELD_MAP: Record<string, string> = {
   currentValue: "current_value", monthlyRent: "monthly_rent", warmRent: "warm_rent", monthlyExpenses: "monthly_expenses",
   monthlyCreditRate: "monthly_credit_rate", monthlyCashflow: "monthly_cashflow",
   remainingDebt: "remaining_debt", interestRate: "interest_rate", sqm: "sqm",
-  yearBuilt: "year_built", ownership: "ownership",
+  commercialSqm: "commercial_sqm", yearBuilt: "year_built", ownership: "ownership",
   restnutzungsdauer: "restnutzungsdauer", buildingSharePercent: "building_share_percent",
+  parkingUnderground: "parking_underground", parkingStellplatz: "parking_stellplatz", parkingGarage: "parking_garage",
+  gardenSqm: "garden_sqm", otherRentableNotes: "other_rentable_notes",
 };
 
 interface PropertyDbRow {
@@ -70,10 +72,16 @@ interface PropertyDbRow {
   remaining_debt: number;
   interest_rate: number;
   sqm: number;
+  commercial_sqm?: number | null;
   year_built: number;
   ownership: string;
   restnutzungsdauer?: number | null;
   building_share_percent?: number | null;
+  parking_underground?: number | null;
+  parking_stellplatz?: number | null;
+  parking_garage?: number | null;
+  garden_sqm?: number | null;
+  other_rentable_notes?: string | null;
 }
 
 const mapDbToProperty = (row: PropertyDbRow): Property => ({
@@ -94,10 +102,16 @@ const mapDbToProperty = (row: PropertyDbRow): Property => ({
   remainingDebt: Number(row.remaining_debt),
   interestRate: Number(row.interest_rate),
   sqm: Number(row.sqm),
+  commercialSqm: row.commercial_sqm != null ? Number(row.commercial_sqm) : undefined,
   yearBuilt: row.year_built,
   ownership: row.ownership as "privat" | "egbr",
   restnutzungsdauer: row.restnutzungsdauer != null ? Number(row.restnutzungsdauer) : undefined,
   buildingSharePercent: row.building_share_percent != null ? Number(row.building_share_percent) : undefined,
+  parkingUnderground: row.parking_underground != null ? Number(row.parking_underground) : undefined,
+  parkingStellplatz: row.parking_stellplatz != null ? Number(row.parking_stellplatz) : undefined,
+  parkingGarage: row.parking_garage != null ? Number(row.parking_garage) : undefined,
+  gardenSqm: row.garden_sqm != null ? Number(row.garden_sqm) : undefined,
+  otherRentableNotes: row.other_rentable_notes ?? undefined,
 });
 
 const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string, unknown> => {
@@ -192,8 +206,14 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         remaining_debt: dbFields.remaining_debt ?? property.remainingDebt,
         interest_rate: dbFields.interest_rate ?? property.interestRate,
         sqm: dbFields.sqm ?? property.sqm,
+        commercial_sqm: dbFields.commercial_sqm ?? property.commercialSqm ?? 0,
         year_built: dbFields.year_built ?? property.yearBuilt,
         ownership: dbFields.ownership || property.ownership,
+        parking_underground: dbFields.parking_underground ?? property.parkingUnderground ?? 0,
+        parking_stellplatz: dbFields.parking_stellplatz ?? property.parkingStellplatz ?? 0,
+        parking_garage: dbFields.parking_garage ?? property.parkingGarage ?? 0,
+        garden_sqm: dbFields.garden_sqm ?? property.gardenSqm ?? null,
+        other_rentable_notes: dbFields.other_rentable_notes ?? property.otherRentableNotes ?? null,
       });
       if (error) throw error;
     },
@@ -273,8 +293,14 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         remaining_debt: dbFields.remaining_debt ?? property.remainingDebt,
         interest_rate: dbFields.interest_rate ?? property.interestRate,
         sqm: dbFields.sqm ?? property.sqm,
+        commercial_sqm: dbFields.commercial_sqm ?? property.commercialSqm ?? 0,
         year_built: dbFields.year_built ?? property.yearBuilt,
         ownership: dbFields.ownership ?? property.ownership,
+        parking_underground: dbFields.parking_underground ?? property.parkingUnderground ?? 0,
+        parking_stellplatz: dbFields.parking_stellplatz ?? property.parkingStellplatz ?? 0,
+        parking_garage: dbFields.parking_garage ?? property.parkingGarage ?? 0,
+        garden_sqm: dbFields.garden_sqm ?? property.gardenSqm ?? null,
+        other_rentable_notes: dbFields.other_rentable_notes ?? property.otherRentableNotes ?? null,
       };
       await addPendingMutation({ table: "properties", type: "insert", data: insertData });
       await qc.cancelQueries({ queryKey: queryKeys.properties.all });

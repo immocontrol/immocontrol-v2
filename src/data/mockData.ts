@@ -17,8 +17,18 @@ export interface Property {
   remainingDebt: number;
   interestRate: number;
   sqm: number;
+  /** Gewerbefläche in m² (vermietet). Vermietete Fläche = sqm + commercialSqm für Kaltmiete/qm. */
+  commercialSqm?: number | null;
   yearBuilt: number;
   ownership: "privat" | "egbr";
+  /** Parkplätze / Stellplätze (separat vermietbar). */
+  parkingUnderground?: number | null;
+  parkingStellplatz?: number | null;
+  parkingGarage?: number | null;
+  /** Gartenfläche (m²) oder Anzahl Gärten. */
+  gardenSqm?: number | null;
+  /** Sonstiges separat vermietbar (z.B. Keller, Dachterrasse). */
+  otherRentableNotes?: string | null;
   /** Verbleibende Nutzungsdauer in Jahren für lineare AfA (nur Gebäudeanteil). */
   restnutzungsdauer?: number | null;
   /** Gebäudeanteil in % des Kaufpreises (Rest = Grund und Boden); Standard 80. */

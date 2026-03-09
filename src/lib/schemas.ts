@@ -73,11 +73,17 @@ export const addPropertyFormSchema = z.object({
   remainingDebt: z.coerce.number().min(0),
   interestRate: z.coerce.number().min(0).max(20, "Zinssatz max 20%"),
   sqm: z.coerce.number().min(0),
+  commercialSqm: z.coerce.number().min(0).optional().default(0),
   yearBuilt: z.coerce.number().min(0).max(2030, "Jahr bis 2030"),
   restnutzungsdauer: z.coerce.number().int().min(1).max(100).optional().or(z.literal("")),
   buildingSharePercent: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
   monthlyCashflow: z.coerce.number().optional(),
   instandhaltungProSqm: z.coerce.number().min(0).max(200).optional().default(20),
+  parkingUnderground: z.coerce.number().int().min(0).optional().default(0),
+  parkingStellplatz: z.coerce.number().int().min(0).optional().default(0),
+  parkingGarage: z.coerce.number().int().min(0).optional().default(0),
+  gardenSqm: z.coerce.number().min(0).optional().default(0),
+  otherRentableNotes: z.string().optional().default(""),
 });
 
 export type AddPropertyFormData = z.infer<typeof addPropertyFormSchema>;

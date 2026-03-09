@@ -79,12 +79,21 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
       remainingDebt: property.remainingDebt,
       interestRate: property.interestRate,
       sqm: property.sqm,
+      commercialSqm: property.commercialSqm ?? 0,
       yearBuilt: property.yearBuilt,
       ownership: property.ownership,
       restnutzungsdauer: property.restnutzungsdauer ?? "",
       buildingSharePercent: property.buildingSharePercent ?? 80,
       monthlyCashflow: property.monthlyCashflow ?? calcMonthlyCashflow(property.monthlyRent, property.monthlyExpenses, property.monthlyCreditRate),
-      instandhaltungProSqm: property.sqm > 0 ? Math.round((property.monthlyExpenses * 12) / property.sqm * 10) / 10 : 20,
+      instandhaltungProSqm: (() => {
+        const total = (property.sqm || 0) + (property.commercialSqm || 0);
+        return total > 0 && property.monthlyExpenses ? Math.round((property.monthlyExpenses * 12) / total * 10) / 10 : 20;
+      })(),
+      parkingUnderground: property.parkingUnderground ?? 0,
+      parkingStellplatz: property.parkingStellplatz ?? 0,
+      parkingGarage: property.parkingGarage ?? 0,
+      gardenSqm: property.gardenSqm ?? 0,
+      otherRentableNotes: property.otherRentableNotes ?? "",
     },
   });
 
@@ -96,21 +105,23 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
     setValue("monthlyCashflow", calcMonthlyCashflow(Number(monthlyRent), Number(monthlyExpenses), Number(monthlyCreditRate)), { shouldValidate: false });
   }, [monthlyRent, monthlyExpenses, monthlyCreditRate, setValue]);
 
-  /* Instandhaltungsrücklage: Kosten/M = (sqm * €/qm · Jahr) / 12 wenn sqm > 0 */
+  /* Instandhaltungsrücklage: Kosten/M = (Wohnfläche + Gewerbefläche) * €/qm·Jahr / 12 */
   const sqm = watch("sqm");
+  const commercialSqm = watch("commercialSqm");
   const instandhaltungProSqm = watch("instandhaltungProSqm");
   useEffect(() => {
-    const s = Number(sqm) || 0;
+    const total = (Number(sqm) || 0) + (Number(commercialSqm) || 0);
     const eurPerSqm = Number(instandhaltungProSqm) || 20;
-    if (s > 0 && eurPerSqm >= 0) {
-      const cost = Math.round((s * eurPerSqm) / 12 * 100) / 100;
+    if (total > 0 && eurPerSqm >= 0) {
+      const cost = Math.round((total * eurPerSqm) / 12 * 100) / 100;
       setValue("monthlyExpenses", cost, { shouldValidate: false });
     }
-  }, [sqm, instandhaltungProSqm, setValue]);
+  }, [sqm, commercialSqm, instandhaltungProSqm, setValue]);
 
   useEffect(() => {
     if (open) {
-      const instandhaltung = property.sqm > 0 ? Math.round((property.monthlyExpenses * 12) / property.sqm * 10) / 10 : 20;
+      const totalSqm = (property.sqm || 0) + (property.commercialSqm || 0);
+      const instandhaltung = totalSqm > 0 && property.monthlyExpenses ? Math.round((property.monthlyExpenses * 12) / totalSqm * 10) / 10 : 20;
       reset({
         name: property.name,
         address: property.address,
@@ -126,12 +137,18 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
         remainingDebt: property.remainingDebt,
         interestRate: property.interestRate,
         sqm: property.sqm,
+        commercialSqm: property.commercialSqm ?? 0,
         yearBuilt: property.yearBuilt,
         ownership: property.ownership,
         restnutzungsdauer: property.restnutzungsdauer ?? "",
         buildingSharePercent: property.buildingSharePercent ?? 80,
         monthlyCashflow: property.monthlyCashflow ?? calcMonthlyCashflow(property.monthlyRent, property.monthlyExpenses, property.monthlyCreditRate),
         instandhaltungProSqm: instandhaltung,
+        parkingUnderground: property.parkingUnderground ?? 0,
+        parkingStellplatz: property.parkingStellplatz ?? 0,
+        parkingGarage: property.parkingGarage ?? 0,
+        gardenSqm: property.gardenSqm ?? 0,
+        otherRentableNotes: property.otherRentableNotes ?? "",
       });
     }
   }, [open, property, reset]);
@@ -209,7 +226,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
               <EditField label="Instandhaltungsrücklage (€/qm · Jahr)" name="instandhaltungProSqm" type="number" register={register} errors={errors} />
               <EditField label="Kosten/M (EUR)" name="monthlyExpenses" type="number" register={register} errors={errors} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="edit-monthlyRent" className="text-xs text-muted-foreground">Kaltmiete/M (EUR)</Label>
                 <Input id="edit-monthlyRent" type="number" step="any" className="h-9 text-sm"
@@ -223,6 +240,15 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
                     setValue("warmRent", newKalt + nk, { shouldValidate: true });
                   }}
                 />
+                <div className="text-[10px] text-muted-foreground bg-muted/50 rounded px-2 py-1">
+                  Kaltmiete/qm: {(() => {
+                    const kalt = Number(watch("monthlyRent")) || 0;
+                    const w = Number(watch("sqm")) || 0;
+                    const g = Number(watch("commercialSqm")) || 0;
+                    const total = w + g;
+                    return total > 0 && kalt >= 0 ? `${(kalt / total).toFixed(2)} €/m²` : "–";
+                  })()}
+                </div>
                 {errors.monthlyRent && <p className="text-xs text-destructive">{errors.monthlyRent.message}</p>}
               </div>
               <EditField label="Warmmiete/M (EUR)" name="warmRent" type="number" register={register} errors={errors} />
@@ -250,11 +276,25 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
             <h4 className="text-sm font-semibold text-foreground">Objektdetails</h4>
             <div className="grid grid-cols-2 gap-3">
               <EditField label="Wohnfläche (m²)" name="sqm" type="number" register={register} errors={errors} />
+              <EditField label="Gewerbefläche (m²)" name="commercialSqm" type="number" register={register} errors={errors} />
               <EditField label="Baujahr" name="yearBuilt" type="number" register={register} errors={errors} />
               <EditField label="Gebäudeanteil (%)" name="buildingSharePercent" type="number" register={register} errors={errors} />
               <EditField label="Restnutzungsdauer (Jahre)" name="restnutzungsdauer" type="number" register={register} errors={errors} />
             </div>
-            <p className="text-[11px] text-muted-foreground">Gebäudeanteil und Restnutzungsdauer für AfA und 15%-Sanierungsregel.</p>
+            <p className="text-[11px] text-muted-foreground">Wohnfläche + Gewerbefläche = vermietete Fläche (Kaltmiete/qm). Gebäudeanteil und Restnutzungsdauer für AfA.</p>
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Parkplätze / separat vermietbar</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <EditField label="Tiefgarage (Anz.)" name="parkingUnderground" type="number" register={register} errors={errors} />
+                <EditField label="Stellplatz (Anz.)" name="parkingStellplatz" type="number" register={register} errors={errors} />
+                <EditField label="Garage (Anz.)" name="parkingGarage" type="number" register={register} errors={errors} />
+                <EditField label="Garten (m²/Anz.)" name="gardenSqm" type="number" register={register} errors={errors} />
+              </div>
+              <div className="mt-2">
+                <Label htmlFor="edit-otherRentableNotes" className="text-xs text-muted-foreground">Sonstiges separat vermietbar</Label>
+                <Input id="edit-otherRentableNotes" className="h-9 text-sm mt-1" placeholder="z.B. Keller, Dachterrasse" {...register("otherRentableNotes")} />
+              </div>
+            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting} aria-busy={isSubmitting}>

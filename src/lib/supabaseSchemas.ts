@@ -24,10 +24,16 @@ export const propertyRowSchema = z.object({
   remaining_debt: z.coerce.number().default(0),
   interest_rate: z.coerce.number().default(0),
   sqm: z.coerce.number().default(0),
+  commercial_sqm: z.coerce.number().default(0).optional(),
   year_built: z.coerce.number().default(0),
   ownership: z.string().default("privat"),
   restnutzungsdauer: z.coerce.number().int().min(1).max(100).nullable().optional(),
   building_share_percent: z.coerce.number().min(0).max(100).nullable().optional(),
+  parking_underground: z.coerce.number().int().min(0).default(0).optional(),
+  parking_stellplatz: z.coerce.number().int().min(0).default(0).optional(),
+  parking_garage: z.coerce.number().int().min(0).default(0).optional(),
+  garden_sqm: z.coerce.number().min(0).nullable().optional(),
+  other_rentable_notes: z.string().nullable().optional(),
 });
 export type PropertyRow = z.infer<typeof propertyRowSchema>;
 
