@@ -198,13 +198,12 @@ const Settings = () => {
   const refFor = (id: string) => (el: HTMLElement | null) => { sectionRefs.current[id] = el; };
 
   return (
-    <div className="flex gap-6" role="main" aria-label="Einstellungen">
-      {/* MOB-IMPROVE-3: Mobile horizontal scrollable section tabs */}
+    <div className="flex flex-col lg:flex-row gap-6 w-full min-w-0" role="main" aria-label="Einstellungen">
+      {/* MOB-IMPROVE-3: Mobile horizontal scrollable section tabs (oberhalb des Inhalts, kein Row-Layout) */}
       {isMobile && (
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border w-full max-w-[100vw] overflow-x-auto scrollbar-hide overscroll-x-contain relative">
-          {/* Fade-Indikator rechts, wenn scrollbar */}
-          <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
-          <div className="flex gap-1 min-w-max justify-start pl-4 pr-4 py-2">
+        <div className="sticky top-0 z-30 shrink-0 w-full bg-background/95 backdrop-blur-md border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain relative">
+          <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
+          <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
             {SETTINGS_SECTIONS.map((section) => {
               const SectionIcon = section.icon;
               const isActive = activeSection === section.id;
@@ -286,8 +285,8 @@ const Settings = () => {
         </nav>
       </aside>
 
-      {/* Main settings content */}
-      <div className="space-y-6 max-w-lg mx-auto flex-1 min-w-0">
+      {/* Main settings content — auf Mobile volle Breite unter den Tabs, auf Desktop neben Sidebar */}
+      <div className="w-full space-y-6 max-w-lg mx-auto flex-1 min-w-0 px-1 sm:px-0">
         <div className="flex items-center gap-2">
           <SettingsIcon className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
