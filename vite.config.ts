@@ -76,7 +76,11 @@ export default defineConfig(async ({ mode }) => ({
   },
   build: {
     minify: "terser",
-    terserOptions: { format: { comments: false } },
+    terserOptions: {
+      mangle: false, // TDZ fix: variable renaming causes "Cannot access X before initialization"
+      compress: { dead_code: true, drop_console: false },
+      format: { comments: false },
+    },
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
