@@ -13,6 +13,7 @@ import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 import ImmoAIBubble from "@/components/ImmoAIBubble";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { RecentPropertiesNav } from "@/components/RecentPropertiesNav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,6 +24,7 @@ import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useInactivityHint } from "@/hooks/useInactivityHint";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
 import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
@@ -37,6 +39,7 @@ import {
   navItems,
   desktopTopLevelEntries,
   isGroup,
+  getGroupItems,
   isRouteActive,
   buildShortcutMap,
   ACTION_TO_PATH,
@@ -66,6 +69,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   /* FIX: Global Enter → next field on mobile keyboard */
   const { handleKeyDown: enterToNextHandler } = useEnterToNext();
+
+  useInactivityHint();
 
   /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
   const qc = useQueryClient();
@@ -123,6 +128,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   /* Mobile grouped nav: which group is expanded (shows sub-items above bottom bar) */
   const [mobileActiveGroup, setMobileActiveGroup] = useState<string | null>(null);
+  /* When opening search, remember which group was expanded so we can restore on close */
+  const mobileActiveGroupBeforeSearchRef = useRef<string | null>(null);
 
   /* MOBILE-FIX-4/5: Swipe navigation between menus + group-first navigation
      - swipe left/right switches between top-level nav entries
@@ -297,7 +304,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     for (let i = 0; i < navEntries.length; i++) {
       const entry = navEntries[i];
       if (isGroup(entry)) {
-        if (entry.items.some(item => isRouteActive(item.path, location.pathname))) {
+        if (getGroupItems(entry).some(item => isRouteActive(item.path, location.pathname))) {
           isInGroup = true;
           break;
         }
@@ -393,7 +400,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     for (let i = 0; i < navEntries.length; i++) {
       const entry = navEntries[i];
       if (isGroup(entry)) {
-        if (entry.items.some(item => isRouteActive(item.path, location.pathname))) return i;
+        if (getGroupItems(entry).some(item => isRouteActive(item.path, location.pathname))) return i;
       } else {
         if (isRouteActive(entry.path, location.pathname)) return i;
       }
@@ -491,7 +498,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <nav ref={desktopNavRef} data-testid="sidebar" className="hidden md:flex items-center gap-0.5 relative overflow-visible" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navEntries.map((entry) => {
                 if (isGroup(entry)) {
-                  const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
+                  const items = getGroupItems(entry);
+                  const groupActive = items.some(i => isRouteActive(i.path, location.pathname));
                   return (
                     <div key={entry.label} className="relative">
                       {/* BUG-5: Click-based dropdown instead of hover-only — fixes hidden dropdowns */}
@@ -506,27 +514,34 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         {entry.label}
                         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
-                      <div className={`absolute top-full left-0 mt-1 min-w-[180px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] ${
+                      <div className={`absolute top-full left-0 mt-1 min-w-[200px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] overflow-hidden ${
                         openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                       }`}>
-                        {entry.items.map((item) => {
-                          const isActive = isRouteActive(item.path, location.pathname);
-                          const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
-                          return (
-                            <Link
-                              key={item.path}
-                              to={item.path}
-                              {...navAttr}
-                              aria-current={isActive ? "page" : undefined}
-                              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                                isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
-                              }`}
-                            >
-                              <item.icon className="h-4 w-4" />
-                              {item.label}
-                            </Link>
-                          );
-                        })}
+                        {entry.sections.map((section) => (
+                          <div key={section.sectionLabel}>
+                            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50 bg-muted/30">
+                              {section.sectionLabel}
+                            </div>
+                            {section.items.map((item) => {
+                              const isActive = isRouteActive(item.path, location.pathname);
+                              const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
+                              return (
+                                <Link
+                                  key={item.path}
+                                  to={item.path}
+                                  {...navAttr}
+                                  aria-current={isActive ? "page" : undefined}
+                                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                                    isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
+                                  }`}
+                                >
+                                  <item.icon className="h-4 w-4" />
+                                  {item.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
@@ -563,6 +578,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               />
             </nav>
             <div className="flex items-center gap-1.5 ml-2 min-w-0">
+              <RecentPropertiesNav />
               <GlobalSearch />
               {/* Quick theme toggle */}
               <Button
@@ -627,7 +643,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       <BackToTop />
       <ActiveCallBar />
-      <ImmoAIBubble />
+      <ImmoAIBubble mobileSubmenuExpanded={!!mobileActiveGroup} />
 
       {/* MOB-11: Enhanced offline queue with action sync — mobile only */}
       <div className="md:hidden"><MobileOfflineQueue /></div>
@@ -641,8 +657,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         )}
       </div>
 
-      {/* MOB-15: Mobile search overlay */}
-      <MobileSearchOverlay open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} />
+      {/* MOB-15: Mobile search overlay — close on backdrop tap; restore last expanded nav group */}
+      <MobileSearchOverlay
+        open={mobileSearchOpen}
+        onClose={() => {
+          setMobileSearchOpen(false);
+          const prev = mobileActiveGroupBeforeSearchRef.current;
+          if (prev != null) setMobileActiveGroup(prev);
+        }}
+      />
 
       {/* Mobile submenu backdrop — close submenu on outside click */}
       {mobileActiveGroup && (
@@ -668,35 +691,42 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             const group = navEntries.find(e => isGroup(e) && e.label === mobileActiveGroup) as NavGroup | undefined;
             if (!group) return null;
             return (
-              /* UPD-12: Use sub-nav-slide-in animation */
-              <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in">
-                  <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
-                    {group.items.map((item, idx) => {
-                      const isActive = isRouteActive(item.path, location.pathname);
-                      const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          {...navAttr}
-                          onClick={() => setMobileActiveGroup(null)}
-                          className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl nav-label-responsive font-medium transition-all duration-200 ${
-                            isActive
-                              ? "bg-primary/12 text-primary shadow-sm border border-primary/20"
-                              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
-                          }`}
-                          style={{ animationDelay: `${idx * 30}ms` }}
-                        >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
-                            isActive ? "bg-primary/15 text-primary" : "bg-secondary/50 text-muted-foreground"
-                          }`}>
-                            <item.icon className="h-4 w-4" />
-                          </div>
-                          <span className="nav-label-wrap max-w-[72px] leading-tight">{item.label}</span>
-                        </Link>
-                      );
-                    })}
+              /* UPD-12: Submenü mit Sektionen — weniger Clutter */
+              <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in space-y-2">
+                {group.sections.map((section) => (
+                  <div key={section.sectionLabel}>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 pb-1">
+                      {section.sectionLabel}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
+                      {section.items.map((item, idx) => {
+                        const isActive = isRouteActive(item.path, location.pathname);
+                        const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            {...navAttr}
+                            onClick={() => setMobileActiveGroup(null)}
+                            className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl nav-label-responsive font-medium transition-all duration-200 ${
+                              isActive
+                                ? "bg-primary/12 text-primary shadow-sm border border-primary/20"
+                                : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
+                            }`}
+                            style={{ animationDelay: `${idx * 30}ms` }}
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                              isActive ? "bg-primary/15 text-primary" : "bg-secondary/50 text-muted-foreground"
+                            }`}>
+                              <item.icon className="h-4 w-4" />
+                            </div>
+                            <span className="nav-label-wrap max-w-[72px] leading-tight">{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
+                ))}
               </div>
             );
           })()}
@@ -704,7 +734,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         {/* MOB-15: Mobile search trigger button in bottom nav */}
         <div ref={mobileNavRef} className="flex items-center justify-around py-1 relative">
           <button
-            onClick={() => setMobileSearchOpen(true)}
+            onClick={() => {
+              mobileActiveGroupBeforeSearchRef.current = mobileActiveGroup;
+              setMobileSearchOpen(true);
+            }}
             className="flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 rounded-lg nav-label-responsive font-medium transition-all duration-200 relative active:scale-95 text-muted-foreground"
             aria-label="Suche öffnen"
           >
@@ -713,7 +746,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           </button>
           {navEntries.map((entry) => {
             if (isGroup(entry)) {
-              const groupActive = entry.items.some(i => isRouteActive(i.path, location.pathname));
+              const groupActive = getGroupItems(entry).some(i => isRouteActive(i.path, location.pathname));
               const isExpanded = mobileActiveGroup === entry.label;
               return (
                 <button

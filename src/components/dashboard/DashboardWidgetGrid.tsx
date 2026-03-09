@@ -1,8 +1,9 @@
 /**
  * DashboardWidgetGrid — extracted from Dashboard.tsx (Fix 3: Split large files).
  * Renders the unified drag-and-drop widget grid for the personal dashboard.
+ * Mobile: long-press on the whole tile starts drag (iOS-style).
  */
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, useRef, useCallback } from "react";
 import { GripVertical } from "lucide-react";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 /* useDragReorder return type inferred from the hook */
@@ -306,6 +307,7 @@ interface DragReorder {
   getHandleProps: (idx: number) => Record<string, unknown>;
   getItemProps: (idx: number) => Record<string, never>;
   getPreviewOrder: () => unknown[];
+  startDrag: (idx: number) => void;
 }
 
 interface DashboardWidgetGridProps {
@@ -341,6 +343,8 @@ export function DashboardWidgetGrid({
   /* Map from original widgetOrder index for drag props */
   const originalIdxOf = (wId: WidgetId) => widgetOrder.indexOf(wId);
 
+  const LONG_PRESS_MS = 400;
+
   return (
     <div>
       <p className="text-[10px] font-normal text-muted-foreground mb-2">Ziehen zum Umsortieren</p>
@@ -365,12 +369,83 @@ export function DashboardWidgetGrid({
           });
           const fullWidth = FULL_WIDTH_WIDGETS.has(wId);
           return (
-            <div
+            <WidgetCardWithLongPress
               key={wId}
+              origIdx={origIdx}
+              isDraggedItem={isDraggedItem}
+              fullWidth={fullWidth}
+              widgetId={wId}
+              widgetLabel={WIDGET_LABELS[wId] || wId}
+              widgetDrag={widgetDrag}
+              isWidgetDragOverview={isWidgetDragOverview}
+              longPressMs={LONG_PRESS_MS}
+            >
+              {widgetContent}
+            </WidgetCardWithLongPress>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Single widget card with long-press-to-drag on touch (iOS-style). */
+function WidgetCardWithLongPress({
+  origIdx,
+  isDraggedItem,
+  fullWidth,
+  widgetId,
+  widgetLabel,
+  widgetDrag,
+  isWidgetDragOverview,
+  longPressMs,
+  children,
+}: {
+  origIdx: number;
+  isDraggedItem: boolean;
+  fullWidth: boolean;
+  widgetId: WidgetId;
+  widgetLabel: string;
+  widgetDrag: DragReorder;
+  isWidgetDragOverview: boolean;
+  longPressMs: number;
+  children: React.ReactNode;
+}) {
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLongPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== "touch" || widgetDrag.isDragging) return;
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTimerRef.current = null;
+        widgetDrag.startDrag(origIdx);
+        if (navigator.vibrate) navigator.vibrate(30);
+      }, longPressMs);
+    },
+    [origIdx, longPressMs, widgetDrag],
+  );
+
+  const onPointerUp = useCallback(() => clearLongPress(), [clearLongPress]);
+  const onPointerLeave = useCallback(() => clearLongPress(), [clearLongPress]);
+  const onPointerCancel = useCallback(() => clearLongPress(), [clearLongPress]);
+
+  return (
+            <div
               data-drag-idx={origIdx}
               {...widgetDrag.getItemProps(origIdx)}
               role="listitem"
-              aria-label={WIDGET_LABELS[wId] || wId}
+              aria-label={widgetLabel}
+              onPointerDown={onPointerDown}
+              onPointerUp={onPointerUp}
+              onPointerLeave={onPointerLeave}
+              onPointerCancel={onPointerCancel}
               className={`relative group rounded-xl ${
                 fullWidth ? "md:col-span-2" : ""
               } ${
@@ -388,16 +463,12 @@ export function DashboardWidgetGrid({
               </div>
               {isWidgetDragOverview && (
                 <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background/90 to-transparent p-2 rounded-b-xl">
-                  <span className="text-[10px] font-semibold text-foreground">{WIDGET_LABELS[wId] || wId}</span>
+                  <span className="text-[10px] font-semibold text-foreground">{widgetLabel}</span>
                 </div>
               )}
-              <WidgetErrorBoundary name={wId}>
-                {widgetContent}
+              <WidgetErrorBoundary name={widgetId}>
+                {children}
               </WidgetErrorBoundary>
             </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

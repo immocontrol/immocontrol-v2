@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, Building2, Users, Phone, MapPin, FileText, Landmark, X, Loader2, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { ROUTES, dealsWithId, propertyDetail, contactsWithHighlight, viewingsWithId, loansWithId, crmWithLeadId } from "@/lib/routes";
@@ -303,37 +304,41 @@ export const GlobalSearch = () => {
 
   return (
     <div ref={wrapperRef} className="relative hidden md:block">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-        <Input
-          ref={inputRef}
-          value={query}
-          onChange={e => { setQuery(e.target.value); setOpen(true); }}
-          onFocus={() => { if (query.trim()) setOpen(true); }}
-          onKeyDown={handleKeyDown}
-          placeholder="Suchen…"
-          className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
-          autoComplete="off"
-          aria-label="Globale Suche"
-          title="Schnellsuche (Ctrl+K / ⌘K)"
-          /* IMPROVE-11: aria-expanded for accessibility */
-          aria-expanded={open && !!query.trim()}
-          role="combobox"
-        />
-        {query ? (
-          <button
-            onClick={() => { setQuery(""); setResults([]); setOpen(false); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label="Suche leeren"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        ) : (
-          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden lg:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground">
-            ⌘K
-          </kbd>
-        )}
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              ref={inputRef}
+              value={query}
+              onChange={e => { setQuery(e.target.value); setOpen(true); }}
+              onFocus={() => { if (query.trim()) setOpen(true); }}
+              onKeyDown={handleKeyDown}
+              placeholder="Suchen…"
+              className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
+              autoComplete="off"
+              aria-label="Globale Suche"
+              /* IMPROVE-11: aria-expanded for accessibility */
+              aria-expanded={open && !!query.trim()}
+              role="combobox"
+            />
+            {query ? (
+              <button
+                onClick={() => { setQuery(""); setResults([]); setOpen(false); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Suche leeren"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden md:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">Schnellsuche öffnen (Ctrl+K / ⌘K)</TooltipContent>
+      </Tooltip>
 
       {open && query.trim() && (
         <div className="absolute top-full mt-1 right-0 w-96 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden">

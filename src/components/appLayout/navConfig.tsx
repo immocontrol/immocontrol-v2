@@ -36,15 +36,26 @@ export interface NavItem {
   shortcut: string;
 }
 
+/** Sektion innerhalb einer Gruppe — reduziert Untermenü-Clutter (z. B. Finanzen in 4 Blöcke). */
+export interface NavSection {
+  sectionLabel: string;
+  items: NavItem[];
+}
+
 export interface NavGroup {
   label: string;
   icon: typeof LayoutDashboard;
-  items: NavItem[];
+  sections: NavSection[];
 }
 
 export type NavEntry = NavItem | NavGroup;
 
-export const isGroup = (e: NavEntry): e is NavGroup => "items" in e;
+export const isGroup = (e: NavEntry): e is NavGroup => "sections" in e;
+
+/** Alle NavItems einer Gruppe (flach, für Shortcuts und aktive Route). */
+export function getGroupItems(g: NavGroup): NavItem[] {
+  return g.sections.flatMap((s) => s.items);
+}
 
 export const navEntries: NavEntry[] = [
   { path: ROUTES.HOME, label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
@@ -52,57 +63,107 @@ export const navEntries: NavEntry[] = [
   {
     label: "Finanzen",
     icon: Landmark,
-    items: [
-      { path: ROUTES.FINANZIERUNG, label: "Finanzierungs-Cockpit", icon: Wallet, shortcut: "" },
-      { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark, shortcut: "2" },
-      { path: ROUTES.RENT, label: "Mieten", icon: Receipt, shortcut: "3" },
-      { path: ROUTES.NK, label: "Nebenkosten", icon: Receipt, shortcut: "" },
-      { path: ROUTES.FORECAST, label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
-      { path: ROUTES.STEUER_COCKPIT, label: "Steuer-Cockpit", icon: Receipt, shortcut: "" },
-      { path: ROUTES.REFINANZIERUNG, label: "Refinanzierung", icon: RefreshCw, shortcut: "" },
-      { path: ROUTES.STRESS_TEST, label: "Stress-Test", icon: ShieldAlert, shortcut: "" },
-      { path: ROUTES.DIVERSIFIKATION, label: "Diversifikation", icon: PieChart, shortcut: "" },
-      { path: ROUTES.MIETSPIEGEL, label: "Mietspiegel-Check", icon: Scale, shortcut: "" },
-      { path: ROUTES.KPI_ZEITREISE, label: "KPIs im Zeitverlauf", icon: TrendingUp, shortcut: "" },
-      { path: ROUTES.REPORTS, label: "Berichte", icon: FileBarChart, shortcut: "7" },
-      { path: ROUTES.ANALYSE, label: "Rechner", icon: Calculator, shortcut: "" },
-      { path: ROUTES.HOCKEY_STICK, label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
+    sections: [
+      {
+        sectionLabel: "Darlehen & Kredit",
+        items: [
+          { path: ROUTES.FINANZIERUNG, label: "Finanzierungs-Cockpit", icon: Wallet, shortcut: "" },
+          { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark, shortcut: "2" },
+          { path: ROUTES.REFINANZIERUNG, label: "Refinanzierung", icon: RefreshCw, shortcut: "" },
+        ],
+      },
+      {
+        sectionLabel: "Mieten & Betrieb",
+        items: [
+          { path: ROUTES.RENT, label: "Mieten", icon: Receipt, shortcut: "3" },
+          { path: ROUTES.NK, label: "Nebenkosten", icon: Receipt, shortcut: "" },
+          { path: ROUTES.FORECAST, label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
+        ],
+      },
+      {
+        sectionLabel: "Steuer",
+        items: [
+          { path: ROUTES.STEUER_COCKPIT, label: "Steuer-Cockpit", icon: Receipt, shortcut: "" },
+        ],
+      },
+      {
+        sectionLabel: "Analyse & Risiko",
+        items: [
+          { path: ROUTES.STRESS_TEST, label: "Stress-Test", icon: ShieldAlert, shortcut: "" },
+          { path: ROUTES.DIVERSIFIKATION, label: "Diversifikation", icon: PieChart, shortcut: "" },
+          { path: ROUTES.MIETSPIEGEL, label: "Mietspiegel-Check", icon: Scale, shortcut: "" },
+          { path: ROUTES.KPI_ZEITREISE, label: "KPIs im Zeitverlauf", icon: TrendingUp, shortcut: "" },
+          { path: ROUTES.REPORTS, label: "Berichte", icon: FileBarChart, shortcut: "7" },
+          { path: ROUTES.ANALYSE, label: "Rechner", icon: Calculator, shortcut: "" },
+          { path: ROUTES.HOCKEY_STICK, label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
+        ],
+      },
     ],
   },
   {
     label: "Verwaltung",
     icon: FileText,
-    items: [
-      { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
-      { path: ROUTES.SYNDICATION, label: "Syndication", icon: Users, shortcut: "" },
-      { path: ROUTES.BENACHRICHTIGUNGEN, label: "Benachrichtigungen", icon: Bell, shortcut: "" },
-      { path: ROUTES.CONTRACTS, label: "Verträge", icon: FileText, shortcut: "4" },
-      { path: ROUTES.CONTACTS, label: "Kontakte", icon: Users, shortcut: "5" },
-      { path: ROUTES.TODOS, label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
-      { path: ROUTES.DOKUMENTE, label: "Dokumente", icon: FolderOpen, shortcut: "" },
-      { path: ROUTES.WARTUNG, label: "Wartung", icon: Wrench, shortcut: "" },
+    sections: [
+      {
+        sectionLabel: "Objekte & Beteiligungen",
+        items: [
+          { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
+          { path: ROUTES.SYNDICATION, label: "Syndication", icon: Users, shortcut: "" },
+        ],
+      },
+      {
+        sectionLabel: "Verträge & Kontakte",
+        items: [
+          { path: ROUTES.CONTRACTS, label: "Verträge", icon: FileText, shortcut: "4" },
+          { path: ROUTES.CONTACTS, label: "Kontakte", icon: Users, shortcut: "5" },
+        ],
+      },
+      {
+        sectionLabel: "Aufgaben & Dokumente",
+        items: [
+          { path: ROUTES.TODOS, label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
+          { path: ROUTES.DOKUMENTE, label: "Dokumente", icon: FolderOpen, shortcut: "" },
+          { path: ROUTES.WARTUNG, label: "Wartung", icon: Wrench, shortcut: "" },
+        ],
+      },
+      {
+        sectionLabel: "Sonstiges",
+        items: [
+          { path: ROUTES.BENACHRICHTIGUNGEN, label: "Benachrichtigungen", icon: Bell, shortcut: "" },
+        ],
+      },
     ],
   },
   {
     label: "Akquise",
     icon: Target,
-    items: [
-      { path: ROUTES.CRM, label: "CRM", icon: Target, shortcut: "8" },
-      { path: ROUTES.DEALS, label: "Deals", icon: Handshake, shortcut: "0" },
-      { path: ROUTES.DEAL_BENCHMARK, label: "Deal-Benchmark", icon: TrendingUp, shortcut: "" },
-      { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
-      { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
-      { path: ROUTES.BEWERTUNG, label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
+    sections: [
+      {
+        sectionLabel: "Deals & Bewertung",
+        items: [
+          { path: ROUTES.CRM, label: "CRM", icon: Target, shortcut: "8" },
+          { path: ROUTES.DEALS, label: "Deals", icon: Handshake, shortcut: "0" },
+          { path: ROUTES.DEAL_BENCHMARK, label: "Deal-Benchmark", icon: TrendingUp, shortcut: "" },
+          { path: ROUTES.BEWERTUNG, label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
+        ],
+      },
+      {
+        sectionLabel: "Besichtigungen & News",
+        items: [
+          { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
+          { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
+        ],
+      },
     ],
   },
 ];
 
-export const navItems: NavItem[] = navEntries.flatMap((e) => (isGroup(e) ? e.items : [e]));
+export const navItems: NavItem[] = navEntries.flatMap((e) => (isGroup(e) ? getGroupItems(e) : [e]));
 
 export const desktopTopLevelEntries = navEntries.map((entry, idx) => ({
   idx,
   isGroup: isGroup(entry),
-  paths: isGroup(entry) ? entry.items.map((i) => i.path) : [(entry as NavItem).path],
+  paths: isGroup(entry) ? getGroupItems(entry).map((i) => i.path) : [(entry as NavItem).path],
 }));
 
 const DEFAULT_SHORTCUT_MAP: Record<string, string> = {};

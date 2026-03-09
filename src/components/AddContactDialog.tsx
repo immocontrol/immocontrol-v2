@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -111,13 +112,18 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button size="sm" className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" /> Kontakt
-          </Button>
-        )}
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            {trigger || (
+              <Button size="sm" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Kontakt
+              </Button>
+            )}
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Kontakt anlegen (Ctrl+N auf Kontaktseite)</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

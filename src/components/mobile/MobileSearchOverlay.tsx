@@ -3,7 +3,7 @@
  * Fullscreen search overlay on mobile with categories (Objekte, Mieter, Dokumente, Deals),
  * recent searches, and live suggestions while typing. Similar to Spotlight on iOS.
  */
-import { memo, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { memo, useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { Search, X, Clock, Building2, Users, FileText, Handshake, ArrowRight, Trash2, TrendingUp, Mic, MicOff, Store } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -64,37 +64,33 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
   const [recentSearches, setRecentSearches] = useState<string[]>(loadRecent);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Focus input when opened; stop voice recognition when closed
+  // Reset state when opened
   useEffect(() => {
     if (open) {
       setQuery("");
       setSelectedCategory(null);
       setRecentSearches(loadRecent());
-      /* FIX: Use longer delay + click() to force virtual keyboard open on mobile.
-         On iOS/Android, focus() alone may not open the keyboard unless it's
-         triggered within a user-gesture context. We use a two-stage approach:
-         1. Short delay to let animation complete
-         2. Click + focus + setSelectionRange to ensure keyboard opens */
-      const timer1 = setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.click();
-          // setSelectionRange forces cursor position which triggers keyboard on some devices
-          try { inputRef.current.setSelectionRange(0, 0); } catch { /* noop */ }
-        }
-      }, 200);
-      // Second attempt for stubborn devices
-      const timer2 = setTimeout(() => {
-        if (inputRef.current && document.activeElement !== inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 500);
-      return () => { clearTimeout(timer1); clearTimeout(timer2); };
     } else {
-      // Stop voice recognition when overlay closes
       recognitionRef.current?.stop();
       setVoiceListening(false);
     }
+  }, [open]);
+
+  // Focus input immediately when overlay opens so keyboard opens in same user gesture (mobile)
+  useLayoutEffect(() => {
+    if (!open) return;
+    const el = inputRef.current;
+    if (el) {
+      el.focus();
+      try { el.setSelectionRange(0, 0); } catch { /* noop */ }
+    }
+    const timer = setTimeout(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.click();
+      }
+    }, 80);
+    return () => clearTimeout(timer);
   }, [open]);
 
   // Generate results from properties

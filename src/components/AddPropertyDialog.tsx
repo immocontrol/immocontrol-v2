@@ -27,8 +27,9 @@ import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { scrollToFirstError } from "@/lib/scrollToFirstError";
 import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { calcMonthlyCashflow } from "@/lib/calculations";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, DATE_INPUT_PLACEHOLDER } from "@/lib/formatters";
 import { StepIndicator } from "@/components/StepIndicator";
 
 type FormData = AddPropertyFormData;
@@ -122,8 +123,10 @@ const AddPropertyDialog = () => {
     setValue,
     watch,
     trigger,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = form;
+
+  useUnsavedChanges(open && isDirty);
 
   /* Sync form changes to draft storage — use watch subscription to avoid infinite loop */
   useEffect(() => {
@@ -323,7 +326,12 @@ const AddPropertyDialog = () => {
               <p className="text-xs text-muted-foreground">Nur Kaufpreis und Miete sind Pflicht – der Rest wird berechnet oder kann später ergänzt werden.</p>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Kaufpreis (EUR) *" name="purchasePrice" type="number" placeholder="300000" register={register} errors={errors} />
-                <Field label="Kaufdatum" name="purchaseDate" type="date" register={register} errors={errors} />
+                <div className="space-y-1.5">
+                  <Label htmlFor="purchaseDate" className="text-xs text-muted-foreground">Kaufdatum</Label>
+                  <Input id="purchaseDate" type="date" className="h-9 text-sm" title={`Format: ${DATE_INPUT_PLACEHOLDER}`} {...register("purchaseDate")} />
+                  <p className="text-[10px] text-muted-foreground">Format: {DATE_INPUT_PLACEHOLDER}</p>
+                  {errors.purchaseDate && <p className="text-xs text-destructive">{errors.purchaseDate?.message as string}</p>}
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays, Info } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays, Info, MoreHorizontal } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
@@ -29,6 +29,9 @@ import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
@@ -354,24 +357,28 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           {/* Cleaned up: removed buttons that are already accessible via navigation menus
                (Rechner, Berichte, Übergabeprotokoll, Mieterhöhung, Selbstauskunft, Hockey Stick Simulator) */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
-            {/* Fix 9: AddPropertyDialog only on Portfolio, not Dashboard */}
-            {/* MOBILE-FIX: Show buttons on mobile too, but smaller and icon-only */}
-            <Button variant="outline" size="sm" className="gap-1.5 flex" onClick={sharePortfolio}>
-              <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Teilen</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 flex" onClick={exportCSV}>
-              <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">CSV</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 flex" onClick={exportPDF}>
-              <Printer className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">PDF</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
-              <BarChart3 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Zur Analyse</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 flex touch-target min-h-[44px]">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Aktionen</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                <DropdownMenuItem onClick={sharePortfolio}>
+                  <Share2 className="h-3.5 w-3.5 mr-2" /> Teilen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportCSV}>
+                  <Download className="h-3.5 w-3.5 mr-2" /> CSV exportieren
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportPDF}>
+                  <Printer className="h-3.5 w-3.5 mr-2" /> PDF drucken
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.ANALYSE)}>
+                  <BarChart3 className="h-3.5 w-3.5 mr-2" /> Zur Analyse
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       ) : (
@@ -382,26 +389,32 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")}
             </p>
           </div>
-          {/* MOBILE-FIX: Portfolio buttons compact + nebeneinander on mobile */}
+          {/* MOBILE-FIX: Portfolio — Add/CSV + Aktionen-Dropdown (Teilen, CSV, PDF, Zur Analyse) */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
             <AddPropertyDialog />
             <PropertyCsvImport onImported={() => qc.invalidateQueries({ queryKey: queryKeys.properties.all })} />
-            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
-              <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="hidden sm:inline">Zur Analyse</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={sharePortfolio}>
-              <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="hidden sm:inline">Teilen</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={exportCSV}>
-              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="hidden sm:inline">CSV</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex" onClick={exportPDF}>
-              <Printer className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="hidden sm:inline">PDF</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex touch-target min-h-[44px]">
+                  <MoreHorizontal className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  <span className="hidden sm:inline">Aktionen</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                <DropdownMenuItem onClick={sharePortfolio}>
+                  <Share2 className="h-3.5 w-3.5 mr-2" /> Teilen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportCSV}>
+                  <Download className="h-3.5 w-3.5 mr-2" /> CSV exportieren
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportPDF}>
+                  <Printer className="h-3.5 w-3.5 mr-2" /> PDF drucken
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.ANALYSE)}>
+                  <BarChart3 className="h-3.5 w-3.5 mr-2" /> Zur Analyse
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       )}
@@ -416,25 +429,27 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         occupancyRate={totalUnitsFromProps > 0 ? ((occupiedUnits / totalUnitsFromProps) * 100) : undefined}
       />
 
-      {/* Favorites bar — quick access to favorite pages */}
-      <FavoritesBar />
-
-      {/* Dashboard Presets — save/load widget layouts (unified grid, no separate chart order) */}
-      <DashboardPresets
-        currentWidgetOrder={widgetOrder}
-        currentChartOrder={[]}
-        chartsCollapsed={false}
-        widgetsCollapsed={false}
-        onApply={({ widgetOrder: wo }) => {
-          const typed = wo as typeof widgetOrder;
-          const valid = typed.filter(w => DEFAULT_WIDGET_ORDER.includes(w));
-          const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
-          const finalOrder = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
-          setWidgetOrder(finalOrder);
-          try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(finalOrder)); } catch { /* */ }
-          saveLayout(finalOrder);
-        }}
-      />
+      {/* Favorites bar + Layout speichern (nebeneinander) */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <FavoritesBar />
+        {mode === "personal" && (
+          <DashboardPresets
+            currentWidgetOrder={widgetOrder}
+            currentChartOrder={[]}
+            chartsCollapsed={false}
+            widgetsCollapsed={false}
+            onApply={({ widgetOrder: wo }) => {
+              const typed = wo as typeof widgetOrder;
+              const valid = typed.filter(w => DEFAULT_WIDGET_ORDER.includes(w));
+              const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
+              const finalOrder = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
+              setWidgetOrder(finalOrder);
+              try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(finalOrder)); } catch { /* */ }
+              saveLayout(finalOrder);
+            }}
+          />
+        )}
+      </div>
 
       {mode === "personal" && (
         <>
@@ -760,13 +775,13 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <Select value={sort} onValueChange={(v) => setSort(v as SortType)}>
-            <SelectTrigger className="h-9 w-[150px] text-sm">
-              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-              <SelectValue />
+            <SelectTrigger className="h-9 min-w-[120px] max-w-[160px] text-sm">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Sortierung" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" sideOffset={4}>
               <SelectItem value="name">Name</SelectItem>
               <SelectItem value="value">Wert</SelectItem>
               <SelectItem value="rent">Miete</SelectItem>
@@ -774,38 +789,28 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               <SelectItem value="rendite">Rendite</SelectItem>
             </SelectContent>
           </Select>
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                filter === f.key
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-secondary"
-              }`}
-            >
-              {f.label}
-              {f.key !== "alle" && (
-                <span className="ml-1 text-muted-foreground">
-                  ({filterCounts[f.key as "egbr" | "privat"]})
-                </span>
-              )}
-            </button>
-          ))}
-          {/* Property type quick-filter chips */}
-          <div className="flex items-center gap-1 sm:ml-2 sm:border-l sm:border-border sm:pl-2 overflow-x-auto scrollbar-hide">
-            {(["alle", "MFH", "ETW", "EFH", "Gewerbe"] as TypeFilter[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setTypeFilter(t)}
-                className={`text-[10px] px-2 py-1 rounded font-medium transition-colors shrink-0 ${
-                  typeFilter === t ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {t === "alle" ? "Typ: Alle" : t}
-              </button>
-            ))}
-          </div>
+          <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
+            <SelectTrigger className="h-9 min-w-[100px] max-w-[140px] text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" sideOffset={4}>
+              <SelectItem value="alle">Alle</SelectItem>
+              <SelectItem value="egbr">eGbR ({filterCounts.egbr})</SelectItem>
+              <SelectItem value="privat">Privat ({filterCounts.privat})</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
+            <SelectTrigger className="h-9 min-w-[90px] max-w-[130px] text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" sideOffset={4}>
+              <SelectItem value="alle">Typ: Alle</SelectItem>
+              <SelectItem value="MFH">MFH</SelectItem>
+              <SelectItem value="ETW">ETW</SelectItem>
+              <SelectItem value="EFH">EFH</SelectItem>
+              <SelectItem value="Gewerbe">Gewerbe</SelectItem>
+            </SelectContent>
+          </Select>
           {/* UI-UPDATE-37: Tooltip on refresh action */}
           <Tooltip>
             <TooltipTrigger asChild>

@@ -1,5 +1,8 @@
 // Shared formatters — single Intl instances for performance
 
+/** UX: Einheitlicher Hinweis für Datumseingaben (z. B. in Platzhaltern oder Fehlermeldungen). */
+export const DATE_INPUT_PLACEHOLDER = "TT.MM.JJJJ";
+
 const currencyFormatter = new Intl.NumberFormat("de-DE", {
   style: "currency",
   currency: "EUR",

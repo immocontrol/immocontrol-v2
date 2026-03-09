@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +58,6 @@ const SETTINGS_SECTIONS = [
 const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -197,40 +195,38 @@ const Settings = () => {
 
   const refFor = (id: string) => (el: HTMLElement | null) => { sectionRefs.current[id] = el; };
 
-  /* Ein Flex-Container: Mobile = Spalte (nur Tabs + Inhalt), Desktop = Zeile (Sidebar + Inhalt). Sidebar auf Mobile nicht im DOM. */
+  /* Layout per CSS: unter lg = Spalte (Tab-Leiste + Inhalt), ab lg = Zeile (Sidebar + Inhalt). Kein JS-Breakpoint → kein Flackern. */
   return (
     <div
-      className={`w-full min-w-0 max-w-full overflow-x-hidden flex ${isMobile ? "flex-col" : "flex-row gap-6"}`}
-      style={{ maxWidth: "100%" }}
+      className="w-full min-w-0 max-w-full max-w-[100vw] overflow-x-hidden flex flex-col lg:flex-row lg:gap-6"
       role="main"
       aria-label="Einstellungen"
     >
-      {isMobile && (
-        <div className="shrink-0 w-full bg-background border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain">
-          <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
-          <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
-            {SETTINGS_SECTIONS.map((section) => {
-              const SectionIcon = section.icon;
-              const isActive = activeSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                    isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
-                  }`}
-                >
-                  <SectionIcon className="h-3 w-3" />
-                  {section.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* Mobile: horizontale Tab-Leiste (nur unter lg sichtbar) */}
+      <div className="lg:hidden shrink-0 w-full max-w-full bg-background border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain relative">
+        <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
+        <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
+          {SETTINGS_SECTIONS.map((section) => {
+            const SectionIcon = section.icon;
+            const isActive = activeSection === section.id;
+            return (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
+                }`}
+              >
+                <SectionIcon className="h-3 w-3" />
+                {section.label}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {!isMobile && (
-        <aside className="hidden lg:flex w-48 shrink-0 self-start sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+      {/* Desktop: Sidebar (nur ab lg sichtbar) */}
+      <aside className="hidden lg:flex w-48 shrink-0 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
           <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
           {/* Single vertical track + progress fill */}
           {(() => {
@@ -288,8 +284,7 @@ const Settings = () => {
             });
           })()}
           </nav>
-        </aside>
-      )}
+      </aside>
 
       {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar */}
       <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0">

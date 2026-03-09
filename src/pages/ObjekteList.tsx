@@ -2,8 +2,9 @@
  * ObjekteList — reine Objektliste unter /objekte.
  * Klare IA und Verlinkbarkeit (Vorschlag 16).
  * VirtualList ab 25 Objekten für bessere Performance.
+ * UX: Filter/Sort in sessionStorage, damit Zurück-Kontext erhalten bleibt.
  */
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Search, Briefcase, Camera, Store, FileText, PieChart, ShieldAlert } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
@@ -19,14 +20,38 @@ import { calcBruttoRendite, calcNettoRendite } from "@/lib/calculations";
 
 const VIRTUAL_LIST_THRESHOLD = 25;
 const PROPERTY_CARD_HEIGHT = 220;
+const LIST_STATE_KEY = "immocontrol_objekte_list";
 
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite" | "netto";
+
+function loadListState(): { search: string; sort: SortType } {
+  try {
+    const raw = sessionStorage.getItem(LIST_STATE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as { search?: string; sort?: string };
+      const sort = p.sort && ["name", "value", "rent", "cashflow", "rendite", "netto"].includes(p.sort) ? p.sort as SortType : "name";
+      return { search: typeof p.search === "string" ? p.search : "", sort };
+    }
+  } catch { /* ignore */ }
+  return { search: "", sort: "name" };
+}
 
 const ObjekteList = () => {
   const { properties, loading } = useProperties();
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortType>("name");
+  const [search, setSearch] = useState(() => loadListState().search);
+  const [sort, setSort] = useState<SortType>(() => loadListState().sort);
+
+  useEffect(() => {
+    sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ search, sort }));
+  }, [search, sort]);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth < 768) return;
+    const t = setTimeout(() => searchInputRef.current?.focus({ preventScroll: true }), 400);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtered = useMemo(
     () =>
@@ -100,10 +125,12 @@ const ObjekteList = () => {
           <div className="relative flex-1 sm:min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
               placeholder="Suchen…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
+              aria-label="Objekte durchsuchen"
             />
           </div>
           <select

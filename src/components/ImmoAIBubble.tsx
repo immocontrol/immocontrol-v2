@@ -35,10 +35,18 @@ const BUBBLE_POSITION = {
   mobileBottom: "5rem",
 } as const;
 
+/** Zusätzlicher Abstand nach oben, wenn auf Mobile ein Submenü (Finanzen/Verwaltung/Akquise) aufgeklappt ist */
+const MOBILE_SUBMENU_OFFSET = "11rem";
+
 /* OPT-39: Message limit for bubble chat */
 const BUBBLE_MAX_MESSAGES = 50;
 
-export default function ImmoAIBubble() {
+interface ImmoAIBubbleProps {
+  /** Auf Mobile: Submenü (Finanzen/Verwaltung/Akquise) ist aufgeklappt → Bubble nach oben ausweichen */
+  mobileSubmenuExpanded?: boolean;
+}
+
+export default function ImmoAIBubble({ mobileSubmenuExpanded = false }: ImmoAIBubbleProps) {
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
   const [disabled, setDisabled] = useState(() => {
@@ -378,7 +386,17 @@ export default function ImmoAIBubble() {
           onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
           onClick={() => { if (!isDragging.current) setOpen(true); }}
           className="fixed z-[9999] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
-          style={bubblePos ? { right: "1rem", top: bubblePos.y } : { bottom: "max(5.5rem, calc(80px + env(safe-area-inset-bottom, 0px)))", right: "1rem" }}
+          style={
+            bubblePos
+              ? { right: "1rem", top: bubblePos.y }
+              : {
+                  bottom: mobileSubmenuExpanded
+                    ? `calc(5.5rem + ${MOBILE_SUBMENU_OFFSET} + env(safe-area-inset-bottom, 0px))`
+                    : "max(5.5rem, calc(80px + env(safe-area-inset-bottom, 0px)))",
+                  right: "1rem",
+                  transition: "bottom 0.25s ease-out",
+                }
+          }
           aria-label="Immo AI öffnen (Alt+I) — ziehen zum Verschieben"
         >
           <Sparkles className="h-6 w-6 group-hover:animate-pulse" />
@@ -395,7 +413,17 @@ export default function ImmoAIBubble() {
         <div
           ref={chatElRef}
           className="fixed z-[9999] w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-10rem)] sm:max-h-[calc(100vh-8rem)] bg-background border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200"
-          style={bubblePos ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) } : { bottom: "max(5.5rem, calc(80px + env(safe-area-inset-bottom, 0px)))", right: "1rem" }}
+          style={
+            bubblePos
+              ? { right: "1rem", top: Math.max(8, bubblePos.y - 570) }
+              : {
+                  bottom: mobileSubmenuExpanded
+                    ? `calc(5.5rem + ${MOBILE_SUBMENU_OFFSET} + env(safe-area-inset-bottom, 0px))`
+                    : "max(5.5rem, calc(80px + env(safe-area-inset-bottom, 0px)))",
+                  right: "1rem",
+                  transition: "bottom 0.25s ease-out",
+                }
+          }
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/95 backdrop-blur-sm">

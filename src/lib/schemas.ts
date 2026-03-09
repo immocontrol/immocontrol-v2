@@ -12,7 +12,7 @@ const germanPhone = z.string().regex(/^(\+49|0)[1-9]\d{1,14}$/, "Ungültige Tele
 const germanPLZ = z.string().regex(/^\d{5}$/, "PLZ muss 5 Ziffern haben").or(z.literal(""));
 const optionalEmail = z.string().email("Ungültige E-Mail-Adresse").or(z.literal(""));
 const positiveNumber = z.number().min(0, "Muss >= 0 sein");
-const requiredString = z.string().min(1, "Pflichtfeld");
+const requiredString = z.string().min(1, "Bitte ausfüllen");
 
 /* ── Deal form schema ───────────────────────────────────── */
 

@@ -56,6 +56,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { calcBruttoRendite, calcNettoRendite, calcMietmultiplikator, calcDSCR } from "@/lib/calculations";
 import { getGebaeudeAnteil, getGrundUndBoden, getAnnualAfa, getAfaRatePercent, getSanierung15PercentBrutto } from "@/lib/afaSanierung";
 import { useShare } from "@/components/mobile/MobileShareSheet";
+import { useRecentProperties } from "@/hooks/useRecentProperties";
 import { isDeepSeekConfigured, suggestPropertySummary } from "@/integrations/ai/extractors";
 import { handleError } from "@/lib/handleError";
 import { logger } from "@/lib/logger";
@@ -69,8 +70,13 @@ const PropertyDetail = () => {
   const isMobile = useIsMobile();
   const { share } = useShare();
   const { getProperty, deleteProperty, duplicateProperty } = useProperties();
+  const { add: addRecentProperty } = useRecentProperties();
   const property = getProperty(id || "");
   const [tenantVersion, setTenantVersion] = useState(0);
+
+  useEffect(() => {
+    if (property?.id && property?.name) addRecentProperty(property.id, property.name);
+  }, [property?.id, property?.name, addRecentProperty]);
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   

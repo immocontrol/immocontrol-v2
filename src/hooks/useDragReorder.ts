@@ -115,6 +115,24 @@ export function useDragReorder<T>(
     }
   }, [items, onReorder, storageKey, stopAutoScroll]);
 
+  /* Document-level pointer listeners when dragging — allows long-press on card to start drag (iOS-style) */
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: PointerEvent) => {
+      lastClientY.current = e.clientY;
+      hitTest(e.clientX, e.clientY);
+    };
+    const onUp = () => handleDragEnd();
+    document.addEventListener("pointermove", onMove, { capture: true });
+    document.addEventListener("pointerup", onUp, { capture: true });
+    document.addEventListener("pointercancel", onUp, { capture: true });
+    return () => {
+      document.removeEventListener("pointermove", onMove, { capture: true });
+      document.removeEventListener("pointerup", onUp, { capture: true });
+      document.removeEventListener("pointercancel", onUp, { capture: true });
+    };
+  }, [isDragging, handleDragEnd, hitTest]);
+
   /**
    * Hit-test: find which grid child the pointer is over.
    * Checks both X and Y for correct behaviour in multi-column grids.
@@ -141,30 +159,17 @@ export function useDragReorder<T>(
     }
   }, [handleDragOver]);
 
-  /** Props to spread on the drag handle element (the grip icon) — pointer events only */
+  /** Props to spread on the drag handle element (the grip icon). Document listeners handle move/up when dragging. */
   const getHandleProps = useCallback((idx: number) => ({
     onPointerDown: (e: React.PointerEvent) => {
-      // Only primary button
       if (e.button !== 0) return;
       e.preventDefault();
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
       lastClientY.current = e.clientY;
       handleDragStart(idx);
       startAutoScroll();
     },
-    onPointerMove: (e: React.PointerEvent) => {
-      if (dragItemRef.current === null) return;
-      lastClientY.current = e.clientY;
-      hitTest(e.clientX, e.clientY);
-    },
-    onPointerUp: () => {
-      handleDragEnd();
-    },
-    onPointerCancel: () => {
-      handleDragEnd();
-    },
     style: { touchAction: "none" as const, cursor: isDragging ? "grabbing" : "grab" },
-  }), [handleDragStart, handleDragEnd, hitTest, startAutoScroll, isDragging]);
+  }), [handleDragStart, startAutoScroll, isDragging]);
 
   /**
    * Props to spread on each draggable item container.
@@ -172,6 +177,12 @@ export function useDragReorder<T>(
    * Items must set data-drag-idx={originalIndex} for hit-testing.
    */
   const getItemProps = useCallback((_idx: number) => ({}), []);
+
+  /** Start drag programmatically (e.g. after long-press on card). Use with document listeners. */
+  const startDrag = useCallback((idx: number) => {
+    handleDragStart(idx);
+    startAutoScroll();
+  }, [handleDragStart, startAutoScroll]);
 
   return {
     dragIdx,
@@ -181,5 +192,6 @@ export function useDragReorder<T>(
     getHandleProps,
     getItemProps,
     getPreviewOrder,
+    startDrag,
   };
 }
