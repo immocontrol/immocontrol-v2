@@ -69,10 +69,10 @@ export const MobileKPIHeader = memo(function MobileKPIHeader({
     },
     {
       label: "Rendite",
-      value: `${yieldPercent.toFixed(1)}%`,
+      value: `${Number(yieldPercent).toFixed(1)}%`,
       icon: <Percent className="h-3.5 w-3.5" />,
       trendPositive: yieldPercent >= 4,
-      detail: occupancyRate !== undefined ? `Belegung: ${occupancyRate.toFixed(0)}%` : undefined,
+      detail: occupancyRate != null && Number.isFinite(Number(occupancyRate)) ? `Belegung: ${Number(occupancyRate).toFixed(0)}%` : undefined,
     },
   ];
 

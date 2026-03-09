@@ -20,6 +20,7 @@ import ExposeHistory from "@/components/analysis/ExposeHistory";
 import PortfolioHealthScore from "@/components/PortfolioHealthScore";
 import RenditeOptimizer from "@/components/RenditeOptimizer";
 import LocationAnalysis from "@/components/analysis/LocationAnalysis";
+import { ZinseszinsRechner } from "@/components/ZinseszinsRechner";
 import { useProperties } from "@/context/PropertyContext";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
 import { ROUTES } from "@/lib/routes";

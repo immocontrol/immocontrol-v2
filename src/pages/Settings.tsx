@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
 
 /* Extracted sub-components (Page-Splitting) */
-import { EmailChangeSettings } from "@/components/settings/EmailChangeSettings";
 import { PasswordSettings } from "@/components/settings/PasswordSettings";
 import { TwoFactorSettings } from "@/components/settings/TwoFactorSettings";
 import { PasskeySettings } from "@/components/settings/PasskeySettings";
@@ -37,7 +36,6 @@ import { BenachrichtigungenSettings } from "@/components/settings/Benachrichtigu
 const SETTINGS_SECTIONS = [
   { id: "erscheinungsbild", label: "Erscheinungsbild", icon: Sun },
   { id: "profil", label: "Profil", icon: User },
-  { id: "email", label: "E-Mail \u00e4ndern", icon: Mail },
   { id: "passwort", label: "Passwort", icon: Lock },
   { id: "2fa", label: "2FA", icon: Shield },
   { id: "passkeys", label: "Passkeys", icon: Fingerprint },
@@ -69,6 +67,12 @@ const Settings = () => {
   const mobileTabBarRef = useRef<HTMLDivElement>(null);
   const [uiZoom, setUIZoom] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("immocontrol_ui_zoom") || "100" : "100"));
   const [settingsSearchQuery, setSettingsSearchQuery] = useState("");
+  /* E-Mail ändern: direkt bei Profil, kein eigenes Sektion */
+  const [emailStep, setEmailStep] = useState<"idle" | "password" | "new-email" | "new-code">("idle");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [emailNew, setEmailNew] = useState("");
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   const filteredSettingsSections = useMemo(() => {
     const q = settingsSearchQuery.trim().toLowerCase();
@@ -216,6 +220,69 @@ const Settings = () => {
   }, [user?.created_at]);
 
   const refFor = (id: string) => (el: HTMLElement | null) => { sectionRefs.current[id] = el; };
+
+  const handleEmailChangeStart = async () => {
+    if (!user?.email || !emailPassword.trim()) {
+      toast.error("Bitte gib dein aktuelles Passwort ein");
+      return;
+    }
+    setEmailChangeLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const previousSession = sessionData?.session;
+      const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: emailPassword });
+      if (verifyError) {
+        if (previousSession) await supabase.auth.setSession({ access_token: previousSession.access_token, refresh_token: previousSession.refresh_token });
+        toast.error("Passwort ist falsch");
+        setEmailChangeLoading(false);
+        return;
+      }
+      if (previousSession) await supabase.auth.setSession({ access_token: previousSession.access_token, refresh_token: previousSession.refresh_token });
+      setEmailStep("new-email");
+      toast.success("Passwort bestätigt — gib jetzt deine neue E-Mail ein");
+    } catch {
+      toast.error("Fehler bei der Passwort-Überprüfung");
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
+  const handleEmailChangeSubmitNew = async () => {
+    if (!emailNew.trim() || !emailNew.includes("@")) {
+      toast.error("Bitte gib eine gültige E-Mail-Adresse ein");
+      return;
+    }
+    if (emailNew === user?.email) {
+      toast.error("Die neue E-Mail ist identisch mit der aktuellen");
+      return;
+    }
+    setEmailChangeLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser(
+        { email: emailNew },
+        { emailRedirectTo: `${window.location.origin}/auth?email_changed=true` }
+      );
+      if (error) {
+        if (error.message.includes("email_exists") || error.message.includes("already registered")) toast.error("Diese E-Mail-Adresse ist bereits registriert");
+        else if (error.message.includes("rate limit")) toast.error("Zu viele Versuche. Bitte warte einen Moment.");
+        else if (error.message.includes("same_email") || error.message.includes("same as")) toast.error("Die neue E-Mail ist identisch mit der aktuellen");
+        else toast.error(error.message);
+      } else {
+        setEmailStep("new-code");
+        toast.success(`Bestätigungslink an ${emailNew} gesendet`);
+      }
+    } catch {
+      toast.error("Fehler beim Ändern der E-Mail");
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
+  const resetEmailChange = () => {
+    setEmailStep("idle");
+    setEmailPassword("");
+    setEmailNew("");
+  };
 
   /* Layout per CSS: unter lg = Spalte (Tab-Leiste + Inhalt), ab lg = Zeile (Sidebar + Inhalt). Kein JS-Breakpoint → kein Flackern. */
   return (
@@ -423,7 +490,63 @@ const Settings = () => {
           </h2>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">E-Mail</Label>
-            <Input value={user?.email || ""} disabled className="h-9 text-sm opacity-60" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Input value={user?.email || ""} disabled className="h-9 text-sm opacity-60 flex-1 min-w-[180px]" />
+              {emailStep === "idle" && (
+                <Button type="button" variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setEmailStep("password")}>
+                  <Mail className="h-3.5 w-3.5" /> E-Mail ändern
+                </Button>
+              )}
+            </div>
+            {emailStep === "password" && (
+              <div className="mt-3 p-3 rounded-lg bg-secondary/30 border border-border space-y-3">
+                <p className="text-[10px] text-muted-foreground">Passwort bestätigen, dann neue E-Mail eingeben. Bestätigungslink geht an alte und neue Adresse.</p>
+                <div className="relative">
+                  <Input
+                    type={showEmailPassword ? "text" : "password"}
+                    value={emailPassword}
+                    onChange={(e) => setEmailPassword(e.target.value)}
+                    placeholder="Aktuelles Passwort"
+                    className="h-9 text-sm pr-10"
+                    autoComplete="current-password"
+                  />
+                  <button type="button" onClick={() => setShowEmailPassword(!showEmailPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                    {showEmailPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" onClick={handleEmailChangeStart} disabled={emailChangeLoading || !emailPassword}>
+                    {emailChangeLoading ? "Prüfe..." : "Weiter"}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={resetEmailChange}>Abbrechen</Button>
+                </div>
+              </div>
+            )}
+            {emailStep === "new-email" && (
+              <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-3">
+                <p className="text-[10px] text-primary font-medium flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Passwort bestätigt</p>
+                <Input
+                  type="email"
+                  value={emailNew}
+                  onChange={(e) => setEmailNew(e.target.value)}
+                  placeholder="neue@email.de"
+                  className="h-9 text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" onClick={handleEmailChangeSubmitNew} disabled={emailChangeLoading || !emailNew.includes("@")}>
+                    {emailChangeLoading ? "Sende..." : "Bestätigungslink senden"}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={resetEmailChange}>Abbrechen</Button>
+                </div>
+              </div>
+            )}
+            {emailStep === "new-code" && (
+              <div className="mt-3 p-3 rounded-lg bg-profit/5 border border-profit/20">
+                <p className="text-[10px] text-profit font-medium flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Link gesendet</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Klicke auf den Link in der E-Mail an <strong>{emailNew}</strong>, um die Änderung abzuschließen.</p>
+                <Button type="button" variant="outline" size="sm" className="mt-2" onClick={resetEmailChange}>Fertig</Button>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Mitglied</Label>
@@ -463,7 +586,6 @@ const Settings = () => {
         </form>
 
         {/* Extracted sub-components */}
-        <EmailChangeSettings sectionRef={refFor("email")} />
         <PasswordSettings sectionRef={refFor("passwort")} />
         <TwoFactorSettings sectionRef={refFor("2fa")} />
         <PasskeySettings sectionRef={refFor("passkeys")} displayName={displayName} />

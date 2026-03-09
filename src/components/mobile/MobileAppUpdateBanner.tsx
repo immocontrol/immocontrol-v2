@@ -1,7 +1,7 @@
 /**
  * MOB5-20: Mobile App Update Banner
- * Shows update notification when a new app version is available (Service Worker or version.json check).
- * Includes "Jetzt aktualisieren" / "Später" and dismissible banner with auto-recheck.
+ * Live-Erkennung neuer Version (Railway/GitHub): version.json-Polling + Check bei Tab-Fokus/Reconnect.
+ * Zeigt "Jetzt aktualisieren" / "Später" mit Ausblenden für 1 h.
  */
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -9,7 +9,7 @@ import { RefreshCw, X, ArrowUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileAppUpdateBannerProps {
-  /** Check interval in milliseconds (default: 5 minutes) */
+  /** Check interval in ms (default: 2 min); zusätzlich sofort bei Tab sichtbar / Reconnect */
   checkInterval?: number;
   /** Position */
   position?: "top" | "bottom";
@@ -19,10 +19,11 @@ interface MobileAppUpdateBannerProps {
   className?: string;
 }
 
-/** Polls /version.json (cache-busted) and compares to __APP_VERSION__ (set at build). Used when hosting on Railway/GitHub so new deploys are detected even if SW does not update. */
+/** Live-Erkennung: Pollt /version.json (Railway/GitHub) + sofortiger Check bei Tab-Wechsel/Reconnect. */
 function useAppVersionCheck(checkInterval: number) {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const clientVersion = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : null;
+  const checkRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (!clientVersion || checkInterval <= 0) return;
@@ -31,16 +32,34 @@ function useAppVersionCheck(checkInterval: number) {
       try {
         const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) return;
+        const contentType = res.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) return;
         const data = (await res.json()) as { version?: string };
-        if (data.version && data.version !== clientVersion) setUpdateAvailable(true);
+        if (typeof data?.version === "string" && data.version !== clientVersion) setUpdateAvailable(true);
       } catch {
         /* ignore */
       }
     };
 
+    checkRef.current = check;
     check();
+
     const interval = setInterval(check, checkInterval);
-    return () => clearInterval(interval);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") checkRef.current?.();
+    };
+    const onOnline = () => { checkRef.current?.(); };
+
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+      checkRef.current = null;
+    };
   }, [clientVersion, checkInterval]);
 
   return updateAvailable;
@@ -96,8 +115,15 @@ function useServiceWorkerUpdate(checkInterval: number) {
     checkForUpdates();
     if (checkInterval > 0) interval = setInterval(checkForUpdates, checkInterval);
 
+    const onVisible = () => { if (document.visibilityState === "visible") checkForUpdates(); };
+    const onOnline = () => { checkForUpdates(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
+
     return () => {
       if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
       if (currentReg && listenerAttachedRef.current) {
         currentReg.removeEventListener("updatefound", onUpdateFound);
         listenerAttachedRef.current = false;
@@ -116,7 +142,7 @@ function useServiceWorkerUpdate(checkInterval: number) {
 }
 
 export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
-  checkInterval = 5 * 60 * 1000,
+  checkInterval = 2 * 60 * 1000,
   position = "bottom",
   onUpdate,
   className,

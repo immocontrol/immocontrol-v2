@@ -16,24 +16,33 @@ interface StatCardProps {
   href?: string;
 }
 
+/** Coerce to string for display — prevents React #310 (objects as React child) */
+const toDisplayString = (v: unknown): string => {
+  if (v == null) return "–";
+  if (typeof v === "string" || typeof v === "number") return String(v);
+  return "–";
+};
+
 const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip, href }: StatCardProps) => {
   const [copied, setCopied] = useState(false);
+  const displayValue = toDisplayString(value);
+  const displaySubValue = subValue != null ? toDisplayString(subValue) : undefined;
 
   const copyValue = useCallback(() => {
-    navigator.clipboard.writeText(value).then(
+    navigator.clipboard.writeText(displayValue).then(
       () => { setCopied(true); setTimeout(() => setCopied(false), 1500); toast.success("Kopiert"); },
       () => toast.error("Kopieren fehlgeschlagen")
     );
-  }, [value]);
+  }, [displayValue]);
 
   const content = (
     <div
       className={`gradient-card rounded-xl border border-border p-4 animate-fade-in hover-lift group relative overflow-hidden cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${href ? "block" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
-      title={tooltip || (href ? `${label}: ${value} – Zur Seite` : `${label}: ${value} – Klicken zum Kopieren`)}
+      title={tooltip || (href ? `${label}: ${displayValue} – Zur Seite` : `${label}: ${displayValue} – Klicken zum Kopieren`)}
       onClick={href ? undefined : copyValue}
       onKeyDown={href ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copyValue(); } }}
-      aria-label={href ? `${label}: ${value}. Zur Seite navigieren` : `${label}: ${value}. Klicken zum Kopieren`}
+      aria-label={href ? `${label}: ${displayValue}. Zur Seite navigieren` : `${label}: ${displayValue}. Klicken zum Kopieren`}
       role={href ? "link" : "button"}
       tabIndex={0}
     >
@@ -50,8 +59,8 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip, hre
             {copied ? <Check className="h-4 w-4 text-profit" /> : icon}
           </span>
         </div>
-        <div className="text-2xl font-bold tracking-tight animate-count">{value}</div>
-        {subValue && (
+        <div className="text-2xl font-bold tracking-tight animate-count">{displayValue}</div>
+        {displaySubValue != null && (
           <div className="flex items-center gap-1 mt-1">
             {trend === "up" && <TrendingUp className="h-3 w-3 text-profit" />}
             {trend === "down" && <TrendingDown className="h-3 w-3 text-loss" />}
@@ -60,7 +69,7 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip, hre
                 trend === "up" ? "text-profit" : trend === "down" ? "text-loss" : "text-muted-foreground"
               }`}
             >
-              {subValue}
+              {displaySubValue}
             </span>
           </div>
         )}

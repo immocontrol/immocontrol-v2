@@ -692,7 +692,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           {yieldExtremes.highest && (
             <div className="mt-3 text-[11px] text-muted-foreground">
               <p>
-                Top Rendite: <span className="font-medium text-foreground">{truncate(yieldExtremes.highest.name, 22)}</span> · {yieldExtremes.highest.yieldPct.toFixed(1)}%
+                Top Rendite: <span className="font-medium text-foreground">{truncate(yieldExtremes.highest?.name, 22)}</span> · {Number(yieldExtremes.highest.yieldPct).toFixed(1)}%
               </p>
             </div>
           )}
@@ -837,8 +837,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4}>
               <SelectItem value="alle">Alle</SelectItem>
-              <SelectItem value="egbr">eGbR ({filterCounts.egbr})</SelectItem>
-              <SelectItem value="privat">Privat ({filterCounts.privat})</SelectItem>
+              <SelectItem value="egbr">eGbR ({Number(filterCounts?.egbr ?? 0)})</SelectItem>
+              <SelectItem value="privat">Privat ({Number(filterCounts?.privat ?? 0)})</SelectItem>
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>

@@ -232,9 +232,11 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
 export const generateTempId = (): string =>
   `temp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
-/* OPT-47: Truncate text with ellipsis */
-export const truncate = (text: string, maxLength: number): string =>
-  text.length > maxLength ? text.slice(0, maxLength - 1) + "…" : text;
+/* OPT-47: Truncate text with ellipsis. Accepts undefined/null to avoid React #310 when property.name is missing */
+export const truncate = (text: string | undefined | null, maxLength: number): string => {
+  const s = text == null ? "" : typeof text === "string" ? text : String(text);
+  return s.length > maxLength ? s.slice(0, maxLength - 1) + "…" : s;
+};
 
 /* OPT-48: Convert HSL string to CSS variable reference */
 export const hslVar = (name: string, alpha?: number): string =>
