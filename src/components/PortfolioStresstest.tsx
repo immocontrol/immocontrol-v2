@@ -4,9 +4,12 @@
  * Multi-factor stress testing for portfolio resilience.
  */
 import { memo, useMemo, useState } from "react";
-import { ShieldAlert, TrendingUp, Home, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, TrendingUp, Home, AlertTriangle, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { isDeepSeekConfigured, suggestStressTestInterpretation } from "@/integrations/ai/extractors";
 import { Slider } from "@/components/ui/slider";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +36,7 @@ const PortfolioStresstest = memo(() => {
   const { user } = useAuth();
   const { properties, stats } = useProperties();
   const [selectedScenario, setSelectedScenario] = useState(1); // Default: Moderat
+  const [aiLoading, setAiLoading] = useState(false);
   const [customRate, setCustomRate] = useState(5.0);
   const [customVacancy, setCustomVacancy] = useState(10);
 
@@ -198,6 +202,34 @@ const PortfolioStresstest = memo(() => {
               <p className="text-[10px] text-loss mt-2 font-medium">
                 Bei 6 Monatsreserven: ~{stressResults.survivalMonths} Monate durchhaltbar
               </p>
+            )}
+            {isDeepSeekConfigured() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 h-7 gap-1 text-xs"
+                disabled={aiLoading}
+                onClick={async () => {
+                  setAiLoading(true);
+                  try {
+                    const text = await suggestStressTestInterpretation({
+                      survives: stressResults.survives,
+                      scenario: stressResults.scenario.name,
+                      currentCashflow: stressResults.currentCashflow,
+                      stressedCashflow: stressResults.stressedCashflow,
+                      survivalMonths: stressResults.survivalMonths < 999 ? stressResults.survivalMonths : undefined,
+                    });
+                    if (text) toast.info(text, { duration: 8000 });
+                  } catch (e) {
+                    handleError(e, { context: "ai", details: "stressTest", showToast: true });
+                  } finally {
+                    setAiLoading(false);
+                  }
+                }}
+              >
+                {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                KI-Einschätzung
+              </Button>
             )}
           </div>
         </>

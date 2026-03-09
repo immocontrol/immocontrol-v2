@@ -23,6 +23,9 @@ const SUGGESTIONS = [
   "Übersicht meiner Restschulden",
   "Erstelle eine Selbstauskunft-Zusammenfassung",
   "Welches Objekt hat den besten Cashflow?",
+  "Wie steht mein Portfolio im Stress-Test da?",
+  "Welche Steuer-Tipps habe ich?",
+  "Wie diversifiziert ist mein Portfolio?",
 ];
 
 /* OPT-38: Chat bubble position constants */

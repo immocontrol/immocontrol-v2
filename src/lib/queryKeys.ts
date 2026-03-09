@@ -94,4 +94,11 @@ export const queryKeys = {
   userBanks: {
     all: ["user_banks"] as const,
   },
+  userNotifications: {
+    all: (userId: string) => ["user_notifications", userId] as const,
+  },
+  propertyShareholders: {
+    all: (userId: string) => ["property_shareholders", userId] as const,
+    byProperty: (propertyId: string) => ["property_shareholders", "property", propertyId] as const,
+  },
 } as const;

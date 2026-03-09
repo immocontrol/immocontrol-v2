@@ -73,6 +73,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
       purchaseDate: property.purchaseDate,
       currentValue: property.currentValue,
       monthlyRent: property.monthlyRent,
+      warmRent: property.warmRent ?? property.monthlyRent,
       monthlyExpenses: property.monthlyExpenses,
       monthlyCreditRate: property.monthlyCreditRate,
       remainingDebt: property.remainingDebt,
@@ -83,6 +84,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
       restnutzungsdauer: property.restnutzungsdauer ?? "",
       buildingSharePercent: property.buildingSharePercent ?? 80,
       monthlyCashflow: property.monthlyCashflow ?? calcMonthlyCashflow(property.monthlyRent, property.monthlyExpenses, property.monthlyCreditRate),
+      instandhaltungProSqm: property.sqm > 0 ? Math.round((property.monthlyExpenses * 12) / property.sqm * 10) / 10 : 20,
     },
   });
 
@@ -94,8 +96,21 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
     setValue("monthlyCashflow", calcMonthlyCashflow(Number(monthlyRent), Number(monthlyExpenses), Number(monthlyCreditRate)), { shouldValidate: false });
   }, [monthlyRent, monthlyExpenses, monthlyCreditRate, setValue]);
 
+  /* Instandhaltungsrücklage: Kosten/M = (sqm * €/qm · Jahr) / 12 wenn sqm > 0 */
+  const sqm = watch("sqm");
+  const instandhaltungProSqm = watch("instandhaltungProSqm");
+  useEffect(() => {
+    const s = Number(sqm) || 0;
+    const eurPerSqm = Number(instandhaltungProSqm) || 20;
+    if (s > 0 && eurPerSqm >= 0) {
+      const cost = Math.round((s * eurPerSqm) / 12 * 100) / 100;
+      setValue("monthlyExpenses", cost, { shouldValidate: false });
+    }
+  }, [sqm, instandhaltungProSqm, setValue]);
+
   useEffect(() => {
     if (open) {
+      const instandhaltung = property.sqm > 0 ? Math.round((property.monthlyExpenses * 12) / property.sqm * 10) / 10 : 20;
       reset({
         name: property.name,
         address: property.address,
@@ -105,6 +120,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
         purchaseDate: property.purchaseDate,
         currentValue: property.currentValue,
         monthlyRent: property.monthlyRent,
+        warmRent: property.warmRent ?? property.monthlyRent,
         monthlyExpenses: property.monthlyExpenses,
         monthlyCreditRate: property.monthlyCreditRate,
         remainingDebt: property.remainingDebt,
@@ -115,6 +131,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
         restnutzungsdauer: property.restnutzungsdauer ?? "",
         buildingSharePercent: property.buildingSharePercent ?? 80,
         monthlyCashflow: property.monthlyCashflow ?? calcMonthlyCashflow(property.monthlyRent, property.monthlyExpenses, property.monthlyCreditRate),
+        instandhaltungProSqm: instandhaltung,
       });
     }
   }, [open, property, reset]);
@@ -188,9 +205,41 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
               <EditField label="Aktueller Wert (EUR)" name="currentValue" type="number" register={register} errors={errors} />
               <EditField label="Restschuld (EUR)" name="remainingDebt" type="number" register={register} errors={errors} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <EditField label="Miete/M (EUR)" name="monthlyRent" type="number" register={register} errors={errors} />
+            <div className="grid grid-cols-2 gap-3">
+              <EditField label="Instandhaltungsrücklage (€/qm · Jahr)" name="instandhaltungProSqm" type="number" register={register} errors={errors} />
               <EditField label="Kosten/M (EUR)" name="monthlyExpenses" type="number" register={register} errors={errors} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-monthlyRent" className="text-xs text-muted-foreground">Kaltmiete/M (EUR)</Label>
+                <Input id="edit-monthlyRent" type="number" step="any" className="h-9 text-sm"
+                  {...register("monthlyRent")}
+                  onChange={(e) => {
+                    const newKalt = Number(e.target.value) || 0;
+                    const oldKalt = Number(watch("monthlyRent")) || 0;
+                    const oldWarm = Number(watch("warmRent")) || 0;
+                    const nk = oldWarm - oldKalt;
+                    setValue("monthlyRent", newKalt, { shouldValidate: true });
+                    setValue("warmRent", newKalt + nk, { shouldValidate: true });
+                  }}
+                />
+                {errors.monthlyRent && <p className="text-xs text-destructive">{errors.monthlyRent.message}</p>}
+              </div>
+              <EditField label="Warmmiete/M (EUR)" name="warmRent" type="number" register={register} errors={errors} />
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-nkRent" className="text-xs text-muted-foreground">Nebenkosten/M (EUR)</Label>
+                <Input id="edit-nkRent" type="number" step="any" className="h-9 text-sm"
+                  value={Math.round(((Number(watch("warmRent")) || 0) - (Number(watch("monthlyRent")) || 0)) * 100) / 100}
+                  onChange={(e) => {
+                    const newNK = Number(e.target.value) || 0;
+                    const kalt = Number(watch("monthlyRent")) || 0;
+                    setValue("warmRent", kalt + newNK, { shouldValidate: true });
+                  }}
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Zwei Werte eingeben → der dritte wird berechnet. Alle editierbar.</p>
+            <div className="grid grid-cols-2 gap-3">
               <EditField label="Rate/M (EUR)" name="monthlyCreditRate" type="number" register={register} errors={errors} />
             </div>
             <EditField label="Cashflow/M (berechnet, editierbar)" name="monthlyCashflow" type="number" register={register} errors={errors} />

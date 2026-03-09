@@ -57,6 +57,15 @@ const bewertungImport = () => import("@/pages/ImmobilienBewertung");
 const objekteListImport = () => import("@/pages/ObjekteList");
 const besichtigungenImport = () => import("@/pages/Besichtigungen");
 const finanzierungsCockpitImport = () => import("@/pages/FinanzierungsCockpit");
+const steuerCockpitImport = () => import("@/pages/SteuerCockpitPage");
+const refinanzierungImport = () => import("@/pages/RefinanzierungPage");
+const stressTestImport = () => import("@/pages/StressTestPage");
+const diversifikationImport = () => import("@/pages/DiversifikationPage");
+const mietspiegelImport = () => import("@/pages/MietspiegelPage");
+const kpiZeitreiseImport = () => import("@/pages/KpiZeitreisePage");
+const benachrichtigungenImport = () => import("@/pages/BenachrichtigungenPage");
+const syndicationImport = () => import("@/pages/SyndicationPage");
+const dealBenchmarkImport = () => import("@/pages/DealBenchmarkPage");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -88,6 +97,15 @@ const ImmobilienBewertung = lazy(bewertungImport);
 const ObjekteList = lazy(objekteListImport);
 const Besichtigungen = lazy(besichtigungenImport);
 const FinanzierungsCockpit = lazy(finanzierungsCockpitImport);
+const SteuerCockpitPage = lazy(steuerCockpitImport);
+const RefinanzierungPage = lazy(refinanzierungImport);
+const StressTestPage = lazy(stressTestImport);
+const DiversifikationPage = lazy(diversifikationImport);
+const MietspiegelPage = lazy(mietspiegelImport);
+const KpiZeitreisePage = lazy(kpiZeitreiseImport);
+const BenachrichtigungenPage = lazy(benachrichtigungenImport);
+const SyndicationPage = lazy(syndicationImport);
+const DealBenchmarkPage = lazy(dealBenchmarkImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -115,6 +133,15 @@ const preloadRoutes = () => {
   objekteListImport();
   besichtigungenImport();
   finanzierungsCockpitImport();
+  steuerCockpitImport();
+  refinanzierungImport();
+  stressTestImport();
+  diversifikationImport();
+  mietspiegelImport();
+  kpiZeitreiseImport();
+  benachrichtigungenImport();
+  syndicationImport();
+  dealBenchmarkImport();
   onboardingImport();
 };
 
@@ -302,6 +329,15 @@ const RoleRouter = () => {
           <Route path={ROUTES.NEWSTICKER} element={<ErrorBoundary><Newsticker /></ErrorBoundary>} />
           <Route path={ROUTES.BEWERTUNG} element={<ErrorBoundary><ImmobilienBewertung /></ErrorBoundary>} />
           <Route path={ROUTES.SETTINGS} element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+          <Route path={ROUTES.STEUER_COCKPIT} element={<ErrorBoundary><SteuerCockpitPage /></ErrorBoundary>} />
+          <Route path={ROUTES.REFINANZIERUNG} element={<ErrorBoundary><RefinanzierungPage /></ErrorBoundary>} />
+          <Route path={ROUTES.STRESS_TEST} element={<ErrorBoundary><StressTestPage /></ErrorBoundary>} />
+          <Route path={ROUTES.DIVERSIFIKATION} element={<ErrorBoundary><DiversifikationPage /></ErrorBoundary>} />
+          <Route path={ROUTES.MIETSPIEGEL} element={<ErrorBoundary><MietspiegelPage /></ErrorBoundary>} />
+          <Route path={ROUTES.KPI_ZEITREISE} element={<ErrorBoundary><KpiZeitreisePage /></ErrorBoundary>} />
+          <Route path={ROUTES.BENACHRICHTIGUNGEN} element={<ErrorBoundary><BenachrichtigungenPage /></ErrorBoundary>} />
+          <Route path={ROUTES.SYNDICATION} element={<ErrorBoundary><SyndicationPage /></ErrorBoundary>} />
+          <Route path={ROUTES.DEAL_BENCHMARK} element={<ErrorBoundary><DealBenchmarkPage /></ErrorBoundary>} />
           <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
         </Routes>
       </PageTransition>

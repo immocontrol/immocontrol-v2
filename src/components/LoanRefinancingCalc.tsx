@@ -1,13 +1,18 @@
 import { useState, useMemo } from "react";
-import { RefreshCw, TrendingDown } from "lucide-react";
+import { RefreshCw, TrendingDown, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { isDeepSeekConfigured, suggestRefinancingInterpretation } from "@/integrations/ai/extractors";
 
 const LoanRefinancingCalc = () => {
   const { user } = useAuth();
   const [newRate, setNewRate] = useState(3.5);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const { data: loans = [] } = useQuery({
     queryKey: ["refinancing_loans"],
@@ -45,9 +50,39 @@ const LoanRefinancingCalc = () => {
 
   return (
     <div className="gradient-card rounded-xl border border-border p-5">
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-        <RefreshCw className="h-4 w-4 text-muted-foreground" /> Umschuldungs-Rechner
-      </h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <RefreshCw className="h-4 w-4 text-muted-foreground" /> Umschuldungs-Rechner
+        </h3>
+        {isDeepSeekConfigured() && analysis.results.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 text-[10px] px-1.5"
+            disabled={aiLoading}
+            onClick={async () => {
+              setAiLoading(true);
+              try {
+                const text = await suggestRefinancingInterpretation({
+                  loanCount: loans.length,
+                  refinanceableCount: analysis.results.length,
+                  totalAnnualSavings: analysis.totalAnnualSavings,
+                  newRate,
+                });
+                if (text) toast.info(text, { duration: 7000 });
+              } catch (e) {
+                handleError(e, { context: "ai", details: "refinancing", showToast: true });
+              } finally {
+                setAiLoading(false);
+              }
+            }}
+            aria-label="KI Einschätzung"
+          >
+            {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            KI
+          </Button>
+        )}
+      </div>
       <div className="flex items-center gap-3 mb-3">
         <label className="text-xs text-muted-foreground whitespace-nowrap">Neuer Zinssatz:</label>
         <input type="number" step="0.1" value={newRate} onChange={e => setNewRate(+e.target.value)}

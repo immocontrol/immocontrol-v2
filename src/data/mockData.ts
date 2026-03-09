@@ -9,6 +9,8 @@ export interface Property {
   purchaseDate: string;
   currentValue: number;
   monthlyRent: number;
+  /** Warmmiete (Gesamtmiete) EUR/Monat. Nebenkosten = warmRent - monthlyRent. */
+  warmRent?: number | null;
   monthlyExpenses: number;
   monthlyCreditRate: number;
   monthlyCashflow: number;

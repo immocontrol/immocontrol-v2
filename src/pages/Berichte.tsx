@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase, BarChart3, Store, FileText } from "lucide-react";
+import { FileBarChart, Download, Building2, Users, Landmark, Calendar, Scale, Receipt, TrendingUp, FileDown, Briefcase, BarChart3, Store, FileText, ShieldAlert } from "lucide-react";
 import { loadJsPDF } from "@/lib/lazyImports";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -499,6 +499,15 @@ ${rows}
           {reportCount > 0 && <span className="text-[10px]">({reportCount} erstellt)</span>}
           <Button variant="link" size="sm" className="h-auto p-0 text-primary touch-target min-h-[44px] gap-1" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Zur Analyse">
             <BarChart3 className="h-3.5 w-3.5" /> Zur Analyse
+          </Button>
+          <Button variant="link" size="sm" className="h-auto p-0 text-primary touch-target min-h-[44px] gap-1" onClick={() => navigate(ROUTES.STEUER_COCKPIT)} aria-label="Steuer-Cockpit">
+            <Scale className="h-3.5 w-3.5" /> Steuer-Cockpit
+          </Button>
+          <Button variant="link" size="sm" className="h-auto p-0 text-primary touch-target min-h-[44px] gap-1" onClick={() => navigate(ROUTES.REFINANZIERUNG)} aria-label="Refinanzierung">
+            <TrendingUp className="h-3.5 w-3.5" /> Refinanzierung
+          </Button>
+          <Button variant="link" size="sm" className="h-auto p-0 text-primary touch-target min-h-[44px] gap-1" onClick={() => navigate(ROUTES.STRESS_TEST)} aria-label="Stress-Test">
+            <ShieldAlert className="h-3.5 w-3.5" /> Stress-Test
           </Button>
         </p>
       </div>

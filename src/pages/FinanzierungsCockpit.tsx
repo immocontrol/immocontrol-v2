@@ -22,6 +22,8 @@ import {
   TrendingUp,
   Shield,
   Receipt,
+  RefreshCw,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
@@ -237,6 +239,21 @@ export default function FinanzierungsCockpit() {
           <Button variant="outline" size="sm" asChild>
             <Link to={ROUTES.DOKUMENTE}>
               <FileStack className="h-3.5 w-3.5 mr-1" /> Dokumente
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.STEUER_COCKPIT}>
+              <Receipt className="h-3.5 w-3.5 mr-1" /> Steuer-Cockpit
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.REFINANZIERUNG}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refinanzierung
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.STRESS_TEST} aria-label="Stress-Test">
+              <ShieldAlert className="h-3.5 w-3.5 mr-1" /> Stress-Test
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>

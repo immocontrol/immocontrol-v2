@@ -617,6 +617,153 @@ Gib eine kurze, hilfreiche Beschreibung (1–2 Sätze) für diese Aufgabe: Was i
   return raw.trim();
 }
 
+/**
+ * Interpretation eines Stress-Test-Ergebnisses — kurze Einschätzung und Handlungsempfehlung.
+ */
+export async function suggestStressTestInterpretation(ctx: {
+  survives: boolean;
+  scenario: string;
+  currentCashflow: number;
+  stressedCashflow: number;
+  survivalMonths?: number;
+}): Promise<string> {
+  const prompt = `Portfolio-Stresstest Szenario "${ctx.scenario}":
+- Aktueller Cashflow: ${ctx.currentCashflow.toFixed(0)} €/Monat
+- Stress-Cashflow: ${ctx.stressedCashflow.toFixed(0)} €/Monat
+- Portfolio übersteht Szenario: ${ctx.survives ? "Ja" : "Nein"}
+${ctx.survivalMonths !== undefined && ctx.survivalMonths < 999 ? `- Durchhaltbarkeit bei Reserven: ~${ctx.survivalMonths} Monate` : ""}
+
+Gib eine kurze, hilfreiche Einschätzung (2–4 Sätze): Wie resilient ist das Portfolio? Welche Handlungsempfehlungen (z. B. Liquiditätsreserve, Refinanzierung prüfen)? Auf Deutsch. Sachlich.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Immobilien-Investment-Berater. Antworte nur mit der Einschätzung.", maxTokens: 300 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Personalisierte Steuer-Tipps für Immobilieninvestoren.
+ */
+export async function suggestSteuerTipps(ctx: {
+  propertyCount: number;
+  totalAfA: number;
+  totalInterest: number;
+  totalRent: number;
+  taxRate: number;
+}): Promise<string> {
+  const prompt = `Als Immobilien-Steuerexperte: Der Nutzer hat ${ctx.propertyCount} Objekte.
+- Jahres-AfA: ~${ctx.totalAfA.toFixed(0)} €
+- Schuldzinsen: ~${ctx.totalInterest.toFixed(0)} €
+- Mieteinnahmen: ~${ctx.totalRent.toFixed(0)} €
+- Grenzsteuersatz: ${ctx.taxRate}%
+
+Gib 2–4 kurze, konkrete Steuer-Tipps (AfA, Zinsen, Erhaltungsaufwand, ggf. Verlustverrechnung). Auf Deutsch. Nummeriert. Sachlich.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Steuerberater für Vermieter. Antworte nur mit den Tipps.", maxTokens: 350 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Diversifikations-Einschätzung — Risiko-Kommentar zur Portfolio-Verteilung.
+ */
+export async function suggestDiversificationInterpretation(ctx: {
+  propertyCount: number;
+  maxLocationShare: number;
+  tenantConcentration: number;
+  locations: string[];
+  types: string[];
+}): Promise<string> {
+  const prompt = `Portfolio: ${ctx.propertyCount} Objekte.
+- Größte Regionskonzentration: ${ctx.maxLocationShare.toFixed(0)}% Miete
+- Mieterkonzentration (max. Objektanteil): ${(ctx.tenantConcentration * 100).toFixed(0)}%
+- Regionen: ${ctx.locations.slice(0, 6).join(", ")}
+- Objekttypen: ${ctx.types.join(", ")}
+
+Gib eine kurze Einschätzung (2–4 Sätze): Wie diversifiziert ist das Portfolio? Welche Risiken oder Stärken siehst du? Auf Deutsch. Sachlich.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Portfolio-Analyst für Immobilien. Antworte nur mit der Einschätzung.", maxTokens: 250 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Exit-Strategie Einschätzung — Verkaufs-/Halte-Empfehlung.
+ */
+export async function suggestExitStrategieInterpretation(ctx: {
+  propertyCount: number;
+  holdCount: number;
+  sellCount: number;
+  waitCount: number;
+  totalNetProceeds: number;
+  totalAnnualCashflow: number;
+}): Promise<string> {
+  const prompt = `Exit-Strategie für ${ctx.propertyCount} Objekte:
+- Halten: ${ctx.holdCount}, Verkauf prüfen: ${ctx.sellCount}, Abwarten (Spekulationsfrist): ${ctx.waitCount}
+- Gesamter Netto-Erlös (Verkauf): ~${ctx.totalNetProceeds.toFixed(0)} €
+- Jährlicher Cashflow (Halten): ~${ctx.totalAnnualCashflow.toFixed(0)} €
+
+Gib eine kurze Einschätzung (2–4 Sätze): Welche Objekte zuerst prüfen? Halten vs. Verkaufen? Auf Deutsch. Sachlich.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Immobilien-Investment-Berater. Antworte nur mit der Einschätzung.", maxTokens: 280 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Refinanzierungs-Einschätzung — Umschuldung lohnenswert?
+ */
+export async function suggestRefinancingInterpretation(ctx: {
+  loanCount: number;
+  refinanceableCount: number;
+  totalAnnualSavings: number;
+  newRate: number;
+}): Promise<string> {
+  const prompt = `Refinanzierungs-Szenario:
+- ${ctx.refinanceableCount} von ${ctx.loanCount} Darlehen umschuldbar (aktuell höher als ${ctx.newRate}%)
+- Potenzielle Jahresersparnis: ~${ctx.totalAnnualSavings.toFixed(0)} €
+
+Gib eine kurze Einschätzung (2–3 Sätze): Lohnt sich die Umschuldung? Was beachten? Auf Deutsch. Sachlich.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Finanzierungs-Berater. Antworte nur mit der Einschätzung.", maxTokens: 200 }
+  );
+  return raw.trim();
+}
+
+/**
+ * Mietspiegel-Check Interpretation — Einschätzung ob Miete marktgerecht und Potenzial.
+ */
+export async function suggestMietspiegelInterpretation(ctx: {
+  propertyName: string;
+  currentRentPerSqm: number;
+  mietspiegelPerSqm: number;
+  status: "unter" | "über" | "marktgerecht";
+  potentialMonthly?: number;
+}): Promise<string> {
+  const prompt = `Objekt "${ctx.propertyName}":
+- Aktuelle Kaltmiete: ${ctx.currentRentPerSqm.toFixed(2)} €/m²
+- Mietspiegel/ortsüblich: ~${ctx.mietspiegelPerSqm.toFixed(2)} €/m²
+- Status: ${ctx.status === "unter" ? "unter Markt" : ctx.status === "über" ? "über Markt" : "marktgerecht"}
+${ctx.potentialMonthly !== undefined && ctx.potentialMonthly > 0 ? `- Potenzial (Mieterhöhung): ~${ctx.potentialMonthly.toFixed(0)} €/Monat` : ""}
+
+Gib eine kurze Einschätzung (1–3 Sätze): Ist die Miete marktgerecht? Gibt es Handlungsspielraum (§558 BGB)? Auf Deutsch. Sachlich.`;
+
+  const raw = await completeDeepSeekChat(
+    [{ role: "user", content: prompt }],
+    { systemPrompt: "Du bist ein Mietrecht- und Immobilien-Experte. Antworte nur mit der Einschätzung.", maxTokens: 200 }
+  );
+  return raw.trim();
+}
+
 export { isDeepSeekConfigured };
 
 function parseJsonSafe<T>(raw: string): T {

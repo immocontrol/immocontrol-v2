@@ -56,10 +56,10 @@
 | **PropertyDetail** | Darlehen | Link „Darlehen bearbeiten“ in Finanzierung |
 | **Verträge** | Dokumente | Link „Dokumente hochladen“ in Kopfzeile |
 | **Dokumente** | Verträge, Nebenkosten, Finanzierungs-Cockpit | Empty State: Links Verträge, Nebenkosten, Besichtigungen; Kopfzeile und Empty State: Button „Finanzierungs-Cockpit“ → ROUTES.FINANZIERUNG. |
-| **Finanzierungs-Cockpit** | Objekte, Darlehen, Mietübersicht, Selbstauskunft, Dokumente | Objektübersicht + Mieten aus Properties/Tenants; Kredite aus loans; Vermögen in localStorage; Selbstauskunft vorausgefüllt; Unterlagen-Checkliste aus property_documents; Tipp bei fehlenden Unterlagen; Links zu Objekte, Darlehen, Dokumente, Mietübersicht, Objekt-Detail. |
-| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, WGH-Scout, Verträge | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden, Verträge (ROUTES.CONTRACTS, ROUTES.CRM_SCOUT) |
+| **Finanzierungs-Cockpit** | Objekte, Darlehen, Mietübersicht, Steuer-Cockpit, Refinanzierung, Stress-Test, Selbstauskunft, Dokumente | Objektübersicht + Mieten; Kredite aus loans; Vermögen in localStorage; Links zu Steuer-Cockpit, Refinanzierung, Stress-Test; Selbstauskunft vorausgefüllt; Unterlagen-Checkliste; Links zu Objekte, Darlehen, Dokumente, Mietübersicht. |
+| **Darlehen** | Objekte, Deals, Mietübersicht, Nebenkosten, Berichte, Refinanzierung, Stress-Test, WGH-Scout, Verträge | Kopfzeile: Link „Berichte“; Empty State: Buttons Objekt, Deals, Mietübersicht, Nebenkosten, Berichte, WGH finden, Verträge. |
 | **Objekte** | Deals, Besichtigungen, WGH-Scout | Empty State: Buttons Deals, Besichtigungen, WGH-Scout (ROUTES.CRM_SCOUT, aria-label) |
-| **Berichte** | Objekte, Deals, Analyse, WGH-Scout | Empty State: Buttons Objekte, Zu Deals, Zur Analyse, WGH finden (ROUTES) |
+| **Berichte** | Objekte, Deals, Analyse, Steuer-Cockpit, Refinanzierung, Stress-Test, WGH-Scout | Kopfzeile: Links Zur Analyse, Steuer-Cockpit, Refinanzierung, Stress-Test; Empty State: Buttons Objekte, Zu Deals, Zur Analyse, WGH finden (ROUTES) |
 | **Besichtigungen** | Deals, Dokumente | Empty State: Links „Zu Deals“, „Dokumente“ (ROUTES) |
 | **Todos** | CRM, Deals, Berichte, WGH-Scout | Empty State: Buttons Zu CRM, Zu Deals, Berichte, WGH finden (ROUTES, Touch-Target) |
 | **PropertyDetail** | Deals | Besichtigungen: Link zum Deal bei deal_id; Deep-Link ?id= zu Besichtigung |
@@ -124,6 +124,15 @@
 | **DashboardActionCenter** | CRM (Scout) | Link „WGH finden“ → ROUTES.CRM_SCOUT |
 | **QuickActions** | CRM (Scout) | Schnellaktion „WGH-Scout“ → ROUTES.CRM_SCOUT |
 | **SpotlightSearch / MobileSearchOverlay** | CRM (Scout) | Eintrag „WGH-Scout“ → ROUTES.CRM_SCOUT (Suche „wgh scout“) |
+| **Mietspiegel-Check** | Steuer-Cockpit, Refinanzierung, Stress-Test, Verträge | Header-Links zu Steuer-Cockpit, Refinanzierung, Stress-Test, Verträge (§558). |
+| **Diversifikation** | Stress-Test, Mietspiegel-Check | Header-Links zu Stress-Test und Mietspiegel-Check. |
+| **Refinanzierung** | Steuer-Cockpit, Stress-Test | Header-Links zu Steuer-Cockpit und Stress-Test. |
+| **Steuer-Cockpit** | Mietspiegel-Check, Refinanzierung | Header-Links zu Mietspiegel-Check und Refinanzierung. |
+| **Stress-Test** | Diversifikation, Refinanzierung | Header-Links zu Diversifikation und Refinanzierung. |
+| **KPI-Zeitreise** | Berichte, Stress-Test, Diversifikation | Header-Links zu Berichte, Stress-Test, Diversifikation. |
+| **Benachrichtigungen** | Darlehen, Verträge, Dokumente, Stress-Test, Steuer-Cockpit | Links zu Darlehen, Verträge, Dokumente, Stress-Test, Steuer-Cockpit. |
+| **Syndication** | Objekte, Darlehen, Berichte | Header-Links zu Objekte, Darlehen, Berichte. |
+| **Deal-Benchmark** | Deals, Analyse, Objekte | Header-Links zu Deals, Analyse, Objekte. |
 | **Immo-AI** | — | Vorschlagsfrage „Wo finde ich Wohn- und Geschäftshäuser (WGH) für die Akquise?“; weitere Vorschläge u. a. Brutto-Mietrendite, Zinsbindung |
 | **EnergyCertificateTracker** | — | Energieausweis anlegen/löschen: handleError + toastErrorWithRetry (Retry mit lastDeletedCertIdRef) |
 | **CrmFollowUpReminder** | Todos | Follow-Up-Todo erstellen: handleError + toastErrorWithRetry (Retry mit lastContactRef) |

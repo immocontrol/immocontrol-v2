@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { ROUTES, dealsWithId, viewingsWithId } from "@/lib/routes";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles, PieChart, ShieldAlert } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -226,6 +226,14 @@ const PropertyDetail = () => {
                   aria-label="WGH in Umgebung suchen"
                 >
                   <Store className="h-3 w-3 shrink-0" /> WGH in Umgebung
+                </Link>
+                <span className="text-muted-foreground/60 mx-1">·</span>
+                <Link to={ROUTES.STRESS_TEST} className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0" aria-label="Stress-Test">
+                  <ShieldAlert className="h-3 w-3 shrink-0" /> Stress-Test
+                </Link>
+                <span className="text-muted-foreground/60 mx-1">·</span>
+                <Link to={ROUTES.DIVERSIFIKATION} className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0" aria-label="Diversifikation">
+                  <PieChart className="h-3 w-3 shrink-0" /> Diversifikation
                 </Link>
                 <span className="text-muted-foreground/60 mx-1">·</span>
                 <button

@@ -1,22 +1,37 @@
-import { useMemo } from "react";
-import { Shield, AlertTriangle, CheckCircle } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Shield, AlertTriangle, CheckCircle, PiggyBank } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const LIQUID_RESERVE_KEY = "immocontrol_liquidReserve";
 
 const CashReserveWidget = () => {
   const { properties, stats } = useProperties();
+  const [liquidReserve, setLiquidReserveState] = useState<string>(() => {
+    try {
+      return localStorage.getItem(LIQUID_RESERVE_KEY) ?? "";
+    } catch { return ""; }
+  });
+
+  useEffect(() => {
+    try {
+      if (liquidReserve !== "") localStorage.setItem(LIQUID_RESERVE_KEY, liquidReserve);
+    } catch { /* ignore */ }
+  }, [liquidReserve]);
 
   const recommendation = useMemo(() => {
     if (properties.length === 0) return null;
     const totalUnits = properties.reduce((s, p) => s + p.units, 0);
     const monthlyExpenses = properties.reduce((s, p) => s + p.monthlyExpenses + p.monthlyCreditRate, 0);
-    // Rule: 3-6 months expenses + €2000/unit for repairs
     const minReserve = monthlyExpenses * 3 + totalUnits * 2000;
     const idealReserve = monthlyExpenses * 6 + totalUnits * 3000;
-    // Instandhaltungsrücklage nach Peters'scher Formel: 0.8-1% of current value
     const petersReserve = stats.totalValue * 0.01;
-    return { minReserve, idealReserve, petersReserve, monthlyExpenses, totalUnits };
-  }, [properties, stats]);
+    const reserveNum = Number(liquidReserve.replace(/\s/g, "").replace(",", ".")) || 0;
+    const monthsReserve = monthlyExpenses > 0 && reserveNum > 0 ? reserveNum / monthlyExpenses : null;
+    return { minReserve, idealReserve, petersReserve, monthlyExpenses, totalUnits, monthsReserve, reserveNum };
+  }, [properties, stats, liquidReserve]);
 
   if (!recommendation) return null;
 
@@ -26,6 +41,26 @@ const CashReserveWidget = () => {
         <Shield className="h-4 w-4 text-muted-foreground" /> Empfohlene Rücklagen
       </h3>
       <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="liquid-reserve" className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <PiggyBank className="h-3 w-3" /> Liquidität / Rücklage (EUR)
+          </Label>
+          <Input
+            id="liquid-reserve"
+            type="text"
+            inputMode="decimal"
+            placeholder="z.B. 25000"
+            className="h-8 text-sm"
+            value={liquidReserve}
+            onChange={(e) => setLiquidReserveState(e.target.value)}
+          />
+        </div>
+        {recommendation.monthsReserve != null && (
+          <div className="flex justify-between text-xs py-1 px-2 rounded bg-muted/50">
+            <span className="text-muted-foreground">Monate Reserve</span>
+            <span className="font-semibold">{recommendation.monthsReserve >= 3 ? "✓ " : ""}{recommendation.monthsReserve.toFixed(1)} Monate</span>
+          </div>
+        )}
         <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">Monatliche Fixkosten</span>
           <span className="font-medium">{formatCurrency(recommendation.monthlyExpenses)}</span>

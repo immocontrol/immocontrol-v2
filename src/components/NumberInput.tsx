@@ -30,7 +30,8 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     const isFocused = React.useRef(false);
 
     const numToDisplay = React.useCallback((num: number): string => {
-      if (num === 0 || isNaN(num)) return "";
+      if (isNaN(num)) return "";
+      if (num === 0) return "0";
       if (decimals) {
         const str = parseFloat(num.toPrecision(15)).toString();
         const isNeg = str.startsWith("-");
@@ -51,11 +52,13 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
     const handleFocus = () => {
       isFocused.current = true;
-      /* BUG-10: On focus, ensure current display shows formatted number */
-      if (!display && value) {
-        const num = typeof value === "string" ? parseFloat(String(value)) : (value as number);
-        if (num > 0) setDisplay(numToDisplay(num));
+      /* When value is 0, clear on focus so first key replaces (0 is placeholder hint) */
+      const num = typeof value === "string" ? parseFloat(String(value)) : (value as number);
+      if (num === 0) {
+        setDisplay("");
+        return;
       }
+      if (!display && num) setDisplay(numToDisplay(num));
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

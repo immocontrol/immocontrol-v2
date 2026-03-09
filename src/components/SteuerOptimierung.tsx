@@ -4,7 +4,7 @@
  * optimale Verteilung von Renovierungskosten, Abschreibungspotenziale.
  */
 import { memo, useMemo, useState } from "react";
-import { Sparkles, TrendingDown, ChevronDown, ChevronUp, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Sparkles, TrendingDown, ChevronDown, ChevronUp, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
 import { getAnnualAfa, getGebaeudeAnteil } from "@/lib/afaSanierung";
+import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { isDeepSeekConfigured, suggestSteuerTipps } from "@/integrations/ai/extractors";
 
 interface TaxTip {
   id: string;
@@ -29,6 +32,7 @@ const SteuerOptimierung = memo(() => {
   const { properties, stats } = useProperties();
   const [expanded, setExpanded] = useState(false);
   const [taxRate, setTaxRate] = useState(42);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const { data: loans = [] } = useQuery({
     queryKey: ["steueropt_loans"],
@@ -180,6 +184,37 @@ const SteuerOptimierung = memo(() => {
           <p className="text-[10px] text-muted-foreground">Geschätztes Sparpotenzial/Jahr</p>
           <p className="text-lg font-bold text-profit">{formatCurrency(totalSaving)}</p>
           <p className="text-[10px] text-muted-foreground">bei {taxRate}% Grenzsteuersatz</p>
+          {isDeepSeekConfigured() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 h-7 gap-1 text-xs"
+              disabled={aiLoading}
+              onClick={async () => {
+                setAiLoading(true);
+                try {
+                  const totalAfA = properties.reduce((s, p) => s + getAnnualAfa({ purchasePrice: p.purchasePrice, yearBuilt: p.yearBuilt, buildingSharePercent: p.buildingSharePercent, restnutzungsdauer: p.restnutzungsdauer }), 0);
+                  const totalInterest = loans.reduce((s, l) => s + l.remaining_balance * l.interest_rate / 100, 0);
+                  const text = await suggestSteuerTipps({
+                    propertyCount: properties.length,
+                    totalAfA,
+                    totalInterest,
+                    totalRent: stats.totalRent * 12,
+                    taxRate,
+                  });
+                  if (text) toast.info(text, { duration: 8000 });
+                } catch (e) {
+                  handleError(e, { context: "ai", details: "steuerTipps", showToast: true });
+                } finally {
+                  setAiLoading(false);
+                }
+              }}
+              aria-label="KI Steuer-Tipps"
+            >
+              {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              KI Steuer-Tipps
+            </Button>
+          )}
         </div>
       )}
 

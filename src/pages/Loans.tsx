@@ -538,6 +538,12 @@ const Loans = () => {
             <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary touch-target min-h-[44px]" onClick={() => navigate(ROUTES.ANALYSE)} aria-label="Objektanalyse">
               <Calculator className="h-3.5 w-3.5 mr-1" /> Objektanalyse
             </Button>
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REFINANZIERUNG)} aria-label="Refinanzierung">
+              <CalendarCheck className="h-3.5 w-3.5 mr-1" /> Refinanzierung
+            </Button>
+            <Button variant="link" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-primary touch-target min-h-[44px]" onClick={() => navigate(ROUTES.STRESS_TEST)} aria-label="Stress-Test">
+              <AlertTriangle className="h-3.5 w-3.5 mr-1" /> Stress-Test
+            </Button>
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap min-w-0 shrink-0">
@@ -876,6 +882,21 @@ const Loans = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Zinsalarm: Hinweis bei hohen Zinsen oder bald endender Zinsbindung */}
+      {(highRateLoans.length > 0 || maturingLoans.length > 0) && (
+        <div className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-gold flex flex-wrap items-center gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            {highRateLoans.length > 0 && `${highRateLoans.length} Darlehen über ${MARKET_RATE_THRESHOLD}% Zins – Refinanzierung prüfen.`}
+            {highRateLoans.length > 0 && maturingLoans.length > 0 && " "}
+            {maturingLoans.length > 0 && `${maturingLoans.length} Zinsbindung(en) enden in <12 Monaten.`}
+          </span>
+          <Button variant="outline" size="sm" className="h-8 text-xs border-gold/50 text-gold hover:bg-gold/20 shrink-0" onClick={() => navigate(ROUTES.REFINANZIERUNG)}>
+            Refinanzierung
+          </Button>
+        </div>
+      )}
 
       {/* Fixed interest expiry alerts */}
       <LoanFixedInterestAlerts loans={filteredLoans} />

@@ -5,7 +5,7 @@
  */
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, Search, Briefcase, Camera, Store, FileText } from "lucide-react";
+import { Building2, Search, Briefcase, Camera, Store, FileText, PieChart, ShieldAlert } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
@@ -124,14 +124,23 @@ const ObjekteList = () => {
         </div>
       </div>
 
-      {/* IMP-51: Portfolio-Benchmark (Durchschnitts-Rendite) */}
+      {/* IMP-51: Portfolio-Benchmark (Durchschnitts-Rendite) + Synergien */}
       {sorted.length > 0 && (() => {
         const avgBrutto = sorted.reduce((s, p) => s + calcBruttoRendite(p.purchasePrice, p.monthlyRent), 0) / sorted.length;
         const avgNetto = sorted.reduce((s, p) => s + calcNettoRendite(p.purchasePrice, p.monthlyRent, p.monthlyExpenses ?? 0), 0) / sorted.length;
         return (
-          <div className="flex gap-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>Ø Brutto-Rendite: <strong className="text-foreground">{avgBrutto.toFixed(1)}%</strong></span>
             <span>Ø Netto-Rendite: <strong className="text-foreground">{avgNetto.toFixed(1)}%</strong></span>
+            <span className="flex items-center gap-1">
+              <button type="button" onClick={() => navigate(ROUTES.DIVERSIFIKATION)} className="text-primary hover:underline inline-flex items-center gap-0.5 touch-target min-h-[36px] sm:min-h-0" aria-label="Diversifikation">
+                <PieChart className="h-3 w-3" /> Diversifikation
+              </button>
+              <span className="text-muted-foreground/60">·</span>
+              <button type="button" onClick={() => navigate(ROUTES.STRESS_TEST)} className="text-primary hover:underline inline-flex items-center gap-0.5 touch-target min-h-[36px] sm:min-h-0" aria-label="Stress-Test">
+                <ShieldAlert className="h-3 w-3" /> Stress-Test
+              </button>
+            </span>
           </div>
         );
       })()}

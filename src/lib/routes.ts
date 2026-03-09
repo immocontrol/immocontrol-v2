@@ -37,6 +37,24 @@ export const ROUTES = {
   HANDWORKER_PORTAL: "/handwerker",
   /** Finanzierungs-Cockpit: Objektübersicht, Kredite, Konten, Selbstauskunft, Unterlagen-Checkliste */
   FINANZIERUNG: "/finanzierung",
+  /** Steuer-Cockpit: Anlage V, AfA, Verlustverrechnung, Veräußerungsgewinn */
+  STEUER_COCKPIT: "/steuer-cockpit",
+  /** Refinanzierungs-Szenario-Rechner */
+  REFINANZIERUNG: "/refinanzierung",
+  /** Stress-Test / Risiko-Simulation */
+  STRESS_TEST: "/stress-test",
+  /** Portfolio-Diversifikation */
+  DIVERSIFIKATION: "/diversifikation",
+  /** Mietspiegel- und Markt-Check */
+  MIETSPIEGEL: "/mietspiegel",
+  /** KPIs im Zeitverlauf */
+  KPI_ZEITREISE: "/kpi-zeitreise",
+  /** Benachrichtigungen / Alarm-System */
+  BENACHRICHTIGUNGEN: "/benachrichtigungen",
+  /** Syndication / Co-Invest-Tracking */
+  SYNDICATION: "/syndication",
+  /** Deal-Benchmark: erwartete vs. realisierte Rendite */
+  DEAL_BENCHMARK: "/deal-benchmark",
 } as const;
 
 /** Helper: Property detail URL */

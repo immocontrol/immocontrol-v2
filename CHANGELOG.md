@@ -8,6 +8,7 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Investor-Features** — 10 neue Seiten für Immobilieninvestoren: Steuer-Cockpit (Anlage V, AfA, Veräußerungsgewinn), Refinanzierungs-Szenario (Zinsbindung, Umschuldung), Stress-Test (Risiko-Simulation), Portfolio-Diversifikation (Region, Objekttyp), Mietspiegel-Check (Ist vs. ortsüblich), KPIs im Zeitverlauf (Charts), Benachrichtigungen (Fristen-Zentrale, Alarme), Syndication (Co-Invest-Tracking), Deal-Benchmark (erwartete vs. realisierte Rendite), Mobile-Besichtigungen (Offline-Hinweis, Checkliste). DB: user_notifications, property_shareholders. Nav, Global Search, Command Palette und Mobile Tab Bar ergänzt.
 - **Pipeline-Checklisten & Deal-Score** — DealPipelineChecklist mit phasenbasierten Checklisten in Deals. dealScoring.ts berechnet Deal-Score (0–100). Score-Badge auf Deal-Karten. Zusätzliche Objekttypen: Sanierungsfall, Neubau.
 - **Objekt-Roadmap & Rendite-Tracking** — PropertyFinancingChecklist pro Objekt (Finanzierungs-Vorbereitung). PropertyRenditeTracking: Soll- vs. Ist-Rendite pro Objekt.
 - **Leerstands-Szenarien-Rechner** — VacancyScenarios: Kosten-Szenarien für 1/2/3/12 Monate Leerstand.

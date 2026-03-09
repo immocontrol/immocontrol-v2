@@ -288,6 +288,9 @@ export default function FristenZentrale() {
           <Link to={ROUTES.LOANS} className="text-xs text-primary hover:underline flex items-center gap-0.5">
             Darlehen <ChevronRight className="h-3 w-3" />
           </Link>
+          <Link to={ROUTES.BENACHRICHTIGUNGEN} className="text-xs text-primary hover:underline flex items-center gap-0.5">
+            Fristen als Erinnerung <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
       </div>
     );
@@ -345,6 +348,7 @@ export default function FristenZentrale() {
         <Link to={ROUTES.CONTRACTS} className="hover:text-primary hover:underline">Verträge</Link>
         <Link to={ROUTES.LOANS} className="hover:text-primary hover:underline">Darlehen</Link>
         <Link to={ROUTES.OBJEKTE} className="hover:text-primary hover:underline">Objekte</Link>
+        <Link to={ROUTES.BENACHRICHTIGUNGEN} className="hover:text-primary hover:underline">Fristen als Erinnerung → Benachrichtigungen</Link>
       </div>
     </div>
   );

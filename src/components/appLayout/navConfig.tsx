@@ -21,6 +21,11 @@ import {
   Handshake,
   Newspaper,
   Camera,
+  RefreshCw,
+  ShieldAlert,
+  PieChart,
+  Scale,
+  Bell,
 } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 
@@ -53,6 +58,12 @@ export const navEntries: NavEntry[] = [
       { path: ROUTES.RENT, label: "Mieten", icon: Receipt, shortcut: "3" },
       { path: ROUTES.NK, label: "Nebenkosten", icon: Receipt, shortcut: "" },
       { path: ROUTES.FORECAST, label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
+      { path: ROUTES.STEUER_COCKPIT, label: "Steuer-Cockpit", icon: Receipt, shortcut: "" },
+      { path: ROUTES.REFINANZIERUNG, label: "Refinanzierung", icon: RefreshCw, shortcut: "" },
+      { path: ROUTES.STRESS_TEST, label: "Stress-Test", icon: ShieldAlert, shortcut: "" },
+      { path: ROUTES.DIVERSIFIKATION, label: "Diversifikation", icon: PieChart, shortcut: "" },
+      { path: ROUTES.MIETSPIEGEL, label: "Mietspiegel-Check", icon: Scale, shortcut: "" },
+      { path: ROUTES.KPI_ZEITREISE, label: "KPIs im Zeitverlauf", icon: TrendingUp, shortcut: "" },
       { path: ROUTES.REPORTS, label: "Berichte", icon: FileBarChart, shortcut: "7" },
       { path: ROUTES.ANALYSE, label: "Rechner", icon: Calculator, shortcut: "" },
       { path: ROUTES.HOCKEY_STICK, label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
@@ -63,6 +74,8 @@ export const navEntries: NavEntry[] = [
     icon: FileText,
     items: [
       { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
+      { path: ROUTES.SYNDICATION, label: "Syndication", icon: Users, shortcut: "" },
+      { path: ROUTES.BENACHRICHTIGUNGEN, label: "Benachrichtigungen", icon: Bell, shortcut: "" },
       { path: ROUTES.CONTRACTS, label: "Verträge", icon: FileText, shortcut: "4" },
       { path: ROUTES.CONTACTS, label: "Kontakte", icon: Users, shortcut: "5" },
       { path: ROUTES.TODOS, label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
@@ -76,6 +89,7 @@ export const navEntries: NavEntry[] = [
     items: [
       { path: ROUTES.CRM, label: "CRM", icon: Target, shortcut: "8" },
       { path: ROUTES.DEALS, label: "Deals", icon: Handshake, shortcut: "0" },
+      { path: ROUTES.DEAL_BENCHMARK, label: "Deal-Benchmark", icon: TrendingUp, shortcut: "" },
       { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
       { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
       { path: ROUTES.BEWERTUNG, label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
@@ -111,6 +125,15 @@ export const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Besichtigungen": ROUTES.BESICHTIGUNGEN,
   "Navigation: Hockey Stick Simulator": ROUTES.HOCKEY_STICK,
   "Navigation: Einstellungen": ROUTES.SETTINGS,
+  "Navigation: Steuer-Cockpit": ROUTES.STEUER_COCKPIT,
+  "Navigation: Refinanzierung": ROUTES.REFINANZIERUNG,
+  "Navigation: Stress-Test": ROUTES.STRESS_TEST,
+  "Navigation: Diversifikation": ROUTES.DIVERSIFIKATION,
+  "Navigation: Mietspiegel-Check": ROUTES.MIETSPIEGEL,
+  "Navigation: KPIs im Zeitverlauf": ROUTES.KPI_ZEITREISE,
+  "Navigation: Benachrichtigungen": ROUTES.BENACHRICHTIGUNGEN,
+  "Navigation: Syndication": ROUTES.SYNDICATION,
+  "Navigation: Deal-Benchmark": ROUTES.DEAL_BENCHMARK,
 };
 
 export function getDefaultShortcutMap(): Record<string, string> {

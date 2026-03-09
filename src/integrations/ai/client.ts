@@ -14,12 +14,15 @@ const IMMO_AI_SYSTEM = `Du bist ein freundlicher Assistent für Immobilien-Inves
 Du hilfst bei Fragen zu Portfolio, Mieten, Darlehen, Rendite, Cashflow, Objektverwaltung, Tickets (Handwerker, Reparaturen), Besichtigungen und Nebenkostenabrechnungen.
 Antworte prägnant und auf Deutsch. Nutze ggf. Aufzählungen oder kurze Absätze.
 Bei Fragen zu offenen Tickets oder Reparaturen: Weise darauf hin, dass die Ticket-Übersicht unter „Verwaltung“ die genauen Daten enthält.
-Bei Fragen zu Nebenkostenabrechnungen: Verweise auf die Seite „Nebenkosten“ in der Navigation; dort gibt es Entwürfe (status: draft) und finalisierte Abrechnungen (status: final).`;
+Bei Fragen zu Nebenkostenabrechnungen: Verweise auf die Seite „Nebenkosten“ in der Navigation; dort gibt es Entwürfe (status: draft) und finalisierte Abrechnungen (status: final).
+Investor-Tools: Bei Stress-Test-Fragen → Hinweis auf „Stress-Test“ (Risiko-Simulation). Bei Steuerfragen → „Steuer-Cockpit“. Bei Mietspiegel/ortsüblich → „Mietspiegel-Check“. Bei Diversifikation → „Diversifikation“. Bei Zinsbindung/Refinanzierung → „Refinanzierung“.`;
 
 export type StreamChatOptions = {
   messages: ChatMessage[];
   onChunk: (text: string) => void;
   getAccessToken?: () => string | undefined;
+  /** Zusätzlicher Kontext (z.B. Portfolio-Kennzahlen, Darlehen) für präzisere Antworten. */
+  context?: string;
 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/immo-ai-chat`;
@@ -27,12 +30,19 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/immo-ai-chat
 /**
  * Streamed Chat: nutzt DeepSeek wenn API-Key gesetzt, sonst Supabase Edge Function.
  */
+function buildSystemPrompt(context?: string): string {
+  const base = IMMO_AI_SYSTEM;
+  if (!context?.trim()) return base;
+  return `${base}\n\nAktueller Kontext (Nutzerdaten – nutze diese für konkrete Antworten):\n${context.trim()}`;
+}
+
 export async function streamImmoChat(options: StreamChatOptions): Promise<void> {
-  const { messages, onChunk, getAccessToken } = options;
+  const { messages, onChunk, getAccessToken, context } = options;
+  const systemPrompt = buildSystemPrompt(context);
 
   if (isDeepSeekConfigured()) {
     await streamDeepSeekChat(messages, {
-      systemPrompt: IMMO_AI_SYSTEM,
+      systemPrompt,
       onChunk,
       maxTokens: 4096,
     });

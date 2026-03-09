@@ -60,6 +60,7 @@ import { logger } from "@/lib/logger";
 import { fromTable } from "@/lib/typedSupabase";
 import { ViewingAISummary } from "@/components/ViewingAISummary";
 import { ViewingCard } from "@/components/besichtigungen/ViewingCard";
+import { BesichtigungMobileHelper } from "@/components/besichtigungen/BesichtigungMobileHelper";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useShare } from "@/components/mobile/MobileShareSheet";
@@ -456,6 +457,7 @@ const Besichtigungen = () => {
           <p className="text-muted-foreground text-sm mt-1">
             Notizen, Bilder und Videos zu Immobilien-Besichtigungen festhalten
           </p>
+          <BesichtigungMobileHelper />
         </div>
         <div className="flex gap-2 shrink-0">
           {filteredViewings.length > 0 && (

@@ -56,7 +56,7 @@ export const propertySchema = z.object({
 
 export type PropertyFormData = z.infer<typeof propertySchema>;
 
-/** Add-Property-Dialog (3 Schritte): alle Felder mit gleichen Regeln wie propertySchema + Objektdetails */
+/** Add-Property-Dialog: Wenige Pflichtangaben, Rest wird berechnet oder hat Defaults. */
 export const addPropertyFormSchema = z.object({
   name: requiredString,
   address: z.string().min(5, "Adresse angeben"),
@@ -64,19 +64,20 @@ export const addPropertyFormSchema = z.object({
   units: z.coerce.number().int().min(1, "Mindestens 1"),
   ownership: z.string().min(1, "Besitzverhältnis wählen"),
   purchasePrice: z.coerce.number().min(1, "Kaufpreis angeben"),
-  purchaseDate: z.string().min(1, "Kaufdatum angeben"),
-  currentValue: z.coerce.number().min(1, "Wert angeben"),
+  purchaseDate: z.string().optional().default(""),
+  currentValue: z.coerce.number().min(0),
   monthlyRent: z.coerce.number().min(0),
+  warmRent: z.coerce.number().min(0).nullable().optional(),
   monthlyExpenses: z.coerce.number().min(0),
   monthlyCreditRate: z.coerce.number().min(0),
   remainingDebt: z.coerce.number().min(0),
   interestRate: z.coerce.number().min(0).max(20, "Zinssatz max 20%"),
-  sqm: z.coerce.number().min(1, "Wohnfläche angeben"),
-  yearBuilt: z.coerce.number().min(1800).max(2030, "Jahr 1800–2030"),
+  sqm: z.coerce.number().min(0),
+  yearBuilt: z.coerce.number().min(0).max(2030, "Jahr bis 2030"),
   restnutzungsdauer: z.coerce.number().int().min(1).max(100).optional().or(z.literal("")),
   buildingSharePercent: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
-  /** Cashflow = Miete - Kosten - Rate. Wird automatisch berechnet, editierbar falls Sonderfall. */
   monthlyCashflow: z.coerce.number().optional(),
+  instandhaltungProSqm: z.coerce.number().min(0).max(200).optional().default(20),
 });
 
 export type AddPropertyFormData = z.infer<typeof addPropertyFormSchema>;

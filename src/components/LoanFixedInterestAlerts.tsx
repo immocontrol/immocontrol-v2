@@ -3,8 +3,10 @@
  * Shows expiring fixed interest periods WITH current market rates for comparison.
  * When interest lock expires in <12 months, shows potential refinancing savings.
  */
-import { AlertTriangle, Calendar, Landmark, TrendingDown, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, Calendar, Landmark, TrendingDown, RefreshCw, ChevronRight } from "lucide-react";
 import { useMarketRates } from "@/hooks/useMarketRates";
+import { ROUTES } from "@/lib/routes";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
 
 interface Loan {
@@ -67,11 +69,18 @@ const LoanFixedInterestAlerts = ({ loans }: LoanFixedInterestAlertsProps) => {
 
       {/* IMP20-2: Refinancing savings summary */}
       {totalAnnualSavings > 50 && (
-        <div className="mb-3 p-2.5 rounded-lg bg-profit/10 border border-profit/20 flex items-center gap-2">
+        <div className="mb-3 p-2.5 rounded-lg bg-profit/10 border border-profit/20 flex flex-wrap items-center gap-2">
           <TrendingDown className="h-3.5 w-3.5 text-profit shrink-0" />
-          <p className="text-[10px] font-medium text-profit">
+          <p className="text-[10px] font-medium text-profit flex-1 min-w-0">
             Bei Refinanzierung zum Marktzins: ~{formatCurrency(totalAnnualSavings)}/Jahr Ersparnis möglich
           </p>
+          <Link
+            to={ROUTES.REFINANZIERUNG}
+            className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5 font-medium touch-target min-h-[36px] items-center"
+            aria-label="Refinanzierung prüfen"
+          >
+            Szenario prüfen <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
       )}
 

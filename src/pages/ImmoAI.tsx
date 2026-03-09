@@ -12,9 +12,14 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import { useAuth } from "@/hooks/useAuth";
+import { useProperties } from "@/context/PropertyContext";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { rateLimiters } from "@/lib/rateLimiter";
 import { streamImmoChat } from "@/integrations/ai/client";
+import { formatCurrency } from "@/lib/formatters";
 import { PdfWithAI } from "@/components/PdfWithAI";
 import { PropertyDescriptionGenerator } from "@/components/PropertyDescriptionGenerator";
 import { BerichteInProsa } from "@/components/BerichteInProsa";
@@ -23,7 +28,9 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const SUGGESTIONS = [
   "Wie ist meine aktuelle Portfolio-Rendite?",
-  "Welcher Mieter wohnt am längsten in meinen Objekten?",
+  "Wie steht mein Portfolio im Stress-Test da?",
+  "Welche Steuer-Tipps habe ich für meine Immobilien?",
+  "Wann endet die Zinsbindung bei meinen Darlehen?",
   "Wann kann ich bei welchem Mieter die Miete anpassen?",
   "Erstelle mir eine Übersicht meiner Restschulden",
   "Wie hoch ist mein monatlicher Gesamt-Cashflow?",
@@ -46,10 +53,45 @@ const SUGGESTIONS = [
   "Wie hoch sind meine monatlichen Darlehensraten?",
   "Welche Objekte haben die beste Mietrendite?",
   "Was brauche ich für eine neue Finanzierung?",
+  "Wie diversifiziert ist mein Portfolio?",
+  "Sind meine Mieten marktgerecht oder ortsüblich?",
+  "Soll ich ein Objekt halten oder verkaufen?",
 ];
 
 export default function ImmoAI() {
   const { session } = useAuth();
+  const { properties, stats } = useProperties();
+  const { data: loans = [] } = useQuery({
+    queryKey: queryKeys.loans.all,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("loans").select("bank_name, loan_amount, remaining_balance, interest_rate, monthly_payment, fixed_interest_until");
+      if (error) throw error;
+      return (data || []) as { bank_name: string; loan_amount: number; remaining_balance: number; interest_rate: number; monthly_payment: number; fixed_interest_until: string | null }[];
+    },
+    enabled: !!session,
+  });
+
+  const aiContext = useMemo(() => {
+    const parts: string[] = [];
+    if (properties.length > 0) {
+      parts.push(`Portfolio: ${properties.length} Objekt(e), Gesamtwert ${formatCurrency(stats.totalValue)}, Kaufpreis gesamt ${formatCurrency(stats.totalPurchase)}, Miete gesamt ${formatCurrency(stats.totalRent)}/Monat, Cashflow gesamt ${formatCurrency(stats.totalCashflow)}/Monat, Restschuld gesamt ${formatCurrency(stats.totalDebt)}.`);
+      if (stats.totalValue > 0) {
+        parts.push(`Durchschnittliche Rendite (Brutto): ${(stats.avgRendite ?? 0).toFixed(2)}%.`);
+      }
+    }
+    if (loans.length > 0) {
+      const totalDebt = loans.reduce((s, l) => s + (l.remaining_balance ?? 0), 0);
+      const weightedRate = loans.reduce((s, l) => s + (l.interest_rate ?? 0) * (l.remaining_balance ?? 0), 0);
+      const avgRate = totalDebt > 0 ? weightedRate / totalDebt : 0;
+      parts.push(`Darlehen: ${loans.length} Kredit(e), Restschuld gesamt ${formatCurrency(totalDebt)}, Ø Zinssatz ca. ${avgRate.toFixed(2)}%, Rate gesamt ${formatCurrency(loans.reduce((s, l) => s + (l.monthly_payment ?? 0), 0))}/Monat.`);
+      const highRate = loans.filter(l => (l.interest_rate ?? 0) > 3.5);
+      if (highRate.length > 0) {
+        parts.push(`Zinsalarm: ${highRate.length} Darlehen über 3,5% Zins – Refinanzierung prüfen.`);
+      }
+    }
+    return parts.join(" ");
+  }, [properties.length, stats, loans]);
+
   // Improvement 6: Persist chat in localStorage
   const [messages, setMessages] = useState<Msg[]>(() => {
     try {
@@ -111,6 +153,7 @@ export default function ImmoAI() {
           });
         },
         getAccessToken: () => session?.access_token,
+        context: aiContext,
       });
       rateLimiters.aiChat.recordSuccess();
     } catch (e: unknown) {

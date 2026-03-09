@@ -27,6 +27,7 @@ import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { scrollToFirstError } from "@/lib/scrollToFirstError";
 import { calcMonthlyCashflow } from "@/lib/calculations";
+import { formatCurrency } from "@/lib/formatters";
 import { StepIndicator } from "@/components/StepIndicator";
 
 type FormData = AddPropertyFormData;
@@ -59,24 +60,28 @@ const Field = memo(({ label, name, type = "text", placeholder, register, errors 
 ));
 Field.displayName = "Field";
 
-const STEP_LABELS = ["Grunddaten", "Finanzen", "Objektdetails"];
+const STEP_LABELS = ["Grunddaten", "Finanzen", "Details (optional)"];
 
+/** Nur die Felder validieren, die der User wirklich ausfüllen muss. Rest wird berechnet. */
 const STEP_FIELDS: (keyof FormData)[][] = [
   ["name", "address", "type", "ownership", "units"],
-  ["purchasePrice", "purchaseDate", "currentValue", "remainingDebt", "monthlyRent", "monthlyExpenses", "monthlyCreditRate", "monthlyCashflow", "interestRate"],
-  ["sqm", "yearBuilt"],
+  ["purchasePrice", "monthlyRent"],
+  [],
 ];
+
+const getDefaultPurchaseDate = () => new Date().toISOString().slice(0, 10);
 
 const FORM_DEFAULTS: FormData = {
   name: "",
   address: "",
   type: "ETW",
   ownership: "",
-  units: 0,
+  units: 1,
   purchasePrice: 0,
-  purchaseDate: "",
+  purchaseDate: getDefaultPurchaseDate(),
   currentValue: 0,
   monthlyRent: 0,
+  warmRent: undefined as number | undefined,
   monthlyExpenses: 0,
   monthlyCreditRate: 0,
   remainingDebt: 0,
@@ -86,6 +91,7 @@ const FORM_DEFAULTS: FormData = {
   restnutzungsdauer: undefined,
   buildingSharePercent: 80,
   monthlyCashflow: 0,
+  instandhaltungProSqm: 20,
 };
 
 const AddPropertyDialog = () => {
@@ -137,6 +143,18 @@ const AddPropertyDialog = () => {
     setValue("monthlyCashflow", calcMonthlyCashflow(Number(monthlyRent), Number(monthlyExpenses), Number(monthlyCreditRate)), { shouldValidate: false });
   }, [monthlyRent, monthlyExpenses, monthlyCreditRate, setValue]);
 
+  /* Instandhaltungsrücklage: Kosten/M = (sqm * €/qm · Jahr) / 12 wenn sqm > 0 */
+  const sqm = watch("sqm");
+  const instandhaltungProSqm = watch("instandhaltungProSqm");
+  useEffect(() => {
+    const s = Number(sqm) || 0;
+    const eurPerSqm = Number(instandhaltungProSqm) || 20;
+    if (s > 0 && eurPerSqm >= 0) {
+      const cost = Math.round((s * eurPerSqm) / 12 * 100) / 100;
+      setValue("monthlyExpenses", cost, { shouldValidate: false });
+    }
+  }, [sqm, instandhaltungProSqm, setValue]);
+
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
       setOpen(isOpen);
@@ -147,7 +165,8 @@ const AddPropertyDialog = () => {
 
   const goNext = useCallback(async (e?: React.MouseEvent) => {
     e?.preventDefault();
-    const valid = await trigger(STEP_FIELDS[step]);
+    const fieldsToValidate = STEP_FIELDS[step];
+    const valid = fieldsToValidate.length > 0 ? await trigger(fieldsToValidate) : true;
     if (valid) {
       setStep((s) => Math.min(s + 1, 2));
     } else {
@@ -173,11 +192,22 @@ const AddPropertyDialog = () => {
 
   const onSubmit = async (data: FormData) => {
     const wasFirst = properties.length === 0;
+    const purchaseDate = data.purchaseDate?.trim() || getDefaultPurchaseDate();
+    const currentValue = Number(data.currentValue) > 0 ? Number(data.currentValue) : Number(data.purchasePrice) || 0;
     const monthlyCashflow = typeof data.monthlyCashflow === "number" ? data.monthlyCashflow : calcMonthlyCashflow(data.monthlyRent, data.monthlyExpenses, data.monthlyCreditRate);
     const restnutzungsdauer = data.restnutzungsdauer !== "" && data.restnutzungsdauer != null ? Number(data.restnutzungsdauer) : undefined;
     const buildingSharePercent = data.buildingSharePercent !== "" && data.buildingSharePercent != null ? Number(data.buildingSharePercent) : 80;
+    const payload = {
+      ...data,
+      purchaseDate,
+      currentValue: currentValue || Number(data.purchasePrice),
+      monthlyCashflow,
+      location: "",
+      restnutzungsdauer,
+      buildingSharePercent,
+    } as Omit<import("@/data/mockData").Property, "id">;
     try {
-      await addProperty({ ...data, monthlyCashflow, location: "", restnutzungsdauer, buildingSharePercent } as Omit<import("@/data/mockData").Property, "id">);
+      await addProperty(payload);
     } catch (e: unknown) {
       handleError(e, { context: "supabase", details: "properties.insert", showToast: false });
       toastErrorWithRetry("Objekt anlegen fehlgeschlagen", () => handleSubmit(onSubmit)());
@@ -274,38 +304,91 @@ const AddPropertyDialog = () => {
           </div>
 
           <div className={step === 1 ? "block" : "hidden"}>
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">Nur Kaufpreis und Miete sind Pflicht – der Rest wird berechnet oder kann später ergänzt werden.</p>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Kaufpreis (EUR)" name="purchasePrice" type="number" placeholder="300000" register={register} errors={errors} />
+                <Field label="Kaufpreis (EUR) *" name="purchasePrice" type="number" placeholder="300000" register={register} errors={errors} />
                 <Field label="Kaufdatum" name="purchaseDate" type="date" register={register} errors={errors} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Aktueller Wert (EUR)" name="currentValue" type="number" placeholder="320000" register={register} errors={errors} />
-                <Field label="Restschuld (EUR)" name="remainingDebt" type="number" placeholder="250000" register={register} errors={errors} />
-              </div>
               <div className="grid grid-cols-3 gap-3">
-                <Field label="Miete/M (EUR)" name="monthlyRent" type="number" placeholder="1200" register={register} errors={errors} />
-                <Field label="Kosten/M (EUR)" name="monthlyExpenses" type="number" placeholder="300" register={register} errors={errors} />
-                <Field label="Rate/M (EUR)" name="monthlyCreditRate" type="number" placeholder="800" register={register} errors={errors} />
+                <div className="space-y-1.5">
+                  <Label htmlFor="monthlyRent" className="text-xs text-muted-foreground">Kaltmiete/M (EUR) *</Label>
+                  <Input id="monthlyRent" type="number" step="any" className="h-9 text-sm" placeholder="1200"
+                    {...register("monthlyRent", {
+                      onChange: (e) => {
+                        const newKalt = Number((e.target as HTMLInputElement).value) || 0;
+                        const oldKalt = Number(watch("monthlyRent")) || 0;
+                        const oldWarm = Number(watch("warmRent")) || 0;
+                        const nk = oldWarm - oldKalt;
+                        setValue("monthlyRent", newKalt, { shouldValidate: true });
+                        setValue("warmRent", newKalt + nk, { shouldValidate: true });
+                      },
+                    })}
+                  />
+                  {errors.monthlyRent && <p className="text-xs text-destructive">{errors.monthlyRent.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="warmRent" className="text-xs text-muted-foreground">Warmmiete/M (optional)</Label>
+                  <Input id="warmRent" type="number" step="any" className="h-9 text-sm" placeholder="1400"
+                    value={watch("warmRent") ?? ""}
+                    {...register("warmRent")}
+                  />
+                  {errors.warmRent && <p className="text-xs text-destructive">{errors.warmRent?.message as string}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="nkRent" className="text-xs text-muted-foreground">Nebenkosten/M (berechnet)</Label>
+                  <Input id="nkRent" type="number" step="any" className="h-9 text-sm bg-muted/50" placeholder="200"
+                    value={Math.round(((Number(watch("warmRent")) || 0) - (Number(watch("monthlyRent")) || 0)) * 100) / 100}
+                    onChange={(e) => {
+                      const newNK = Number(e.target.value) || 0;
+                      const kalt = Number(watch("monthlyRent")) || 0;
+                      setValue("warmRent", kalt + newNK, { shouldValidate: true });
+                    }}
+                  />
+                </div>
               </div>
-              <Field label="Cashflow/M (berechnet, editierbar)" name="monthlyCashflow" type="number" placeholder="100" register={register} errors={errors} />
-              <Field label="Zinssatz (%)" name="interestRate" type="number" placeholder="3.5" register={register} errors={errors} />
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Wird automatisch berechnet</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <span className="text-muted-foreground">Aktueller Wert</span>
+                  <span>{formatCurrency(Number(watch("currentValue")) || Number(purchasePrice) || 0)}</span>
+                  <span className="text-muted-foreground">Cashflow/M</span>
+                  <span>{formatCurrency(calcMonthlyCashflow(Number(monthlyRent), Number(monthlyExpenses), Number(monthlyCreditRate)))}</span>
+                </div>
+              </div>
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Finanzierung &amp; Kosten (optional)</summary>
+                <div className="pt-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Restschuld (EUR)" name="remainingDebt" type="number" placeholder="0" register={register} errors={errors} />
+                    <Field label="Rate/M (EUR)" name="monthlyCreditRate" type="number" placeholder="0" register={register} errors={errors} />
+                  </div>
+                  <Field label="Zinssatz (%)" name="interestRate" type="number" placeholder="0" register={register} errors={errors} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Instandhaltung €/qm·Jahr" name="instandhaltungProSqm" type="number" placeholder="20" register={register} errors={errors} />
+                    <Field label="Kosten/M (EUR)" name="monthlyExpenses" type="number" placeholder="0" register={register} errors={errors} />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Bei Wohnfläche in Schritt 3 wird Kosten/M aus Rücklage berechnet.</p>
+                </div>
+              </details>
             </div>
           </div>
 
           <div className={step === 2 ? "block" : "hidden"}>
             <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Alle Angaben optional – verbessern Rendite, AfA und Kostenberechnung.</p>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Wohnfläche (m²)" name="sqm" type="number" placeholder="120" register={register} errors={errors} />
-                <Field label="Baujahr" name="yearBuilt" type="number" placeholder="1975" register={register} errors={errors} />
+                <Field label="Wohnfläche (m²)" name="sqm" type="number" placeholder="0 oder z.B. 120" register={register} errors={errors} />
+                <Field label="Baujahr" name="yearBuilt" type="number" placeholder="0 oder z.B. 1975" register={register} errors={errors} />
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-                <Field label="Gebäudeanteil (%)" name="buildingSharePercent" type="number" placeholder="80" register={register} errors={errors} />
-                <Field label="Restnutzungsdauer (Jahre)" name="restnutzungsdauer" type="number" placeholder="50" register={register} errors={errors} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Gebäudeanteil = Anteil des Kaufpreises, der auf das Gebäude entfällt (Rest = Grund und Boden). Nur der Gebäudeanteil ist abschreibbar. Restnutzungsdauer für lineare AfA (z.B. 50 Jahre).
-              </p>
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">AfA (Steuer) – optional</summary>
+                <div className="pt-3 grid grid-cols-2 gap-3">
+                  <Field label="Gebäudeanteil (%)" name="buildingSharePercent" type="number" placeholder="80" register={register} errors={errors} />
+                  <Field label="Restnutzungsdauer (Jahre)" name="restnutzungsdauer" type="number" placeholder="50" register={register} errors={errors} />
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">Nur Gebäudeanteil ist abschreibbar; Restnutzungsdauer für lineare AfA.</p>
+              </details>
             </div>
           </div>
 

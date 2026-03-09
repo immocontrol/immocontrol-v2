@@ -45,7 +45,7 @@ const PropertyContext = createContext<PropertyContextType | undefined>(undefined
 const FIELD_MAP: Record<string, string> = {
   name: "name", location: "location", address: "address", type: "type",
   units: "units", purchasePrice: "purchase_price", purchaseDate: "purchase_date",
-  currentValue: "current_value", monthlyRent: "monthly_rent", monthlyExpenses: "monthly_expenses",
+  currentValue: "current_value", monthlyRent: "monthly_rent", warmRent: "warm_rent", monthlyExpenses: "monthly_expenses",
   monthlyCreditRate: "monthly_credit_rate", monthlyCashflow: "monthly_cashflow",
   remainingDebt: "remaining_debt", interestRate: "interest_rate", sqm: "sqm",
   yearBuilt: "year_built", ownership: "ownership",
@@ -63,6 +63,7 @@ interface PropertyDbRow {
   purchase_date: string;
   current_value: number;
   monthly_rent: number;
+  warm_rent?: number | null;
   monthly_expenses: number;
   monthly_credit_rate: number;
   monthly_cashflow: number;
@@ -86,6 +87,7 @@ const mapDbToProperty = (row: PropertyDbRow): Property => ({
   purchaseDate: row.purchase_date,
   currentValue: Number(row.current_value),
   monthlyRent: Number(row.monthly_rent),
+  warmRent: row.warm_rent != null ? Number(row.warm_rent) : undefined,
   monthlyExpenses: Number(row.monthly_expenses),
   monthlyCreditRate: Number(row.monthly_credit_rate),
   monthlyCashflow: Number(row.monthly_cashflow),
@@ -183,6 +185,7 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         purchase_date: dbFields.purchase_date || property.purchaseDate,
         current_value: dbFields.current_value ?? property.currentValue,
         monthly_rent: dbFields.monthly_rent ?? property.monthlyRent,
+        warm_rent: dbFields.warm_rent ?? property.warmRent ?? null,
         monthly_expenses: dbFields.monthly_expenses ?? property.monthlyExpenses,
         monthly_credit_rate: dbFields.monthly_credit_rate ?? property.monthlyCreditRate,
         monthly_cashflow: dbFields.monthly_cashflow ?? property.monthlyCashflow,
@@ -263,6 +266,7 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         purchase_date: dbFields.purchase_date ?? property.purchaseDate,
         current_value: dbFields.current_value ?? property.currentValue,
         monthly_rent: dbFields.monthly_rent ?? property.monthlyRent,
+        warm_rent: dbFields.warm_rent ?? property.warmRent ?? null,
         monthly_expenses: dbFields.monthly_expenses ?? property.monthlyExpenses,
         monthly_credit_rate: dbFields.monthly_credit_rate ?? property.monthlyCreditRate,
         monthly_cashflow: dbFields.monthly_cashflow ?? property.monthlyCashflow,

@@ -17,6 +17,7 @@ export const propertyRowSchema = z.object({
   purchase_date: z.string().default(""),
   current_value: z.coerce.number().default(0),
   monthly_rent: z.coerce.number().default(0),
+  warm_rent: z.coerce.number().nullable().optional(),
   monthly_expenses: z.coerce.number().default(0),
   monthly_credit_rate: z.coerce.number().default(0),
   monthly_cashflow: z.coerce.number().default(0),

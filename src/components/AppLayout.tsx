@@ -474,7 +474,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <ScrollProgress />
       <KeyboardShortcuts />
       {/* UI-6/UI-27: glass-header + page-header */}
-      <header className="sticky top-0 z-[150] border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header overflow-visible">
+      <header
+        className="sticky top-0 z-[150] border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header overflow-visible md:pt-0"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <div className="container flex h-14 items-center justify-between overflow-visible">
           <div className="flex items-center gap-3">
             <Link to={ROUTES.HOME} className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="ImmoControl Home">

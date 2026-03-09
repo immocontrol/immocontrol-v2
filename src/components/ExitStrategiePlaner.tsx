@@ -4,7 +4,7 @@
  * Vergleich "Halten vs. Verkaufen vs. Refinanzieren".
  */
 import { memo, useMemo, useState } from "react";
-import { LogOut, TrendingUp, Clock, Calculator, ChevronDown, ChevronUp, Building2 } from "lucide-react";
+import { LogOut, TrendingUp, Clock, Calculator, ChevronDown, ChevronUp, Building2, Sparkles, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -13,6 +13,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatPercentDE } from "@/lib/formatters";
+import { toast } from "sonner";
+import { handleError } from "@/lib/handleError";
+import { isDeepSeekConfigured, suggestExitStrategieInterpretation } from "@/integrations/ai/extractors";
 
 interface ExitAnalysis {
   propertyId: string;
@@ -35,6 +38,7 @@ const ExitStrategiePlaner = memo(() => {
   const { user } = useAuth();
   const { properties } = useProperties();
   const [expanded, setExpanded] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [appreciationRate, setAppreciationRate] = useState(2); // % p.a.
   const [sellingCosts, setSellingCosts] = useState(8); // % of sale price (Makler + Notar + Steuer)
 
@@ -123,9 +127,44 @@ const ExitStrategiePlaner = memo(() => {
           <LogOut className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold">Exit-Strategie-Planer</h3>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
-          {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        </Button>
+        <div className="flex items-center gap-1">
+          {isDeepSeekConfigured() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 text-[10px] px-1.5"
+              disabled={aiLoading}
+              onClick={async () => {
+                setAiLoading(true);
+                try {
+                  const holdCount = analyses.filter((a) => a.recommendation === "halten").length;
+                  const sellCount = analyses.filter((a) => a.recommendation === "verkaufen").length;
+                  const waitCount = analyses.filter((a) => a.recommendation === "warten").length;
+                  const text = await suggestExitStrategieInterpretation({
+                    propertyCount: analyses.length,
+                    holdCount,
+                    sellCount,
+                    waitCount,
+                    totalNetProceeds: analyses.reduce((s, a) => s + a.netProceeds, 0),
+                    totalAnnualCashflow: analyses.reduce((s, a) => s + a.annualCashflow, 0),
+                  });
+                  if (text) toast.info(text, { duration: 8000 });
+                } catch (e) {
+                  handleError(e, { context: "ai", details: "exitStrategie", showToast: true });
+                } finally {
+                  setAiLoading(false);
+                }
+              }}
+              aria-label="KI Einschätzung"
+            >
+              {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              KI
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
+            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </Button>
+        </div>
       </div>
 
       {/* Settings */}

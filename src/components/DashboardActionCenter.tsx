@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt, Store } from "lucide-react";
+import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt, Store, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -117,8 +117,11 @@ const DashboardActionCenter = () => {
             <span className="text-[10px] bg-loss/15 text-loss px-2 py-0.5 rounded-full font-bold">{totalActions}</span>
           )}
         </h2>
-        {/* Synergy 3: Quick context stats */}
+        {/* Synergy 3: Quick context stats + Benachrichtigungen */}
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <Link to={ROUTES.BENACHRICHTIGUNGEN} className="flex items-center gap-0.5 hover:text-primary transition-colors touch-target min-h-[36px] items-center" aria-label="Fristen und Benachrichtigungen">
+            <Bell className="h-3 w-3" /> Fristen & Benachrichtigungen
+          </Link>
           <span className="flex items-center gap-0.5"><Users className="h-3 w-3" /> {stats.activeTenants} Mieter</span>
           <span className="flex items-center gap-0.5"><Wrench className="h-3 w-3" /> {stats.handworkerContacts} Handwerker</span>
         </div>

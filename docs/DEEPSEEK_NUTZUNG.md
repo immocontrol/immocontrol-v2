@@ -29,6 +29,12 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 | **Kontakte** | Kontakte → Add/Edit | Button „KI Vorschlag“ (suggestContactFollowUp): Vorschlag für Notizen oder Follow-up (Name, Kategorie, bestehende Notizen). |
 | **Aufgaben** | Aufgaben → Bearbeiten | Button „KI Beschreibung" (suggestTodoDescription): Kurzbeschreibung aus dem Aufgabentitel (1–2 Sätze). |
 | **Darlehen** | Darlehen / AddLoanDialog | Button „Verbessern" (improveText) für Notizen: Rechtschreibung, Stil, Formulierung für Darlehensnotizen. |
+| **Portfolio-Stresstest** | Stress-Test-Seite | Button „KI-Einschätzung" (suggestStressTestInterpretation): Kurze Einschätzung und Handlungsempfehlung zum Stress-Test-Ergebnis. |
+| **Mietspiegel-Check** | Mietspiegel-Seite | Button „KI" pro Objekt (suggestMietspiegelInterpretation): Einschätzung ob Miete marktgerecht, Potenzial §558 BGB. |
+| **Steuer-Optimierung** | Steuer-Cockpit | Button „KI Steuer-Tipps" (suggestSteuerTipps): Personalisierte Steuer-Tipps aus AfA, Zinsen, Miete, Grenzsteuersatz. |
+| **Portfolio-Diversifikation** | Diversifikation-Seite | Button „KI Einschätzung" (suggestDiversificationInterpretation): Risiko-Kommentar zur Regions- und Objekttyp-Verteilung. |
+| **Exit-Strategie-Planer** | Steuer-Cockpit | Button „KI" (suggestExitStrategieInterpretation): Einschätzung Halten vs. Verkaufen, Spekulationsfrist. |
+| **Umschuldungs-Rechner** | Refinanzierungs-Seite | Button „KI" (suggestRefinancingInterpretation): Lohnt sich Umschuldung, was beachten? |
 
 ---
 

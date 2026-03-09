@@ -1,0 +1,71 @@
+/**
+ * Stress-Test / Risiko-Simulation — Leerstand, Zinsanstieg,
+ * Mietausfall, Sondereffekte kombiniert durchrechnen.
+ */
+import { useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { ShieldAlert, PieChart, RefreshCw } from "lucide-react";
+import { PortfolioStresstest } from "@/components/PortfolioStresstest";
+import { useProperties } from "@/context/PropertyContext";
+import { ROUTES } from "@/lib/routes";
+import { EmptyState } from "@/components/EmptyState";
+import { Button } from "@/components/ui/button";
+
+const StressTestPage = () => {
+  const { properties } = useProperties();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Stress-Test – ImmoControl";
+  }, []);
+
+  if (properties.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8" role="main" aria-label="Stress-Test">
+        <EmptyState
+          icon={ShieldAlert}
+          title="Keine Objekte"
+          description="Stress-Tests basieren auf deinem Portfolio. Lege zuerst Objekte an."
+          action={
+            <button
+              type="button"
+              className="text-sm text-primary hover:underline"
+              onClick={() => navigate(ROUTES.OBJEKTE)}
+            >
+              Objekte anlegen
+            </button>
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-3xl mx-auto px-4 py-6" role="main" aria-label="Stress-Test">
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+          <ShieldAlert className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Stress-Test
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Portfolio-Resilienz: Leerstand, Zinsanstieg, Mietausfall und Sondereffekte durchrechnen
+        </p>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.DIVERSIFIKATION} className="gap-1.5 touch-target min-h-[36px]" aria-label="Diversifikation">
+              <PieChart className="h-3.5 w-3.5" /> Diversifikation
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.REFINANZIERUNG} className="gap-1.5 touch-target min-h-[36px]" aria-label="Refinanzierung">
+              <RefreshCw className="h-3.5 w-3.5" /> Refinanzierung
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      <PortfolioStresstest />
+    </div>
+  );
+};
+
+export default StressTestPage;
