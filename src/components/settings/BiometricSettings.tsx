@@ -1,23 +1,27 @@
 /**
  * Settings Page-Splitting — Biometric Authentication section extracted from Settings.tsx
- * Einheitliches Toggle-Zeilen-Layout wie alle anderen Einstellungen.
+ * Nutzt Face ID / Touch ID (Plattform-Authenticator), nicht Passkey/QR/Sicherheitsschlüssel.
+ * Bei Aktivierung wird automatisch eine Face-ID/Touch-ID-Credential angelegt.
  */
 import { useState, useEffect } from "react";
 import { Fingerprint, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
+import { registerBiometricCredential } from "@/lib/biometric";
 
 interface BiometricSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
   displayName: string;
 }
 
-export function BiometricSettings({ sectionRef }: BiometricSettingsProps) {
+export function BiometricSettings({ sectionRef, displayName }: BiometricSettingsProps) {
+  const { user } = useAuth();
   const [biometricEnabled, setBiometricEnabled] = useState(() => {
     try { return localStorage.getItem("immocontrol_biometric_enabled") === "true"; } catch { return false; }
   });
   const [biometricSupported, setBiometricSupported] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
   useEffect(() => {
     const check = async () => {
@@ -34,15 +38,35 @@ export function BiometricSettings({ sectionRef }: BiometricSettingsProps) {
     check();
   }, []);
 
-  const handleToggle = (enabled: boolean) => {
+  const handleToggle = async (enabled: boolean) => {
     if (enabled) {
       if (!biometricSupported) {
-        toast.error("Dein Gerät unterstützt keine biometrische Authentifizierung");
+        toast.error("Dein Gerät unterstützt keine biometrische Authentifizierung (Face ID / Touch ID)");
         return;
       }
-      setBiometricEnabled(true);
-      localStorage.setItem("immocontrol_biometric_enabled", "true");
-      toast.success("Biometrische Authentifizierung aktiviert!");
+      if (!user) {
+        toast.error("Bitte zuerst anmelden");
+        return;
+      }
+      setRegistering(true);
+      try {
+        const ok = await registerBiometricCredential(
+          user.id,
+          user.email ?? "",
+          displayName || user.email || "User",
+        );
+        if (ok) {
+          setBiometricEnabled(true);
+          localStorage.setItem("immocontrol_biometric_enabled", "true");
+          toast.success("Face ID / Touch ID aktiviert! Beim nächsten App-Start wird biometrisch entsperrt.");
+        } else {
+          toast.error("Face ID / Touch ID konnte nicht eingerichtet werden. Bitte erneut versuchen.");
+        }
+      } catch {
+        toast.error("Fehler beim Einrichten von Face ID / Touch ID");
+      } finally {
+        setRegistering(false);
+      }
     } else {
       setBiometricEnabled(false);
       localStorage.removeItem("immocontrol_biometric_enabled");
@@ -65,11 +89,18 @@ export function BiometricSettings({ sectionRef }: BiometricSettingsProps) {
         </p>
       ) : (
         <SettingsToggleRow
-          label="Biometrie für Login nutzen"
-          description={biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
+          label="Face ID / Touch ID für Login"
+          description={
+            registering
+              ? "Face ID wird eingerichtet…"
+              : biometricEnabled
+                ? "Face ID / Touch ID beim App-Start"
+                : "Aktiviere — Face ID wird einmalig eingerichtet"
+          }
           checked={biometricEnabled}
           onCheckedChange={handleToggle}
-          ariaLabel="Biometrie ein oder aus"
+          disabled={registering}
+          ariaLabel="Face ID / Touch ID ein oder aus"
         />
       )}
     </div>
