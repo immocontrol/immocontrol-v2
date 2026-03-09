@@ -36,25 +36,20 @@ export interface NavItem {
   shortcut: string;
 }
 
-/** Sektion innerhalb einer Gruppe — reduziert Untermenü-Clutter (z. B. Finanzen in 4 Blöcke). */
-export interface NavSection {
-  sectionLabel: string;
-  items: NavItem[];
-}
-
 export interface NavGroup {
   label: string;
   icon: typeof LayoutDashboard;
-  sections: NavSection[];
+  /** Flache Liste der Menüpunkte — keine Untermenüs/Sektionen */
+  items: NavItem[];
 }
 
 export type NavEntry = NavItem | NavGroup;
 
-export const isGroup = (e: NavEntry): e is NavGroup => "sections" in e;
+export const isGroup = (e: NavEntry): e is NavGroup => "items" in e && Array.isArray((e as NavGroup).items);
 
-/** Alle NavItems einer Gruppe (flach, für Shortcuts und aktive Route). */
+/** Alle NavItems einer Gruppe (für Shortcuts und aktive Route). */
 export function getGroupItems(g: NavGroup): NavItem[] {
-  return g.sections.flatMap((s) => s.items);
+  return g.items;
 }
 
 export const navEntries: NavEntry[] = [
@@ -63,83 +58,33 @@ export const navEntries: NavEntry[] = [
   {
     label: "Finanzen",
     icon: Landmark,
-    sections: [
-      {
-        sectionLabel: "Darlehen & Kredit",
-        items: [
-          { path: ROUTES.FINANZIERUNG, label: "Finanzierungs-Cockpit", icon: Wallet, shortcut: "" },
-          { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark, shortcut: "2" },
-          { path: ROUTES.REFINANZIERUNG, label: "Refinanzierung", icon: RefreshCw, shortcut: "" },
-        ],
-      },
-      {
-        sectionLabel: "Mieten & Betrieb",
-        items: [
-          { path: ROUTES.MIETEN_BETRIEB, label: "Mieten & Betrieb", icon: Receipt, shortcut: "3" },
-        ],
-      },
-      {
-        sectionLabel: "Steuer",
-        items: [
-          { path: ROUTES.STEUER_COCKPIT, label: "Steuer-Cockpit", icon: Receipt, shortcut: "" },
-        ],
-      },
-      {
-        sectionLabel: "Analyse & Risiko",
-        items: [
-          { path: ROUTES.ANALYSE_RISIKO, label: "Analyse & Risiko", icon: ShieldAlert, shortcut: "7" },
-        ],
-      },
+    items: [
+      { path: ROUTES.FINANZIERUNG, label: "Finanzierungs-Cockpit", icon: Wallet, shortcut: "" },
+      { path: ROUTES.LOANS, label: "Darlehen", icon: Landmark, shortcut: "2" },
+      { path: ROUTES.REFINANZIERUNG, label: "Refinanzierung", icon: RefreshCw, shortcut: "" },
+      { path: ROUTES.MIETEN_BETRIEB, label: "Mieten & Betrieb", icon: Receipt, shortcut: "3" },
+      { path: ROUTES.STEUER_COCKPIT, label: "Steuer-Cockpit", icon: Receipt, shortcut: "" },
+      { path: ROUTES.ANALYSE_RISIKO, label: "Analyse & Risiko", icon: ShieldAlert, shortcut: "7" },
     ],
   },
   {
     label: "Verwaltung",
     icon: FileText,
-    sections: [
-      {
-        sectionLabel: "Objekte & Beteiligungen",
-        items: [
-          { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
-          { path: ROUTES.SYNDICATION, label: "Syndication", icon: Users, shortcut: "" },
-        ],
-      },
-      {
-        sectionLabel: "Verträge & Kontakte",
-        items: [
-          { path: ROUTES.VERTRAEGE_KONTAKTE, label: "Verträge & Kontakte", icon: FileText, shortcut: "4" },
-        ],
-      },
-      {
-        sectionLabel: "Aufgaben & Dokumente",
-        items: [
-          { path: ROUTES.AUFGABEN_DOKUMENTE, label: "Aufgaben & Dokumente", icon: CheckSquare, shortcut: "6" },
-        ],
-      },
-      {
-        sectionLabel: "Sonstiges",
-        items: [
-          { path: ROUTES.BENACHRICHTIGUNGEN, label: "Benachrichtigungen", icon: Bell, shortcut: "" },
-        ],
-      },
+    items: [
+      { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
+      { path: ROUTES.SYNDICATION, label: "Syndication", icon: Users, shortcut: "" },
+      { path: ROUTES.VERTRAEGE_KONTAKTE, label: "Verträge & Kontakte", icon: FileText, shortcut: "4" },
+      { path: ROUTES.AUFGABEN_DOKUMENTE, label: "Aufgaben & Dokumente", icon: CheckSquare, shortcut: "6" },
+      { path: ROUTES.BENACHRICHTIGUNGEN, label: "Benachrichtigungen", icon: Bell, shortcut: "" },
     ],
   },
   {
     label: "Akquise",
     icon: Target,
-    sections: [
-      {
-        sectionLabel: "Deals & Bewertung",
-        items: [
-          { path: ROUTES.DEALS_BEWERTUNG, label: "Deals & Bewertung", icon: Target, shortcut: "8" },
-        ],
-      },
-      {
-        sectionLabel: "Besichtigungen & News",
-        items: [
-          { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
-          { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
-        ],
-      },
+    items: [
+      { path: ROUTES.DEALS_BEWERTUNG, label: "Deals & Bewertung", icon: Target, shortcut: "8" },
+      { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
+      { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
     ],
   },
 ];

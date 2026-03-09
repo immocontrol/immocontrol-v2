@@ -517,31 +517,24 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       <div className={`absolute top-full left-0 mt-1 min-w-[200px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] overflow-hidden ${
                         openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                       }`}>
-                        {entry.sections.map((section) => (
-                          <div key={section.sectionLabel}>
-                            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50 bg-muted/30">
-                              {section.sectionLabel}
-                            </div>
-                            {section.items.map((item) => {
-                              const isActive = isRouteActive(item.path, location.pathname);
-                              const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
-                              return (
-                                <Link
-                                  key={item.path}
-                                  to={item.path}
-                                  {...navAttr}
-                                  aria-current={isActive ? "page" : undefined}
-                                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                                    isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
-                                  }`}
-                                >
-                                  <item.icon className="h-4 w-4" />
-                                  {item.label}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        ))}
+                        {items.map((item) => {
+                          const isActive = isRouteActive(item.path, location.pathname);
+                          const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              {...navAttr}
+                              aria-current={isActive ? "page" : undefined}
+                              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+                                isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
+                              }`}
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {item.label}
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -694,42 +687,34 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             const group = navEntries.find(e => isGroup(e) && e.label === mobileActiveGroup) as NavGroup | undefined;
             if (!group) return null;
             return (
-              /* UPD-12: Submenü mit Sektionen — weniger Clutter */
-              <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in space-y-2">
-                {group.sections.map((section) => (
-                  <div key={section.sectionLabel}>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 pb-1">
-                      {section.sectionLabel}
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
-                      {section.items.map((item, idx) => {
-                        const isActive = isRouteActive(item.path, location.pathname);
-                        const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
-                        return (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            {...navAttr}
-                            onClick={() => setMobileActiveGroup(null)}
-                            className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl nav-label-responsive font-medium transition-all duration-200 ${
-                              isActive
-                                ? "bg-primary/12 text-primary shadow-sm border border-primary/20"
-                                : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
-                            }`}
-                            style={{ animationDelay: `${idx * 30}ms` }}
-                          >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
-                              isActive ? "bg-primary/15 text-primary" : "bg-secondary/50 text-muted-foreground"
-                            }`}>
-                              <item.icon className="h-4 w-4" />
-                            </div>
-                            <span className="nav-label-wrap max-w-[72px] leading-tight">{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <div className="border-b border-border bg-background/95 backdrop-blur-xl px-3 py-2 sub-nav-slide-in">
+                <div className="grid grid-cols-3 gap-2 mobile-nav-sub-grid">
+                  {getGroupItems(group).map((item, idx) => {
+                    const isActive = isRouteActive(item.path, location.pathname);
+                    const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        {...navAttr}
+                        onClick={() => setMobileActiveGroup(null)}
+                        className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl nav-label-responsive font-medium transition-all duration-200 ${
+                          isActive
+                            ? "bg-primary/12 text-primary shadow-sm border border-primary/20"
+                            : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground border border-transparent"
+                        }`}
+                        style={{ animationDelay: `${idx * 30}ms` }}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+                          isActive ? "bg-primary/15 text-primary" : "bg-secondary/50 text-muted-foreground"
+                        }`}>
+                          <item.icon className="h-4 w-4" />
+                        </div>
+                        <span className="nav-label-wrap max-w-[72px] leading-tight">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             );
           })()}
