@@ -316,10 +316,10 @@ const Settings = () => {
       >
         <div
           ref={mobileTabBarRef}
-          className="w-full h-full max-w-full overflow-x-auto scrollbar-hide overscroll-x-contain relative"
+          className="w-full h-full max-w-full overflow-x-auto overflow-y-hidden scrollbar-hide overscroll-x-contain scroll-smooth snap-x snap-mandatory relative"
         >
           <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
-          <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full">
+          <div className="flex gap-2 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full">
             {filteredSettingsSections.map((section) => {
               const SectionIcon = section.icon;
               const isActive = activeSection === section.id;
@@ -328,7 +328,7 @@ const Settings = () => {
                   key={section.id}
                   data-settings-tab={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  className={`flex shrink-0 snap-center snap-always items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-300 ease-out ${
                     isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
                   }`}
                 >
