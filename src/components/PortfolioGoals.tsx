@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Target, Plus, Trash2, TrendingUp, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
@@ -69,7 +70,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Ziel gesetzt");
+      toastSuccess("Ziel gesetzt");
       setForm({ title: "", type: "value", target: 0, deadline: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["portfolio_goals"] });
@@ -131,9 +132,9 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
                   <input type="date" value={form.deadline} onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))} className="h-9 text-sm w-full rounded-md border border-input bg-background px-3 py-1" />
                 </div>
               </div>
-              <Button onClick={() => addMutation.mutate()} className="w-full" disabled={addMutation.isPending || !form.title.trim() || form.target <= 0}>
+              <LoadingButton onClick={() => addMutation.mutate()} className="w-full" loading={addMutation.isPending} disabled={addMutation.isPending || !form.title.trim() || form.target <= 0}>
                 Ziel speichern
-              </Button>
+              </LoadingButton>
             </div>
           </DialogContent>
         </Dialog>

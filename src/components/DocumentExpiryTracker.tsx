@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 
 interface DocExpiry {
@@ -61,7 +61,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Dokument gespeichert");
+      toastSuccess("Dokument gespeichert");
       setForm({ name: "", expiry_date: "", notes: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["doc_expiry", propertyId] });

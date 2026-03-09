@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
@@ -60,7 +60,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Wertentwicklung eingetragen");
+      toastSuccess("Wertentwicklung eingetragen");
       setForm({ value: 0, date: new Date().toISOString().split("T")[0], note: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["value_history", propertyId] });

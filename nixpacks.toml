@@ -1,0 +1,6 @@
+# Nixpacks config for Railway — reproducible install (Node version via package.json engines or .nvmrc)
+[phases.install]
+cmds = ["npm ci"]
+
+[variables]
+NODE_ENV = "production"

@@ -31,6 +31,15 @@ const MIMES = {
 
 createServer(async (req, res) => {
   const pathname = new URL(req.url || "/", "http://x").pathname;
+
+  /* Health check for Railway (and load balancers) — must return 200 */
+  if (pathname === "/health" || pathname === "/api/health") {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
   const path = pathname === "/" ? "/index.html" : pathname;
   const filePath = resolve(ROOT, path.replace(/^\//, "").replace(/\.\./g, ""));
   if (!filePath.startsWith(ROOT)) {
@@ -47,6 +56,9 @@ createServer(async (req, res) => {
       res.setHeader("Cache-Control", NO_CACHE);
     } else if (path === "/index.html" || path.endsWith("/index.html")) {
       res.setHeader("Cache-Control", NO_CACHE_HTML);
+    } else if (path.startsWith("/assets/") && /[.-][a-f0-9]{8,}\.(js|css)$/i.test(path)) {
+      /* Hashed assets (Vite): immutable, long cache */
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     }
     res.end(data);
   } catch (err) {

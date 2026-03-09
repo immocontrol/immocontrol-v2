@@ -7,7 +7,7 @@ import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Versicherung gespeichert");
+      toastSuccess("Versicherung gespeichert");
       setForm({ type: "Gebäudeversicherung", provider: "", annual_premium: 0, renewal_date: "", policy_number: "", notes: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["insurances", propertyId] });
