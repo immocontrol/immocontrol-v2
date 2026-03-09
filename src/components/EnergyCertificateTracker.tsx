@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Plus, AlertTriangle, CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +48,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     certificate_type: "verbrauch",
     energy_class: "",
@@ -101,6 +106,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["energy_certificates"] });
       toast.success("Gelöscht");
+      setDeleteTargetId(null);
     },
     onError: (e: unknown) => {
       handleError(e, { context: "supabase", details: "energy_certificates.delete", showToast: false });
@@ -186,7 +192,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
                   ) : (
                     <Badge className="bg-profit/15 text-profit border-profit/30"><CheckCircle className="h-3 w-3 mr-1" /> Gültig</Badge>
                   )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { lastDeletedCertIdRef.current = cert.id; deleteMutation.mutate(cert.id); }} aria-label="Energieausweis löschen">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTargetId(cert.id)} aria-label="Energieausweis löschen">
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 </div>
@@ -195,6 +201,29 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Energieausweis löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Der Eintrag wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) {
+                  lastDeletedCertIdRef.current = deleteTargetId;
+                  deleteMutation.mutate(deleteTargetId);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

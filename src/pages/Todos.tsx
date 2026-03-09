@@ -36,7 +36,9 @@ import {
 import { TodoEditDialog } from "@/components/todos/TodoEditDialog";
 import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnimation";
 import { useHaptic } from "@/hooks/useHaptic";
+import { useUndoToast } from "@/hooks/useUndoToast";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Todo {
   id: string;
@@ -132,6 +134,7 @@ const Todos = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteBulkCompletedIds, setDeleteBulkCompletedIds] = useState<string[] | null>(null);
   const [visibleTodoCount, setVisibleTodoCount] = useState(50);
   const quickInputRef = useRef<HTMLInputElement>(null);
 
@@ -206,6 +209,7 @@ const Todos = () => {
     errorMessage: "Fehler beim Aktualisieren",
   });
 
+  const { showUndoToast } = useUndoToast();
   const deleteMutation = useOptimisticMutation<Todo, string>({
     queryKey: todoQueryKey,
     mutationFn: async (id) => {
@@ -214,7 +218,7 @@ const Todos = () => {
       return { id, user_id: "", title: "", description: "", due_date: null, due_time: null, priority: 0, completed: false, completed_at: null, project: "", labels: [], sort_order: 0, created_at: "", updated_at: "" } satisfies Todo;
     },
     optimisticUpdate: (old, id) => (old || []).filter((t) => t.id !== id),
-    successMessage: "Aufgabe gelöscht",
+    successMessage: undefined,
     errorMessage: "Fehler beim Löschen",
   });
 
@@ -525,8 +529,7 @@ const Todos = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => {
                     const completed = todos.filter(t => t.completed);
-                    completed.forEach(t => deleteMutation.mutate(t.id));
-                    toast.success(`${completed.length} erledigte gelöscht`);
+                    if (completed.length > 0) setDeleteBulkCompletedIds(completed.map(t => t.id));
                   }} className="text-destructive">
                     <Trash className="h-3.5 w-3.5 mr-2" /> Erledigte löschen
                   </DropdownMenuItem>
@@ -639,46 +642,47 @@ const Todos = () => {
         )}
 
         {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 empty-state-float">
-              <CheckSquare className="h-8 w-8 text-primary" />
-            </div>
-            <h3 className="text-base font-semibold mb-1">
-              {view === "completed" ? "Keine erledigten Aufgaben" : "Keine Aufgaben"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {view === "today" ? "Heute nichts geplant — genieße den freien Tag!" : view === "upcoming" ? "Keine bevorstehenden Aufgaben" : view === "completed" ? "Erledigte Aufgaben erscheinen hier." : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."}
-            </p>
-            {(view === "inbox" || view === "today") && (
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button
-                  size="sm"
-                  className="gap-1.5 touch-target min-h-[44px]"
-                  onClick={() => {
-                    const input = document.querySelector<HTMLInputElement>("[data-todo-input]");
-                    input?.focus();
-                  }}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Aufgabe hinzufügen
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu CRM">
-                  <Target className="h-3.5 w-3.5" /> Zu CRM
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Deals">
-                  <Briefcase className="h-3.5 w-3.5" /> Zu Deals
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Berichte">
-                  <FileBarChart className="h-3.5 w-3.5" /> Berichte
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="gap-1.5 touch-target min-h-[44px]" aria-label="WGH-Scout">
-                  <Store className="h-3.5 w-3.5" /> WGH finden
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Besichtigung planen">
-                  <CalendarCheck className="h-3.5 w-3.5" /> Besichtigung planen
-                </Button>
-              </div>
-            )}
-          </div>
+          <EmptyState
+            icon={CheckSquare}
+            title={view === "completed" ? "Keine erledigten Aufgaben" : "Keine Aufgaben"}
+            description={
+              view === "today"
+                ? "Heute nichts geplant — genieße den freien Tag!"
+                : view === "upcoming"
+                  ? "Keine bevorstehenden Aufgaben."
+                  : view === "completed"
+                    ? "Erledigte Aufgaben erscheinen hier."
+                    : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."
+            }
+            action={
+              (view === "inbox" || view === "today") ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-1.5 touch-target min-h-[44px]"
+                    onClick={() => {
+                      const input = document.querySelector<HTMLInputElement>("[data-todo-input]");
+                      input?.focus();
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Aufgabe hinzufügen
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu CRM">
+                    <Target className="h-3.5 w-3.5" /> Zu CRM
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Deals">
+                    <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zu Berichte">
+                    <FileBarChart className="h-3.5 w-3.5" /> Berichte
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Besichtigung planen">
+                    <CalendarCheck className="h-3.5 w-3.5" /> Besichtigung
+                  </Button>
+                </div>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="space-y-1">
             {view === "inbox" && groupedByProject
@@ -743,13 +747,72 @@ const Todos = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Aufgabe löschen?</AlertDialogTitle>
-            <AlertDialogDescription>Die Aufgabe wird unwiderruflich gelöscht.</AlertDialogDescription>
+            <AlertDialogDescription>Die Aufgabe wird gelöscht. Du kannst sie im Toast „Rückgängig" wiederherstellen.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget); setDeleteTarget(null); } }}
+              onClick={() => {
+                if (!deleteTarget || !user) return;
+                const todoToRestore = todos.find((t) => t.id === deleteTarget);
+                deleteMutation.mutate(deleteTarget);
+                setDeleteTarget(null);
+                if (todoToRestore) {
+                  showUndoToast({
+                    message: "Aufgabe gelöscht",
+                    onUndo: async () => {
+                      const { error } = await fromTable("todos").insert({
+                        user_id: user.id,
+                        title: todoToRestore.title,
+                        description: todoToRestore.description ?? "",
+                        due_date: todoToRestore.due_date,
+                        due_time: todoToRestore.due_time,
+                        priority: todoToRestore.priority,
+                        completed: todoToRestore.completed,
+                        completed_at: todoToRestore.completed_at,
+                        project: todoToRestore.project ?? "",
+                        labels: todoToRestore.labels ?? [],
+                        sort_order: todoToRestore.sort_order ?? 0,
+                      }).select().single();
+                      if (error) {
+                        toast.error("Wiederherstellen fehlgeschlagen");
+                        return;
+                      }
+                      qc.invalidateQueries({ queryKey: todoQueryKey });
+                      toast.success("Aufgabe wiederhergestellt");
+                    },
+                  });
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteBulkCompletedIds?.length} onOpenChange={(open) => { if (!open) setDeleteBulkCompletedIds(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Erledigte Aufgaben löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteBulkCompletedIds?.length === 1
+                ? "Eine erledigte Aufgabe wird unwiderruflich gelöscht."
+                : `${deleteBulkCompletedIds?.length ?? 0} erledigte Aufgaben werden unwiderruflich gelöscht.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteBulkCompletedIds?.length) {
+                  deleteBulkCompletedIds.forEach(id => deleteMutation.mutate(id));
+                  toast.success(`${deleteBulkCompletedIds.length} erledigte gelöscht`);
+                  setDeleteBulkCompletedIds(null);
+                }
+              }}
             >
               Löschen
             </AlertDialogAction>

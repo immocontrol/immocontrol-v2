@@ -40,6 +40,12 @@ export const ThemeProvider = ({ children, defaultTheme = "dark" }: { children: R
     root.classList.add(resolvedTheme);
   }, [resolvedTheme]);
 
+  /* UI-Zoom aus Einstellungen anwenden (Schrift/Buttons kleiner oder größer) */
+  useEffect(() => {
+    const z = localStorage.getItem("immocontrol_ui_zoom") || "100";
+    document.documentElement.dataset.uiZoom = z;
+  }, []);
+
   useEffect(() => {
     if (theme !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");

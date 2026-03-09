@@ -26,6 +26,7 @@ import { focusNextField } from "@/hooks/useEnterToNext";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { scrollToFirstError } from "@/lib/scrollToFirstError";
+import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
 import { calcMonthlyCashflow } from "@/lib/calculations";
 import { formatCurrency } from "@/lib/formatters";
 import { StepIndicator } from "@/components/StepIndicator";
@@ -169,6 +170,8 @@ const AddPropertyDialog = () => {
     },
     [reset, clearDraft]
   );
+
+  useFocusFirstInput(open, formRef);
 
   const goNext = useCallback(async (e?: React.MouseEvent) => {
     e?.preventDefault();

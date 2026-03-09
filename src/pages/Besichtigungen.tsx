@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES, viewingsWithId } from "@/lib/routes";
+import { EmptyState } from "@/components/EmptyState";
 import {
   Camera,
   MapPin,
@@ -528,27 +529,24 @@ const Besichtigungen = () => {
           ))}
         </div>
       ) : filteredViewings.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Camera className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-1">Keine Besichtigungen</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-              Legen Sie eine Besichtigung an, um Notizen, Pro/Kontra-Punkte, Bilder und Videos zu erfassen.
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Tipp: Deals in Stage „Besichtigung“ erzeugen automatisch einen Besichtigungseintrag.{" "}
-              <Link to={ROUTES.DEALS} className="text-primary hover:underline">Zu Deals</Link>
-              <span className="text-muted-foreground mx-1">·</span>
-              <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline">Dokumente</Link>
-              <span className="text-muted-foreground mx-1">·</span>
-              <Link to={ROUTES.CRM_SCOUT} className="text-primary hover:underline">WGH finden</Link>
-            </p>
-            <Button onClick={() => openAdd(false)} className="touch-target min-h-[44px]">
-              <Plus className="h-4 w-4 mr-2" />
-              Erste Besichtigung anlegen
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Camera}
+          title="Noch keine Besichtigungen"
+          description="Lege eine Besichtigung an, um Notizen, Pro/Kontra-Punkte, Bilder und Videos zu erfassen. Deals in Stage Besichtigung erzeugen automatisch einen Eintrag."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={() => openAdd(false)} className="touch-target min-h-[44px] gap-1.5">
+                <Plus className="h-4 w-4" /> Besichtigung anlegen
+              </Button>
+              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+                <Link to={ROUTES.DEALS}>Zu Deals</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+                <Link to={ROUTES.CRM_SCOUT}>WGH finden</Link>
+              </Button>
+            </div>
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2" data-testid="viewing-list" role="list">
           {filteredViewings.map((v) => (

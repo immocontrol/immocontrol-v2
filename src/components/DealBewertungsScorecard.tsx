@@ -149,7 +149,7 @@ const DealBewertungsScorecard = memo(() => {
           <div className="grid grid-cols-3 gap-2">
             <Input className="h-7 text-[10px]" type="number" placeholder="Kaufpreis €" value={newDeal.price || ""} onChange={(e) => setNewDeal((p) => ({ ...p, price: parseFloat(e.target.value) || 0 }))} />
             <Input className="h-7 text-[10px]" type="number" placeholder="m²" value={newDeal.sqm || ""} onChange={(e) => setNewDeal((p) => ({ ...p, sqm: parseFloat(e.target.value) || 0 }))} />
-            <Input className="h-7 text-[10px]" type="number" placeholder="Miete/M €" value={newDeal.monthlyRent || ""} onChange={(e) => setNewDeal((p) => ({ ...p, monthlyRent: parseFloat(e.target.value) || 0 }))} />
+            <Input className="h-7 text-[10px]" type="number" placeholder="Kaltmiete/M €" value={newDeal.monthlyRent || ""} onChange={(e) => setNewDeal((p) => ({ ...p, monthlyRent: parseFloat(e.target.value) || 0 }))} />
           </div>
 
           {/* Scoring */}
@@ -221,7 +221,7 @@ const DealBewertungsScorecard = memo(() => {
             </div>
             <div className="grid grid-cols-3 gap-1 mt-1">
               {deal.price > 0 && <div><span className="text-muted-foreground">Preis</span><p className="font-medium">{formatCurrency(deal.price)}</p></div>}
-              {deal.monthlyRent > 0 && <div><span className="text-muted-foreground">Miete/M</span><p className="font-medium">{formatCurrency(deal.monthlyRent)}</p></div>}
+              {deal.monthlyRent > 0 && <div><span className="text-muted-foreground">Kaltmiete/M</span><p className="font-medium">{formatCurrency(deal.monthlyRent)}</p></div>}
               {deal.price > 0 && deal.monthlyRent > 0 && (
                 <div><span className="text-muted-foreground">Rendite</span><p className="font-medium">{formatPercentDE(deal.monthlyRent * 12 / deal.price * 100)}</p></div>
               )}

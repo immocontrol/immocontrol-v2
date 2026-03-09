@@ -132,13 +132,13 @@ const PropertyCard = memo(({
             {appreciation >= 0 ? "+" : ""}{appreciation.toFixed(1)}%
           </div>
         </div>
-        <div>
-          <div className="text-xs text-muted-foreground mb-0.5">Miete/M</div>
+        <div title="Kaltmiete pro Monat (ohne NK)">
+          <div className="text-xs text-muted-foreground mb-0.5">Kaltmiete/M</div>
           <div className="font-semibold">{formatCurrency(monthlyRent)}</div>
           {/* Improvement 1: Annual rent */}
           <div className="text-xs text-muted-foreground">{formatCurrency(monthlyRent * 12)}/J</div>
         </div>
-        <div>
+        <div title="Mieteinnahmen minus Bewirtschaftung und Kreditrate pro Monat">
           <div className="text-xs text-muted-foreground mb-0.5">Cashflow/M</div>
           <div className={`font-semibold ${monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
             {formatCurrency(monthlyCashflow)}
@@ -156,7 +156,7 @@ const PropertyCard = memo(({
             </div>
           )}
         </div>
-        <div>
+        <div title="Brutto-Rendite = 12 × Kaltmiete ÷ Kaufpreis (in %)">
           <div className="text-xs text-muted-foreground mb-0.5">Rendite</div>
           <div className={`font-semibold flex items-center gap-0.5 ${bruttoRendite >= 5 ? "text-profit" : bruttoRendite >= 3 ? "text-gold" : "text-loss"}`}>
             <Percent className="h-3 w-3" />

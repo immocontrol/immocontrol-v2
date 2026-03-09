@@ -11,6 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -40,6 +44,8 @@ const Nebenkosten = () => {
     prepayments: "0",
   });
   const [itemForm, setItemForm] = useState({ category: "Grundsteuer", description: "", total_amount: "", distribution_key: "Fläche", tenant_amount: "" });
+  const [deleteItemTarget, setDeleteItemTarget] = useState<string | null>(null);
+  const [deleteBillingTarget, setDeleteBillingTarget] = useState<string | null>(null);
   const lastDeletedItemIdRef = useRef<string | null>(null);
   const lastDeletedBillingIdRef = useRef<string | null>(null);
 
@@ -134,6 +140,7 @@ const Nebenkosten = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["utility_billing_items", selectedBilling] });
       updateBillingTotals();
+      setDeleteItemTarget(null);
     },
     onError: (e: unknown) => {
       handleError(e, { context: "supabase", details: "utility_billing_items.delete", showToast: false });
@@ -151,10 +158,12 @@ const Nebenkosten = () => {
     onSuccess: () => {
       toast.success("Abrechnung gelöscht");
       setSelectedBilling(null);
+      setDeleteBillingTarget(null);
       qc.invalidateQueries({ queryKey: ["utility_billings"] });
     },
     onError: (e: unknown) => {
       handleError(e, { context: "supabase", details: "utility_billings/items.delete", showToast: false });
+      lastDeletedBillingIdRef.current = deleteBillingTarget;
       toastErrorWithRetry("Fehler beim Löschen der Abrechnung", () => { if (lastDeletedBillingIdRef.current) deleteBilling.mutate(lastDeletedBillingIdRef.current); });
     },
   });
@@ -488,7 +497,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                       <span className="text-xs text-muted-foreground">{formatCurrency(Number(item.total_amount))}</span>
                       <span className="font-medium">{formatCurrency(Number(item.tenant_amount))}</span>
                       {selectedBillingData.status === "draft" && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { lastDeletedItemIdRef.current = item.id; deleteItem.mutate(item.id); }} aria-label="Position löschen">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDeleteItemTarget(item.id)} aria-label="Position löschen">
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
@@ -596,7 +605,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
                           Gesamt: {formatCurrency(Number(b.total_costs))}
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); lastDeletedBillingIdRef.current = b.id; deleteBilling.mutate(b.id); }} aria-label="Abrechnung löschen">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); setDeleteBillingTarget(b.id); }} aria-label="Abrechnung löschen">
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -609,6 +618,52 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       )}
       {/* Automatische Nebenkostenabrechnung — moved from Dashboard */}
       <AutoNebenkosten />
+
+      <AlertDialog open={!!deleteItemTarget} onOpenChange={(open) => { if (!open) setDeleteItemTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Position löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die Position wird aus der Abrechnung entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteItemTarget) {
+                  lastDeletedItemIdRef.current = deleteItemTarget;
+                  deleteItem.mutate(deleteItemTarget);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteBillingTarget} onOpenChange={(open) => { if (!open) setDeleteBillingTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abrechnung löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die Nebenkostenabrechnung und alle zugehörigen Positionen werden unwiderruflich gelöscht.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteBillingTarget) {
+                  lastDeletedBillingIdRef.current = deleteBillingTarget;
+                  deleteBilling.mutate(deleteBillingTarget);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

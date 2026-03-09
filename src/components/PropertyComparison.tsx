@@ -19,7 +19,7 @@ export function PropertyComparison() {
     return [
       { label: "Kaufpreis", a: a.purchasePrice, b: b.purchasePrice, format: formatCurrency },
       { label: "Aktueller Wert", a: a.currentValue, b: b.currentValue, format: formatCurrency },
-      { label: "Miete/M", a: a.monthlyRent, b: b.monthlyRent, format: formatCurrency },
+      { label: "Kaltmiete/M", a: a.monthlyRent, b: b.monthlyRent, format: formatCurrency },
       { label: "Cashflow/M", a: a.monthlyCashflow, b: b.monthlyCashflow, format: formatCurrency },
       { label: "Brutto-Rendite", a: a.purchasePrice > 0 ? (a.monthlyRent * 12 / a.purchasePrice * 100) : 0, b: b.purchasePrice > 0 ? (b.monthlyRent * 12 / b.purchasePrice * 100) : 0, format: (v: number) => `${v.toFixed(2)}%` },
       { label: "Restschuld", a: a.remainingDebt, b: b.remainingDebt, format: formatCurrency },

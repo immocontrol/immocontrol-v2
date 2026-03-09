@@ -232,27 +232,33 @@ const Onboarding = () => {
           {/* Navigation */}
           <div className="flex items-center justify-between pt-2">
             {step > 0 ? (
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); prevStep(); }}>
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); prevStep(); }} className="touch-target min-h-[44px]">
                 <ChevronLeft className="h-4 w-4 mr-1" /> Zurück
               </Button>
             ) : (
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSkip(); }} className="text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSkip(); }} className="text-muted-foreground touch-target min-h-[44px]">
                 Überspringen
               </Button>
             )}
 
             {step < totalSteps - 1 ? (
-              <Button size="sm" onClick={(e) => { e.stopPropagation(); nextStep(); }}>
+              <Button size="sm" onClick={(e) => { e.stopPropagation(); nextStep(); }} className="touch-target min-h-[44px]">
                 Weiter <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
-              <Button
-                size="sm"
-                onClick={(e) => { e.stopPropagation(); handleComplete(); }}
-                disabled={saving}
-              >
-                {saving ? "Speichern..." : "Loslegen 🚀"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleSkip(); }} className="text-muted-foreground touch-target min-h-[44px]">
+                  Überspringen
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); handleComplete(); }}
+                  disabled={saving}
+                  className="touch-target min-h-[44px]"
+                >
+                  {saving ? "Speichern..." : "Loslegen 🚀"}
+                </Button>
+              </div>
             )}
           </div>
 

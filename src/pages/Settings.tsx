@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DataBackup } from "@/components/DataBackup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { useTheme } from "@/hooks/useTheme";
 import { TeamManagement } from "@/components/TeamManagement2";
@@ -68,6 +68,7 @@ const Settings = () => {
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [activeSection, setActiveSection] = useState("erscheinungsbild");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [uiZoom, setUIZoom] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("immocontrol_ui_zoom") || "100" : "100"));
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
@@ -318,6 +319,41 @@ const Settings = () => {
               );
             })}
           </div>
+
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2 mb-2">
+              <Type className="h-3.5 w-3.5" /> Schrift & Ansicht
+            </h3>
+            <p className="text-xs text-muted-foreground mb-2">
+              Text, Buttons und Abstände vergrößern oder verkleinern (wirkt wie Rein-/Rauszoomen).
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { value: "90", label: "Kleiner" },
+                { value: "100", label: "Standard" },
+                { value: "110", label: "Größer" },
+                { value: "120", label: "Sehr groß" },
+              ] as const).map(({ value, label }) => {
+                const isActive = uiZoom === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem("immocontrol_ui_zoom", value);
+                      document.documentElement.dataset.uiZoom = value;
+                      setUIZoom(value);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all touch-target min-h-[44px] ${
+                      isActive ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary/50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Profile */}
@@ -356,6 +392,14 @@ const Settings = () => {
           <Button type="submit" size="sm" disabled={loading}>
             Speichern
           </Button>
+          <div className="pt-2 border-t border-border">
+            <Link
+              to={ROUTES.ONBOARDING}
+              className="text-xs text-muted-foreground hover:text-primary hover:underline inline-flex items-center gap-1.5 touch-target min-h-[44px]"
+            >
+              Ersteinrichtung (Investoren-Typ & Strategie) erneut durchlaufen →
+            </Link>
+          </div>
         </form>
 
         {/* Extracted sub-components */}

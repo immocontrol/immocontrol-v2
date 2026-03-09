@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
@@ -110,6 +114,7 @@ const Wartungsplaner = () => {
   const qc = useQueryClient();
 
   const [open, setOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [filterProperty, setFilterProperty] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [searchText, setSearchText] = useState("");
@@ -234,6 +239,7 @@ const Wartungsplaner = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.maintenance.allList });
       toast.success("Gelöscht");
+      setDeleteTargetId(null);
     },
     onError: (err, id) => {
       handleError(err, { context: "supabase", details: "maintenance_items.delete", showToast: false });
@@ -315,7 +321,7 @@ const Wartungsplaner = () => {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button onClick={() => deleteMutation.mutate(item.id)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-loss">
+              <button onClick={() => setDeleteTargetId(item.id)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-loss" aria-label="Maßnahme löschen">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
@@ -636,6 +642,24 @@ const Wartungsplaner = () => {
           )}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Maßnahme löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die geplante Maßnahme wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

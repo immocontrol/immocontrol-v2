@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays, Info } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
@@ -471,6 +471,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           value={formatCurrency(stats.equity)}
           icon={<PiggyBank className="h-4 w-4" />}
           delay={50}
+          tooltip="Gesamtwert minus Darlehen = Eigenkapital im Portfolio"
         />
         <StatCard
           label="Mieteinnahmen/M"
@@ -480,6 +481,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           icon={<Wallet className="h-4 w-4" />}
           delay={100}
           href={ROUTES.RENT}
+          tooltip="Summe der Kaltmieten aller Objekte pro Monat"
         />
         <StatCard
           label="Cashflow/M"
@@ -488,6 +490,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           trend={stats.totalCashflow >= 0 ? "up" : "down"}
           icon={<TrendingUp className="h-4 w-4" />}
           delay={150}
+          tooltip="Mieteinnahmen minus Bewirtschaftung und Kreditrate = freier Cashflow pro Monat"
         />
         <StatCard
           label="Ø Wert/m²"
@@ -495,6 +498,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           subValue={`${totalSqm.toLocaleString("de-DE")} m² gesamt`}
           icon={<Ruler className="h-4 w-4" />}
           delay={200}
+          tooltip="Durchschnittlicher Wert pro Quadratmeter (Gesamtwert ÷ Wohnfläche)"
         />
       </div>
 
@@ -502,15 +506,31 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       {/* IMP-44-11: Add aria-label to quick KPI row for screen readers */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 card-stagger-enter" aria-label="Schnell-KPIs">
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
+            LTV
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help" aria-label="Hilfe zu LTV"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">Loan-to-Value: Darlehen in % des Gesamtwerts. Unter 60 % gilt als solide.</TooltipContent>
+            </Tooltip>
+          </p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow" title="Anteil nicht vermieteter Einheiten am Gesamtbestand">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow" title="Eigenkapitalrendite = Jahres-Cashflow / Eigenkapital">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">EK-Rendite</p>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
+            EK-Rendite
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help" aria-label="Hilfe zu EK-Rendite"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">Eigenkapitalrendite = Jahres-Cashflow ÷ Eigenkapital. Zeigt die Verzinsung deines eingesetzten Kapitals.</TooltipContent>
+            </Tooltip>
+          </p>
           <p className={`text-lg font-bold ${portfolioMetrics.cashOnCashReturn >= 5 ? "text-profit" : portfolioMetrics.cashOnCashReturn >= 3 ? "text-gold" : "text-muted-foreground"}`}>{portfolioMetrics.cashOnCashReturn.toFixed(1)}%</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">

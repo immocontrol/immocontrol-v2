@@ -11,6 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Wrench, Plus, AlertTriangle, CheckCircle, RotateCw, Trash2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -107,6 +111,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
     onError: createMutationErrorHandler("Dienstleistervertrag anlegen", "Fehler beim Anlegen"),
   });
 
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("service_contracts").delete().eq("id", id);
@@ -115,6 +120,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["service_contracts"] });
       toast.success("Gelöscht");
+      setDeleteTargetId(null);
     },
     onError: createMutationErrorHandler("Dienstleistervertrag löschen", "Fehler beim Löschen"),
   });
@@ -235,7 +241,7 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(c.id)} aria-label="Vertrag löschen">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTargetId(c.id)} aria-label="Vertrag löschen">
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </TableCell>
@@ -246,6 +252,24 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dienstleistervertrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Der Vertrag wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

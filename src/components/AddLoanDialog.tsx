@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Plus, ChevronRight, ChevronLeft, Landmark, Search, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { GERMAN_BANKS } from "@/data/germanBanks";
 import { StepIndicator } from "@/components/StepIndicator";
+import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
 import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 
 const LOAN_TYPE_LABELS: Record<string, string> = {
@@ -40,6 +41,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   const { announce } = useAccessibility();
   const { properties } = useProperties();
   const qc = useQueryClient();
+  const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -115,6 +117,8 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     setOpen(v);
     if (!v) resetForm();
   }, [resetForm]);
+
+  useFocusFirstInput(open, contentRef);
 
   const canGoNext = step === 0
     ? !!form.property_id && !!form.bank_name
@@ -238,7 +242,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
           </div>
         )}
 
-        <div className="space-y-4 min-h-[260px]">
+        <div ref={contentRef} className="space-y-4 min-h-[260px]">
           {step === 0 && (
             <div className="space-y-3">
               <div className="space-y-1">
@@ -328,6 +332,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
                 <Label className="text-xs">Tilgung %</Label>
                 <NumberInput value={form.repayment_rate} onChange={v => setForm(f => ({ ...f, repayment_rate: v }))} decimals className="h-9 text-sm" placeholder="0,00" />
               </div>
+              <p className="text-[10px] text-muted-foreground -mt-0.5">Zins + Tilgung in % p.a. – die monatliche Rate wird daraus berechnet.</p>
               <div className="space-y-1">
                 <Label className="text-xs">Rate/Monat (berechnet)</Label>
                 <NumberInput value={form.monthly_payment} onChange={v => setForm(f => ({ ...f, monthly_payment: v }))} decimals className="h-9 text-sm bg-secondary/50" placeholder="0,00" />

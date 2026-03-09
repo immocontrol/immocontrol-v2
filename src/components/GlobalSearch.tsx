@@ -86,6 +86,7 @@ export const GlobalSearch = () => {
       { id: "nav-deal-benchmark", title: "Deal-Benchmark", subtitle: "Erwartete vs. realisierte Rendite", path: ROUTES.DEAL_BENCHMARK },
       { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: ROUTES.BESICHTIGUNGEN },
       { id: "nav-settings", title: "Einstellungen", subtitle: "Profil & Theme", path: ROUTES.SETTINGS },
+      { id: "nav-shortcuts", title: "Tastenkombinationen", subtitle: "Liste aller Shortcuts (Ctrl+K, Ctrl+N, …)", path: `${ROUTES.SETTINGS}#tastenkombinationen` },
     ];
     return items.map(i => ({
       id: i.id,

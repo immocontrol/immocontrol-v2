@@ -8,6 +8,10 @@ import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { relativeTime } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
@@ -27,6 +31,7 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryText, setSummaryText] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const qc = useQueryClient();
 
   const handleSummarize = async () => {
@@ -85,6 +90,7 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.notes.byProperty(propertyId) });
       qc.invalidateQueries({ queryKey: queryKeys.timeline.byProperty(propertyId) });
+      setDeleteTargetId(null);
     },
     onError: (e: unknown) => {
       handleError(e, { context: "supabase", details: "property_notes.delete", showToast: false });
@@ -157,8 +163,9 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
                   {relativeTime(note.created_at)}
                 </span>
                 <button
-                  onClick={() => { lastDeletedNoteIdRef.current = note.id; deleteMutation.mutate(note.id); }}
+                  onClick={() => setDeleteTargetId(note.id)}
                   className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                  aria-label="Notiz löschen"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
@@ -167,6 +174,29 @@ const PropertyNotes = ({ propertyId }: { propertyId: string }) => {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notiz löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die Notiz wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) {
+                  lastDeletedNoteIdRef.current = deleteTargetId;
+                  deleteMutation.mutate(deleteTargetId);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

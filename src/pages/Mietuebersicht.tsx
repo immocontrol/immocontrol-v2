@@ -16,8 +16,9 @@ import MietTrendChart from "@/components/MietTrendChart";
 import RentIncreaseWizard from "@/components/RentIncreaseWizard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
+import { EmptyState } from "@/components/EmptyState";
 import { MobileQuickStats } from "@/components/mobile/MobileQuickStats";
 import { LeerstandskostenRechner } from "@/components/LeerstandskostenRechner";
 import { MoveInOutChecklist } from "@/components/MoveInOutChecklist";
@@ -28,6 +29,7 @@ import { IndexMietanpassung } from "@/components/IndexMietanpassung";
 const Mietuebersicht = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const propertyFromUrl = searchParams.get("property");
   const tabFromUrl = searchParams.get("tab");
@@ -500,11 +502,16 @@ const Mietuebersicht = () => {
 
           {/* Payment list */}
           {filteredPayments.length === 0 ? (
-            <div className="text-center py-12 animate-fade-in">
-              <Receipt className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm font-medium">Keine Zahlungen gefunden</p>
-              <p className="text-xs text-muted-foreground mt-1">Erstelle Mietzahlungen bei den einzelnen Objekten</p>
-            </div>
+            <EmptyState
+              icon={Receipt}
+              title="Keine Zahlungen"
+              description="Erstelle Mietzahlungen bei den Objekten mit Mietern – dann erscheinen sie hier."
+              action={
+                <Button size="sm" className="touch-target min-h-[44px] gap-1.5" onClick={() => navigate(ROUTES.OBJEKTE)}>
+                  Zu Objekten
+                </Button>
+              }
+            />
           ) : (
             <div className="space-y-1">
               {filteredPayments.map(p => {

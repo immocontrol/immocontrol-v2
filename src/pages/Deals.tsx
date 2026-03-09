@@ -43,6 +43,7 @@ import { useShare } from "@/components/mobile/MobileShareSheet";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ROUTES, dealsWithId } from "@/lib/routes";
+import { EmptyState } from "@/components/EmptyState";
 import { DealRecord, STAGES, stageMap, emptyForm } from "./deals/DealTypes";
 
 /* UPD-11: Deal age color helper */
@@ -1102,30 +1103,49 @@ const Deals = () => {
                   })}
                 </tbody>
               </table>
-              {/* UPD-40: Improved empty state */}
+              {/* UX: Empty state mit klarer nächster Aktion */}
               {filteredDeals.length === 0 && (
-                <div className="py-12 text-center text-sm text-muted-foreground">
-                  <Building2 className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                  {search ? `Keine Deals f\u00fcr "${search}" gefunden` : "Noch keine Deals angelegt"}
-                  {!search && (
-                    <>
-                      <p className="text-xs mt-2">
-                        Erstelle einen Deal mit dem Button oben oder importiere aus Telegram
-                      </p>
-                      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-2">
-                        <Link to={ROUTES.CRM} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
-                          Leads aus CRM übernehmen →
-                        </Link>
-                        <Link to={ROUTES.CRM_SCOUT} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="WGH-Scout">
-                          <Store className="h-3 w-3" /> WGH finden
-                        </Link>
-                        <Link to={ROUTES.BESICHTIGUNGEN} className="text-xs text-primary hover:underline inline-flex items-center gap-1" aria-label="Besichtigung planen">
-                          <CalendarCheck className="h-3 w-3" /> Besichtigung planen
-                        </Link>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <tr>
+                  <td colSpan={8} className="p-0 border-0">
+                    <div className="p-4">
+                      <EmptyState
+                        icon={Building2}
+                        title={search ? `Keine Deals für „${search}"` : "Noch keine Deals"}
+                        description={
+                          search
+                            ? "Suchbegriff anpassen oder neuen Deal anlegen."
+                            : "Lege einen Deal an, um Angebote und Besichtigungen zu verfolgen. Oder importiere aus dem CRM oder Telegram."
+                        }
+                        action={
+                          !search ? (
+                            <div className="flex flex-wrap items-center justify-center gap-2">
+                              <Button
+                                size="sm"
+                                className="gap-1.5 touch-target min-h-[44px]"
+                                onClick={() => {
+                                  if (!hasDealDraft) setForm({ ...emptyForm });
+                                  setEditDeal(null);
+                                  setAddOpen(true);
+                                }}
+                              >
+                                <Plus className="h-3.5 w-3.5" /> Deal anlegen
+                              </Button>
+                              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5">
+                                <Link to={ROUTES.CRM}>Leads aus CRM</Link>
+                              </Button>
+                              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="WGH-Scout">
+                                <Link to={ROUTES.CRM_SCOUT}><Store className="h-3 w-3" /> WGH</Link>
+                              </Button>
+                              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="Besichtigung planen">
+                                <Link to={ROUTES.BESICHTIGUNGEN}><CalendarCheck className="h-3 w-3" /> Besichtigung</Link>
+                              </Button>
+                            </div>
+                          ) : undefined
+                        }
+                      />
+                    </div>
+                  </td>
+                </tr>
               )}
             </div>
           </CardContent>

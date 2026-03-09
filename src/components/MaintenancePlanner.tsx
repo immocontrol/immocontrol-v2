@@ -6,6 +6,10 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
@@ -44,6 +48,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [suggestNotesLoading, setSuggestNotesLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", category: "Sonstiges", priority: "medium" as MaintenanceItem["priority"],
@@ -100,7 +105,10 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => { await fromTable("maintenance_items").delete().eq("id", id); },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["maintenance", propertyId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["maintenance", propertyId] });
+      setDeleteTargetId(null);
+    },
   });
 
   const pending = items.filter(i => !i.completed);
@@ -218,7 +226,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
                     {item.planned_date && <span>{new Date(item.planned_date).toLocaleDateString("de-DE", { month: "short", year: "numeric" })}</span>}
                   </div>
                 </div>
-                <button onClick={() => deleteMutation.mutate(item.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
+                <button onClick={() => setDeleteTargetId(item.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0" aria-label="Maßnahme löschen">
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
@@ -226,6 +234,24 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Maßnahme löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die geplante Maßnahme wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

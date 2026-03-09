@@ -62,7 +62,7 @@ export const MobileKPIHeader = memo(function MobileKPIHeader({
       detail: `${formatCurrency(totalCashflow * 12)}/Jahr`,
     },
     {
-      label: "Miete/M",
+      label: "Kaltmiete/M",
       value: formatCurrency(totalRent),
       icon: <Wallet className="h-3.5 w-3.5" />,
       detail: `${formatCurrency(totalRent * 12)}/Jahr`,

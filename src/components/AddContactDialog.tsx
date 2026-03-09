@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Plus, ChevronRight, ChevronLeft, Contact2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 import { contactFormSchema } from "@/lib/schemas";
 import { StepIndicator } from "@/components/StepIndicator";
+import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
 import { isDeepSeekConfigured, suggestContactFollowUp } from "@/integrations/ai/extractors";
 
 const STEP_LABELS = ["Kategorie", "Kontaktdaten", "Adresse & Notizen"];
@@ -32,6 +33,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   const { user } = useAuth();
   const { announce } = useAccessibility();
   const qc = useQueryClient();
+  const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -52,6 +54,8 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
     if (!v) resetForm();
   }, [resetForm]);
 
+  useFocusFirstInput(open, contentRef);
+
   const canGoNext = step === 0
     ? !!form.category
     : step === 1
@@ -63,7 +67,18 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
     const parsed = contactFormSchema.safeParse(form);
     if (!parsed.success) {
       const first = parsed.error.flatten().fieldErrors;
-      const msg = first.name?.[0] ?? first.email?.[0] ?? first.phone?.[0] ?? "Bitte Pflichtfelder prüfen.";
+      const friendly: Record<string, string> = {
+        name: "Bitte Namen eingeben.",
+        email: "Bitte gültige E-Mail-Adresse eingeben.",
+        phone: "Bitte gültige Telefonnummer eingeben.",
+        category: "Bitte Kategorie wählen.",
+      };
+      const msg =
+        first.name?.length ? friendly.name
+        : first.email?.length ? friendly.email
+        : first.phone?.length ? friendly.phone
+        : first.category?.length ? friendly.category
+        : "Bitte Name oder Kontaktdaten (E-Mail/Telefon) eingeben.";
       toast.error(msg);
       return;
     }
@@ -113,7 +128,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
 
         <StepIndicator current={step} total={3} />
 
-        <div className="space-y-4 min-h-[220px]">
+        <div ref={contentRef} className="space-y-4 min-h-[220px]">
           {step === 0 && (
             <div className="grid grid-cols-2 gap-3">
               {CONTACT_CATEGORIES.map(cat => {

@@ -58,6 +58,13 @@
     font-family: 'DM Sans', system-ui, sans-serif;
   }
 
+  /* UI-Zoom: Schrift & Buttons kleiner/größer (Einstellungen → Erscheinungsbild).
+     Skaliert alles in rem (Tailwind + globale Klassen). Touch-Targets (44px) bleiben fix für Barrierefreiheit. */
+  html[data-ui-zoom="90"] { font-size: 90%; }
+  html[data-ui-zoom="100"] { font-size: 100%; }
+  html[data-ui-zoom="110"] { font-size: 110%; }
+  html[data-ui-zoom="120"] { font-size: 120%; }
+
   .dark {
     --background: 220 20% 7%;
     --foreground: 210 20% 92%;
@@ -403,22 +410,22 @@
     transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
   }
 
-  /* IMP-15: Better badge styling */
+  /* IMP-15: Better badge styling (rem so UI-Zoom scales) */
   .badge-compact {
-    font-size: 10px;
+    font-size: 0.625rem;
     line-height: 1;
-    padding: 2px 6px;
+    padding: 0.125rem 0.375rem;
     border-radius: 9999px;
     font-weight: 600;
   }
 
-  /* IMP-49: Improve table responsiveness on mobile — ensure tables don't break layout */
+  /* IMP-49: Improve table responsiveness on mobile (rem so UI-Zoom scales) */
   @media (max-width: 640px) {
     table {
-      font-size: 11px;
+      font-size: 0.6875rem;
     }
     th, td {
-      padding: 4px 6px;
+      padding: 0.25rem 0.375rem;
     }
   }
 
@@ -457,8 +464,8 @@
     background: hsl(var(--destructive));
     color: hsl(var(--destructive-foreground));
     text-align: center;
-    padding: 4px;
-    font-size: 11px;
+    padding: 0.25rem;
+    font-size: 0.6875rem;
     font-weight: 500;
   }
 
@@ -747,10 +754,10 @@ html, body {
   opacity: 1;
 }
 
-/* Tooltip custom styles */
+/* Tooltip custom styles (rem so UI-Zoom scales) */
 [data-radix-tooltip-content] {
-  max-width: 280px;
-  font-size: 12px;
+  max-width: min(280px, 90vw);
+  font-size: 0.75rem;
   line-height: 1.4;
 }
 
@@ -1050,10 +1057,10 @@ input, select, textarea {
 .pill-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
   border-radius: 9999px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -1084,13 +1091,13 @@ input, select, textarea {
               0 8px 24px -8px hsl(var(--primary) / 0.1);
 }
 
-/* UI-16: Mobile navigation label improvements */
+/* UI-16: Mobile navigation label improvements (rem so UI-Zoom scales) */
 @media (max-width: 768px) {
   .mobile-nav-label {
-    font-size: 9px;
+    font-size: 0.5625rem;
     letter-spacing: 0.02em;
     line-height: 1.2;
-    margin-top: 2px;
+    margin-top: 0.125rem;
   }
 }
 
@@ -1168,14 +1175,14 @@ input:focus, textarea:focus, select:focus {
   color: hsl(215 12% 58%);
 }
 
-/* UI-26: Chart tooltip styling */
+/* UI-26: Chart tooltip styling (rem so UI-Zoom scales) */
 .chart-tooltip-custom {
   background: hsl(var(--popover)) !important;
   border: 1px solid hsl(var(--border)) !important;
-  border-radius: 8px !important;
+  border-radius: 0.5rem !important;
   box-shadow: 0 4px 12px -2px hsl(var(--foreground) / 0.1) !important;
-  padding: 8px 12px !important;
-  font-size: 12px !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
 }
 
 /* UI-27: Page header transition */
@@ -1231,9 +1238,9 @@ input:focus, textarea:focus, select:focus {
   overflow: hidden;
 }
 
-/* UI-33: Form label styling */
+/* UI-33: Form label styling (rem so UI-Zoom scales) */
 .form-label-enhanced {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2593,7 +2600,7 @@ input:focus, textarea:focus, select:focus {
     grid-template-columns: repeat(2, 1fr);
   }
   .nav-label-responsive {
-    font-size: 9px;
+    font-size: 0.5625rem;
   }
 }
 

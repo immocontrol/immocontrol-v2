@@ -40,6 +40,7 @@ import { ManusFinanzierung } from "@/components/manus/ManusFinanzierung";
 import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 import { TilgungsplanSchnellrechner } from "@/components/TilgungsplanSchnellrechner";
 import { VirtualList } from "@/components/VirtualList";
+import { EmptyState } from "@/components/EmptyState";
 
 const VIRTUAL_LIST_THRESHOLD = 25;
 const LOAN_ITEM_HEIGHT = 145;
@@ -1004,41 +1005,28 @@ const Loans = () => {
 
       {/* Loans list */}
       {filteredLoans.length === 0 ? (
-        <div className="text-center py-12 space-y-4">
-          {/* UI-10: empty-state-float */}
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto empty-state-float">
-            <Landmark className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-lg font-bold">Noch keine Darlehen</h2>
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto">Lege dein erstes Darlehen an, um Zinsbindungen und Tilgungsfortschritt zu überwachen.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
-            <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.OBJEKTE)} className="touch-target min-h-[44px] gap-2">
-              <Building2 className="h-4 w-4" /> Objekt anlegen
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2">
-              <Handshake className="h-4 w-4" /> Deals
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.RENT)} className="touch-target min-h-[44px] gap-2">
-              <BarChart3 className="h-4 w-4" /> Mietübersicht
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.NK)} className="touch-target min-h-[44px] gap-2">
-              <Receipt className="h-4 w-4" /> Nebenkosten
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Berichte">
-              <FileBarChart className="h-4 w-4" /> Berichte
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-2" aria-label="WGH-Scout">
-              <Store className="h-4 w-4" /> WGH finden
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Verträge">
-              <FileText className="h-4 w-4" /> Verträge
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Besichtigung planen">
-              <CalendarCheck className="h-4 w-4" /> Besichtigung planen
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          icon={Landmark}
+          title="Noch keine Darlehen"
+          description="Lege dein erstes Darlehen an, um Zinsbindungen und Tilgungsfortschritt zu überwachen."
+          action={
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
+              <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.OBJEKTE)} className="touch-target min-h-[44px] gap-2">
+                <Building2 className="h-4 w-4" /> Objekt anlegen
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2">
+                <Handshake className="h-4 w-4" /> Deals
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.RENT)} className="touch-target min-h-[44px] gap-2">
+                <BarChart3 className="h-4 w-4" /> Mietübersicht
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Berichte">
+                <FileBarChart className="h-4 w-4" /> Berichte
+              </Button>
+            </div>
+          }
+        />
       ) : filteredLoans.length >= VIRTUAL_LIST_THRESHOLD ? (
         <VirtualList
           items={filteredLoans}

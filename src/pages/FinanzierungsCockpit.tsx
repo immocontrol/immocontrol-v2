@@ -295,7 +295,7 @@ export default function FinanzierungsCockpit() {
             </div>
           </div>
           <div className="gradient-card rounded-xl border border-border p-3">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Miete/M</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Kaltmiete/M</div>
             <div className="text-base font-bold tabular-nums">{formatCurrency(stats.totalRent)}</div>
           </div>
           <div className="gradient-card rounded-xl border border-border p-3">
