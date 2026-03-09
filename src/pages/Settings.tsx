@@ -224,31 +224,46 @@ const Settings = () => {
       role="main"
       aria-label="Einstellungen"
     >
-      {/* Mobile: horizontale Tab-Leiste (nur unter lg) — sticky, scrollt horizontal mit aktivem Abschnitt */}
-      <div
-        ref={mobileTabBarRef}
-        className="lg:hidden sticky top-0 z-20 shrink-0 w-full max-w-full bg-background/95 backdrop-blur-sm border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain relative"
-      >
-        <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
-        <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
-          {filteredSettingsSections.map((section) => {
-            const SectionIcon = section.icon;
-            const isActive = activeSection === section.id;
-            return (
-              <button
-                key={section.id}
-                data-settings-tab={section.id}
-                onClick={() => scrollToSection(section.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
-                }`}
-              >
-                <SectionIcon className="h-3 w-3" />
-                {section.label}
-              </button>
-            );
-          })}
+      {/* Mobile: Tab-Leiste + Progress (nur unter lg) — sticky gepinnt, horizontal scrollbar, Fortschritt sync mit Seite */}
+      <div className="lg:hidden sticky top-0 z-20 shrink-0 w-full max-w-full bg-background border-b border-border shadow-[0_1px_0_0_hsl(var(--border))]">
+        <div
+          ref={mobileTabBarRef}
+          className="w-full max-w-full overflow-x-auto scrollbar-hide overscroll-x-contain relative"
+        >
+          <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
+          <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
+            {filteredSettingsSections.map((section) => {
+              const SectionIcon = section.icon;
+              const isActive = activeSection === section.id;
+              return (
+                <button
+                  key={section.id}
+                  data-settings-tab={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                    isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
+                  }`}
+                >
+                  <SectionIcon className="h-3 w-3" />
+                  {section.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
+        {/* Progress-Leiste: Fortschritt zwischen Menü-Übersicht und Scroll-Position auf der Seite */}
+        {filteredSettingsSections.length > 0 && (() => {
+          const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
+          const progressPercent = activeIdx < 0 ? 0 : Math.min(100, ((activeIdx + 0.5) / Math.max(1, filteredSettingsSections.length)) * 100);
+          return (
+            <div className="h-1 w-full bg-muted/80 overflow-hidden" role="progressbar" aria-valuenow={Math.round(progressPercent)} aria-valuemin={0} aria-valuemax={100} aria-label="Einstellungen-Fortschritt">
+              <div
+                className="h-full bg-primary transition-all duration-300 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar */}
