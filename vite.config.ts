@@ -75,6 +75,8 @@ export default defineConfig(async ({ mode }) => ({
     include: ["@radix-ui/react-slider"],
   },
   build: {
+    minify: "terser",
+    terserOptions: { format: { comments: false } },
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
