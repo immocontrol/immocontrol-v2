@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
@@ -179,10 +179,12 @@ const RentIncreaseWizard = ({ currentRent = 0, propertyName, sqm = 0, tenantName
           {step >= 1 && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">2. Mietspiegel</h3>
-              <div className="flex items-center gap-3">
-                <Switch checked={form.hasMietspiegel} onCheckedChange={v => update("hasMietspiegel", v)} />
-                <Label className="text-xs">Mietspiegel-Daten vorhanden</Label>
-              </div>
+              <SettingsToggleRow
+                label="Mietspiegel-Daten vorhanden"
+                checked={form.hasMietspiegel}
+                onCheckedChange={v => update("hasMietspiegel", v)}
+                ariaLabel="Mietspiegel ein oder aus"
+              />
               {form.hasMietspiegel && (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
@@ -206,10 +208,12 @@ const RentIncreaseWizard = ({ currentRent = 0, propertyName, sqm = 0, tenantName
           {step >= 1 && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">3. Modernisierung (§559 BGB)</h3>
-              <div className="flex items-center gap-3">
-                <Switch checked={form.hasModernisierung} onCheckedChange={v => update("hasModernisierung", v)} />
-                <Label className="text-xs">Modernisierung durchgeführt</Label>
-              </div>
+              <SettingsToggleRow
+                label="Modernisierung durchgeführt"
+                checked={form.hasModernisierung}
+                onCheckedChange={v => update("hasModernisierung", v)}
+                ariaLabel="Modernisierung ein oder aus"
+              />
               {form.hasModernisierung && (
                 <div className="space-y-1">
                   <Label className="text-xs">Modernisierungskosten (gesamt)</Label>

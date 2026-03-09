@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -216,13 +216,13 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-          <div>
-            <p className="text-xs font-medium">Auto-Import Deals</p>
-            <p className="text-[11px] text-muted-foreground">Beim Öffnen der Deals-Seite: neue Nachrichten aus dem Kanal abrufen und als Deals anlegen.</p>
-          </div>
-          <Switch checked={autoImportEnabled} onCheckedChange={(v) => setAutoImportEnabled(!!v)} />
-        </div>
+        <SettingsToggleRow
+          label="Auto-Import Deals"
+          description="Beim Öffnen der Deals-Seite: neue Nachrichten aus dem Kanal abrufen und als Deals anlegen."
+          checked={autoImportEnabled}
+          onCheckedChange={(v) => setAutoImportEnabled(!!v)}
+          ariaLabel="Auto-Import Deals ein oder aus"
+        />
 
         <div className="p-3 rounded-lg bg-[#0088cc]/5 border border-[#0088cc]/10 space-y-2">
           <p className="text-xs font-medium text-[#0088cc]">Einrichtung:</p>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -184,10 +184,12 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
               )}
               <div><Label>Titel / Thema</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="z.B. Ordentliche ETV 2025" /></div>
               <div><Label>Datum & Uhrzeit</Label><Input type="datetime-local" value={form.meeting_date} onChange={e => setForm(f => ({ ...f, meeting_date: e.target.value }))} /></div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.is_virtual} onCheckedChange={v => setForm(f => ({ ...f, is_virtual: v }))} />
-                <Label className="text-xs">Virtuelle Versammlung</Label>
-              </div>
+              <SettingsToggleRow
+                label="Virtuelle Versammlung"
+                checked={form.is_virtual}
+                onCheckedChange={v => setForm(f => ({ ...f, is_virtual: v }))}
+                ariaLabel="Virtuelle Versammlung ein oder aus"
+              />
               {form.is_virtual ? (
                 <div><Label>Meeting-Link</Label><Input value={form.meeting_link} onChange={e => setForm(f => ({ ...f, meeting_link: e.target.value }))} placeholder="https://zoom.us/..." /></div>
               ) : (

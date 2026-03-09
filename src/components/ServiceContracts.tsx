@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -180,11 +180,13 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
                   </Select>
                 </div>
               </div>
+              <SettingsToggleRow
+                label="Automatische Verlängerung"
+                checked={form.is_auto_renew}
+                onCheckedChange={v => setForm(f => ({ ...f, is_auto_renew: v }))}
+                ariaLabel="Automatische Verlängerung ein oder aus"
+              />
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Switch checked={form.is_auto_renew} onCheckedChange={v => setForm(f => ({ ...f, is_auto_renew: v }))} />
-                  <Label className="text-xs">Automatische Verlängerung</Label>
-                </div>
                 <div className="flex-1">
                   <Label className="text-xs">Kündigungsfrist (Monate)</Label>
                   <Input type="number" className="h-8" value={form.notice_period_months} onChange={e => setForm(f => ({ ...f, notice_period_months: +e.target.value }))} />

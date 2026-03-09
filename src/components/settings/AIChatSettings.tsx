@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Bot } from "lucide-react";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 
 interface AIChatSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -31,15 +31,13 @@ export function AIChatSettings({ sectionRef }: AIChatSettingsProps) {
       <p className="text-xs text-muted-foreground">
         Aktiviere oder deaktiviere den AI Chat-Assistenten (Bubble unten rechts).
       </p>
-      <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-        <div className="min-w-0">
-          <p className="text-xs font-medium">AI Chat anzeigen</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {aiChatEnabled ? "Bubble unten rechts sichtbar" : "Chat-Assistent ausgeblendet"}
-          </p>
-        </div>
-        <Switch checked={aiChatEnabled} onCheckedChange={handleToggle} aria-label="AI Chat ein oder aus" />
-      </div>
+      <SettingsToggleRow
+        label="AI Chat anzeigen"
+        description={aiChatEnabled ? "Bubble unten rechts sichtbar" : "Chat-Assistent ausgeblendet"}
+        checked={aiChatEnabled}
+        onCheckedChange={handleToggle}
+        ariaLabel="AI Chat ein oder aus"
+      />
     </div>
   );
 }

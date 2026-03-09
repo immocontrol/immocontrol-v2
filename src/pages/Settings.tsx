@@ -34,8 +34,8 @@ import { ShortcutSettings } from "@/components/settings/ShortcutSettings";
 import { ManusSettings } from "@/components/settings/ManusSettings";
 import { BenachrichtigungenSettings } from "@/components/settings/BenachrichtigungenSettings";
 
-/* Settings sidebar sections for navigation */
-const SETTINGS_SECTIONS = [
+/* Settings sidebar sections for navigation. Gefahrenzone bewusst getrennt, damit sie im Menü immer ganz unten steht. */
+const SETTINGS_SECTIONS_MAIN = [
   { id: "erscheinungsbild", label: "Erscheinungsbild", icon: Sun },
   { id: "profil", label: "Profil", icon: User },
   { id: "passwort", label: "Passwort", icon: Lock },
@@ -53,8 +53,10 @@ const SETTINGS_SECTIONS = [
   { id: "error-scanner", label: "Error Scanner", icon: Bug },
   { id: "team", label: "Team", icon: Users },
   { id: "system-info", label: "System-Info", icon: Database },
-  { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
 ] as const;
+
+const GEFAHRENZONE_SECTION = { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle } as const;
+const SETTINGS_SECTIONS = [...SETTINGS_SECTIONS_MAIN, GEFAHRENZONE_SECTION];
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -82,19 +84,21 @@ const Settings = () => {
 
   const filteredSettingsSections = useMemo(() => {
     const q = settingsSearchQuery.trim().toLowerCase();
-    let list = !q ? [...SETTINGS_SECTIONS] : SETTINGS_SECTIONS.filter((s) => s.label.toLowerCase().includes(q));
+    const main = !q ? [...SETTINGS_SECTIONS_MAIN] : SETTINGS_SECTIONS_MAIN.filter((s) => s.label.toLowerCase().includes(q));
+    const withDanger = q ? (GEFAHRENZONE_SECTION.label.toLowerCase().includes(q) ? [GEFAHRENZONE_SECTION] : []) : [GEFAHRENZONE_SECTION];
+    let list = [...main, ...withDanger];
     if (isMobile) list = list.filter((s) => s.id !== "tastenkombinationen");
     return list;
   }, [settingsSearchQuery, isMobile]);
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
-  /* Sidebar scroll spy */
+  /* Sidebar scroll spy: aktive Sektion aus vertikalem Scroll ableiten (größerer sichtbarer Bereich = reaktiver) */
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       for (const entry of entries) {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.2) {
           setActiveSection(entry.target.id);
         }
       }
@@ -103,8 +107,8 @@ const Settings = () => {
       const el = sectionRefs.current[section.id];
       if (el) {
         const observer = new IntersectionObserver(handleIntersection, {
-          rootMargin: "-10% 0px -60% 0px",
-          threshold: [0.3],
+          rootMargin: "-5% 0px -55% 0px",
+          threshold: [0.2, 0.4, 0.6],
         });
         observer.observe(el);
         observers.push(observer);
@@ -113,21 +117,22 @@ const Settings = () => {
     return () => observers.forEach(o => o.disconnect());
   }, [profileLoading]);
 
-  /* Mobile: Tab-Leiste horizontal mitscrollen, damit der aktive Menüpunkt sichtbar und mit Scroll-Position synchron bleibt */
+  /* Mobile: Tab-Leiste horizontal mitscrollen – aktiver Menüpunkt zentriert, parallel zum vertikalen Scrollen */
   useEffect(() => {
     const container = mobileTabBarRef.current;
     if (!container) return;
     const activeBtn = container.querySelector<HTMLElement>(`[data-settings-tab="${activeSection}"]`);
     if (!activeBtn) return;
-    const scrollIntoView = () => {
-      const containerWidth = container.clientWidth;
+    const centerTab = () => {
+      const cw = container.clientWidth;
       const btnLeft = activeBtn.offsetLeft;
       const btnWidth = activeBtn.offsetWidth;
-      const scrollLeft = btnLeft - containerWidth / 2 + btnWidth / 2;
-      const maxScroll = Math.max(0, container.scrollWidth - containerWidth);
-      container.scrollTo({ left: Math.max(0, Math.min(scrollLeft, maxScroll)), behavior: "smooth" });
+      const targetScroll = btnLeft - cw / 2 + btnWidth / 2;
+      const maxScroll = Math.max(0, container.scrollWidth - cw);
+      container.scrollTo({ left: Math.max(0, Math.min(targetScroll, maxScroll)), behavior: "smooth" });
     };
-    requestAnimationFrame(scrollIntoView);
+    const raf = requestAnimationFrame(centerTab);
+    return () => cancelAnimationFrame(raf);
   }, [activeSection, filteredSettingsSections]);
 
   /* Check existing TOTP factors for SystemInfo */
@@ -294,22 +299,25 @@ const Settings = () => {
     setEmailNew("");
   };
 
-  /* Layout per CSS: unter lg = Spalte (Tab-Leiste + Inhalt), ab lg = Zeile (Sidebar + Inhalt). Kein JS-Breakpoint → kein Flackern.
-     Root ohne overflow-x-hidden, damit sticky für die Tab-Leiste funktioniert; overflow nur am Inhaltsbereich. */
+  /* Layout: Mobile = Tab-Leiste fixed unter Header + Inhalt; Desktop = Sidebar + Inhalt. */
+  const mobileTabBarHeight = "3rem"; /* h-12, muss mit Spacer übereinstimmen */
   return (
     <div
       className="w-full min-w-0 max-w-full max-w-[100vw] flex flex-col lg:flex-row lg:gap-6"
       role="main"
       aria-label="Einstellungen"
     >
-      {/* Mobile: Tab-Leiste + Progress (nur unter lg) — gepinnt unter Header, bleibt beim Scrollen sichtbar */}
-      <div className="lg:hidden sticky z-20 shrink-0 w-full max-w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-[0_1px_0_0_hsl(var(--border))] top-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+      {/* Mobile: Tab-Leiste fixed unter der obersten Menüleiste (Header), immer sichtbar beim Scrollen */}
+      <div
+        className="lg:hidden fixed left-0 right-0 z-[140] w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-[0_1px_0_0_hsl(var(--border))]"
+        style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))", height: mobileTabBarHeight }}
+      >
         <div
           ref={mobileTabBarRef}
-          className="w-full max-w-full overflow-x-auto scrollbar-hide overscroll-x-contain relative"
+          className="w-full h-full max-w-full overflow-x-auto scrollbar-hide overscroll-x-contain relative"
         >
           <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
-          <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
+          <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full">
             {filteredSettingsSections.map((section) => {
               const SectionIcon = section.icon;
               const isActive = activeSection === section.id;
@@ -331,64 +339,85 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar */}
-      <aside className="hidden lg:flex w-48 shrink-0 self-start sticky top-0 max-h-[calc(100vh-2rem)] overflow-y-auto z-10 bg-background border-r border-border pr-2 -mr-2">
-          <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
-          {/* Single vertical track + progress fill */}
-          {(() => {
-            const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
-            const fillPercent = Math.min(100, (filteredSettingsSections.length > 1 ? (activeIdx + 0.5) / (filteredSettingsSections.length - 1) : 0) * 100);
-            return (
-              <div className="absolute left-[17px] top-2 bottom-2 w-[2px] rounded-full bg-border overflow-hidden" aria-hidden="true">
-                <div
-                  className="absolute left-0 top-0 w-full rounded-full bg-primary transition-all duration-500 ease-out"
-                  style={{ height: `${fillPercent}%` }}
-                />
-              </div>
-            );
-          })()}
-          {(() => {
-            const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
-            return filteredSettingsSections.map((section, idx) => {
-              const SectionIcon = section.icon;
-              const isPast = idx < activeIdx;
-              const isActive = idx === activeIdx;
-              return (
-                <div key={section.id} className="relative">
-                  <button
-                    data-settings-nav={section.id}
-                    onClick={() => scrollToSection(section.id)}
-                    className={`relative z-10 w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-[color,background-color,transform] duration-500 ease-out ${
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : isPast
-                          ? "text-primary/70 hover:bg-primary/5"
-                          : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                    }`}
-                  >
-                    {/* Progress dot/icon */}
-                    <div
-                      className={`relative flex items-center justify-center h-[18px] w-[18px] shrink-0 rounded-full transition-[background-color,color,box-shadow,transform] duration-500 ease-out ${
+      {/* Mobile: Spacer damit der Inhalt nicht unter der fixierten Tab-Leiste beginnt */}
+      <div className="lg:hidden shrink-0 w-full" style={{ height: mobileTabBarHeight }} aria-hidden />
+
+      {/* Desktop: Sidebar (nur ab lg) — sticky; Gefahrenzone immer ganz unten */}
+      <aside className="hidden lg:flex flex-col w-48 shrink-0 self-start sticky top-0 max-h-[calc(100vh-2rem)] z-10 bg-background border-r border-border pr-2 -mr-2">
+          <nav className="w-full flex flex-col min-h-0 flex-1" aria-label="Einstellungen-Navigation">
+          {/* Scrollbarer Bereich: restliche Sektionen */}
+          <div className="flex-1 min-h-0 overflow-y-auto py-1">
+            {(() => {
+              const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
+              const sectionsWithoutDanger = filteredSettingsSections.filter(s => s.id !== "gefahrenzone");
+              return sectionsWithoutDanger.map((section, idx) => {
+                const SectionIcon = section.icon;
+                const isPast = idx < activeIdx;
+                const isActive = idx === activeIdx;
+                return (
+                  <div key={section.id} className="relative">
+                    <button
+                      data-settings-nav={section.id}
+                      onClick={() => scrollToSection(section.id)}
+                      className={`relative z-10 w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-[color,background-color,transform] duration-500 ease-out ${
                         isActive
-                          ? "bg-primary text-primary-foreground shadow-[0_0_0_3px_hsl(var(--primary)/0.2)] scale-110"
+                          ? "bg-primary/10 text-primary"
                           : isPast
-                            ? "bg-primary/20 text-primary scale-100"
-                            : "bg-secondary text-muted-foreground scale-100"
+                            ? "text-primary/70 hover:bg-primary/5"
+                            : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                       }`}
                     >
-                      <SectionIcon className="h-2.5 w-2.5" />
-                    </div>
-                    <span className="truncate">{section.label}</span>
-                    {/* Active indicator dot — smooth opacity transition instead of mount/unmount */}
-                    <div
-                      className="ml-auto h-1.5 w-1.5 rounded-full bg-primary transition-opacity duration-500 ease-out"
-                      style={{ opacity: isActive ? 1 : 0 }}
-                    />
-                  </button>
+                      <div
+                        className={`relative flex items-center justify-center h-[18px] w-[18px] shrink-0 rounded-full transition-[background-color,color,box-shadow,transform] duration-500 ease-out ${
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-[0_0_0_3px_hsl(var(--primary)/0.2)] scale-110"
+                            : isPast
+                              ? "bg-primary/20 text-primary scale-100"
+                              : "bg-secondary text-muted-foreground scale-100"
+                        }`}
+                      >
+                        <SectionIcon className="h-2.5 w-2.5" />
+                      </div>
+                      <span className="truncate">{section.label}</span>
+                      <div
+                        className="ml-auto h-1.5 w-1.5 rounded-full bg-primary transition-opacity duration-500 ease-out"
+                        style={{ opacity: isActive ? 1 : 0 }}
+                      />
+                    </button>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+          {/* Gefahrenzone immer am unteren Rand der Sidebar */}
+          <div className="shrink-0 pt-2 mt-auto border-t border-border">
+            <div className="relative">
+              <button
+                data-settings-nav="gefahrenzone"
+                onClick={() => scrollToSection("gefahrenzone")}
+                className={`relative z-10 w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-[color,background-color] duration-200 ${
+                  activeSection === "gefahrenzone"
+                    ? "bg-destructive/10 text-destructive"
+                    : "text-muted-foreground hover:bg-destructive/5 hover:text-destructive/90"
+                }`}
+              >
+                <div
+                  className={`relative flex items-center justify-center h-[18px] w-[18px] shrink-0 rounded-full ${
+                    activeSection === "gefahrenzone"
+                      ? "bg-destructive/20 text-destructive"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  <AlertTriangle className="h-2.5 w-2.5" />
                 </div>
-              );
-            });
-          })()}
+                <span className="truncate">{GEFAHRENZONE_SECTION.label}</span>
+                <div
+                  className="ml-auto h-1.5 w-1.5 rounded-full bg-destructive transition-opacity duration-200"
+                  style={{ opacity: activeSection === "gefahrenzone" ? 1 : 0 }}
+                />
+              </button>
+            </div>
+          </div>
           </nav>
       </aside>
 

@@ -1,10 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { Bug, Download, Trash2, RefreshCw, FileText, AlertTriangle, Info, AlertCircle, ChevronDown, ChevronUp, Search, Copy } from "lucide-react";
 import { trackError, copyErrorReportToClipboard } from "@/lib/errorTracking";
+import { relativeTime } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
@@ -172,7 +184,10 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
     let unlabeled = 0;
     inputs.forEach(inp => {
       const id = inp.getAttribute("id");
-      if (id && !document.querySelector(`label[for="${id}"]`) && !inp.getAttribute("aria-label")) unlabeled++;
+      const hasLabelFor = id ? !!document.querySelector(`label[for="${id}"]`) : false;
+      const hasAriaLabel = !!inp.getAttribute("aria-label")?.trim();
+      const wrappedInLabel = !!inp.closest("label");
+      if (!hasLabelFor && !hasAriaLabel && !wrappedInLabel) unlabeled++;
     });
     if (unlabeled > 0) {
       newErrors.push({ id: errorId("inputs-no-label", "scanner"), timestamp: now, severity: "info", message: `${unlabeled} Input-Feld(er) ohne zugeordnetes Label`, source: "Accessibility Scanner", count: unlabeled, lastSeen: now });
@@ -201,11 +216,20 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
 
     setTimeout(() => {
       setScanning(false);
-      toast.success(`Scan abgeschlossen — ${newErrors.length} neue Eintr\u00e4ge`);
+      if (newErrors.length > 0) {
+        toast.success(`Scan abgeschlossen — ${newErrors.length} neue Eintr\u00e4ge gefunden`);
+      } else {
+        toast.info("Scan abgeschlossen — keine neuen Eintr\u00e4ge");
+      }
     }, 800);
   }, []);
 
-  const clearErrors = () => { setErrors([]); localStorage.removeItem(STORAGE_KEY); toast.success("Fehlerprotokoll gel\u00f6scht"); };
+  const clearErrors = useCallback(() => {
+    setErrors([]);
+    setExpanded(null);
+    localStorage.removeItem(STORAGE_KEY);
+    toast.success("Fehlerprotokoll gel\u00f6scht");
+  }, []);
 
   const filteredErrors = errors.filter(e => {
     if (severityFilter !== "all" && e.severity !== severityFilter) return false;
@@ -246,14 +270,19 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
     doc.line(14, y, 280, y);
     y += 4;
     doc.setFont("helvetica", "normal");
+    const msgWidth = 125;
     for (const e of filteredErrors) {
-      if (y > 190) { doc.addPage(); y = 15; }
+      if (y > 190) { doc.addPage("a4", "landscape"); y = 15; }
       doc.text(new Date(e.timestamp).toLocaleString("de-DE"), 14, y);
       doc.text(e.severity, 65, y);
-      doc.text(e.message.slice(0, 80), 90, y);
+      const lines = doc.splitTextToSize(e.message, msgWidth);
+      const maxLines = 3;
+      for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+        doc.text(lines[i], 90, y + i * 4);
+      }
       doc.text(e.source.slice(0, 25), 220, y);
       doc.text(String(e.count), 260, y);
-      y += 5;
+      y += Math.min(lines.length, maxLines) * 4 + 2;
     }
     doc.save(`immocontrol-errors-${new Date().toISOString().slice(0, 10)}.pdf`);
     toast.success("PDF exportiert");
@@ -263,20 +292,21 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
   const warningCount = errors.filter(e => e.severity === "warning").length;
 
   return (
-    <div id="error-scanner" ref={sectionRef} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:125ms] scroll-mt-20" role="region" aria-label="Error Scanner">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold flex items-center gap-2">
-          <Bug className="h-4 w-4 text-muted-foreground" /> Error Scanner
-          {errorCount > 0 && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">{errorCount} Fehler</Badge>}
-          {warningCount > 0 && <Badge variant="outline" className="text-[10px] bg-gold/10 text-gold border-gold/20">{warningCount} Warnungen</Badge>}
+    <div id="error-scanner" ref={sectionRef} className="gradient-card rounded-xl border border-border p-4 sm:p-5 space-y-4 animate-fade-in [animation-delay:125ms] scroll-mt-20 min-w-0 max-w-full overflow-hidden" role="region" aria-label="Error Scanner">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-sm font-semibold flex items-center gap-2 flex-wrap min-w-0">
+          <Bug className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">Error Scanner</span>
+          {errorCount > 0 && <Badge variant="outline" className="text-[10px] shrink-0 bg-destructive/10 text-destructive border-destructive/20">{errorCount} Fehler</Badge>}
+          {warningCount > 0 && <Badge variant="outline" className="text-[10px] shrink-0 bg-gold/10 text-gold border-gold/20">{warningCount} Warnungen</Badge>}
         </h2>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1 px-2 text-xs"
+                className="h-8 w-8 shrink-0 p-0 sm:h-7 sm:w-auto sm:gap-1 sm:px-2 text-xs"
                 disabled={filteredErrors.length === 0}
                 onClick={async () => {
                   const latest = filteredErrors[0];
@@ -291,67 +321,112 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
                   else toast.error("Kopieren fehlgeschlagen");
                 }}
               >
-                <Copy className="h-3.5 w-3.5" /> Copy for AI
+                <Copy className="h-3.5 w-3.5 sm:mr-0" />
+                <span className="hidden sm:inline">Copy for AI</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>Neuesten Fehlerbericht kopieren (f\u00fcr Cursor/Lovable einfügen)</TooltipContent>
           </Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={runScan} disabled={scanning}><RefreshCw className={`h-3.5 w-3.5 ${scanning ? "animate-spin" : ""}`} /></Button></TooltipTrigger><TooltipContent>App scannen</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={exportCSV} disabled={filteredErrors.length === 0}><FileText className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>CSV exportieren</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={exportPDF} disabled={filteredErrors.length === 0}><Download className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>PDF exportieren</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={clearErrors} disabled={errors.length === 0}><Trash2 className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Alle l\u00f6schen</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-8 w-8 shrink-0 p-0 sm:h-7 sm:w-7" onClick={runScan} disabled={scanning}><RefreshCw className={`h-3.5 w-3.5 ${scanning ? "animate-spin" : ""}`} /></Button></TooltipTrigger><TooltipContent>App scannen</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-8 w-8 shrink-0 p-0 sm:h-7 sm:w-7" onClick={exportCSV} disabled={filteredErrors.length === 0}><FileText className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>CSV exportieren</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="sm" className="h-8 w-8 shrink-0 p-0 sm:h-7 sm:w-7" onClick={exportPDF} disabled={filteredErrors.length === 0}><Download className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>PDF exportieren</TooltipContent></Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 shrink-0 p-0 text-destructive sm:h-7 sm:w-7" disabled={errors.length === 0}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Fehlerprotokoll l\u00f6schen?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Alle {errors.length} Eintr\u00e4ge werden dauerhaft gel\u00f6scht. Neue Fehler werden weiterhin erfasst.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction onClick={clearErrors} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">L\u00f6schen</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </TooltipTrigger>
+            <TooltipContent>Alle l\u00f6schen</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">Intelligenter Bot der Fehler, Warnungen und Performance-Probleme erkennt und protokolliert.</p>
+      <p className="text-xs text-muted-foreground text-wrap-safe">Intelligenter Bot der Fehler, Warnungen und Performance-Probleme erkennt und protokolliert.</p>
 
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[140px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Fehler durchsuchen..." className="h-8 text-xs pl-8" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="relative w-full min-w-0 sm:flex-1 sm:min-w-[140px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Fehler durchsuchen..." className="h-8 w-full text-xs pl-8 min-w-0" />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap">
           {(["all", "error", "warning", "info"] as const).map(s => (
-            <Button key={s} variant={severityFilter === s ? "default" : "outline"} size="sm" className="h-8 text-[10px] px-2" onClick={() => setSeverityFilter(s)}>
+            <Button key={s} variant={severityFilter === s ? "default" : "outline"} size="sm" className="h-8 text-[10px] px-2 shrink-0" onClick={() => setSeverityFilter(s)}>
               {s === "all" ? "Alle" : s === "error" ? "Fehler" : s === "warning" ? "Warnung" : "Info"}
             </Button>
           ))}
         </div>
       </div>
 
-      <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+      {filteredErrors.length > 0 && (
+        <p className="text-[11px] text-muted-foreground" aria-live="polite">
+          {filteredErrors.length} Eintr\u00e4ge {filteredErrors.length !== errors.length && `(gefiltert von ${errors.length})`}
+        </p>
+      )}
+      <div className="space-y-1.5 max-h-[400px] overflow-y-auto overflow-x-hidden min-w-0 rounded-lg border border-border/50 bg-muted/20" role="list" aria-label="Fehlerliste" aria-live="polite">
         {filteredErrors.length === 0 ? (
-          <div className="text-center py-8 text-xs text-muted-foreground">
-            <Bug className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            {errors.length === 0 ? "Keine Fehler erkannt \u2014 alles l\u00e4uft!" : "Keine Ergebnisse f\u00fcr den Filter"}
+          <div className="text-center py-10 px-4 text-xs text-muted-foreground">
+            <Bug className="h-10 w-10 mx-auto mb-3 opacity-30" aria-hidden />
+            <p className="font-medium text-foreground/80">
+              {errors.length === 0 ? "Keine Fehler erkannt" : "Keine Ergebnisse für den Filter"}
+            </p>
+            <p className="mt-1">
+              {errors.length === 0 ? "Läuft alles rund — oder „App scannen“ ausführen für Barrierefreiheit & Performance." : "Anderen Suchbegriff oder Schwere wählen."}
+            </p>
           </div>
         ) : (
           filteredErrors.slice(0, 50).map(err => {
             const Icon = severityIcon[err.severity];
             const isExpanded = expanded === err.id;
             return (
-              <div key={err.id} className="group p-2.5 rounded-lg bg-secondary/20 hover:bg-secondary/40 transition-colors cursor-pointer border border-transparent hover:border-border" onClick={() => setExpanded(isExpanded ? null : err.id)}>
-                <div className="flex items-start gap-2">
-                  <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${severityColor[err.severity]}`} />
-                  <div className="flex-1 min-w-0">
+              <div
+                key={err.id}
+                role="listitem"
+                aria-expanded={isExpanded}
+                className="group p-2.5 rounded-lg bg-secondary/20 hover:bg-secondary/40 transition-colors cursor-pointer border border-transparent hover:border-border min-w-0 first:rounded-t-lg last:rounded-b-lg"
+                onClick={() => setExpanded(isExpanded ? null : err.id)}
+              >
+                <div className="flex items-start gap-2 min-w-0">
+                  <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${severityColor[err.severity]}`} aria-hidden />
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <p className="text-xs font-medium truncate" title={err.message}>{err.message}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-[10px] text-muted-foreground">{err.source}</span>
-                      <span className="text-[10px] text-muted-foreground">{new Date(err.lastSeen).toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}</span>
-                      {err.count > 1 && <Badge variant="outline" className={`text-[9px] h-4 px-1 ${severityBadge[err.severity]}`}>\u00d7{err.count}</Badge>}
+                      <span className="text-[10px] text-muted-foreground shrink-0">{err.source}</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0" title={new Date(err.lastSeen).toLocaleString("de-DE")}>{relativeTime(err.lastSeen)}</span>
+                      {err.count > 1 && <Badge variant="outline" className={`text-[9px] h-4 px-1 shrink-0 ${severityBadge[err.severity]}`}>\u00d7{err.count}</Badge>}
                     </div>
                   </div>
-                  {isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />}
+                  <span className="shrink-0" aria-hidden>{isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />}</span>
                 </div>
                 {isExpanded && (
-                  <div className="mt-2 flex flex-col gap-2">
+                  <div className="mt-2 flex flex-col gap-2 min-w-0 pt-2 border-t border-border/50">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Nachricht</p>
+                      <pre className="text-[11px] text-foreground bg-background rounded p-2 overflow-x-auto max-h-[80px] font-sans whitespace-pre-wrap break-words min-w-0 border border-border/50">{err.message}</pre>
+                    </div>
                     {err.stack && (
-                      <pre className="text-[10px] text-muted-foreground bg-background rounded p-2 overflow-x-auto max-h-[120px] font-mono whitespace-pre-wrap break-all">{err.stack}</pre>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stack</p>
+                        <pre className="text-[10px] text-muted-foreground bg-background rounded p-2 overflow-x-auto max-h-[120px] font-mono whitespace-pre-wrap break-words min-w-0 border border-border/50">{err.stack}</pre>
+                      </div>
                     )}
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full sm:w-auto gap-1.5 h-8 text-xs"
+                      className="w-full sm:w-auto gap-1.5 h-8 text-xs shrink-0 self-start"
                       onClick={async (e) => {
                         e.stopPropagation();
                         const ok = await copyErrorReportToClipboard({
@@ -364,7 +439,7 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
                         else toast.error("Kopieren fehlgeschlagen");
                       }}
                     >
-                      <Copy className="h-3.5 w-3.5" /> Copy for AI
+                      <Copy className="h-3.5 w-3.5 shrink-0" /> Copy for AI
                     </Button>
                   </div>
                 )}
@@ -372,7 +447,7 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
             );
           })
         )}
-        {filteredErrors.length > 50 && <p className="text-[10px] text-muted-foreground text-center py-2">+ {filteredErrors.length - 50} weitere Eintr\u00e4ge (exportiere als CSV/PDF)</p>}
+        {filteredErrors.length > 50 && <p className="text-[10px] text-muted-foreground text-center py-2 border-t border-border/50">+ {filteredErrors.length - 50} weitere Eintr\u00e4ge (exportiere als CSV/PDF)</p>}
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { useNotificationPreferences } from "@/context/NotificationPreferencesCon
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BenachrichtigungenSettingsProps {
@@ -159,33 +160,27 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
           </Select>
         </div>
         <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium">Browser-Benachrichtigungen</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Pop-up-Hinweise des Betriebssystems (z. B. Dokument läuft ab, Zinsbindung endet). Nur bei erteilter Berechtigung.
-              </p>
-            </div>
-            <Switch
-              checked={prefs.browser}
-              onCheckedChange={async (checked) => {
-                setBrowser(!!checked);
-                if (!!checked && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-                  setBrowserRequesting(true);
-                  const perm = await requestNotificationPermission();
-                  setBrowserPermission(perm);
-                  setBrowserRequesting(false);
-                  if (perm !== "granted") {
-                    toast.error("Berechtigung verweigert. Browser-Benachrichtigungen sind in den Browser-Einstellungen aktivierbar.");
-                    setBrowser(false);
-                  } else {
-                    toast.success("Browser-Benachrichtigungen aktiviert.");
-                  }
+          <SettingsToggleRow
+            label="Browser-Benachrichtigungen"
+            description="Pop-up-Hinweise des Betriebssystems (z. B. Dokument läuft ab, Zinsbindung endet). Nur bei erteilter Berechtigung."
+            checked={prefs.browser}
+            onCheckedChange={async (checked) => {
+              setBrowser(!!checked);
+              if (!!checked && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+                setBrowserRequesting(true);
+                const perm = await requestNotificationPermission();
+                setBrowserPermission(perm);
+                setBrowserRequesting(false);
+                if (perm !== "granted") {
+                  toast.error("Berechtigung verweigert. Browser-Benachrichtigungen sind in den Browser-Einstellungen aktivierbar.");
+                  setBrowser(false);
+                } else {
+                  toast.success("Browser-Benachrichtigungen aktiviert.");
                 }
-              }}
-              aria-label="Browser-Benachrichtigungen ein oder aus"
-            />
-          </div>
+              }
+            }}
+            ariaLabel="Browser-Benachrichtigungen ein oder aus"
+          />
           {prefs.browser && (
             <p className="text-[11px] text-muted-foreground">
               Status: {browserPermission === "granted" ? "Berechtigung erteilt" : browserPermission === "denied" ? "Berechtigung verweigert" : "Noch nicht angefragt"}.
@@ -211,22 +206,25 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
           )}
         </div>
         <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-medium">Web-Push</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Push auch bei geschlossener App (VAPID). Abo wird auf dem Server gespeichert.
-              </p>
+          {pushStatus.supported ? (
+            <SettingsToggleRow
+              label="Web-Push"
+              description="Push auch bei geschlossener App (VAPID). Abo wird auf dem Server gespeichert."
+              checked={pushStatus.subscribed}
+              onCheckedChange={handleWebPushToggle}
+              disabled={pushLoading || !pushStatus.vapidConfigured}
+              ariaLabel="Web-Push ein oder aus"
+            />
+          ) : (
+            <div className="flex items-center justify-between gap-3 p-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium">Web-Push</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Push auch bei geschlossener App (VAPID). Abo wird auf dem Server gespeichert.
+                </p>
+              </div>
             </div>
-            {pushStatus.supported && (
-              <Switch
-                checked={pushStatus.subscribed}
-                onCheckedChange={handleWebPushToggle}
-                disabled={pushLoading || !pushStatus.vapidConfigured}
-                aria-label="Web-Push ein oder aus"
-              />
-            )}
-          </div>
+          )}
           {pushStatus.supported && !pushStatus.vapidConfigured && (
             <p className="text-[11px] text-muted-foreground">VAPID nicht konfiguriert (VITE_VAPID_PUBLIC_KEY).</p>
           )}

@@ -14,7 +14,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { FileText, Loader2, Plus, AlertTriangle, CheckCircle, Clock, Trash2, Upload } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -223,9 +223,13 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Vertragsbeginn</Label><Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} /></div>
-                <div className="flex items-center gap-2 pt-5">
-                  <Switch checked={form.is_indefinite} onCheckedChange={v => setForm(f => ({ ...f, is_indefinite: v }))} />
-                  <Label className="text-xs">Unbefristet</Label>
+                <div className="pt-5">
+                  <SettingsToggleRow
+                    label="Unbefristet"
+                    checked={form.is_indefinite}
+                    onCheckedChange={v => setForm(f => ({ ...f, is_indefinite: v }))}
+                    ariaLabel="Unbefristet ein oder aus"
+                  />
                 </div>
               </div>
               {!form.is_indefinite && (

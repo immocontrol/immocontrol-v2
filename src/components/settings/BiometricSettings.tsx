@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Fingerprint, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 
 interface BiometricSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -64,15 +64,13 @@ export function BiometricSettings({ sectionRef }: BiometricSettingsProps) {
           <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Dein Gerät unterstützt keine biometrische Authentifizierung
         </p>
       ) : (
-        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-          <div className="min-w-0">
-            <p className="text-xs font-medium">Biometrie für Login nutzen</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
-            </p>
-          </div>
-          <Switch checked={biometricEnabled} onCheckedChange={handleToggle} aria-label="Biometrie ein oder aus" />
-        </div>
+        <SettingsToggleRow
+          label="Biometrie für Login nutzen"
+          description={biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
+          checked={biometricEnabled}
+          onCheckedChange={handleToggle}
+          ariaLabel="Biometrie ein oder aus"
+        />
       )}
     </div>
   );

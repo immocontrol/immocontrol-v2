@@ -102,41 +102,45 @@ const WidgetCustomizer = ({ onConfigChange }: WidgetCustomizerProps) => {
             {[...filteredWidgets].sort((a, b) => a.order - b.order).map((widget: WidgetConfig) => (
               <div
                 key={widget.id}
-                className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+                className={`flex items-center justify-between gap-3 p-3 rounded-lg border border-border transition-colors ${
                   widget.visible ? "bg-secondary/30" : "bg-secondary/10 opacity-60"
                 }`}
               >
-                <Switch
-                  checked={widget.visible}
-                  onCheckedChange={() => handleToggle(widget.id)}
-                  className="shrink-0"
-                />
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex items-center gap-2">
                   <span className="text-xs font-medium">{widget.label}</span>
-                  <Badge variant="outline" className={`ml-2 text-[9px] h-4 ${CATEGORY_COLORS[widget.category] || ""}`}>
+                  <Badge variant="outline" className={`text-[9px] h-4 shrink-0 ${CATEGORY_COLORS[widget.category] || ""}`}>
                     {categories.get(widget.category) || widget.category}
                   </Badge>
                 </div>
-                {widget.visible && (
-                  <div className="flex gap-0.5 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => handleMove(widget.id, "up")}
-                    >
-                      <ChevronUp className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => handleMove(widget.id, "down")}
-                    >
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                  <Switch
+                    checked={widget.visible}
+                    onCheckedChange={() => handleToggle(widget.id)}
+                    aria-label={`${widget.label} ein oder aus`}
+                  />
+                  {widget.visible && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleMove(widget.id, "up")}
+                        aria-label="Nach oben"
+                      >
+                        <ChevronUp className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleMove(widget.id, "down")}
+                        aria-label="Nach unten"
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>

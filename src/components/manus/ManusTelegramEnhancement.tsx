@@ -5,8 +5,7 @@
  */
 import { Bot, MessageSquare, CheckCircle2, Zap, Loader2 } from "lucide-react";
 import { hasManusApiKey } from "@/lib/manusAgent";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 
 interface ManusTelegramEnhancementProps {
   webhookActive: boolean;
@@ -56,19 +55,20 @@ export const ManusTelegramEnhancement = ({
         Private Nachrichten an deinen Bot werden mit Manus AI beantwortet (Recherche, Bewertung, Marktdaten).
       </p>
 
-      <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-        <div>
-          <Label className="text-xs font-medium">Manus-Antworten aktivieren</Label>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            Nur für Direktnachrichten an den Bot. Webhook muss aktiv sein; Manus API Key unter Einstellungen → Manus AI.
-          </p>
-        </div>
-        <Switch
+      <div className="relative">
+        <SettingsToggleRow
+          label="Manus-Antworten aktivieren"
+          description="Nur für Direktnachrichten an den Bot. Webhook muss aktiv sein; Manus API Key unter Einstellungen → Manus AI."
           checked={manusRepliesEnabled}
           onCheckedChange={onManusRepliesChange}
           disabled={!canEnableManus || manusLoading}
+          ariaLabel="Manus-Antworten ein oder aus"
         />
-        {manusLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+        {manusLoading && (
+          <span className="absolute right-12 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          </span>
+        )}
       </div>
 
       <div className="space-y-2">

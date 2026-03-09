@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Plus, AlertTriangle, Clock, Calendar, Bell, Trash2, TrendingUp, CheckCircle, Info } from "lucide-react";
 import { toast } from "sonner";
@@ -283,11 +283,13 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
                     <Input type="date" value={form.contract_start} onChange={e => setForm(f => ({ ...f, contract_start: e.target.value }))} />
                   </div>
                   <div>
-                    <Label className="text-xs">Unbefristet</Label>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <Switch checked={form.is_indefinite} onCheckedChange={v => setForm(f => ({ ...f, is_indefinite: v }))} />
-                      <span className="text-xs">{form.is_indefinite ? "Ja" : "Nein"}</span>
-                    </div>
+                    <SettingsToggleRow
+                      label="Unbefristet"
+                      description={form.is_indefinite ? "Ja" : "Nein"}
+                      checked={form.is_indefinite}
+                      onCheckedChange={v => setForm(f => ({ ...f, is_indefinite: v }))}
+                      ariaLabel="Unbefristet ein oder aus"
+                    />
                   </div>
                 </div>
                 {!form.is_indefinite && (

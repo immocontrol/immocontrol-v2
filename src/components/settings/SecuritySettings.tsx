@@ -5,7 +5,7 @@ import { Shield, Fingerprint, Copy, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
@@ -171,13 +171,13 @@ export function SecuritySettings({
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Fingerprint className="h-4 w-4 text-muted-foreground" /> Biometrische Authentifizierung
           </h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm">Face ID / Touch ID / Fingerabdruck</p>
-              <p className="text-xs text-muted-foreground">Schneller Login mit biometrischer Authentifizierung</p>
-            </div>
-            <Switch checked={biometricEnabled} onCheckedChange={onBiometricToggle} />
-          </div>
+          <SettingsToggleRow
+            label="Face ID / Touch ID / Fingerabdruck"
+            description="Schneller Login mit biometrischer Authentifizierung"
+            checked={biometricEnabled}
+            onCheckedChange={onBiometricToggle}
+            ariaLabel="Biometrie ein oder aus"
+          />
         </div>
       )}
     </>
