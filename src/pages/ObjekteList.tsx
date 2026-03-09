@@ -151,8 +151,8 @@ const ObjekteList = () => {
           title={search ? "Keine Objekte gefunden" : "Noch keine Objekte"}
           description={
             search
-              ? "Suchbegriff anpassen oder Objekt anlegen."
-              : "Lege dein erstes Objekt an, um zu starten."
+              ? "Suchbegriff anpassen oder neues Objekt anlegen."
+              : "Lege dein erstes Objekt an – dann siehst du hier dein Portfolio."
           }
           action={
             !search ? (
