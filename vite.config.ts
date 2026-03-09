@@ -78,31 +78,9 @@ export default defineConfig(async ({ mode }) => ({
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-query": ["@tanstack/react-query"],
-          "vendor-charts": ["recharts"],
-          "vendor-ui": [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-select",
-            "@radix-ui/react-popover",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-alert-dialog",
-            "@radix-ui/react-tooltip",
-            "@radix-ui/react-accordion",
-            "@radix-ui/react-checkbox",
-            "@radix-ui/react-switch",
-            "@radix-ui/react-slider",
-            "@radix-ui/react-scroll-area",
-          ],
-          "vendor-supabase": ["@supabase/supabase-js"],
-          "vendor-forms": ["react-hook-form", "@hookform/resolvers", "zod"],
-          "vendor-date": ["date-fns"],
-          "vendor-pdf": ["jspdf", "pdf-lib"],
-          "vendor-markdown": ["react-markdown"],
-          "vendor-misc": ["sonner", "clsx", "tailwind-merge", "class-variance-authority", "cmdk"],
-        },
+        /* manualChunks disabled — caused "Cannot access 'd' before initialization" on Settings
+           (chunk init order / circular deps). Rollup auto-chunking avoids TDZ. */
+        // manualChunks: { ... },
       },
     },
   },
