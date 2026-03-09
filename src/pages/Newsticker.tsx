@@ -689,7 +689,7 @@ const Newsticker = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Nachrichten durchsuchen..."
+          placeholder="z. B. Zins oder Mietspiegel"
           className="pl-10"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setDisplayCount(20); }}

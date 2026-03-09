@@ -497,7 +497,7 @@ const Wartungsplaner = () => {
         <div className="relative">
           <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Suchen..."
+            placeholder="z. B. Heizung oder Objekt"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="h-9 pl-8 w-[160px] text-sm"

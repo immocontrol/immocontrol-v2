@@ -297,7 +297,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting} aria-busy={isSubmitting}>
+          <Button type="submit" className="w-full touch-target min-h-[44px]" disabled={isSubmitting} aria-busy={isSubmitting}>
             {isSubmitting ? "Wird gespeichert…" : "Änderungen speichern"}
           </Button>
         </form>

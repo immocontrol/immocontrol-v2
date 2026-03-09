@@ -891,8 +891,8 @@ const CRM = () => {
               ) : filteredLeads.length === 0 ? (
                 <EmptyState
                   icon={CalendarCheck}
-                  title="Keine Leads gefunden"
-                  description="Suche nach Geschäften oder füge Leads manuell hinzu."
+                  title={leads.length === 0 ? "Noch keine Leads" : "Keine Leads gefunden"}
+                  description={leads.length === 0 ? "Suche nach Geschäften im WGH-Scout oder nimm Leads aus Besichtigungen auf." : "Filter anpassen oder neuen Lead anlegen."}
                   action={
                     <div className="flex flex-wrap items-center justify-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-1.5" aria-label="Zum WGH-Scout">

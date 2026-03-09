@@ -41,6 +41,24 @@ const CONTEXT_MESSAGES: Record<ErrorContext, string> = {
   general: "Ein Fehler ist aufgetreten. Bitte erneut versuchen.",
 };
 
+/** Map known API/network error patterns to short, actionable German messages */
+function getFriendlyMessage(err: Error, context: ErrorContext): string | null {
+  const msg = (err.message || "").toLowerCase();
+  if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed"))
+    return "Verbindung unterbrochen. Bitte Internet prüfen und erneut versuchen.";
+  if (msg.includes("jwt") || msg.includes("session") || msg.includes("unauthorized"))
+    return "Sitzung abgelaufen. Bitte erneut anmelden.";
+  if (msg.includes("not found") || msg.includes("pgrst116") || msg.includes("404"))
+    return "Eintrag nicht gefunden. Seite ggf. neu laden.";
+  if (msg.includes("conflict") || msg.includes("unique") || msg.includes("duplicate"))
+    return "Eintrag existiert bereits oder wurde gerade geändert. Bitte neu laden.";
+  if (msg.includes("permission") || msg.includes("forbidden") || msg.includes("403"))
+    return "Keine Berechtigung für diese Aktion.";
+  if (msg.includes("payload") || msg.includes("too large"))
+    return "Datenmenge zu groß. Bitte verkleinern und erneut versuchen.";
+  return null;
+}
+
 /**
  * Unified error handler — logs to error tracking and optionally shows a toast.
  * Use this instead of empty catch {} blocks.
@@ -73,7 +91,10 @@ export function handleError(error: unknown, options: HandleErrorOptions = {}): v
 
   // Show toast unless silent
   if (showToast && !silent) {
-    const message = toastMessage || CONTEXT_MESSAGES[context];
+    const message =
+      toastMessage ||
+      getFriendlyMessage(err, context) ||
+      CONTEXT_MESSAGES[context];
     toast.error(message, {
       description: import.meta.env.DEV ? err.message : undefined,
       duration: 6000,

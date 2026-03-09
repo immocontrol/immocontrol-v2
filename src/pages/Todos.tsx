@@ -560,7 +560,7 @@ const Todos = () => {
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 /* IMPROVE-33: More specific search placeholder */
-                placeholder="Aufgabe suchen..."
+                placeholder="z. B. Besichtigung oder Adresse"
                 aria-label="Aufgaben durchsuchen"
                 value={searchInput}
                 onChange={e => {

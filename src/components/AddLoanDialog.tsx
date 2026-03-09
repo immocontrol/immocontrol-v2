@@ -271,7 +271,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
                     <div className="p-2 border-b">
-                      <Input placeholder="Bank suchen…" value={bankSearch} onChange={e => setBankSearch(e.target.value)} className="h-8 text-sm" autoFocus />
+                      <Input placeholder="z. B. Sparkasse oder Volksbank" value={bankSearch} onChange={e => setBankSearch(e.target.value)} className="h-8 text-sm" autoFocus />
                     </div>
                     <ScrollArea className="max-h-[200px]">
                       <div className="p-1">
@@ -405,16 +405,16 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
 
         <div className="flex gap-3 pt-2">
           {step > 0 && (
-            <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} className="gap-1.5">
+            <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} className="gap-1.5 touch-target min-h-[44px]">
               <ChevronLeft className="h-4 w-4" /> Zurück
             </Button>
           )}
           {step < 2 ? (
-            <Button type="button" onClick={() => setStep(s => s + 1)} className="flex-1 gap-1.5" disabled={!canGoNext}>
+            <Button type="button" onClick={() => setStep(s => s + 1)} className="flex-1 gap-1.5 touch-target min-h-[44px]" disabled={!canGoNext}>
               Weiter <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSave} className="flex-1" disabled={saving}>
+            <Button onClick={handleSave} className="flex-1 touch-target min-h-[44px]" disabled={saving}>
               {saving ? "Anlegen…" : "Darlehen anlegen"}
             </Button>
           )}

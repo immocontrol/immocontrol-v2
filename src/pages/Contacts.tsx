@@ -497,7 +497,7 @@ const ContactManagement = () => {
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           {/* IMPROVE-21: Better search placeholder with keyboard hint */}
-          <Input placeholder="Name, Firma oder E-Mail … (Ctrl+K)" aria-label="Kontakte durchsuchen" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-8 h-9 text-sm" />
+          <Input placeholder="z. B. Max Mustermann oder Firma (Ctrl+K)" aria-label="Kontakte durchsuchen" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-8 h-9 text-sm" />
           {search && (
             <button
               onClick={() => setSearch("")}

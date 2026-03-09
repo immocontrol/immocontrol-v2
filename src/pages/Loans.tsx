@@ -41,6 +41,7 @@ import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors"
 import { TilgungsplanSchnellrechner } from "@/components/TilgungsplanSchnellrechner";
 import { VirtualList } from "@/components/VirtualList";
 import { EmptyState } from "@/components/EmptyState";
+import { TablePageSkeleton } from "@/components/PageSkeleton";
 
 const VIRTUAL_LIST_THRESHOLD = 25;
 const LOAN_ITEM_HEIGHT = 145;
@@ -508,11 +509,7 @@ const Loans = () => {
   if (isLoading) {
     return (
       <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
-        {/* UI-4: skeleton-wave for loading */}
-        <div className="h-8 w-48 skeleton-wave rounded-lg" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 card-stagger-enter">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 skeleton-wave rounded-xl" />)}
-        </div>
+        <TablePageSkeleton rows={5} />
       </div>
     );
   }

@@ -445,16 +445,16 @@ const AddPropertyDialog = () => {
 
           <div className="flex gap-3 pt-2">
             {step > 0 && (
-              <Button type="button" variant="outline" onClick={goBack} className="gap-1.5">
+              <Button type="button" variant="outline" onClick={goBack} className="gap-1.5 touch-target min-h-[44px]">
                 <ChevronLeft className="h-4 w-4" /> Zurück
               </Button>
             )}
             {step < 2 ? (
-              <Button type="button" onClick={goNext} className="flex-1 gap-1.5">
+              <Button type="button" onClick={goNext} className="flex-1 gap-1.5 touch-target min-h-[44px]">
                 Weiter <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button type="submit" className="flex-1" disabled={isSubmitting} aria-busy={isSubmitting}>
+              <Button type="submit" className="flex-1 touch-target min-h-[44px]" disabled={isSubmitting} aria-busy={isSubmitting}>
                 {isSubmitting ? "Wird angelegt…" : "Objekt anlegen"}
               </Button>
             )}

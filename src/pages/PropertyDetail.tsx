@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { ROUTES, dealsWithId, viewingsWithId } from "@/lib/routes";
-import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles, PieChart, ShieldAlert } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles, PieChart, ShieldAlert, Info } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
@@ -33,6 +33,7 @@ import ContractManagement from "@/components/ContractManagement";
 import EnergyCertificateTracker from "@/components/EnergyCertificateTracker";
 import ServiceContracts from "@/components/ServiceContracts";
 import PropertyQuickSwitcher from "@/components/PropertyQuickSwitcher";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import DocumentTemplateGenerator from "@/components/DocumentTemplateGenerator";
 import { RentIncreaseLetter } from "@/components/RentIncreaseLetter";
 import { AnlageVExport } from "@/components/AnlageVExport";
@@ -196,6 +197,7 @@ const PropertyDetail = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label={`Objektdetail: ${property.name}`}>
+      <Breadcrumbs items={[{ label: "Objekte", href: ROUTES.OBJEKTE }, { label: property.name }]} className="mb-1" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link to={ROUTES.OBJEKTE} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors touch-target min-h-[44px] sm:min-h-0 items-center">
@@ -409,22 +411,32 @@ const PropertyDetail = () => {
         />
       </div>
 
-      {/* Rendite - Improvement 8: Traffic light colors */}
+      {/* Rendite - Improvement 8: Traffic light colors + UX-10 Tooltips für Kennzahlen */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:300ms]">
         <h2 className="text-sm font-semibold mb-4">Renditekennzahlen</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Brutto-Rendite", value: bruttoRendite, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 5, mid: (v: number) => v >= 3 },
-            { label: "Netto-Rendite", value: nettoRendite, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 3, mid: (v: number) => v >= 1.5 },
-            { label: "Cash-on-Cash", value: cashOnCash, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 5, mid: (v: number) => v >= 2 },
-            { label: "Mietmultiplikator", value: mietmultiplikator, format: (v: number) => v > 0 ? `${v.toFixed(1)}x` : "–", good: (v: number) => v > 0 && v <= 20, mid: (v: number) => v > 0 && v <= 25 },
-            { label: "LTV", value: ltv, format: (v: number) => `${v.toFixed(1)}%`, good: (v: number) => v <= 60, mid: (v: number) => v <= 80 },
-            { label: "DSCR", value: dscr, format: (v: number) => v > 0 ? `${v.toFixed(2)}x` : "–", good: (v: number) => v >= 1.3, mid: (v: number) => v >= 1.0 },
-            { label: "Break-Even", value: breakEvenOccupancy, format: (v: number) => `${v.toFixed(0)}%`, good: (v: number) => v <= 70, mid: (v: number) => v <= 90 },
-            { label: "Preis/Einheit", value: pricePerUnit, format: (v: number) => formatCurrency(v), good: () => true, mid: () => false },
+            { label: "Brutto-Rendite", value: bruttoRendite, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 5, mid: (v: number) => v >= 3, tip: "Jahresmiete ÷ Kaufpreis. Grober Ertrag ohne Kosten; ab 5 % oft gut." },
+            { label: "Netto-Rendite", value: nettoRendite, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 3, mid: (v: number) => v >= 1.5, tip: "Nach Bewirtschaftungskosten; realistischer als Brutto. Ab 3 % oft gut." },
+            { label: "Cash-on-Cash", value: cashOnCash, format: (v: number) => `${v.toFixed(2)}%`, good: (v: number) => v >= 5, mid: (v: number) => v >= 2, tip: "Jahres-Cashflow ÷ Eigenkapital. Verzinsung des eingesetzten Kapitals." },
+            { label: "Mietmultiplikator", value: mietmultiplikator, format: (v: number) => v > 0 ? `${v.toFixed(1)}x` : "–", good: (v: number) => v > 0 && v <= 20, mid: (v: number) => v > 0 && v <= 25, tip: "Kaufpreis ÷ Jahresmiete. Niedriger = schneller Mietrückfluss; oft 15–25." },
+            { label: "LTV", value: ltv, format: (v: number) => `${v.toFixed(1)}%`, good: (v: number) => v <= 60, mid: (v: number) => v <= 80, tip: "Loan-to-Value: Darlehen in % des Objektwerts. Unter 60 % gilt als solide." },
+            { label: "DSCR", value: dscr, format: (v: number) => v > 0 ? `${v.toFixed(2)}x` : "–", good: (v: number) => v >= 1.3, mid: (v: number) => v >= 1.0, tip: "Mieteinnahmen ÷ Kreditrate. Über 1,3x = Banken zufrieden." },
+            { label: "Break-Even", value: breakEvenOccupancy, format: (v: number) => `${v.toFixed(0)}%`, good: (v: number) => v <= 70, mid: (v: number) => v <= 90, tip: "Auslastung in %, bei der Einnahmen die Fixkosten decken." },
+            { label: "Preis/Einheit", value: pricePerUnit, format: (v: number) => formatCurrency(v), good: () => true, mid: () => false, tip: undefined as string | undefined },
           ].map((item) => (
             <div key={item.label} className="relative">
-              <div className="text-xs text-muted-foreground mb-1">{item.label}</div>
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-0.5">
+                {item.label}
+                {item.tip && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-help" aria-label={`Hilfe zu ${item.label}`}><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">{item.tip}</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
               <div className={`text-xl font-bold ${item.good(item.value) ? "text-profit" : item.mid(item.value) ? "text-gold" : "text-loss"}`}>
                 {item.format(item.value)}
               </div>

@@ -25,6 +25,7 @@ import { MoveInOutChecklist } from "@/components/MoveInOutChecklist";
 import { VacancyScenarios } from "@/components/VacancyScenarios";
 import { InflationMietrechner } from "@/components/InflationMietrechner";
 import { IndexMietanpassung } from "@/components/IndexMietanpassung";
+import { TablePageSkeleton } from "@/components/PageSkeleton";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -256,19 +257,7 @@ const Mietuebersicht = () => {
   if (isLoading) {
     return (
       <div className="space-y-6" role="main" aria-label="Mietübersicht">
-        <div>
-          <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-          <div className="h-4 w-72 bg-muted rounded animate-pulse mt-2" />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-border p-4 animate-pulse bg-muted/30">
-              <div className="h-3 w-20 bg-muted rounded mb-2" />
-              <div className="h-7 w-28 bg-muted rounded" />
-            </div>
-          ))}
-        </div>
-        <div className="rounded-xl border border-border p-4 animate-pulse bg-muted/30 h-48" />
+        <TablePageSkeleton rows={6} />
       </div>
     );
   }
@@ -466,7 +455,7 @@ const Mietuebersicht = () => {
           <div className="flex gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Mieter oder Objekt suchen..." aria-label="Mieter oder Objekt suchen" value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
+              <Input placeholder="z. B. Mustermann oder Musterstraße" aria-label="Mieter oder Objekt suchen" value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-9 w-[140px] text-sm"><SelectValue placeholder="Status" /></SelectTrigger>

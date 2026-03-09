@@ -314,7 +314,7 @@ export const GlobalSearch = () => {
               onChange={e => { setQuery(e.target.value); setOpen(true); }}
               onFocus={() => { if (query.trim()) setOpen(true); }}
               onKeyDown={handleKeyDown}
-              placeholder="Suchen…"
+              placeholder="z. B. Objekt, Seite, Aktion"
               className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
               autoComplete="off"
               aria-label="Globale Suche"

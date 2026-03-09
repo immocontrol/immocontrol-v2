@@ -441,7 +441,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Willkommen im Portfolio</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Hier siehst du alle Objekte, Kennzahlen und Widgets. Objekt hinzufügen über den grünen Button – Aktionen wie Teilen oder CSV-Export findest du unter „Aktionen“.
+              Starte hier: Erstes Objekt anlegen (grüner Button), dann Mieten und Darlehen in den Objektdetails erfassen. Aktionen wie Teilen oder Export findest du unter „Aktionen“.
             </p>
             <Button variant="ghost" size="sm" className="mt-2 h-8 min-h-[44px] sm:min-h-8 text-xs touch-target" onClick={dismissDashboardHint}>
               Nicht mehr anzeigen
@@ -802,7 +802,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             ref={searchRef}
-            placeholder="Objekt suchen… (⌘K)"
+            placeholder="z. B. Musterstraße 12 oder Objektname (⌘K)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 pr-8 h-9 text-sm"

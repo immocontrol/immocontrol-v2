@@ -129,7 +129,7 @@ export const CommandPalette = () => {
         <div className="flex items-center gap-2 px-3 border-b border-border">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <Input
-            placeholder="Seite oder Objekt suchen…"
+            placeholder="z. B. Dashboard, Musterstraße, Aufgaben"
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

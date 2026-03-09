@@ -239,16 +239,16 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
 
         <div className="flex gap-3 pt-2">
           {step > 0 && (
-            <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} className="gap-1.5">
+            <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} className="gap-1.5 touch-target min-h-[44px]">
               <ChevronLeft className="h-4 w-4" /> Zurück
             </Button>
           )}
           {step < 2 ? (
-            <Button type="button" onClick={() => setStep(s => s + 1)} className="flex-1 gap-1.5" disabled={!canGoNext}>
+            <Button type="button" onClick={() => setStep(s => s + 1)} className="flex-1 gap-1.5 touch-target min-h-[44px]" disabled={!canGoNext}>
               Weiter <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSave} className="flex-1" disabled={saving}>
+            <Button onClick={handleSave} className="flex-1 touch-target min-h-[44px]" disabled={saving}>
               {saving ? "Anlegen…" : "Mieter anlegen"}
             </Button>
           )}
