@@ -85,15 +85,31 @@ export function BiometricGate({ children }: BiometricGateProps) {
             {error}
           </p>
         )}
-        <Button
-          onClick={runVerification}
-          disabled={checking}
-          className="gap-2"
-          size="lg"
-        >
-          <Fingerprint className="h-5 w-5" />
-          {checking ? "Wird geprüft…" : "Mit Face ID / Touch ID entsperren"}
-        </Button>
+        <div className="flex flex-col gap-2 w-full">
+          <Button
+            onClick={runVerification}
+            disabled={checking}
+            className="gap-2"
+            size="lg"
+          >
+            <Fingerprint className="h-5 w-5" />
+            {checking ? "Wird geprüft…" : "Mit Face ID / Touch ID entsperren"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => {
+              setBiometricVerifiedThisSession();
+              setVerified(true);
+            }}
+          >
+            Überspringen und mit Passwort fortfahren
+          </Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Kein Passkey hinterlegt? Überspringen und Biometrie unter Einstellungen deaktivieren.
+        </p>
       </div>
     </div>
   );
