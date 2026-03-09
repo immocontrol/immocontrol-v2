@@ -115,6 +115,28 @@ export function useDragReorder<T>(
     }
   }, [items, onReorder, storageKey, stopAutoScroll]);
 
+  /**
+   * Hit-test: find which grid child the pointer is over.
+   * Must be declared before the useEffect that uses it (avoids TDZ "Cannot access before initialization").
+   */
+  const hitTest = useCallback((clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+    const children = Array.from(containerRef.current.children) as HTMLElement[];
+    for (let i = 0; i < children.length; i++) {
+      const attr = children[i].dataset.dragIdx;
+      const origIdx = attr !== undefined ? Number(attr) : i;
+      if (origIdx === dragItemRef.current) continue;
+      const rect = children[i].getBoundingClientRect();
+      if (
+        clientX >= rect.left && clientX <= rect.right &&
+        clientY >= rect.top && clientY <= rect.bottom
+      ) {
+        handleDragOver(origIdx);
+        return;
+      }
+    }
+  }, [handleDragOver]);
+
   /* Document-level pointer listeners when dragging — allows long-press on card to start drag (iOS-style) */
   useEffect(() => {
     if (!isDragging) return;
@@ -132,32 +154,6 @@ export function useDragReorder<T>(
       document.removeEventListener("pointercancel", onUp, { capture: true });
     };
   }, [isDragging, handleDragEnd, hitTest]);
-
-  /**
-   * Hit-test: find which grid child the pointer is over.
-   * Checks both X and Y for correct behaviour in multi-column grids.
-   * Skips the dragged item to prevent a jitter feedback loop where
-   * hovering over the dragged item resets the preview order, causing
-   * the DOM to reorder, causing a new hover target, etc.
-   */
-  const hitTest = useCallback((clientX: number, clientY: number) => {
-    if (!containerRef.current) return;
-    const children = Array.from(containerRef.current.children) as HTMLElement[];
-    for (let i = 0; i < children.length; i++) {
-      const attr = children[i].dataset.dragIdx;
-      const origIdx = attr !== undefined ? Number(attr) : i;
-      // Skip the item being dragged to prevent jitter
-      if (origIdx === dragItemRef.current) continue;
-      const rect = children[i].getBoundingClientRect();
-      if (
-        clientX >= rect.left && clientX <= rect.right &&
-        clientY >= rect.top && clientY <= rect.bottom
-      ) {
-        handleDragOver(origIdx);
-        return;
-      }
-    }
-  }, [handleDragOver]);
 
   /** Props to spread on the drag handle element (the grip icon). Document listeners handle move/up when dragging. */
   const getHandleProps = useCallback((idx: number) => ({

@@ -29,15 +29,16 @@ interface HandleErrorOptions {
   details?: string;
 }
 
+/* UX-9: Nutzerverständliche Fehlermeldungen mit Handlungsempfehlung */
 const CONTEXT_MESSAGES: Record<ErrorContext, string> = {
-  supabase: "Datenbankfehler",
-  auth: "Authentifizierungsfehler",
-  network: "Netzwerkfehler — bitte Verbindung prüfen",
-  validation: "Validierungsfehler",
-  file: "Dateifehler",
-  export: "Export fehlgeschlagen",
-  import: "Import fehlgeschlagen",
-  general: "Ein Fehler ist aufgetreten",
+  supabase: "Verbindung zur Datenbank fehlgeschlagen. Bitte erneut versuchen.",
+  auth: "Anmeldung fehlgeschlagen. Bitte erneut anmelden.",
+  network: "Verbindung unterbrochen. Bitte prüfen Sie Ihr Netzwerk und versuchen Sie es erneut.",
+  validation: "Eingabe ungültig. Bitte prüfen Sie die Felder.",
+  file: "Datei konnte nicht verarbeitet werden. Format oder Größe prüfen.",
+  export: "Export fehlgeschlagen. Bitte erneut versuchen.",
+  import: "Import fehlgeschlagen. Bitte Datei prüfen und erneut versuchen.",
+  general: "Ein Fehler ist aufgetreten. Bitte erneut versuchen.",
 };
 
 /**

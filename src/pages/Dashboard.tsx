@@ -307,6 +307,21 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     );
   }
 
+  /* UX-1: Kurz-Hinweis beim ersten Besuch (dismissible, localStorage) */
+  const [showDashboardHint, setShowDashboardHint] = useState(() => {
+    try {
+      return localStorage.getItem("immocontrol_dashboard_hint_dismissed") !== "1";
+    } catch {
+      return true;
+    }
+  });
+  const dismissDashboardHint = useCallback(() => {
+    setShowDashboardHint(false);
+    try {
+      localStorage.setItem("immocontrol_dashboard_hint_dismissed", "1");
+    } catch { /* ignore */ }
+  }, []);
+
   /* IMP20-2: Use pre-computed stats from PropertyContext — eliminates 3 redundant reduce() calls */
   const totalSqm = stats.totalSqm;
   const avgPricePerSqm = totalSqm > 0 ? stats.totalValue / totalSqm : 0;
@@ -416,6 +431,25 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+      )}
+
+      {/* UX-1: Erster Besuch — kurzer Hinweis mit "Nicht mehr anzeigen" */}
+      {showDashboardHint && mode === "portfolio" && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-start gap-3">
+          <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Willkommen im Portfolio</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Hier siehst du alle Objekte, Kennzahlen und Widgets. Objekt hinzufügen über den grünen Button – Aktionen wie Teilen oder CSV-Export findest du unter „Aktionen“.
+            </p>
+            <Button variant="ghost" size="sm" className="mt-2 h-8 min-h-[44px] sm:min-h-8 text-xs touch-target" onClick={dismissDashboardHint}>
+              Nicht mehr anzeigen
+            </Button>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={dismissDashboardHint} aria-label="Hinweis schließen">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
@@ -532,8 +566,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           </p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
         </div>
-        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow" title="Anteil nicht vermieteter Einheiten am Gesamtbestand">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Leerstand</p>
+        <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
+            Leerstand
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help" aria-label="Hilfe zu Leerstand"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">Anteil nicht vermieteter Einheiten am Gesamtbestand. Unter 10 % gilt als gut.</TooltipContent>
+            </Tooltip>
+          </p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">

@@ -167,10 +167,14 @@ function ScoutAiCallPopover({ business }: { business: ScoutResult }) {
 
   const copy = useCallback(() => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    toast.success("In Zwischenablage kopiert");
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success("In Zwischenablage kopiert");
+      },
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   }, [text]);
 
   return (

@@ -1,5 +1,6 @@
 import { Component, ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
 import { trackError } from "@/lib/errorTracking";
@@ -86,7 +87,10 @@ class ErrorBoundary extends Component<Props, State> {
             {/* IMP20-5: Copy error details to clipboard for support/debugging */}
             <Button variant="ghost" size="sm" onClick={() => {
               const details = `Fehler: ${this.state.error?.message || "Unbekannt"}\nStack: ${this.state.error?.stack || "–"}\nZeit: ${new Date().toISOString()}\nURL: ${window.location.href}`;
-              navigator.clipboard.writeText(details).catch(() => {});
+              navigator.clipboard.writeText(details).then(
+                () => toast.success("Fehler kopiert"),
+                () => toast.error("Kopieren fehlgeschlagen")
+              );
             }}>
               Fehler kopieren
             </Button>

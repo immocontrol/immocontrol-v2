@@ -251,8 +251,8 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Desktop: Sidebar (nur ab lg sichtbar) */}
-      <aside className="hidden lg:flex w-48 shrink-0 self-start max-h-[calc(100vh-6rem)] overflow-y-auto">
+      {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar */}
+      <aside className="hidden lg:flex w-48 shrink-0 self-start sticky top-0 max-h-[calc(100vh-2rem)] overflow-y-auto z-10 bg-background border-r border-border pr-2 -mr-2">
           <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
           {/* Single vertical track + progress fill */}
           {(() => {

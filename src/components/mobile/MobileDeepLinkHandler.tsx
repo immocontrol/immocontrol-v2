@@ -4,6 +4,7 @@
  * Parses incoming URLs and navigates to the correct page with context.
  */
 import { useEffect, useCallback, useState, memo } from "react";
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link2, ExternalLink, AlertCircle, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -159,8 +160,9 @@ export const MobileDeepLinkHandler = memo(function MobileDeepLinkHandler({
       await navigator.clipboard.writeText(`${baseUrl}${path}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast.success("Link kopiert");
     } catch {
-      // Clipboard write failed
+      toast.error("Kopieren fehlgeschlagen");
     }
   }, [baseUrl]);
 

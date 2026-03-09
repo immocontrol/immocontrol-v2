@@ -357,7 +357,7 @@ const Dokumente = () => {
           <Input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Dokumente durchsuchen (auch extrahierter Text)..."
+            placeholder="z. B. Mietvertrag, Adresse, Objektname …"
             className="pl-9 h-10"
           />
         </div>
@@ -381,6 +381,9 @@ const Dokumente = () => {
           </SelectContent>
         </Select>
       </div>
+      {CATEGORIES.length > 3 && (
+        <p className="text-[10px] text-muted-foreground">Tipp: Nach Kategorie oder Objekt filtern</p>
+      )}
 
       {/* MOB-13: Mobile Document Camera — quick capture button */}
       <div className="md:hidden">

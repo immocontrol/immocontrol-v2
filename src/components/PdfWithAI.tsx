@@ -94,10 +94,14 @@ export function PdfWithAI() {
 
   const copyResult = useCallback(() => {
     if (!result) return;
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    toast.success("In Zwischenablage kopiert");
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(result).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success("In Zwischenablage kopiert");
+      },
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   }, [result]);
 
   if (!isDeepSeekConfigured()) {

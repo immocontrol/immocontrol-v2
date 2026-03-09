@@ -82,10 +82,14 @@ export function ColdOutreachTemplates({ onSelect, className }: ColdOutreachTempl
 
   const handleCopy = () => {
     if (!body) return;
-    navigator.clipboard.writeText(body);
-    setCopied(true);
-    toast.success("Vorlage kopiert");
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(body).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success("Vorlage kopiert");
+      },
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   };
 
   const handleUse = () => {

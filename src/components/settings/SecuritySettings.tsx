@@ -48,11 +48,14 @@ export function SecuritySettings({
   const [copied, setCopied] = useState(false);
 
   const copySecret = () => {
-    navigator.clipboard.writeText(totpSecret).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast.success("Secret kopiert!");
-    });
+    navigator.clipboard.writeText(totpSecret).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success("Secret kopiert!");
+      },
+      () => toast.error("Kopieren fehlgeschlagen")
+    );
   };
 
   return (

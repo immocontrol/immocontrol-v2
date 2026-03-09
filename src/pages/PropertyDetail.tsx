@@ -176,9 +176,11 @@ const PropertyDetail = () => {
 
   if (!property) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-20 space-y-3">
         <p className="text-muted-foreground">Objekt nicht gefunden</p>
-        <Link to={ROUTES.HOME} className="text-primary text-sm mt-2 inline-block">← Zurück</Link>
+        <Link to={ROUTES.OBJEKTE} className="inline-flex items-center gap-1 text-sm text-primary hover:underline touch-target min-h-[44px] sm:min-h-0 justify-center">
+          <ArrowLeft className="h-4 w-4" /> Zurück zu Objekte
+        </Link>
       </div>
     );
   }
@@ -196,8 +198,8 @@ const PropertyDetail = () => {
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label={`Objektdetail: ${property.name}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to={ROUTES.HOME} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Portfolio
+          <Link to={ROUTES.OBJEKTE} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors touch-target min-h-[44px] sm:min-h-0 items-center">
+            <ArrowLeft className="h-4 w-4" /> Zurück zu Objekte
           </Link>
           <PropertyQuickSwitcher currentPropertyId={property.id} />
         </div>

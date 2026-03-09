@@ -1,6 +1,7 @@
 import React from "react";
 import { ReactNode, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { TrendingUp, TrendingDown, Check } from "lucide-react";
 
 interface StatCardProps {
@@ -20,8 +21,8 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip, hre
 
   const copyValue = useCallback(() => {
     navigator.clipboard.writeText(value).then(
-      () => { setCopied(true); setTimeout(() => setCopied(false), 1500); },
-      () => { /* clipboard unavailable — fail silently for stat cards */ }
+      () => { setCopied(true); setTimeout(() => setCopied(false), 1500); toast.success("Kopiert"); },
+      () => toast.error("Kopieren fehlgeschlagen")
     );
   }, [value]);
 
