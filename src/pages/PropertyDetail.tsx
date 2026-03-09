@@ -220,41 +220,47 @@ const PropertyDetail = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={copyAddress}
-                  className="flex items-center gap-1 text-sm text-muted-foreground mt-1 hover:text-foreground transition-colors group/addr"
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1 hover:text-foreground transition-colors group/addr min-w-0"
                 >
-                  <MapPin className="h-3.5 w-3.5" /> {property.address}
-                  <ClipboardCopy className="h-3 w-3 opacity-0 group-hover/addr:opacity-100 transition-opacity" />
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{property.address}</span>
+                  <ClipboardCopy className="h-3 w-3 shrink-0 opacity-0 group-hover/addr:opacity-100 transition-opacity" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>Adresse kopieren</TooltipContent>
             </Tooltip>
             {property.address?.trim() && (
-              <>
+              <div className="flex flex-wrap items-center gap-2 mt-2 min-w-0">
                 <Link
                   to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(property.address.trim())}`}
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0"
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors touch-target min-h-[36px] sm:min-h-0 sm:py-1"
                   aria-label="WGH in Umgebung suchen"
                 >
-                  <Store className="h-3 w-3 shrink-0" /> WGH in Umgebung
+                  <Store className="h-3.5 w-3.5 shrink-0" /> WGH in Umgebung
                 </Link>
-                <span className="text-muted-foreground/60 mx-1">·</span>
-                <Link to={ROUTES.STRESS_TEST} className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0" aria-label="Stress-Test">
-                  <ShieldAlert className="h-3 w-3 shrink-0" /> Stress-Test
+                <Link
+                  to={ROUTES.STRESS_TEST}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors touch-target min-h-[36px] sm:min-h-0 sm:py-1"
+                  aria-label="Stress-Test"
+                >
+                  <ShieldAlert className="h-3.5 w-3.5 shrink-0" /> Stress-Test
                 </Link>
-                <span className="text-muted-foreground/60 mx-1">·</span>
-                <Link to={ROUTES.DIVERSIFIKATION} className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0" aria-label="Diversifikation">
-                  <PieChart className="h-3 w-3 shrink-0" /> Diversifikation
+                <Link
+                  to={ROUTES.DIVERSIFIKATION}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors touch-target min-h-[36px] sm:min-h-0 sm:py-1"
+                  aria-label="Diversifikation"
+                >
+                  <PieChart className="h-3.5 w-3.5 shrink-0" /> Diversifikation
                 </Link>
-                <span className="text-muted-foreground/60 mx-1">·</span>
                 <button
                   type="button"
                   onClick={() => navigate(ROUTES.DEALS, { state: { fromProperty: { title: property.name, address: property.address ?? "" } } })}
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1 touch-target min-h-[36px] sm:min-h-0"
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors touch-target min-h-[36px] sm:min-h-0 sm:py-1"
                   aria-label="Deal mit diesem Objekt anlegen"
                 >
-                  <Handshake className="h-3 w-3 shrink-0" /> Deal anlegen
+                  <Handshake className="h-3.5 w-3.5 shrink-0" /> Deal anlegen
                 </button>
-              </>
+              </div>
             )}
           </div>
           <div className="flex items-center gap-1">

@@ -152,43 +152,43 @@ th{background:#f5f5f5;font-weight:600}
         <AmortisationsRechner />
         <ZinseszinsRechner />
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Objektanalyse</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Calculator className="h-6 w-6 shrink-0 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight truncate">Objektanalyse</h1>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={copyResults}>
-            <Copy className="h-3.5 w-3.5" /> Kopieren
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={copyResults}>
+            <Copy className="h-3.5 w-3.5 shrink-0" /> Kopieren
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportPDF}>
-            <BarChart3 className="h-3.5 w-3.5" /> PDF
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={exportPDF}>
+            <BarChart3 className="h-3.5 w-3.5 shrink-0" /> PDF
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={resetInputs}>
-            <RotateCcw className="h-3.5 w-3.5" /> Reset
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={resetInputs}>
+            <RotateCcw className="h-3.5 w-3.5 shrink-0" /> Reset
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
-            <FileBarChart className="h-3.5 w-3.5" /> Berichte
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={() => navigate(ROUTES.REPORTS)} aria-label="Zu Berichte">
+            <FileBarChart className="h-3.5 w-3.5 shrink-0" /> Berichte
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
-            <Store className="h-3.5 w-3.5" /> WGH finden
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
+            <Store className="h-3.5 w-3.5 shrink-0" /> WGH finden
           </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-secondary/50 p-1 rounded-lg">
+      <div className="flex gap-1 bg-secondary/50 p-1 rounded-lg min-w-0 overflow-x-auto scrollbar-hide">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setActiveTab(t.key)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all flex-1 justify-center ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all flex-1 min-w-0 justify-center touch-target min-h-[44px] sm:min-h-0 ${
               activeTab === t.key
                 ? "bg-background text-foreground shadow-sm ring-1 ring-border"
                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
             }`}
           >
-            <t.icon className={`h-3.5 w-3.5 ${activeTab === t.key ? "text-primary" : ""}`} />
+            <t.icon className={`h-3.5 w-3.5 shrink-0 ${activeTab === t.key ? "text-primary" : ""}`} />
             <span className="hidden sm:inline">{t.label}</span>
           </button>
         ))}

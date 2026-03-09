@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search, Eye, EyeOff, Check } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search, Eye, EyeOff, Check, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DataBackup } from "@/components/DataBackup";
@@ -48,6 +50,7 @@ const SETTINGS_SECTIONS = [
   { id: "tastenkombinationen", label: "Tasten", icon: Keyboard },
   { id: "telegram", label: "Telegram", icon: MessageSquare },
   { id: "manus-ai", label: "Manus AI", icon: Bot },
+  { id: "error-scanner", label: "Error Scanner", icon: Bug },
   { id: "team", label: "Team", icon: Users },
   { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
   { id: "system-info", label: "System-Info", icon: Database },
@@ -57,6 +60,9 @@ const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const isMobile = useIsMobile();
+  /* Suchfeld und andere Inputs auf Mobile über der Tastatur sichtbar halten */
+  useKeyboardAwareScroll({ offset: 80, enabled: isMobile });
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -76,9 +82,10 @@ const Settings = () => {
 
   const filteredSettingsSections = useMemo(() => {
     const q = settingsSearchQuery.trim().toLowerCase();
-    if (!q) return [...SETTINGS_SECTIONS];
-    return SETTINGS_SECTIONS.filter((s) => s.label.toLowerCase().includes(q));
-  }, [settingsSearchQuery]);
+    let list = !q ? [...SETTINGS_SECTIONS] : SETTINGS_SECTIONS.filter((s) => s.label.toLowerCase().includes(q));
+    if (isMobile) list = list.filter((s) => s.id !== "tastenkombinationen");
+    return list;
+  }, [settingsSearchQuery, isMobile]);
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
@@ -106,19 +113,22 @@ const Settings = () => {
     return () => observers.forEach(o => o.disconnect());
   }, [profileLoading]);
 
-  /* Mobile: Tab-Leiste horizontal mitscrollen, damit der aktive Menüpunkt sichtbar ist */
+  /* Mobile: Tab-Leiste horizontal mitscrollen, damit der aktive Menüpunkt sichtbar und mit Scroll-Position synchron bleibt */
   useEffect(() => {
     const container = mobileTabBarRef.current;
     if (!container) return;
     const activeBtn = container.querySelector<HTMLElement>(`[data-settings-tab="${activeSection}"]`);
     if (!activeBtn) return;
-    const containerWidth = container.clientWidth;
-    const btnLeft = activeBtn.offsetLeft;
-    const btnWidth = activeBtn.offsetWidth;
-    const scrollLeft = btnLeft - containerWidth / 2 + btnWidth / 2;
-    const maxScroll = container.scrollWidth - containerWidth;
-    container.scrollTo({ left: Math.max(0, Math.min(scrollLeft, maxScroll)), behavior: "smooth" });
-  }, [activeSection]);
+    const scrollIntoView = () => {
+      const containerWidth = container.clientWidth;
+      const btnLeft = activeBtn.offsetLeft;
+      const btnWidth = activeBtn.offsetWidth;
+      const scrollLeft = btnLeft - containerWidth / 2 + btnWidth / 2;
+      const maxScroll = Math.max(0, container.scrollWidth - containerWidth);
+      container.scrollTo({ left: Math.max(0, Math.min(scrollLeft, maxScroll)), behavior: "smooth" });
+    };
+    requestAnimationFrame(scrollIntoView);
+  }, [activeSection, filteredSettingsSections]);
 
   /* Check existing TOTP factors for SystemInfo */
   useEffect(() => {
@@ -284,15 +294,16 @@ const Settings = () => {
     setEmailNew("");
   };
 
-  /* Layout per CSS: unter lg = Spalte (Tab-Leiste + Inhalt), ab lg = Zeile (Sidebar + Inhalt). Kein JS-Breakpoint → kein Flackern. */
+  /* Layout per CSS: unter lg = Spalte (Tab-Leiste + Inhalt), ab lg = Zeile (Sidebar + Inhalt). Kein JS-Breakpoint → kein Flackern.
+     Root ohne overflow-x-hidden, damit sticky für die Tab-Leiste funktioniert; overflow nur am Inhaltsbereich. */
   return (
     <div
-      className="w-full min-w-0 max-w-full max-w-[100vw] overflow-x-hidden flex flex-col lg:flex-row lg:gap-6"
+      className="w-full min-w-0 max-w-full max-w-[100vw] flex flex-col lg:flex-row lg:gap-6"
       role="main"
       aria-label="Einstellungen"
     >
-      {/* Mobile: Tab-Leiste + Progress (nur unter lg) — sticky gepinnt, horizontal scrollbar, Fortschritt sync mit Seite */}
-      <div className="lg:hidden sticky top-0 z-20 shrink-0 w-full max-w-full bg-background border-b border-border shadow-[0_1px_0_0_hsl(var(--border))]">
+      {/* Mobile: Tab-Leiste + Progress (nur unter lg) — gepinnt unter Header, bleibt beim Scrollen sichtbar */}
+      <div className="lg:hidden sticky z-20 shrink-0 w-full max-w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-[0_1px_0_0_hsl(var(--border))] top-[calc(3.5rem+env(safe-area-inset-top,0px))]">
         <div
           ref={mobileTabBarRef}
           className="w-full max-w-full overflow-x-auto scrollbar-hide overscroll-x-contain relative"
@@ -318,19 +329,6 @@ const Settings = () => {
             })}
           </div>
         </div>
-        {/* Progress-Leiste: Fortschritt zwischen Menü-Übersicht und Scroll-Position auf der Seite */}
-        {filteredSettingsSections.length > 0 && (() => {
-          const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
-          const progressPercent = activeIdx < 0 ? 0 : Math.min(100, ((activeIdx + 0.5) / Math.max(1, filteredSettingsSections.length)) * 100);
-          return (
-            <div className="h-1 w-full bg-muted/80 overflow-hidden" role="progressbar" aria-valuenow={Math.round(progressPercent)} aria-valuemin={0} aria-valuemax={100} aria-label="Einstellungen-Fortschritt">
-              <div
-                className="h-full bg-primary transition-all duration-300 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          );
-        })()}
       </div>
 
       {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar */}
@@ -394,8 +392,8 @@ const Settings = () => {
           </nav>
       </aside>
 
-      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar */}
-      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0">
+      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar; overflow-x nur hier, damit sticky Tab-Leiste nicht bricht */}
+      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 overflow-x-hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-6 w-6 text-primary" />
@@ -595,11 +593,11 @@ const Settings = () => {
         <AIChatSettings sectionRef={refFor("ai-chat")} />
         <BackupSettings sectionRef={refFor("backup")} />
         <BenachrichtigungenSettings sectionRef={refFor("benachrichtigungen")} />
-        <ShortcutSettings sectionRef={refFor("tastenkombinationen")} />
+        {!isMobile && <ShortcutSettings sectionRef={refFor("tastenkombinationen")} />}
         <TelegramSettings sectionRef={refFor("telegram")} />
         <ManusSettings sectionRef={refFor("manus-ai")} />
 
-        <ErrorScanner />
+        <ErrorScanner sectionRef={refFor("error-scanner")} />
 
         {/* Team */}
         <div id="team" ref={refFor("team")} className="scroll-mt-20">

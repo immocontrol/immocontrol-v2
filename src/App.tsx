@@ -18,6 +18,7 @@ import { ErrorInterceptor } from "@/components/ErrorScanner";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import { useBackgroundSync } from "@/hooks/useOfflineCache";
 import { queryKeys } from "@/lib/queryKeys";
+import { BiometricGate } from "@/components/BiometricGate";
 import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
@@ -314,9 +315,10 @@ const RoleRouter = () => {
   }
 
   return (
-    <AppLayout>
-      <PageTransition>
-        <Routes>
+    <BiometricGate>
+      <AppLayout>
+        <PageTransition>
+          <Routes>
           <Route path={ROUTES.ONBOARDING} element={<ErrorBoundary><Onboarding /></ErrorBoundary>} />
           <Route path={`${ROUTES.TENANT_PORTAL}/*`} element={<ErrorBoundary><TenantPortal /></ErrorBoundary>} />
           <Route path={`${ROUTES.HANDWORKER_PORTAL}/*`} element={<ErrorBoundary><HandworkerPortal /></ErrorBoundary>} />
@@ -359,9 +361,10 @@ const RoleRouter = () => {
           <Route path={ROUTES.SYNDICATION} element={<ErrorBoundary><SyndicationPage /></ErrorBoundary>} />
           <Route path={ROUTES.DEAL_BENCHMARK} element={<ErrorBoundary><DealBenchmarkPage /></ErrorBoundary>} />
           <Route path="*" element={<ErrorBoundary><NotFound /></ErrorBoundary>} />
-        </Routes>
-      </PageTransition>
-    </AppLayout>
+          </Routes>
+        </PageTransition>
+      </AppLayout>
+    </BiometricGate>
   );
 };
 

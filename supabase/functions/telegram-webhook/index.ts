@@ -1,10 +1,95 @@
 /**
- * Telegram Webhook — receives channel/group posts from Telegram.
- * Parses ImmoMetrica deal messages and inserts into deals table.
+ * Telegram Webhook — receives channel/group posts and private messages.
+ * - Channel/group: parses ImmoMetrica deal messages, inserts into deals.
+ * - Private chat: optional Manus AI replies (if manus_replies_enabled + manus_api_key).
  * URL: /telegram-webhook?secret=UUID or path /telegram-webhook/:secret
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const MANUS_API_BASE = "https://api.manus.im/v1";
+const MANUS_POLL_MS = 2500;
+const MANUS_MAX_WAIT_MS = 52000;
+
+async function runManusAndReply(
+  manusApiKey: string,
+  botToken: string,
+  chatId: number,
+  userPrompt: string
+): Promise<void> {
+  const createRes = await fetch(`${MANUS_API_BASE}/tasks`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${manusApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt: userPrompt,
+      task_mode: "agent",
+      agent_profile: "quality",
+    }),
+  });
+  if (!createRes.ok) {
+    const errText = await createRes.text();
+    await sendTelegram(botToken, chatId, `Manus Fehler: ${errText.slice(0, 500)}`);
+    return;
+  }
+  const createData = (await createRes.json()) as { task_id?: string };
+  const taskId = createData.task_id;
+  if (!taskId) {
+    await sendTelegram(botToken, chatId, "Manus: Keine Task-ID erhalten.");
+    return;
+  }
+
+  const deadline = Date.now() + MANUS_MAX_WAIT_MS;
+  let lastStatus: string | null = null;
+  let output: string | undefined;
+  let errorMsg: string | undefined;
+
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, MANUS_POLL_MS));
+    const getRes = await fetch(`${MANUS_API_BASE}/tasks/${taskId}`, {
+      headers: { Authorization: `Bearer ${manusApiKey}` },
+    });
+    if (!getRes.ok) {
+      await sendTelegram(botToken, chatId, "Manus: Statusabfrage fehlgeschlagen.");
+      return;
+    }
+    const task = (await getRes.json()) as { status?: string; output?: string; error?: string };
+    lastStatus = task.status ?? null;
+    if (task.status === "completed") {
+      output = task.output;
+      break;
+    }
+    if (task.status === "failed") {
+      errorMsg = task.error || "Unbekannter Fehler";
+      break;
+    }
+  }
+
+  if (output) {
+    const text = output.length > 4000 ? output.slice(0, 3997) + "…" : output;
+    await sendTelegram(botToken, chatId, text);
+    return;
+  }
+  if (errorMsg) {
+    await sendTelegram(botToken, chatId, `Manus: ${errorMsg.slice(0, 500)}`);
+    return;
+  }
+  await sendTelegram(
+    botToken,
+    chatId,
+    "Recherche dauert länger. Bitte in 1–2 Minuten erneut fragen oder in der App prüfen."
+  );
+}
+
+async function sendTelegram(botToken: string, chatId: number, text: string): Promise<void> {
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  });
+}
 
 // ─── ImmoMetrica message parser (port from TelegramDealImport) ───
 function parseGermanNumber(str: string): number | null {
@@ -173,15 +258,15 @@ serve(async (req) => {
 
     const { data: config } = await supabaseAdmin
       .from("telegram_webhook_config")
-      .select("user_id, chat_title_includes, allowed_chat_id")
+      .select("user_id, bot_token, chat_title_includes, allowed_chat_id, manus_replies_enabled, manus_api_key")
       .eq("webhook_secret", secret)
       .single();
 
     if (!config) return new Response("Config not found", { status: 404 });
 
     const body = await req.json() as {
-      message?: { text?: string; chat?: { id: number; title?: string } };
-      channel_post?: { text?: string; chat?: { id: number; title?: string } };
+      message?: { text?: string; chat?: { id: number; type?: string; title?: string } };
+      channel_post?: { text?: string; chat?: { id: number; type?: string; title?: string } };
     };
 
     const post = body.message ?? body.channel_post;
@@ -189,9 +274,32 @@ serve(async (req) => {
     const chat = post?.chat;
     if (!text || !chat) return new Response("OK", { status: 200 });
 
-    // Filter by chat if configured
-    const chatTitleIncludes = (config as { chat_title_includes?: string }).chat_title_includes;
-    const allowedChatId = (config as { allowed_chat_id?: number }).allowed_chat_id;
+    const cfg = config as {
+      user_id: string;
+      bot_token?: string;
+      chat_title_includes?: string;
+      allowed_chat_id?: number;
+      manus_replies_enabled?: boolean;
+      manus_api_key?: string | null;
+    };
+
+    // Private chat: Manus-Antworten (wenn aktiviert); Key aus Config oder Server-Secret
+    const manusKey = (cfg.manus_api_key && cfg.manus_api_key.trim()) || Deno.env.get("MANUS_API_KEY");
+    if (chat.type === "private" && cfg.manus_replies_enabled && manusKey && cfg.bot_token) {
+      try {
+        await runManusAndReply(manusKey, cfg.bot_token, chat.id, text);
+      } catch (e) {
+        console.error("telegram-webhook Manus:", e);
+        try {
+          await sendTelegram(cfg.bot_token!, chat.id, "Antwort konnte nicht erstellt werden. Bitte später erneut versuchen.");
+        } catch {}
+      }
+      return new Response("OK", { status: 200 });
+    }
+
+    // Channel/group: Deal-Import (Kanal-Filter)
+    const chatTitleIncludes = cfg.chat_title_includes;
+    const allowedChatId = cfg.allowed_chat_id;
     if (typeof allowedChatId === "number" && chat.id !== allowedChatId) return new Response("OK", { status: 200 });
     if (chatTitleIncludes && !(chat.title || "").toLowerCase().includes(chatTitleIncludes.toLowerCase())) {
       return new Response("OK", { status: 200 });
@@ -200,7 +308,7 @@ serve(async (req) => {
     const parsed = parseTelegramMessages(text);
     if (parsed.length === 0) return new Response("OK", { status: 200 });
 
-    const userId = (config as { user_id: string }).user_id;
+    const userId = cfg.user_id;
 
     // Check existing notes to avoid duplicates
     const { data: existing } = await supabaseAdmin

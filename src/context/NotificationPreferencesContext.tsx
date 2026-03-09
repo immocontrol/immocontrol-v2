@@ -6,6 +6,10 @@ export type NotifyTopic = "overdue" | "contract_expiry" | "tickets" | "loan_mile
 
 export interface NotificationPreferences {
   inApp: Record<NotifyTopic, boolean>;
+  /** Browser-Notification-API (OS-Popups) ein-/ausschaltbar */
+  browser: boolean;
+  /** Web-Push (auch bei geschlossener App) — Abo in Supabase, konfigurierbar in Einstellungen */
+  webPush: boolean;
 }
 
 const DEFAULTS: NotificationPreferences = {
@@ -15,6 +19,8 @@ const DEFAULTS: NotificationPreferences = {
     tickets: true,
     loan_milestone: true,
   },
+  browser: false,
+  webPush: false,
 };
 
 function load(): NotificationPreferences {
@@ -24,6 +30,8 @@ function load(): NotificationPreferences {
     const parsed = JSON.parse(raw) as Partial<NotificationPreferences>;
     return {
       inApp: { ...DEFAULTS.inApp, ...parsed?.inApp },
+      browser: parsed?.browser ?? DEFAULTS.browser,
+      webPush: parsed?.webPush ?? DEFAULTS.webPush,
     };
   } catch {
     return DEFAULTS;
@@ -41,7 +49,11 @@ function save(prefs: NotificationPreferences) {
 interface ContextValue {
   prefs: NotificationPreferences;
   setInApp: (topic: NotifyTopic, enabled: boolean) => void;
+  setBrowser: (enabled: boolean) => void;
+  setWebPush: (enabled: boolean) => void;
   isInAppEnabled: (topic: NotifyTopic) => boolean;
+  isBrowserEnabled: () => boolean;
+  isWebPushEnabled: () => boolean;
 }
 
 const Context = createContext<ContextValue | null>(null);
@@ -60,14 +72,33 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
     });
   }, []);
 
+  const setBrowser = useCallback((enabled: boolean) => {
+    setPrefs((prev) => {
+      const next: NotificationPreferences = { ...prev, browser: enabled };
+      save(next);
+      return next;
+    });
+  }, []);
+
+  const setWebPush = useCallback((enabled: boolean) => {
+    setPrefs((prev) => {
+      const next: NotificationPreferences = { ...prev, webPush: enabled };
+      save(next);
+      return next;
+    });
+  }, []);
+
   const isInAppEnabled = useCallback(
     (topic: NotifyTopic) => prefs.inApp[topic] ?? true,
     [prefs]
   );
 
+  const isBrowserEnabled = useCallback(() => prefs.browser, [prefs]);
+  const isWebPushEnabled = useCallback(() => prefs.webPush, [prefs]);
+
   const value = useMemo(
-    () => ({ prefs, setInApp, isInAppEnabled }),
-    [prefs, setInApp, isInAppEnabled]
+    () => ({ prefs, setInApp, setBrowser, setWebPush, isInAppEnabled, isBrowserEnabled, isWebPushEnabled }),
+    [prefs, setInApp, setBrowser, setWebPush, isInAppEnabled, isBrowserEnabled, isWebPushEnabled]
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
@@ -79,7 +110,11 @@ export function useNotificationPreferences() {
     return {
       prefs: load(),
       setInApp: () => {},
+      setBrowser: () => {},
+      setWebPush: () => {},
       isInAppEnabled: () => true,
+      isBrowserEnabled: () => false,
+      isWebPushEnabled: () => false,
     };
   }
   return ctx;

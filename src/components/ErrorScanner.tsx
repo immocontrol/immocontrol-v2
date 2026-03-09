@@ -132,7 +132,11 @@ export function ErrorInterceptor() {
   return null;
 }
 
-export function ErrorScanner() {
+interface ErrorScannerProps {
+  sectionRef?: (el: HTMLElement | null) => void;
+}
+
+export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
   const [errors, setErrors] = useState<AppError[]>(loadErrors);
   const [filter, setFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState<ErrorSeverity | "all">("all");
@@ -259,7 +263,7 @@ export function ErrorScanner() {
   const warningCount = errors.filter(e => e.severity === "warning").length;
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:125ms]" role="region" aria-label="Error Scanner">
+    <div id="error-scanner" ref={sectionRef} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in [animation-delay:125ms] scroll-mt-20" role="region" aria-label="Error Scanner">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Bug className="h-4 w-4 text-muted-foreground" /> Error Scanner
@@ -330,7 +334,7 @@ export function ErrorScanner() {
                 <div className="flex items-start gap-2">
                   <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${severityColor[err.severity]}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{err.message}</p>
+                    <p className="text-xs font-medium truncate" title={err.message}>{err.message}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-[10px] text-muted-foreground">{err.source}</span>
                       <span className="text-[10px] text-muted-foreground">{new Date(err.lastSeen).toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}</span>

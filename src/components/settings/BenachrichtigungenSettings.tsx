@@ -7,8 +7,10 @@ import { useState, useEffect } from "react";
 import { Bell, MessageSquare, Monitor, Inbox, Smartphone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { subscribeToWebPush, getWebPushStatus } from "@/lib/pushNotifications";
+import { subscribeToWebPush, unsubscribeFromWebPush, getWebPushStatus, requestNotificationPermission } from "@/lib/pushNotifications";
 import { useNotificationPreferences } from "@/context/NotificationPreferencesContext";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -35,34 +37,77 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
   const [digestFreq, setDigestFreq] = useState<string>(() => {
     try { return localStorage.getItem(DIGEST_KEY) ?? "off"; } catch { return "off"; }
   });
+  const [browserPermission, setBrowserPermission] = useState<NotificationPermission>(() =>
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "denied"
+  );
+  const [browserRequesting, setBrowserRequesting] = useState(false);
 
   useEffect(() => {
     try { localStorage.setItem(DIGEST_KEY, digestFreq); } catch { /* noop */ }
   }, [digestFreq]);
   const [pushLoading, setPushLoading] = useState(false);
-  const { prefs, setInApp } = useNotificationPreferences();
+  const [testPushLoading, setTestPushLoading] = useState(false);
+  const { user } = useAuth();
+  const { prefs, setInApp, setBrowser, setWebPush } = useNotificationPreferences();
 
   useEffect(() => {
     setPushStatus(getWebPushStatus());
   }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setBrowserPermission(Notification.permission);
+    }
+  }, []);
 
-  const handleWebPushEnable = async () => {
-    if (!pushStatus.supported) return;
+  const handleWebPushToggle = async (enabled: boolean) => {
+    if (!pushStatus.supported || !user?.id) return;
     setPushLoading(true);
     try {
-      const sub = await subscribeToWebPush();
-      setPushStatus(getWebPushStatus());
-      if (sub) {
-        toast.success("Web-Push aktiviert. Abonnements-Daten lokal gespeichert.");
-      } else if (!pushStatus.vapidConfigured) {
-        toast.info("Web-Push erfordert VAPID-Konfiguration (VITE_VAPID_PUBLIC_KEY).");
+      if (enabled) {
+        const sub = await subscribeToWebPush(user.id);
+        setPushStatus(getWebPushStatus());
+        if (sub) {
+          setWebPush(true);
+          toast.success("Web-Push aktiviert. Du erhältst Benachrichtigungen auch bei geschlossener App.");
+        } else if (!pushStatus.vapidConfigured) {
+          toast.info("Web-Push erfordert VAPID-Konfiguration (VITE_VAPID_PUBLIC_KEY).");
+        } else {
+          toast.error("Berechtigung verweigert oder Browser unterstützt Web-Push nicht.");
+        }
       } else {
-        toast.error("Berechtigung verweigert oder Browser unterstützt Web-Push nicht.");
+        await unsubscribeFromWebPush(user.id);
+        setWebPush(false);
+        setPushStatus(getWebPushStatus());
+        toast.success("Web-Push deaktiviert.");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Web-Push Aktivierung fehlgeschlagen");
+      toast.error(e instanceof Error ? e.message : (enabled ? "Web-Push Aktivierung fehlgeschlagen" : "Web-Push Deaktivierung fehlgeschlagen"));
     } finally {
       setPushLoading(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    if (!user) return;
+    setTestPushLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Nicht angemeldet.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("send-push", {
+        body: { payload: { title: "ImmoControl Test", body: "Web-Push funktioniert – auch bei geschlossener App.", url: "/", tag: "test" } },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      const sent = (data as { sent?: number })?.sent ?? 0;
+      if (sent > 0) toast.success(`Test-Push gesendet (${sent} Gerät${sent > 1 ? "e" : ""}).`);
+      else toast.info("Kein Abo für diesen Nutzer oder Edge Function nicht konfiguriert (VAPID_KEYS_JSON).");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Test-Push fehlgeschlagen");
+    } finally {
+      setTestPushLoading(false);
     }
   };
 
@@ -78,22 +123,21 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
         <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
           <div className="flex items-center gap-3">
             <Inbox className="h-5 w-5 text-primary shrink-0" />
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium">In-App</p>
               <p className="text-[11px] text-muted-foreground">Hinweise im Dashboard pro Thema ein-/ausschaltbar</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 pl-8">
-            {TOPICS.map((t) => (
-              <label key={t.key} className="flex items-center gap-2 text-xs cursor-pointer">
-                <Switch
-                  checked={prefs.inApp[t.key]}
-                  onCheckedChange={(v) => setInApp(t.key, !!v)}
-                />
-                <span>{t.label}</span>
-              </label>
-            ))}
-          </div>
+          {TOPICS.map((t) => (
+            <div key={t.key} className="flex items-center justify-between gap-3 py-1.5">
+              <span className="text-xs font-medium">{t.label}</span>
+              <Switch
+                checked={prefs.inApp[t.key]}
+                onCheckedChange={(v) => setInApp(t.key, !!v)}
+                aria-label={`${t.label} ein oder aus`}
+              />
+            </div>
+          ))}
         </div>
         <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
           <div className="flex items-center gap-3">
@@ -114,38 +158,91 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-          <Monitor className="h-5 w-5 text-primary shrink-0" />
-          <div>
-            <p className="text-xs font-medium">Browser</p>
-            <p className="text-[11px] text-muted-foreground">Browser-Notification-API — optional nach Berechtigung. Einstellbar über den Browser.</p>
+        <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium">Browser-Benachrichtigungen</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Pop-up-Hinweise des Betriebssystems (z. B. Dokument läuft ab, Zinsbindung endet). Nur bei erteilter Berechtigung.
+              </p>
+            </div>
+            <Switch
+              checked={prefs.browser}
+              onCheckedChange={async (checked) => {
+                setBrowser(!!checked);
+                if (!!checked && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+                  setBrowserRequesting(true);
+                  const perm = await requestNotificationPermission();
+                  setBrowserPermission(perm);
+                  setBrowserRequesting(false);
+                  if (perm !== "granted") {
+                    toast.error("Berechtigung verweigert. Browser-Benachrichtigungen sind in den Browser-Einstellungen aktivierbar.");
+                    setBrowser(false);
+                  } else {
+                    toast.success("Browser-Benachrichtigungen aktiviert.");
+                  }
+                }
+              }}
+              aria-label="Browser-Benachrichtigungen ein oder aus"
+            />
           </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
-          <Smartphone className="h-5 w-5 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium">Web-Push</p>
+          {prefs.browser && (
             <p className="text-[11px] text-muted-foreground">
-              Push-Benachrichtigungen auch bei geschlossener App. Erfordert VAPID-Konfiguration und Server-Integration.
+              Status: {browserPermission === "granted" ? "Berechtigung erteilt" : browserPermission === "denied" ? "Berechtigung verweigert" : "Noch nicht angefragt"}.
+              {browserPermission !== "granted" && " "}
+              {browserPermission !== "granted" && (
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={async () => {
+                    setBrowserRequesting(true);
+                    const perm = await requestNotificationPermission();
+                    setBrowserPermission(perm);
+                    setBrowserRequesting(false);
+                    if (perm === "granted") toast.success("Berechtigung erteilt.");
+                    else toast.error("Berechtigung verweigert. In den Browser-Einstellungen für diese Seite erlauben.");
+                  }}
+                  disabled={browserRequesting}
+                >
+                  {browserRequesting ? "Prüfe…" : "Jetzt Berechtigung anfordern"}
+                </button>
+              )}
             </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium">Web-Push</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Push auch bei geschlossener App (VAPID). Abo wird auf dem Server gespeichert.
+              </p>
+            </div>
             {pushStatus.supported && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2 h-7 text-xs"
-                onClick={handleWebPushEnable}
-                disabled={pushLoading || pushStatus.subscribed || !pushStatus.vapidConfigured}
-              >
-                {pushStatus.subscribed
-                  ? "Web-Push aktiv"
-                  : !pushStatus.vapidConfigured
-                    ? "VAPID nicht konfiguriert"
-                    : pushLoading
-                      ? "Aktivieren…"
-                      : "Web-Push aktivieren"}
-              </Button>
+              <Switch
+                checked={pushStatus.subscribed}
+                onCheckedChange={handleWebPushToggle}
+                disabled={pushLoading || !pushStatus.vapidConfigured}
+                aria-label="Web-Push ein oder aus"
+              />
             )}
           </div>
+          {pushStatus.supported && !pushStatus.vapidConfigured && (
+            <p className="text-[11px] text-muted-foreground">VAPID nicht konfiguriert (VITE_VAPID_PUBLIC_KEY).</p>
+          )}
+          {pushStatus.supported && (
+            <p className="text-[11px] text-muted-foreground">
+              <strong>iPhone:</strong> PWA zuerst „Zum Home-Bildschirm“ hinzufügen (Safari → Teilen), iOS 16.4+. Dann erscheinen Push-Meldungen auch auf Sperrbildschirm und in der Mitteilungszentrale.
+            </p>
+          )}
+          {pushStatus.supported && pushStatus.subscribed && (
+            <p className="text-[11px] text-muted-foreground">
+              Abo auf Server gespeichert — Benachrichtigungen können bei geschlossener App zugestellt werden.{" "}
+              <Button type="button" variant="ghost" size="sm" className="h-6 text-xs p-0 inline" onClick={handleTestPush} disabled={testPushLoading}>
+                {testPushLoading ? "Sende…" : "Test-Push senden"}
+              </Button>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
           <MessageSquare className="h-5 w-5 text-[#0088cc] shrink-0" />

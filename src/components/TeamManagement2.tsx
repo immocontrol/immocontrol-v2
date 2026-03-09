@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Users, Plus, Mail, Shield, CheckCircle2, XCircle, Clock, Trash2, Building2, UserCheck, Share2, Copy, Pencil } from "lucide-react";
+import { Users, Plus, Mail, Shield, CheckCircle2, XCircle, Clock, Trash2, Building2, UserCheck, Share2, Copy, Pencil, FileText, Wallet } from "lucide-react";
 import { isValidEmail } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,15 +23,20 @@ interface TeamMember {
   created_at: string;
 }
 
-/** Available shared resource types for team members */
+/** Geteilte Zonen: Welche Bereiche mit Co-Investoren, Mitarbeitern, Handwerkern geteilt werden */
 const SHARED_RESOURCES = [
-  { key: "properties", label: "Objekte", icon: Building2, description: "Gemeinsame Immobilien (z.B. eGbR)" },
-  { key: "contacts", label: "Kontakte", icon: Users, description: "Mieter, Handwerker, Dienstleister" },
-  { key: "loans", label: "Darlehen", icon: Shield, description: "Gemeinsame Finanzierungen" },
-  { key: "documents", label: "Dokumente", icon: Mail, description: "Vertraege, Protokolle, Rechnungen" },
-  { key: "accounts", label: "Konten", icon: Shield, description: "Bank- und Mietkonten" },
-  { key: "tasks", label: "Aufgaben", icon: CheckCircle2, description: "Gemeinsame To-Dos" },
+  { key: "properties", label: "Objekte", icon: Building2, description: "Immobilien (z. B. eGbR, Co-Investoren)", group: "co-investor" as const },
+  { key: "loans", label: "Darlehen", icon: Shield, description: "Gemeinsame Finanzierungen (Co-Investoren)", group: "co-investor" as const },
+  { key: "accounts", label: "Konten", icon: Wallet, description: "Bank- und Mietkonten (Buchhaltung)", group: "co-investor" as const },
+  { key: "contacts", label: "Kontakte", icon: Users, description: "Mieter, Handwerker, Dienstleister (Mitarbeiter)", group: "operativ" as const },
+  { key: "documents", label: "Dokumente", icon: FileText, description: "Verträge, Protokolle, Rechnungen", group: "operativ" as const },
+  { key: "tasks", label: "Aufgaben", icon: CheckCircle2, description: "To-Dos, Wartung, Handwerker-Zuweisung", group: "operativ" as const },
 ] as const;
+
+const ZONE_GROUPS: { key: "co-investor" | "operativ"; label: string }[] = [
+  { key: "co-investor", label: "Co-Investoren & Finanzen" },
+  { key: "operativ", label: "Mitarbeiter, Handwerker & Mieter" },
+];
 
 const roleLabels: Record<string, string> = {
   viewer: "Betrachter",
@@ -207,7 +212,7 @@ export const TeamManagement = () => {
       toast.error(`Fehler beim Aktualisieren: ${error.message || "Unbekannter Fehler"}`);
       return;
     }
-    toast.success("Geteilte Bereiche aktualisiert");
+    toast.success("Geteilte Zonen aktualisiert");
     setEditMemberId(null);
     setEditResources([]);
     fetchMembers();
@@ -270,15 +275,18 @@ export const TeamManagement = () => {
 
       {/* Team management */}
       <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" /> Team-Verwaltung
+        <h2 className="text-sm font-semibold flex items-center gap-2 mb-1">
+          <Users className="h-4 w-4 text-muted-foreground" /> Team-Verwaltung
             {members.length > 0 && (
               <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
                 {members.length}
               </span>
             )}
-          </h2>
+        </h2>
+        <p className="text-[11px] text-muted-foreground mb-4">
+          Teammitglieder einladen und geteilte Zonen festlegen: Co-Investoren (Objekte, Darlehen, Konten), Mitarbeiter oder Handwerker (Kontakte, Dokumente, Aufgaben).
+        </p>
+        <div className="flex items-center justify-end mb-4">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1.5 h-8">
@@ -316,53 +324,49 @@ export const TeamManagement = () => {
                   </Select>
                 </div>
 
-                {/* Shared resource selection */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Geteilte Bereiche</Label>
-                  <div className="flex gap-1.5 mb-1.5">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-6 text-[10px] px-2"
-                      onClick={() => setSelectedResources(SHARED_RESOURCES.map(r => r.key))}
-                    >
+                {/* Geteilte Zonen: Co-Investoren, Mitarbeiter, Handwerker, Mieter */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Geteilte Zonen</Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Welche Bereiche sieht das Teammitglied? (Co-Investoren: Objekte/Darlehen/Konten; Mitarbeiter: Kontakte/Dokumente/Aufgaben.)
+                  </p>
+                  <div className="flex gap-1.5">
+                    <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setSelectedResources(SHARED_RESOURCES.map(r => r.key))}>
                       Alle
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-6 text-[10px] px-2"
-                      onClick={() => setSelectedResources([])}
-                    >
+                    <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setSelectedResources([])}>
                       Keine
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {SHARED_RESOURCES.map(res => {
-                      const isSelected = selectedResources.includes(res.key);
-                      const ResIcon = res.icon;
-                      return (
-                        <button
-                          key={res.key}
-                          type="button"
-                          onClick={() => toggleResource(res.key)}
-                          className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all text-xs ${
-                            isSelected
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border text-muted-foreground hover:bg-secondary/50"
-                          }`}
-                        >
-                          <ResIcon className="h-3.5 w-3.5 shrink-0" />
-                          <span className="font-medium">{res.label}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-2.5">
+                    {ZONE_GROUPS.map((grp) => (
+                      <div key={grp.key}>
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1">{grp.label}</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {SHARED_RESOURCES.filter(r => r.group === grp.key).map(res => {
+                            const isSelected = selectedResources.includes(res.key);
+                            const ResIcon = res.icon;
+                            return (
+                              <button
+                                key={res.key}
+                                type="button"
+                                onClick={() => toggleResource(res.key)}
+                                className={`flex items-start gap-2 px-2.5 py-2 rounded-lg border text-left transition-all text-xs min-w-0 ${
+                                  isSelected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-secondary/50"
+                                }`}
+                              >
+                                <ResIcon className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                <span className="min-w-0">
+                                  <span className="font-medium block">{res.label}</span>
+                                  <span className="text-[10px] opacity-80 block mt-0.5">{res.description}</span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Wähle welche Bereiche geteilt werden sollen (z.B. gemeinsame eGbR-Objekte).
-                  </p>
                 </div>
 
                 <Button onClick={inviteMember} disabled={loading || !email.trim()} className="w-full">
@@ -422,12 +426,22 @@ export const TeamManagement = () => {
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${status.color}`}>
                           {status.label}
                         </span>
-                        {member.shared_resources && member.shared_resources.length > 0 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            · {member.shared_resources.length} Bereiche
-                          </span>
-                        )}
                       </div>
+                      {member.shared_resources && member.shared_resources.length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 mt-1">
+                          {member.shared_resources.slice(0, 4).map((key) => {
+                            const res = SHARED_RESOURCES.find(r => r.key === key);
+                            return res ? (
+                              <Badge key={key} variant="secondary" className="text-[9px] h-4 px-1 font-normal">
+                                {res.label}
+                              </Badge>
+                            ) : null;
+                          })}
+                          {member.shared_resources.length > 4 && (
+                            <Badge variant="secondary" className="text-[9px] h-4 px-1 font-normal">+{member.shared_resources.length - 4}</Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -436,7 +450,7 @@ export const TeamManagement = () => {
                       variant="ghost"
                       className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
                       onClick={() => startEditResources(member)}
-                      title="Geteilte Bereiche bearbeiten"
+                      title="Geteilte Zonen bearbeiten"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -456,61 +470,54 @@ export const TeamManagement = () => {
         )}
       </div>
 
-      {/* Edit shared resources dialog */}
+      {/* Edit shared zones dialog */}
       <Dialog open={!!editMemberId} onOpenChange={(open) => { if (!open) { setEditMemberId(null); setEditResources([]); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Geteilte Bereiche bearbeiten</DialogTitle>
+            <DialogTitle>Geteilte Zonen bearbeiten</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Wähle welche Bereiche mit diesem Teammitglied geteilt werden sollen.
+              Welche Bereiche (Co-Investoren, Mitarbeiter, Handwerker) sieht dieses Teammitglied?
             </p>
-            <div className="flex gap-1.5 mb-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-6 text-[10px] px-2"
-                onClick={() => setEditResources(SHARED_RESOURCES.map(r => r.key))}
-              >
+            <div className="flex gap-1.5">
+              <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setEditResources(SHARED_RESOURCES.map(r => r.key))}>
                 Alle
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-6 text-[10px] px-2"
-                onClick={() => setEditResources([])}
-              >
+              <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setEditResources([])}>
                 Keine
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {SHARED_RESOURCES.map(res => {
-                const isSelected = editResources.includes(res.key);
-                const ResIcon = res.icon;
-                return (
-                  <button
-                    key={res.key}
-                    type="button"
-                    onClick={() => toggleEditResource(res.key)}
-                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all text-xs ${
-                      isSelected
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:bg-secondary/50"
-                    }`}
-                  >
-                    <ResIcon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="font-medium">{res.label}</span>
-                  </button>
-                );
-              })}
+            <div className="space-y-2.5">
+              {ZONE_GROUPS.map((grp) => (
+                <div key={grp.key}>
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1">{grp.label}</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {SHARED_RESOURCES.filter(r => r.group === grp.key).map(res => {
+                      const isSelected = editResources.includes(res.key);
+                      const ResIcon = res.icon;
+                      return (
+                        <button
+                          key={res.key}
+                          type="button"
+                          onClick={() => toggleEditResource(res.key)}
+                          className={`flex items-start gap-2 px-2.5 py-2 rounded-lg border text-left transition-all text-xs min-w-0 ${
+                            isSelected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-secondary/50"
+                          }`}
+                        >
+                          <ResIcon className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <span className="min-w-0">
+                            <span className="font-medium block">{res.label}</span>
+                            <span className="text-[10px] opacity-80 block mt-0.5">{res.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
-            <Button
-              onClick={() => editMemberId && updateSharedResources(editMemberId, editResources)}
-              className="w-full"
-            >
+            <Button onClick={() => editMemberId && updateSharedResources(editMemberId, editResources)} className="w-full">
               Speichern
             </Button>
           </div>

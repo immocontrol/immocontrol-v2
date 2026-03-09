@@ -121,6 +121,7 @@ export async function migrateLocalStorageToSupabase(userId: string): Promise<num
     "immocontrol_shortcuts",
     "immo-telegram-bot-token",
     "immo-telegram-bot-name",
+    "immocontrol_manus_api_key",
     "immocontrol_passkeys",
     "immo_chart_order",
     "immo_error_scanner",
@@ -148,10 +149,13 @@ export async function migrateLocalStorageToSupabase(userId: string): Promise<num
         .maybeSingle();
 
       if (!existing) {
+        const valueToStore = key === "immocontrol_manus_api_key"
+          ? JSON.stringify(value || "")
+          : value;
         await supabase.from("user_settings").insert({
           user_id: userId,
           key,
-          value,
+          value: valueToStore,
           updated_at: new Date().toISOString(),
         });
         migrated++;

@@ -2,9 +2,11 @@
  * FUND-25: Push notifications for document expiry, rent reminders,
  * loan milestones, and maintenance schedules.
  * Uses the Web Push API (service worker based).
+ * Web-Push-Abo wird in Supabase push_subscriptions gespeichert, damit bei geschlossener App gepusht werden kann.
  */
 import { logger } from "@/lib/logger";
 import { documentsWithId, loansWithId } from "@/lib/routes";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AppNotification {
   id: string;
@@ -24,6 +26,7 @@ export interface AppNotification {
 }
 
 const STORAGE_KEY = "immocontrol_notifications";
+const NOTIFY_PREFS_KEY = "immocontrol_notify_prefs";
 
 /**
  * FUND-25: Request notification permission from the browser.
@@ -54,6 +57,29 @@ export function showBrowserNotification(
   });
 }
 
+/** Liest die gespeicherte Einstellung „Browser-Benachrichtigungen“ (gleicher Key wie NotificationPreferencesContext). */
+function getBrowserNotificationPref(): boolean {
+  try {
+    const raw = localStorage.getItem(NOTIFY_PREFS_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { browser?: boolean };
+    return !!parsed.browser;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Zeigt eine Browser-Benachrichtigung nur, wenn der Nutzer sie in den Einstellungen aktiviert hat.
+ */
+export function showBrowserNotificationIfAllowed(
+  title: string,
+  options?: NotificationOptions,
+): Notification | null {
+  if (!getBrowserNotificationPref()) return null;
+  return showBrowserNotification(title, options);
+}
+
 /**
  * FUND-25: Store a notification in localStorage for the in-app notification center.
  */
@@ -74,6 +100,13 @@ export function storeNotification(notification: Omit<AppNotification, "id" | "re
   // Keep max 100 notifications
   const trimmed = stored.slice(0, 100);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+  // Optional: OS-Popup anzeigen, wenn Browser-Benachrichtigungen aktiviert sind
+  showBrowserNotificationIfAllowed(notification.title, {
+    body: notification.body,
+    tag: notification.tag,
+    icon: notification.icon,
+    data: notification.url ? { url: notification.url } : undefined,
+  });
   return newNotification;
 }
 
@@ -156,17 +189,21 @@ export function checkDocumentExpiry(
 
 const PUSH_SUB_KEY = "immocontrol_web_push_subscription";
 
+export interface PushSubscriptionJson {
+  endpoint?: string;
+  keys?: { p256dh?: string; auth?: string };
+  expirationTime?: number | null;
+}
+
 /**
- * Web-Push: Subscribe to push notifications (requires VAPID public key).
+ * Web-Push: Subscribe and persist in Supabase so server can push when app is closed.
  * VAPID public key via VITE_VAPID_PUBLIC_KEY.
- * Returns subscription JSON or null if unavailable.
+ * userId: current user id (for Supabase push_subscriptions).
  */
-export async function subscribeToWebPush(): Promise<PushSubscription | null> {
+export async function subscribeToWebPush(userId: string): Promise<PushSubscription | null> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;
   const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-  if (!vapidKey || !vapidKey.startsWith("B")) {
-    return null;
-  }
+  if (!vapidKey || !vapidKey.startsWith("B")) return null;
   const perm = await requestNotificationPermission();
   if (perm !== "granted") return null;
   const reg = await navigator.serviceWorker.ready;
@@ -174,13 +211,56 @@ export async function subscribeToWebPush(): Promise<PushSubscription | null> {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(vapidKey),
   });
-  const json = subscription.toJSON();
+  const json = subscription.toJSON() as PushSubscriptionJson;
   try {
     localStorage.setItem(PUSH_SUB_KEY, JSON.stringify(json));
   } catch {
     /* ignore */
   }
+  if (userId && json.endpoint && json.keys?.p256dh && json.keys?.auth) {
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        user_id: userId,
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+      },
+      { onConflict: "user_id,endpoint" }
+    );
+    if (error) logger.warn("Web-Push: Abo auf Server speichern fehlgeschlagen", { error: error.message });
+  }
   return subscription;
+}
+
+/**
+ * Web-Push: Unsubscribe and remove from Supabase and localStorage.
+ */
+export async function unsubscribeFromWebPush(userId: string): Promise<void> {
+  try {
+    const raw = localStorage.getItem(PUSH_SUB_KEY);
+    if (raw) {
+      const json = JSON.parse(raw) as PushSubscriptionJson;
+      if (json.endpoint && userId) {
+        await supabase.from("push_subscriptions").delete().eq("user_id", userId).eq("endpoint", json.endpoint);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.removeItem(PUSH_SUB_KEY);
+  } catch {
+    /* ignore */
+  }
+  if ("serviceWorker" in navigator && "PushManager" in window) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {

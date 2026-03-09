@@ -70,7 +70,7 @@ export function KaufpreisfaktorRechner() {
               <p className="font-medium text-foreground">Max. Kaufpreis</p>
               <p className="text-primary font-semibold mt-0.5">{formatCurrency(maxPurchasePrice)}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Bei {formatCurrency(annualRent)}/Jahr und Faktor {factor}×. Preise über diesem Wert sind tendenziell überteuert.
+                Bei {formatCurrency(annualRent)}/Jahr und Faktor {factor}× entspricht das diesem rechnerischen Höchstpreis.
               </p>
             </div>
           </div>

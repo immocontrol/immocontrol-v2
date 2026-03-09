@@ -86,18 +86,29 @@ export function resetProxyCache(): void {
 
 /**
  * Get the local Manus API key (localStorage / env var).
- * Only used as fallback when the server-side proxy is NOT configured.
+ * Supports value synced from Supabase (JSON string) and legacy plain string.
  */
 export function getManusApiKey(): string {
   // 1. Check environment variable (dev only)
   const envKey = import.meta.env.VITE_MANUS_API_KEY;
   if (envKey) return envKey;
-  // 2. Check localStorage (fallback)
-  return localStorage.getItem(MANUS_KEY_STORAGE) || "";
+  // 2. Check localStorage (synced from Supabase user_settings or legacy)
+  const raw = localStorage.getItem(MANUS_KEY_STORAGE) || "";
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw) as string;
+    return typeof parsed === "string" ? parsed : raw;
+  } catch {
+    return raw;
+  }
 }
 
 export function setManusApiKey(key: string): void {
-  localStorage.setItem(MANUS_KEY_STORAGE, key);
+  try {
+    localStorage.setItem(MANUS_KEY_STORAGE, JSON.stringify(key));
+  } catch {
+    localStorage.setItem(MANUS_KEY_STORAGE, key);
+  }
 }
 
 /**

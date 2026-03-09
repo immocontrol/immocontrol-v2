@@ -37,12 +37,70 @@ serve(async (req) => {
     }
 
     const body = (await req.json()) as {
-      bot_token: string;
+      bot_token?: string;
       chat_title_includes?: string;
       allowed_chat_id?: number;
+      disable?: boolean;
+      update_manus_only?: boolean;
+      manus_replies_enabled?: boolean;
+      manus_api_key?: string;
     };
 
-    const { bot_token, chat_title_includes, allowed_chat_id } = body;
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    if (body.update_manus_only) {
+      const { data: existing } = await supabaseAdmin
+        .from("telegram_webhook_config")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      if (!existing) {
+        return new Response(JSON.stringify({ error: "Zuerst Webhook aktivieren." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabaseAdmin.from("telegram_webhook_config").update({
+        manus_replies_enabled: !!body.manus_replies_enabled,
+        manus_api_key: body.manus_replies_enabled && body.manus_api_key ? String(body.manus_api_key).trim() : null,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", user.id);
+      return new Response(JSON.stringify({
+        success: true,
+        message: body.manus_replies_enabled ? "Manus-Antworten aktiviert." : "Manus-Antworten deaktiviert.",
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (body.disable) {
+      const { data: config } = await supabaseAdmin
+        .from("telegram_webhook_config")
+        .select("bot_token")
+        .eq("user_id", user.id)
+        .single();
+      if (config?.bot_token) {
+        await fetch(`https://api.telegram.org/bot${config.bot_token}/setWebhook`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: "" }),
+        });
+      }
+      await supabaseAdmin.from("telegram_webhook_config").delete().eq("user_id", user.id);
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Webhook deaktiviert.",
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { bot_token, chat_title_includes, allowed_chat_id, manus_replies_enabled: manusEnabled, manus_api_key: manusKey } = body;
     if (!bot_token || typeof bot_token !== "string" || bot_token.length < 20) {
       return new Response(JSON.stringify({ error: "Ungültiger Bot-Token" }), {
         status: 400,
@@ -82,17 +140,14 @@ serve(async (req) => {
     }
 
     // Upsert config
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     await supabaseAdmin.from("telegram_webhook_config").upsert({
       user_id: user.id,
       webhook_secret: webhookSecret,
       bot_token,
       chat_title_includes: chat_title_includes || null,
       allowed_chat_id: allowed_chat_id ?? null,
+      manus_replies_enabled: !!manusEnabled,
+      manus_api_key: manusEnabled && manusKey ? String(manusKey).trim() : null,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: "user_id",

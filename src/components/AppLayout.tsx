@@ -26,6 +26,7 @@ import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useInactivityHint } from "@/hooks/useInactivityHint";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
+import { useNotificationChecks } from "@/hooks/useNotificationChecks";
 import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
@@ -71,6 +72,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { handleKeyDown: enterToNextHandler } = useEnterToNext();
 
   useInactivityHint();
+
+  /* Dokument- und Darlehens-Fristen → In-App + ggf. Browser-Benachrichtigungen */
+  useNotificationChecks();
 
   /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
   const qc = useQueryClient();

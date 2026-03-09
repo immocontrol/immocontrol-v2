@@ -2564,6 +2564,31 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
+/* ALIGN: Einheitliche Ausrichtung bei allen Viewport-Größen — Container-Padding + Safe-Area */
+.container {
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (min-width: 640px) {
+  .container {
+    padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
+  }
+}
+@media (min-width: 1024px) {
+  .container {
+    padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* Inhaltsbreiten in main: box-sizing für konsistente Breitenberechnung */
+#main-content [class*="max-w-"] {
+  box-sizing: border-box;
+}
+
 /* TEXT-NO-CLIP (global): Inhaltstext in #main-content soll umbrechen, nicht abschneiden */
 #main-content p,
 #main-content h1,

@@ -1,18 +1,19 @@
 /**
  * Settings Page-Splitting — Biometric Authentication section extracted from Settings.tsx
+ * Einheitliches Toggle-Zeilen-Layout wie alle anderen Einstellungen.
  */
 import { useState, useEffect } from "react";
 import { Fingerprint, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 interface BiometricSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
   displayName: string;
 }
 
-export function BiometricSettings({ sectionRef, displayName }: BiometricSettingsProps) {
-  const { user } = useAuth();
+export function BiometricSettings({ sectionRef }: BiometricSettingsProps) {
   const [biometricEnabled, setBiometricEnabled] = useState(() => {
     try { return localStorage.getItem("immocontrol_biometric_enabled") === "true"; } catch { return false; }
   });
@@ -33,9 +34,6 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
     check();
   }, []);
 
-  /* FIX: Biometric toggle is a preference-only switch — no WebAuthn credential creation.
-     WebAuthn credential creation belongs in PasskeySettings. Biometric just stores
-     the user's preference to use platform biometrics (Face ID / Touch ID) at login. */
   const handleToggle = (enabled: boolean) => {
     if (enabled) {
       if (!biometricSupported) {
@@ -62,38 +60,19 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
         Nutze Face ID, Touch ID oder deinen Fingerabdruck für schnelleren Login.
       </p>
       {!biometricSupported ? (
-        <p className="text-xs text-muted-foreground flex items-center gap-1">
-          <AlertCircle className="h-3.5 w-3.5" /> Dein Gerät unterstützt keine biometrische Authentifizierung
+        <p className="text-xs text-muted-foreground flex items-center gap-1 p-3 rounded-lg bg-secondary/30 border border-border">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Dein Gerät unterstützt keine biometrische Authentifizierung
         </p>
       ) : (
-        <button
-          type="button"
-          role="switch"
-          aria-checked={biometricEnabled}
-          onClick={() => handleToggle(!biometricEnabled)}
-          className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
-            biometricEnabled
-              ? "border-primary/40 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm"
-              : "border-border bg-secondary/20 hover:border-muted-foreground/30 hover:bg-secondary/40"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-              biometricEnabled ? "bg-primary/15 text-primary scale-105" : "bg-secondary text-muted-foreground"
-            }`}>
-              <Fingerprint className="h-5 w-5" />
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-medium">{biometricEnabled ? "Aktiviert" : "Deaktiviert"}</p>
-              <p className="text-[10px] text-muted-foreground">
-                {biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
-              </p>
-            </div>
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="min-w-0">
+            <p className="text-xs font-medium">Biometrie für Login nutzen</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {biometricEnabled ? "Face ID / Touch ID wird für den Login verwendet" : "Aktiviere biometrischen Login"}
+            </p>
           </div>
-          <div className={`relative w-12 h-7 rounded-full transition-all duration-300 ${biometricEnabled ? "bg-primary" : "bg-muted"}`}>
-            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${biometricEnabled ? "left-[22px]" : "left-0.5"}`} />
-          </div>
-        </button>
+          <Switch checked={biometricEnabled} onCheckedChange={handleToggle} aria-label="Biometrie ein oder aus" />
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,11 @@
 /**
  * Settings Page-Splitting — AI Chat toggle extracted from Settings.tsx
+ * Einheitliches Toggle-Zeilen-Layout wie alle anderen Einstellungen.
  */
 import { useState } from "react";
 import { Bot } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 interface AIChatSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -29,34 +31,15 @@ export function AIChatSettings({ sectionRef }: AIChatSettingsProps) {
       <p className="text-xs text-muted-foreground">
         Aktiviere oder deaktiviere den AI Chat-Assistenten (Bubble unten rechts).
       </p>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={aiChatEnabled}
-        onClick={() => handleToggle(!aiChatEnabled)}
-        className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
-          aiChatEnabled
-            ? "border-primary/40 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm"
-            : "border-border bg-secondary/20 hover:border-muted-foreground/30 hover:bg-secondary/40"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-            aiChatEnabled ? "bg-primary/15 text-primary scale-105" : "bg-secondary text-muted-foreground"
-          }`}>
-            <Bot className="h-5 w-5" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-medium">{aiChatEnabled ? "AI Chat ist aktiv" : "AI Chat ist deaktiviert"}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {aiChatEnabled ? "Bubble unten rechts sichtbar" : "Chat-Assistent ausgeblendet"}
-            </p>
-          </div>
+      <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
+        <div className="min-w-0">
+          <p className="text-xs font-medium">AI Chat anzeigen</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {aiChatEnabled ? "Bubble unten rechts sichtbar" : "Chat-Assistent ausgeblendet"}
+          </p>
         </div>
-        <div className={`relative w-12 h-7 rounded-full transition-all duration-300 ${aiChatEnabled ? "bg-primary" : "bg-muted"}`}>
-          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${aiChatEnabled ? "left-[22px]" : "left-0.5"}`} />
-        </div>
-      </button>
+        <Switch checked={aiChatEnabled} onCheckedChange={handleToggle} aria-label="AI Chat ein oder aus" />
+      </div>
     </div>
   );
 }
