@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search, Eye, EyeOff, Check, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ErrorScanner } from "@/components/ErrorScanner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -13,11 +12,17 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { toastSuccess, toastError, toastInfo } from "@/lib/toastMessages";
-import { DataBackup } from "@/components/DataBackup";
 import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { useTheme } from "@/hooks/useTheme";
-import { TeamManagement } from "@/components/TeamManagement2";
+
+/* Lazy-load sub-components that have complex import chains to avoid TDZ/circular init in production */
+const ErrorScanner = lazy(() => import("@/components/ErrorScanner").then((m) => ({ default: m.ErrorScanner })));
+const DataBackup = lazy(() => import("@/components/DataBackup").then((m) => ({ default: m.DataBackup })));
+const TeamManagement = lazy(() => import("@/components/TeamManagement2").then((m) => ({ default: m.TeamManagement })));
+const BackupSettings = lazy(() => import("@/components/settings/BackupSettings").then((m) => ({ default: m.BackupSettings })));
+const TelegramSettings = lazy(() => import("@/components/settings/TelegramSettings").then((m) => ({ default: m.TelegramSettings })));
+const ManusSettings = lazy(() => import("@/components/settings/ManusSettings").then((m) => ({ default: m.ManusSettings })));
 
 /* Extracted sub-components (Page-Splitting) */
 import { PasswordSettings } from "@/components/settings/PasswordSettings";
@@ -27,11 +32,8 @@ import { BiometricSettings } from "@/components/settings/BiometricSettings";
 import { DeviceSettings } from "@/components/settings/DeviceSettings";
 import { DefaultPageSettings } from "@/components/settings/DefaultPageSettings";
 import { AIChatSettings } from "@/components/settings/AIChatSettings";
-import { BackupSettings } from "@/components/settings/BackupSettings";
-import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { SystemInfoSettings } from "@/components/settings/SystemInfoSettings";
 import { ShortcutSettings } from "@/components/settings/ShortcutSettings";
-import { ManusSettings } from "@/components/settings/ManusSettings";
 import { BenachrichtigungenSettings } from "@/components/settings/BenachrichtigungenSettings";
 
 /* Settings sidebar sections for navigation. Gefahrenzone bewusst getrennt, damit sie im Menü immer ganz unten steht. */
@@ -620,21 +622,33 @@ const Settings = () => {
         <DeviceSettings sectionRef={refFor("geraete")} />
         <DefaultPageSettings sectionRef={refFor("standardseite")} />
         <AIChatSettings sectionRef={refFor("ai-chat")} />
-        <BackupSettings sectionRef={refFor("backup")} />
+        <Suspense fallback={null}>
+          <BackupSettings sectionRef={refFor("backup")} />
+        </Suspense>
         <BenachrichtigungenSettings sectionRef={refFor("benachrichtigungen")} />
         {!isMobile && <ShortcutSettings sectionRef={refFor("tastenkombinationen")} />}
-        <TelegramSettings sectionRef={refFor("telegram")} />
-        <ManusSettings sectionRef={refFor("manus-ai")} />
+        <Suspense fallback={null}>
+          <TelegramSettings sectionRef={refFor("telegram")} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <ManusSettings sectionRef={refFor("manus-ai")} />
+        </Suspense>
 
-        <ErrorScanner sectionRef={refFor("error-scanner")} />
+        <Suspense fallback={null}>
+          <ErrorScanner sectionRef={refFor("error-scanner")} />
+        </Suspense>
 
         {/* Team */}
         <div id="team" ref={refFor("team")} className="scroll-mt-20">
-          <TeamManagement />
+          <Suspense fallback={null}>
+            <TeamManagement />
+          </Suspense>
         </div>
 
         <SystemInfoSettings sectionRef={refFor("system-info")} totpEnabled={totpEnabled} />
-        <DataBackup />
+        <Suspense fallback={null}>
+          <DataBackup />
+        </Suspense>
 
         {/* Gefahrenzone immer ganz unten */}
         <div id="gefahrenzone" ref={refFor("gefahrenzone")} role="alert" className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms] scroll-mt-20">
