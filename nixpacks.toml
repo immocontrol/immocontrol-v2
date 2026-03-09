@@ -1,4 +1,6 @@
-# Nixpacks config for Railway — reproducible install (Node version via package.json engines or .nvmrc)
+# Nixpacks config for Railway — force Node.js (avoid Deno auto-detection)
+providers = ["node"]
+
 [phases.install]
 cmds = ["npm ci"]
 
