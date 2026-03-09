@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -25,6 +29,7 @@ const MeterManagement = ({ propertyId }: Props) => {
   const [readingOpen, setReadingOpen] = useState<string | null>(null);
   const [form, setForm] = useState({ meter_type: "Strom", meter_number: "", unit_label: "", location_note: "" });
   const [readingForm, setReadingForm] = useState({ value: "", reading_date: new Date().toISOString().split("T")[0], note: "" });
+  const [deleteTargetMeterId, setDeleteTargetMeterId] = useState<string | null>(null);
   const lastMeterIdRef = useRef<string | null>(null);
   const lastDeletedMeterIdRef = useRef<string | null>(null);
 
@@ -110,6 +115,7 @@ const MeterManagement = ({ propertyId }: Props) => {
       handleError(e, { context: "supabase", details: "meters.delete", showToast: false });
       toastErrorWithRetry("Fehler beim Entfernen", () => { if (lastDeletedMeterIdRef.current) deleteMeter.mutate(lastDeletedMeterIdRef.current); });
     },
+    onSuccess: () => { setDeleteTargetMeterId(null); },
   });
 
   const getLatestReading = (meterId: string) => {
@@ -240,7 +246,7 @@ const MeterManagement = ({ propertyId }: Props) => {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => { lastDeletedMeterIdRef.current = meter.id; deleteMeter.mutate(meter.id); }}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTargetMeterId(meter.id)} aria-label="Zähler entfernen">
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -248,6 +254,31 @@ const MeterManagement = ({ propertyId }: Props) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetMeterId} onOpenChange={(open) => { if (!open) setDeleteTargetMeterId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Zähler entfernen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Zähler und alle zugehörigen Ablesewerte werden unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetMeterId) {
+                  lastDeletedMeterIdRef.current = deleteTargetMeterId;
+                  deleteMeter.mutate(deleteTargetMeterId);
+                }
+              }}
+            >
+              Entfernen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

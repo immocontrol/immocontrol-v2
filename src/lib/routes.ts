@@ -55,6 +55,16 @@ export const ROUTES = {
   SYNDICATION: "/syndication",
   /** Deal-Benchmark: erwartete vs. realisierte Rendite */
   DEAL_BENCHMARK: "/deal-benchmark",
+  /** Sammel-Seite mit Tabs: Mieten, Nebenkosten, Cashflow-Prognose */
+  MIETEN_BETRIEB: "/mieten-betrieb",
+  /** Sammel-Seite mit Tabs: Stress-Test, Diversifikation, Mietspiegel, KPI, Berichte, Rechner, Hockey Stick */
+  ANALYSE_RISIKO: "/analyse-risiko",
+  /** Sammel-Seite mit Tabs: Verträge, Kontakte */
+  VERTRAEGE_KONTAKTE: "/vertraege-kontakte",
+  /** Sammel-Seite mit Tabs: Aufgaben, Dokumente, Wartung */
+  AUFGABEN_DOKUMENTE: "/aufgaben-dokumente",
+  /** Sammel-Seite mit Tabs: CRM, Deals, Deal-Benchmark, Schnellbewertung */
+  DEALS_BEWERTUNG: "/deals-bewertung",
 } as const;
 
 /** Helper: Property detail URL */

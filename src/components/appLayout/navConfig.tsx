@@ -75,9 +75,7 @@ export const navEntries: NavEntry[] = [
       {
         sectionLabel: "Mieten & Betrieb",
         items: [
-          { path: ROUTES.RENT, label: "Mieten", icon: Receipt, shortcut: "3" },
-          { path: ROUTES.NK, label: "Nebenkosten", icon: Receipt, shortcut: "" },
-          { path: ROUTES.FORECAST, label: "Cashflow-Prognose", icon: Calculator, shortcut: "" },
+          { path: ROUTES.MIETEN_BETRIEB, label: "Mieten & Betrieb", icon: Receipt, shortcut: "3" },
         ],
       },
       {
@@ -89,13 +87,7 @@ export const navEntries: NavEntry[] = [
       {
         sectionLabel: "Analyse & Risiko",
         items: [
-          { path: ROUTES.STRESS_TEST, label: "Stress-Test", icon: ShieldAlert, shortcut: "" },
-          { path: ROUTES.DIVERSIFIKATION, label: "Diversifikation", icon: PieChart, shortcut: "" },
-          { path: ROUTES.MIETSPIEGEL, label: "Mietspiegel-Check", icon: Scale, shortcut: "" },
-          { path: ROUTES.KPI_ZEITREISE, label: "KPIs im Zeitverlauf", icon: TrendingUp, shortcut: "" },
-          { path: ROUTES.REPORTS, label: "Berichte", icon: FileBarChart, shortcut: "7" },
-          { path: ROUTES.ANALYSE, label: "Rechner", icon: Calculator, shortcut: "" },
-          { path: ROUTES.HOCKEY_STICK, label: "Hockey Stick Simulator", icon: TrendingUp, shortcut: "" },
+          { path: ROUTES.ANALYSE_RISIKO, label: "Analyse & Risiko", icon: ShieldAlert, shortcut: "7" },
         ],
       },
     ],
@@ -114,16 +106,13 @@ export const navEntries: NavEntry[] = [
       {
         sectionLabel: "Verträge & Kontakte",
         items: [
-          { path: ROUTES.CONTRACTS, label: "Verträge", icon: FileText, shortcut: "4" },
-          { path: ROUTES.CONTACTS, label: "Kontakte", icon: Users, shortcut: "5" },
+          { path: ROUTES.VERTRAEGE_KONTAKTE, label: "Verträge & Kontakte", icon: FileText, shortcut: "4" },
         ],
       },
       {
         sectionLabel: "Aufgaben & Dokumente",
         items: [
-          { path: ROUTES.TODOS, label: "Aufgaben", icon: CheckSquare, shortcut: "6" },
-          { path: ROUTES.DOKUMENTE, label: "Dokumente", icon: FolderOpen, shortcut: "" },
-          { path: ROUTES.WARTUNG, label: "Wartung", icon: Wrench, shortcut: "" },
+          { path: ROUTES.AUFGABEN_DOKUMENTE, label: "Aufgaben & Dokumente", icon: CheckSquare, shortcut: "6" },
         ],
       },
       {
@@ -141,10 +130,7 @@ export const navEntries: NavEntry[] = [
       {
         sectionLabel: "Deals & Bewertung",
         items: [
-          { path: ROUTES.CRM, label: "CRM", icon: Target, shortcut: "8" },
-          { path: ROUTES.DEALS, label: "Deals", icon: Handshake, shortcut: "0" },
-          { path: ROUTES.DEAL_BENCHMARK, label: "Deal-Benchmark", icon: TrendingUp, shortcut: "" },
-          { path: ROUTES.BEWERTUNG, label: "Schnellbewertung", icon: TrendingUp, shortcut: "" },
+          { path: ROUTES.DEALS_BEWERTUNG, label: "Deals & Bewertung", icon: Target, shortcut: "8" },
         ],
       },
       {
@@ -195,6 +181,11 @@ export const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Benachrichtigungen": ROUTES.BENACHRICHTIGUNGEN,
   "Navigation: Syndication": ROUTES.SYNDICATION,
   "Navigation: Deal-Benchmark": ROUTES.DEAL_BENCHMARK,
+  "Navigation: Mieten & Betrieb": ROUTES.MIETEN_BETRIEB,
+  "Navigation: Analyse & Risiko": ROUTES.ANALYSE_RISIKO,
+  "Navigation: Verträge & Kontakte": ROUTES.VERTRAEGE_KONTAKTE,
+  "Navigation: Aufgaben & Dokumente": ROUTES.AUFGABEN_DOKUMENTE,
+  "Navigation: Deals & Bewertung": ROUTES.DEALS_BEWERTUNG,
 };
 
 export function getDefaultShortcutMap(): Record<string, string> {

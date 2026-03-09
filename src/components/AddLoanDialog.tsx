@@ -347,6 +347,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
                 <Label className="text-xs">Tilgungsfreie Monate</Label>
                 <NumberInput value={form.tilgungsfreie_monate} onChange={v => setForm(f => ({ ...f, tilgungsfreie_monate: v }))} className="h-9 text-sm" placeholder="0" />
               </div>
+              <p className="text-[10px] text-muted-foreground -mt-0.5">Tilgungsfreie Monate: Anzahl Monate ohne Tilgung (z. B. bei Anschlussfinanzierung).</p>
             </div>
           )}
 

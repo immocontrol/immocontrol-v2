@@ -10,6 +10,10 @@ import { formatDate } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 
@@ -30,6 +34,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", expiry_date: "", notes: "" });
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const { data: docs = [] } = useQuery({
     queryKey: ["doc_expiry", propertyId],
@@ -139,7 +144,7 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
                     {isSoon && <span className="ml-1.5 text-gold font-medium">in {days} Tagen</span>}
                   </p>
                 </div>
-                <button onClick={() => deleteMutation.mutate(doc.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0">
+                <button onClick={() => setDeleteTargetId(doc.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0" aria-label="Dokumentenfrist löschen">
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
@@ -147,6 +152,31 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dokumentenfrist löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Eintrag wird unwiderruflich entfernt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) {
+                  deleteMutation.mutate(deleteTargetId);
+                  setDeleteTargetId(null);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -9,6 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/formatters";
 import { handleError } from "@/lib/handleError";
@@ -180,6 +184,7 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
   const [autoGenerating, setAutoGenerating] = useState(false);
   const [markingOverdue, setMarkingOverdue] = useState(false);
+  const [deleteTargetPayment, setDeleteTargetPayment] = useState<(Payment & { tenants?: { first_name: string; last_name: string; unit_label: string; monthly_rent: number } }) | null>(null);
 
   const fetchPayments = async (offset = 0, append = false) => {
     if (offset > 0) setLoadingMore(true);
@@ -532,7 +537,7 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
                       <Clock className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => deletePayment(payment.id)}>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTargetPayment(payment)} aria-label="Zahlung löschen">
                     <XCircle className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -553,6 +558,33 @@ export const LandlordPayments = ({ propertyId }: LandlordPaymentsProps) => {
           {loadingMore ? "Laden…" : "Mehr laden"}
         </Button>
       )}
+
+      <AlertDialog open={!!deleteTargetPayment} onOpenChange={(open) => { if (!open) setDeleteTargetPayment(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Zahlung löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetPayment && (
+                <>Diese Zahlung ({formatCurrency(Number(deleteTargetPayment.amount))}, Fälligkeit {new Date(deleteTargetPayment.due_date).toLocaleDateString("de-DE")}) wird unwiderruflich gelöscht.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetPayment) {
+                  deletePayment(deleteTargetPayment.id);
+                  setDeleteTargetPayment(null);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

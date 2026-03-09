@@ -66,6 +66,11 @@ const kpiZeitreiseImport = () => import("@/pages/KpiZeitreisePage");
 const benachrichtigungenImport = () => import("@/pages/BenachrichtigungenPage");
 const syndicationImport = () => import("@/pages/SyndicationPage");
 const dealBenchmarkImport = () => import("@/pages/DealBenchmarkPage");
+const mietenBetriebImport = () => import("@/pages/MietenBetriebPage");
+const analyseRisikoImport = () => import("@/pages/AnalyseRisikoPage");
+const vertraegeKontakteImport = () => import("@/pages/VertraegeKontaktePage");
+const aufgabenDokumenteImport = () => import("@/pages/AufgabenDokumentePage");
+const dealsBewertungImport = () => import("@/pages/DealsBewertungPage");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -106,6 +111,11 @@ const KpiZeitreisePage = lazy(kpiZeitreiseImport);
 const BenachrichtigungenPage = lazy(benachrichtigungenImport);
 const SyndicationPage = lazy(syndicationImport);
 const DealBenchmarkPage = lazy(dealBenchmarkImport);
+const MietenBetriebPage = lazy(mietenBetriebImport);
+const AnalyseRisikoPage = lazy(analyseRisikoImport);
+const VertraegeKontaktePage = lazy(vertraegeKontakteImport);
+const AufgabenDokumentePage = lazy(aufgabenDokumenteImport);
+const DealsBewertungPage = lazy(dealsBewertungImport);
 
 /* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
    so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
@@ -142,6 +152,11 @@ const preloadRoutes = () => {
   benachrichtigungenImport();
   syndicationImport();
   dealBenchmarkImport();
+  mietenBetriebImport();
+  analyseRisikoImport();
+  vertraegeKontakteImport();
+  aufgabenDokumenteImport();
+  dealsBewertungImport();
   onboardingImport();
 };
 
@@ -311,15 +326,20 @@ const RoleRouter = () => {
           <Route path={`${ROUTES.PROPERTY}/:id`} element={<ErrorBoundary><PropertyDetail /></ErrorBoundary>} />
           <Route path={ROUTES.FINANZIERUNG} element={<ErrorBoundary><FinanzierungsCockpit /></ErrorBoundary>} />
           <Route path={ROUTES.LOANS} element={<ErrorBoundary><Loans /></ErrorBoundary>} />
+          <Route path={ROUTES.MIETEN_BETRIEB} element={<ErrorBoundary><MietenBetriebPage /></ErrorBoundary>} />
           <Route path={ROUTES.FORECAST} element={<ErrorBoundary><CashForecast /></ErrorBoundary>} />
+          <Route path={ROUTES.ANALYSE_RISIKO} element={<ErrorBoundary><AnalyseRisikoPage /></ErrorBoundary>} />
           <Route path={ROUTES.ANALYSE} element={<ErrorBoundary><AnalysisCalculator /></ErrorBoundary>} />
+          <Route path={ROUTES.VERTRAEGE_KONTAKTE} element={<ErrorBoundary><VertraegeKontaktePage /></ErrorBoundary>} />
           <Route path={ROUTES.CONTACTS} element={<ErrorBoundary><Contacts /></ErrorBoundary>} />
+          <Route path={ROUTES.AUFGABEN_DOKUMENTE} element={<ErrorBoundary><AufgabenDokumentePage /></ErrorBoundary>} />
           <Route path={ROUTES.TODOS} element={<ErrorBoundary><Todos /></ErrorBoundary>} />
           <Route path={ROUTES.NK} element={<ErrorBoundary><Nebenkosten /></ErrorBoundary>} />
           <Route path={ROUTES.REPORTS} element={<ErrorBoundary><Berichte /></ErrorBoundary>} />
           <Route path={ROUTES.RENT} element={<ErrorBoundary><Mietuebersicht /></ErrorBoundary>} />
           <Route path={ROUTES.AI} element={<ErrorBoundary><ImmoAI /></ErrorBoundary>} />
           <Route path={ROUTES.CONTRACTS} element={<ErrorBoundary><Vertraege /></ErrorBoundary>} />
+          <Route path={ROUTES.DEALS_BEWERTUNG} element={<ErrorBoundary><DealsBewertungPage /></ErrorBoundary>} />
           <Route path={ROUTES.CRM} element={<ErrorBoundary><CRM /></ErrorBoundary>} />
           <Route path={ROUTES.DEALS} element={<ErrorBoundary><Deals /></ErrorBoundary>} />
           <Route path={ROUTES.BESICHTIGUNGEN} element={<ErrorBoundary><Besichtigungen /></ErrorBoundary>} />

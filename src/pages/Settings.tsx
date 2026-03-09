@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +66,15 @@ const Settings = () => {
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [activeSection, setActiveSection] = useState("erscheinungsbild");
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const mobileTabBarRef = useRef<HTMLDivElement>(null);
   const [uiZoom, setUIZoom] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("immocontrol_ui_zoom") || "100" : "100"));
+  const [settingsSearchQuery, setSettingsSearchQuery] = useState("");
+
+  const filteredSettingsSections = useMemo(() => {
+    const q = settingsSearchQuery.trim().toLowerCase();
+    if (!q) return [...SETTINGS_SECTIONS];
+    return SETTINGS_SECTIONS.filter((s) => s.label.toLowerCase().includes(q));
+  }, [settingsSearchQuery]);
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
@@ -93,6 +101,20 @@ const Settings = () => {
     });
     return () => observers.forEach(o => o.disconnect());
   }, [profileLoading]);
+
+  /* Mobile: Tab-Leiste horizontal mitscrollen, damit der aktive Menüpunkt sichtbar ist */
+  useEffect(() => {
+    const container = mobileTabBarRef.current;
+    if (!container) return;
+    const activeBtn = container.querySelector<HTMLElement>(`[data-settings-tab="${activeSection}"]`);
+    if (!activeBtn) return;
+    const containerWidth = container.clientWidth;
+    const btnLeft = activeBtn.offsetLeft;
+    const btnWidth = activeBtn.offsetWidth;
+    const scrollLeft = btnLeft - containerWidth / 2 + btnWidth / 2;
+    const maxScroll = container.scrollWidth - containerWidth;
+    container.scrollTo({ left: Math.max(0, Math.min(scrollLeft, maxScroll)), behavior: "smooth" });
+  }, [activeSection]);
 
   /* Check existing TOTP factors for SystemInfo */
   useEffect(() => {
@@ -202,16 +224,20 @@ const Settings = () => {
       role="main"
       aria-label="Einstellungen"
     >
-      {/* Mobile: horizontale Tab-Leiste (nur unter lg sichtbar) */}
-      <div className="lg:hidden shrink-0 w-full max-w-full bg-background border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain relative">
+      {/* Mobile: horizontale Tab-Leiste (nur unter lg) — sticky, scrollt horizontal mit aktivem Abschnitt */}
+      <div
+        ref={mobileTabBarRef}
+        className="lg:hidden sticky top-0 z-20 shrink-0 w-full max-w-full bg-background/95 backdrop-blur-sm border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain relative"
+      >
         <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
         <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
-          {SETTINGS_SECTIONS.map((section) => {
+          {filteredSettingsSections.map((section) => {
             const SectionIcon = section.icon;
             const isActive = activeSection === section.id;
             return (
               <button
                 key={section.id}
+                data-settings-tab={section.id}
                 onClick={() => scrollToSection(section.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                   isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
@@ -230,8 +256,8 @@ const Settings = () => {
           <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
           {/* Single vertical track + progress fill */}
           {(() => {
-            const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
-            const fillPercent = Math.min(100, (SETTINGS_SECTIONS.length > 1 ? (activeIdx + 0.5) / (SETTINGS_SECTIONS.length - 1) : 0) * 100);
+            const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
+            const fillPercent = Math.min(100, (filteredSettingsSections.length > 1 ? (activeIdx + 0.5) / (filteredSettingsSections.length - 1) : 0) * 100);
             return (
               <div className="absolute left-[17px] top-2 bottom-2 w-[2px] rounded-full bg-border overflow-hidden" aria-hidden="true">
                 <div
@@ -242,8 +268,8 @@ const Settings = () => {
             );
           })()}
           {(() => {
-            const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
-            return SETTINGS_SECTIONS.map((section, idx) => {
+            const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
+            return filteredSettingsSections.map((section, idx) => {
               const SectionIcon = section.icon;
               const isPast = idx < activeIdx;
               const isActive = idx === activeIdx;
@@ -288,9 +314,28 @@ const Settings = () => {
 
       {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar */}
       <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0">
-        <div className="flex items-center gap-2">
-          <SettingsIcon className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <SettingsIcon className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
+          </div>
+          {/* C8: Suchfeld „Einstellung finden“ — filtert Tabs/Sidebar */}
+          <div className="w-full sm:w-56 shrink-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="search"
+                placeholder="Einstellung finden…"
+                value={settingsSearchQuery}
+                onChange={(e) => setSettingsSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-sm"
+                aria-label="Einstellung suchen"
+              />
+            </div>
+            {settingsSearchQuery.trim() && filteredSettingsSections.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1.5">Keine Einstellung für „{settingsSearchQuery.trim()}“ gefunden.</p>
+            )}
+          </div>
         </div>
 
         {/* Theme */}
