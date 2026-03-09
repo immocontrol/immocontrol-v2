@@ -993,7 +993,7 @@ const Newsticker = () => {
                     <div className="hidden sm:block w-24 h-20 rounded-lg overflow-hidden shrink-0 bg-secondary">
                       <img
                         src={item.imageUrl}
-                        alt=""
+                        alt={item.title ? `Artikelbild: ${item.title}` : "Artikelbild"}
                         className="w-full h-full object-cover"
                         loading="lazy"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

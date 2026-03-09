@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { TenantTickets } from "@/components/TicketSystem";
 import { TenantPayments } from "@/components/PaymentTracking";
 import { DamageReport } from "@/components/DamageReport";
@@ -61,7 +61,7 @@ const TenantDocuments = ({ propertyId }: { propertyId: string }) => {
     const { data, error } = await supabase.storage
       .from("property-documents")
       .download(doc.file_path);
-    if (error || !data) { toast.error("Download fehlgeschlagen"); return; }
+    if (error || !data) { toastError("Download fehlgeschlagen"); return; }
     const url = URL.createObjectURL(data);
     const a = document.createElement("a");
     a.href = url;
@@ -485,7 +485,7 @@ const TenantPortal = () => {
           <p className="text-sm text-muted-foreground max-w-sm">
             Dein Konto ist keiner Wohnung zugeordnet. Bitte kontaktiere deinen Vermieter.
           </p>
-          <Button variant="outline" onClick={() => { signOut(); toast.success("Abgemeldet"); }}>
+          <Button variant="outline" onClick={() => { signOut(); toastSuccess("Abgemeldet"); }}>
             <LogOut className="h-4 w-4 mr-2" /> Abmelden
           </Button>
         </div>
@@ -518,7 +518,7 @@ const TenantPortal = () => {
             <span className="text-sm text-muted-foreground hidden sm:block">
               {tenantInfo.first_name} {tenantInfo.last_name}
             </span>
-            <Button variant="ghost" size="icon" onClick={() => { signOut(); toast.success("Abgemeldet"); }}>
+            <Button variant="ghost" size="icon" aria-label="Abmelden" onClick={() => { signOut(); toastSuccess("Abgemeldet"); }}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -699,7 +699,7 @@ const TenantPortal = () => {
                   <h2 className="text-sm font-semibold">Abmelden</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">Vom Mieterportal abmelden</p>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => { signOut(); toast.success("Abgemeldet"); }}>
+                <Button variant="destructive" size="sm" onClick={() => { signOut(); toastSuccess("Abgemeldet"); }}>
                   <LogOut className="h-4 w-4 mr-1.5" /> Abmelden
                 </Button>
               </div>

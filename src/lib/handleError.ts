@@ -6,7 +6,7 @@
 import { trackError, copyErrorReportToClipboard } from "@/lib/errorTracking";
 import { toast } from "sonner";
 
-type ErrorContext =
+export type ErrorContext =
   | "supabase"
   | "auth"
   | "network"
@@ -113,6 +113,18 @@ export function handleError(error: unknown, options: HandleErrorOptions = {}): v
           : undefined,
     });
   }
+}
+
+/**
+ * Returns a user-friendly error message string without showing a toast.
+ * Use in catch blocks when you want to display the message yourself (e.g. in a form).
+ */
+export function toErrorMessage(error: unknown, context: ErrorContext = "general"): string {
+  const err =
+    error instanceof Error
+      ? error
+      : new Error(typeof error === "string" ? error : "Unknown error");
+  return getFriendlyMessage(err, context) ?? CONTEXT_MESSAGES[context];
 }
 
 /**

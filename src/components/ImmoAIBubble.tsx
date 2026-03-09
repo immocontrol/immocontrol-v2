@@ -443,7 +443,7 @@ export default function ImmoAIBubble({ mobileSubmenuExpanded = false }: ImmoAIBu
                 // UI-UPDATE-23: Tooltip on "clear chat" action
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Chat leeren" onClick={clearChat}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
@@ -453,7 +453,7 @@ export default function ImmoAIBubble({ mobileSubmenuExpanded = false }: ImmoAIBu
               {/* UI-UPDATE-24: Tooltip on "close chat" action */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Assistent schließen" onClick={() => setOpen(false)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -550,7 +550,7 @@ export default function ImmoAIBubble({ mobileSubmenuExpanded = false }: ImmoAIBu
               {/* UI-UPDATE-25: Tooltip on "send" action */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={() => send(input)} disabled={!input.trim() || isLoading} size="icon" className="shrink-0 h-9 w-9">
+                  <Button onClick={() => send(input)} disabled={!input.trim() || isLoading} size="icon" className="shrink-0 h-9 w-9" aria-label="Nachricht senden">
                     <Send className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>

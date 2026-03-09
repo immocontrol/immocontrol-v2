@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
+import { handleError } from "@/lib/handleError";
 import { ROUTES, dealsWithId, propertyDetail, contactsWithHighlight, viewingsWithId, loansWithId, crmWithLeadId } from "@/lib/routes";
 
 interface SearchResult {
@@ -227,6 +228,7 @@ export const GlobalSearch = () => {
       });
     } catch (e) {
       logger.warn("GlobalSearch DB search failed", "GlobalSearch", { error: e });
+      handleError(e, { context: "general", silent: true, details: "GlobalSearch.search" });
     }
 
     return dbResults;

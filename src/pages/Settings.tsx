@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toastSuccess, toastError, toastInfo } from "@/lib/toastMessages";
 import { DataBackup } from "@/components/DataBackup";
 import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
@@ -180,13 +180,13 @@ const Settings = () => {
         .update({ display_name: displayName })
         .eq("user_id", user.id);
       if (error) {
-        toast.error("Fehler beim Speichern");
+        toastError("Fehler beim Speichern");
         /* FIX-11: Removed console.error — errors are shown to user via toast */
       } else {
-        toast.success("Profil aktualisiert!");
+        toastSuccess("Profil aktualisiert!");
       }
     } catch {
-      toast.error("Unerwarteter Fehler beim Speichern");
+      toastError("Unerwarteter Fehler beim Speichern");
       /* FIX-11: Removed console.error — errors are shown to user via toast */
     } finally {
       setLoading(false);
@@ -196,10 +196,10 @@ const Settings = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success("Abgemeldet");
+      toastSuccess("Abgemeldet");
       navigate(ROUTES.AUTH);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Abmeldung fehlgeschlagen");
+      toastError(err instanceof Error ? err.message : "Abmeldung fehlgeschlagen");
     }
   };
 
@@ -238,7 +238,7 @@ const Settings = () => {
 
   const handleEmailChangeStart = async () => {
     if (!user?.email || !emailPassword.trim()) {
-      toast.error("Bitte gib dein aktuelles Passwort ein");
+      toastError("Bitte gib dein aktuelles Passwort ein");
       return;
     }
     setEmailChangeLoading(true);
@@ -248,15 +248,15 @@ const Settings = () => {
       const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email, password: emailPassword });
       if (verifyError) {
         if (previousSession) await supabase.auth.setSession({ access_token: previousSession.access_token, refresh_token: previousSession.refresh_token });
-        toast.error("Passwort ist falsch");
+        toastError("Passwort ist falsch");
         setEmailChangeLoading(false);
         return;
       }
       if (previousSession) await supabase.auth.setSession({ access_token: previousSession.access_token, refresh_token: previousSession.refresh_token });
       setEmailStep("new-email");
-      toast.success("Passwort bestätigt — gib jetzt deine neue E-Mail ein");
+      toastSuccess("Passwort bestätigt — gib jetzt deine neue E-Mail ein");
     } catch {
-      toast.error("Fehler bei der Passwort-Überprüfung");
+      toastError("Fehler bei der Passwort-Überprüfung");
     } finally {
       setEmailChangeLoading(false);
     }
@@ -264,11 +264,11 @@ const Settings = () => {
 
   const handleEmailChangeSubmitNew = async () => {
     if (!emailNew.trim() || !emailNew.includes("@")) {
-      toast.error("Bitte gib eine gültige E-Mail-Adresse ein");
+      toastError("Bitte gib eine gültige E-Mail-Adresse ein");
       return;
     }
     if (emailNew === user?.email) {
-      toast.error("Die neue E-Mail ist identisch mit der aktuellen");
+      toastError("Die neue E-Mail ist identisch mit der aktuellen");
       return;
     }
     setEmailChangeLoading(true);
@@ -278,16 +278,16 @@ const Settings = () => {
         { emailRedirectTo: `${window.location.origin}/auth?email_changed=true` }
       );
       if (error) {
-        if (error.message.includes("email_exists") || error.message.includes("already registered")) toast.error("Diese E-Mail-Adresse ist bereits registriert");
-        else if (error.message.includes("rate limit")) toast.error("Zu viele Versuche. Bitte warte einen Moment.");
-        else if (error.message.includes("same_email") || error.message.includes("same as")) toast.error("Die neue E-Mail ist identisch mit der aktuellen");
-        else toast.error(error.message);
+        if (error.message.includes("email_exists") || error.message.includes("already registered")) toastError("Diese E-Mail-Adresse ist bereits registriert");
+        else if (error.message.includes("rate limit")) toastError("Zu viele Versuche. Bitte warte einen Moment.");
+        else if (error.message.includes("same_email") || error.message.includes("same as")) toastError("Die neue E-Mail ist identisch mit der aktuellen");
+        else toastError(error.message);
       } else {
         setEmailStep("new-code");
-        toast.success(`Bestätigungslink an ${emailNew} gesendet`);
+        toastSuccess(`Bestätigungslink an ${emailNew} gesendet`);
       }
     } catch {
-      toast.error("Fehler beim Ändern der E-Mail");
+      toastError("Fehler beim Ändern der E-Mail");
     } finally {
       setEmailChangeLoading(false);
     }
@@ -685,7 +685,7 @@ const Settings = () => {
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   disabled={deleteConfirm !== "LÖSCHEN"}
                   onClick={async () => {
-                    toast.info("Bitte kontaktiere den Support, um dein Konto zu löschen.");
+                    toastInfo("Bitte kontaktiere den Support, um dein Konto zu löschen.");
                     setDeleteConfirm("");
                   }}
                 >

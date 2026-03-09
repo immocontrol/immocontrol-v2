@@ -213,7 +213,7 @@ const DealBewertungsScorecard = memo(() => {
                   {deal.rating} ({deal.percentage.toFixed(0)}%)
                 </Badge>
                 {expanded && (
-                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => deleteDeal(deal.id)}>
+                  <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Deal löschen" onClick={() => deleteDeal(deal.id)}>
                     <Trash2 className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 )}

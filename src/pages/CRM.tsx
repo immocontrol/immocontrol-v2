@@ -699,14 +699,14 @@ const CRM = () => {
                             <CallButton phone={place.phone} toLabel={place.name} className="text-xs text-primary hover:underline flex items-center gap-1" variant="link" />
                           )}
                           {place.website && (
-                            <a href={place.website} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                            <a href={place.website} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                               <Globe className="h-3 w-3" /> Website
                             </a>
                           )}
                           <a
                             href={`https://maps.google.com/?q=${place.lat},${place.lng}`}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
                           >
                             <ExternalLink className="h-3 w-3" /> Maps
@@ -789,7 +789,7 @@ const CRM = () => {
                                             </a>
                                           )}
                                           {biz.website && (
-                                            <a href={biz.website} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
+                                            <a href={biz.website} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary flex items-center gap-0.5">
                                               <Globe className="h-2.5 w-2.5" /> Web
                                             </a>
                                           )}
@@ -1050,7 +1050,7 @@ const CRM = () => {
                           <span className="text-muted-foreground text-xs">Adresse</span>
                           <p className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" /> {selectedLeadData.address}
-                            <a href={`https://maps.google.com/?q=${encodeURIComponent(selectedLeadData.address)}`} target="_blank" rel="noreferrer" className="ml-1">
+                            <a href={`https://maps.google.com/?q=${encodeURIComponent(selectedLeadData.address)}`} target="_blank" rel="noopener noreferrer" className="ml-1" aria-label="Adresse in Google Maps öffnen">
                               <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
                             </a>
                           </p>

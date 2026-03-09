@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProperties } from "@/context/PropertyContext";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { formatCurrency } from "@/lib/formatters";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -68,7 +68,7 @@ const DealToPropertyConverter = memo(({ deal, onConverted }: DealToPropertyConve
         yearBuilt: new Date().getFullYear(),
         ownership: "privat" as const,
       });
-      toast.success(`Deal "${deal.title}" in Immobilie konvertiert`);
+      toastSuccess(`Deal "${deal.title}" in Immobilie konvertiert`);
       setOpen(false);
       onConverted?.();
     } catch (e: unknown) {

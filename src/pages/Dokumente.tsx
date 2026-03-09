@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File, Search, Eye, X, Filter, ScanText, FileSignature, Receipt, CalendarCheck, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
-import { toast } from "sonner";
 import { formatFileSize, formatDate } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import FileImportPicker from "@/components/FileImportPicker";
@@ -23,7 +22,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ROUTES } from "@/lib/routes";
 import { Link } from "react-router-dom";
 import { handleError } from "@/lib/handleError";
-import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { toastErrorWithRetry, toastSuccess, toastError } from "@/lib/toastMessages";
 
 interface DocEntry {
   id: string;
@@ -67,6 +66,7 @@ const autoDetectCategory = (fileName: string): string => {
 
 const Dokumente = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { properties } = useProperties();
   const qc = useQueryClient();
@@ -76,6 +76,15 @@ const Dokumente = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterProperty, setFilterProperty] = useState("all");
+
+  /* Sync filter from URL ?property= for deep links from PropertyDetail */
+  useEffect(() => {
+    const prop = searchParams.get("property");
+    if (prop) {
+      setFilterProperty(prop);
+      setPropertyId(prop);
+    }
+  }, [searchParams]);
   const [dragActive, setDragActive] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocEntry | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -136,7 +145,7 @@ const Dokumente = () => {
   const uploadFile = async (file: File) => {
     if (!user) return;
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Maximale Dateigröße: 10 MB");
+      toastError("Maximale Dateigröße: 10 MB");
       return;
     }
 
@@ -192,7 +201,7 @@ const Dokumente = () => {
       handleError(dbError, { context: "supabase", showToast: false });
       toastErrorWithRetry("Metadaten konnten nicht gespeichert werden", () => uploadFile(file));
     } else {
-      toast.success(`„${file.name}" hochgeladen${ocrText ? " (Text extrahiert)" : ""}`);
+      toastSuccess(`„${file.name}" hochgeladen${ocrText ? " (Text extrahiert)" : ""}`);
       qc.invalidateQueries({ queryKey: ["all_documents"] });
     }
     setUploading(false);
@@ -229,12 +238,12 @@ const Dokumente = () => {
       await supabase.from("property_documents").delete().eq("id", doc.id);
     },
     onSuccess: () => {
-      toast.success("Dokument gelöscht");
+      toastSuccess("Dokument gelöscht");
       qc.invalidateQueries({ queryKey: ["all_documents"] });
     },
     onError: (err) => {
       handleError(err, { context: "supabase", showToast: false });
-      toast.error("Fehler beim Löschen");
+      toastError("Fehler beim Löschen");
     },
   });
 
@@ -253,7 +262,7 @@ const Dokumente = () => {
     /* FIX-3: Delay revoke — immediate revoke can race with download on slow devices */
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     /* IMPROVE-6: Show success toast after download */
-    toast.success(`"${doc.file_name}" heruntergeladen`);
+    toastSuccess(`"${doc.file_name}" heruntergeladen`);
   };
 
   return (
@@ -495,7 +504,7 @@ const Dokumente = () => {
                 {/* UI-UPDATE-21: Tooltip on download action */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(doc)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Herunterladen" onClick={() => handleDownload(doc)}>
                       <Download className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>

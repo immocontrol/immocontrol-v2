@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,7 +13,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { isValidEmail } from "@/lib/validation";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
-import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { toastErrorWithRetry, toastSuccess, toastError } from "@/lib/toastMessages";
 import { StepIndicator } from "@/components/StepIndicator";
 
 const STEP_LABELS = ["Persönliche Daten", "Mietdetails", "Zusammenfassung"];
@@ -81,7 +80,7 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
         deposit: form.deposit,
       });
       if (error) throw error;
-      toast.success(`${form.first_name} ${form.last_name} angelegt`);
+      toastSuccess(`${form.first_name} ${form.last_name} angelegt`);
       announce(`${form.first_name} ${form.last_name} wurde als Mieter angelegt.`);
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.tenants.byProperty(propertyId) });

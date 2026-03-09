@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -255,7 +256,7 @@ const ContractManagement = ({ propertyId }: ContractManagementProps) => {
                   </Select>
                 </div>
               </div>
-              <Button onClick={() => addMutation.mutate()} disabled={!form.property_id || addMutation.isPending}>Speichern</Button>
+              <LoadingButton onClick={() => addMutation.mutate()} loading={addMutation.isPending} disabled={!form.property_id || addMutation.isPending}>Speichern</LoadingButton>
             </div>
           </DialogContent>
         </Dialog>

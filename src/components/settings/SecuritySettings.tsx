@@ -98,7 +98,7 @@ export function SecuritySettings({
                 <Label className="text-xs">Oder manuell eingeben:</Label>
                 <div className="flex items-center gap-2">
                   <code className="text-xs bg-secondary p-2 rounded flex-1 break-all">{totpSecret}</code>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copySecret}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Geheimschlüssel kopieren" onClick={copySecret}>
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>
                 </div>

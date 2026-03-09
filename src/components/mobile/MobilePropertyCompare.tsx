@@ -277,7 +277,7 @@ export const MobilePropertyCompare = memo(function MobilePropertyCompare({
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {properties[activeIndex].image ? (
-                    <img src={properties[activeIndex].image} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                    <img src={properties[activeIndex].image} alt={properties[activeIndex].name || "Objekt"} className="w-10 h-10 rounded-lg object-cover" />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                       <Home className="w-5 h-5 text-muted-foreground" />

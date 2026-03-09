@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -152,7 +153,7 @@ const EnergyCertificateTracker = ({ propertyId }: EnergyCertificateTrackerProps)
                 <div><Label>Gültig bis</Label><Input type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} /></div>
               </div>
               <div><Label>Aussteller</Label><Input value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder="Name des Ausstellers" /></div>
-              <Button onClick={() => addMutation.mutate()} disabled={!form.expiry_date || addMutation.isPending}>Speichern</Button>
+              <LoadingButton onClick={() => addMutation.mutate()} loading={addMutation.isPending} disabled={!form.expiry_date || addMutation.isPending}>Speichern</LoadingButton>
             </div>
           </DialogContent>
         </Dialog>

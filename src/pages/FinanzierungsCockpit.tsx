@@ -4,7 +4,7 @@
  * Unterlagen-Checkliste pro Objekt (Exposé, Energieausweis, Grundrisse, Mieterliste, Flurkarte, Altlastenauskunft).
  */
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Building2,
   Landmark,
@@ -57,6 +57,8 @@ const defaultAssets: FinancingAssets = {
   bauspar: "",
 };
 
+const PAGE_TITLE = "Finanzierungs-Cockpit – ImmoControl";
+
 /** Unterlagen, die Banken oft für Finanzierungen verlangen */
 const UNTERLAGEN_CATEGORIES = [
   { id: "expose", label: "Exposé", categoryMatch: /exposé|expose|angebot/i },
@@ -86,15 +88,28 @@ function saveAssets(data: FinancingAssets) {
 }
 
 export default function FinanzierungsCockpit() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { properties, stats } = useProperties();
   const [assets, setAssets] = useState<FinancingAssets>(loadAssets);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("");
   const [expandedSection, setExpandedSection] = useState<string | null>("objekte");
 
+  /* Pre-select property from URL ?property= (deep link from PropertyDetail) */
+  useEffect(() => {
+    const prop = searchParams.get("property");
+    if (prop) setSelectedPropertyId(prop);
+  }, [searchParams]);
+
   useEffect(() => {
     saveAssets(assets);
   }, [assets]);
+
+  useEffect(() => {
+    const prev = document.title;
+    document.title = PAGE_TITLE;
+    return () => { document.title = prev; };
+  }, []);
 
   const { data: loans = [] } = useQuery({
     queryKey: ["financing_loans", user?.id],
@@ -207,7 +222,7 @@ export default function FinanzierungsCockpit() {
               <Icon className="h-4 w-4 text-muted-foreground" />
               {title}
             </CardTitle>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={isExpanded ? "Bereich einklappen" : "Bereich aufklappen"}>
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
           </div>

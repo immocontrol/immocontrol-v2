@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePropertyDetailTabs } from "@/components/mobile/MobilePropertyDetailTabs";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { ROUTES, dealsWithId, viewingsWithId } from "@/lib/routes";
+import { ROUTES, dealsWithId, viewingsWithId, dokumenteForProperty, finanzierungForProperty } from "@/lib/routes";
 import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench, Trash2, Copy, ClipboardCopy, Clock, Euro, CreditCard, Users, Share2, Percent, BarChart3, Camera, Receipt, Store, Handshake, Sparkles, PieChart, ShieldAlert, Info } from "lucide-react";
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
@@ -53,7 +53,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { formatCurrency } from "@/lib/formatters";
 import { calcBruttoRendite, calcNettoRendite, calcMietmultiplikator, calcDSCR } from "@/lib/calculations";
 import { getGebaeudeAnteil, getGrundUndBoden, getAnnualAfa, getAfaRatePercent, getSanierung15PercentBrutto } from "@/lib/afaSanierung";
@@ -192,8 +192,8 @@ const PropertyDetail = () => {
 
   const copyAddress = () => {
     navigator.clipboard.writeText(property.address).then(
-      () => toast.success("Adresse kopiert"),
-      () => toast.error("Kopieren fehlgeschlagen")
+      () => toastSuccess("Adresse kopiert"),
+      () => toastError("Kopieren fehlgeschlagen")
     );
   };
 
@@ -308,7 +308,7 @@ const PropertyDetail = () => {
                           units: property.units,
                           notes: property.notes,
                         });
-                        toast.success(text, { duration: 8000, description: "KI Kurzbewertung" });
+                        toastSuccess(text, 8000);
                       } catch (e) {
                         handleError(e, { context: "ai", details: "suggestPropertySummary", showToast: true });
                       } finally {
@@ -332,7 +332,7 @@ const PropertyDetail = () => {
                   aria-label="Objekt duplizieren"
                   onClick={async () => {
                     await duplicateProperty(property.id);
-                    toast.success(`${property.name} wurde dupliziert`);
+                    toastSuccess(`${property.name} wurde dupliziert`);
                     navigate(ROUTES.HOME);
                   }}
                 >
@@ -365,7 +365,7 @@ const PropertyDetail = () => {
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={async () => {
                       await deleteProperty(property.id);
-                      toast.success(`${property.name} wurde gelöscht.`);
+                      toastSuccess(`${property.name} wurde gelöscht.`);
                       navigate(ROUTES.HOME);
                     }}
                   >
@@ -494,9 +494,17 @@ const PropertyDetail = () => {
               <Receipt className="h-3 w-3" /> Nebenkostenabrechnung
             </Link>
             {property?.id && (
-              <Link to={`${ROUTES.RENT}?property=${property.id}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]" aria-label="Mietübersicht für dieses Objekt">
-                Mietübersicht →
-              </Link>
+              <>
+                <Link to={dokumenteForProperty(property.id)} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]" aria-label="Dokumente zu diesem Objekt">
+                  Dokumente →
+                </Link>
+                <Link to={finanzierungForProperty(property.id)} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]" aria-label="Finanzierungs-Cockpit für dieses Objekt">
+                  Finanzierungs-Cockpit →
+                </Link>
+                <Link to={`${ROUTES.RENT}?property=${property.id}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1 touch-target min-h-[36px]" aria-label="Mietübersicht für dieses Objekt">
+                  Mietübersicht →
+                </Link>
+              </>
             )}
           </div>
           <PropertyFinancingChecklist propertyId={property.id} propertyName={property.name} compact />

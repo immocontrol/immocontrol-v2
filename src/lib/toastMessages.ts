@@ -15,6 +15,11 @@ export function toastError(message: string, duration = TOAST_DURATION_ERROR) {
   toast.error(message, { duration });
 }
 
+/** Info-Toast (z. B. „Vorlage übernommen“) — gleiche Dauer wie Success. */
+export function toastInfo(message: string, duration = TOAST_DURATION_SUCCESS) {
+  toast.info(message, { duration });
+}
+
 /**
  * Fehler-Toast mit optionaler „Erneut versuchen“-Aktion.
  * Hoher Impact: Nutzer können nach Fehlern sofort erneut versuchen.

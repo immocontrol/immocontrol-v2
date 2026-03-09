@@ -108,7 +108,7 @@ const FinanzierungsVergleich = memo(() => {
             </Badge>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
+        <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={expanded ? "Bereich einklappen" : "Bereich aufklappen"} onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </Button>
       </div>

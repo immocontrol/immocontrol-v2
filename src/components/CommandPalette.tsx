@@ -51,6 +51,7 @@ export const CommandPalette = () => {
   const items = useMemo<PaletteItem[]>(() => {
     const navItems: PaletteItem[] = [
       { id: "nav-dashboard", label: "Portfolio", sublabel: "Dashboard & Übersicht", icon: <LayoutDashboard className="h-4 w-4" />, action: () => go(ROUTES.HOME), category: "Navigation" },
+      { id: "nav-objekte", label: "Objekte", sublabel: "Objektliste & Immobilien", icon: <Building2 className="h-4 w-4" />, action: () => go(ROUTES.OBJEKTE), category: "Navigation" },
       { id: "nav-loans", label: "Darlehen", sublabel: "Finanzierungen verwalten", icon: <Landmark className="h-4 w-4" />, action: () => go(ROUTES.LOANS), category: "Navigation" },
       { id: "nav-forecast", label: "Cashforecast", sublabel: "Liquiditätsplanung", icon: <CalendarDays className="h-4 w-4" />, action: () => go(ROUTES.FORECAST), category: "Navigation" },
       { id: "nav-steuer", label: "Steuer-Cockpit", sublabel: "Anlage V, AfA, Veräußerungsgewinn", icon: <Calculator className="h-4 w-4" />, action: () => go(ROUTES.STEUER_COCKPIT), category: "Navigation" },

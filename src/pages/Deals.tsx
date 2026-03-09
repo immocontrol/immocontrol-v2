@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,158 +45,8 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ROUTES, dealsWithId } from "@/lib/routes";
 import { EmptyState } from "@/components/EmptyState";
 import { DealRecord, STAGES, stageMap, emptyForm } from "./deals/DealTypes";
-
-/* UPD-11: Deal age color helper */
-const getDealAgeColor = (days: number): string => {
-  if (days <= 7) return "text-green-600";
-  if (days <= 30) return "text-yellow-600";
-  return "text-red-500";
-};
-
-/* UPD-12: Validate deal form before save */
-const isFormValid = (form: typeof emptyForm): boolean =>
-  form.title.trim().length > 0;
-
-/* UPD-13: Reuse shared currency formatter */
-const fmt = (n: number) => formatCurrency(n);
-
-/* IMP-55: Deal-zu-Objekt One-Click — show convert button on abgeschlossen deals */
-const DealCard = memo(({
-  deal,
-  onClick,
-  onShare,
-  onConverted,
-  draggable,
-  onDragStart,
-  onDragEnd,
-}: {
-  deal: DealRecord;
-  onClick: () => void;
-  onShare?: (deal: DealRecord) => void;
-  onConverted?: () => void;
-  draggable?: boolean;
-  onDragStart?: (e: React.DragEvent) => void;
-  onDragEnd?: () => void;
-}) => {
-  const dealAge = Math.floor((Date.now() - new Date(deal.created_at).getTime()) / 86400000);
-  const isStale = dealAge > 30 && deal.stage !== "abgeschlossen" && deal.stage !== "abgelehnt";
-  const isTelegram = deal.source?.toLowerCase().includes("telegram");
-
-  return (
-    <Card
-      className={cn(
-        "cursor-pointer hover:shadow-md transition-all duration-200",
-        isStale && "border-yellow-500/40",
-        draggable && "active:scale-[0.98]",
-      )}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      role="button"
-      aria-label={`Deal: ${deal.title}`}
-      tabIndex={0}
-      onKeyDown={e => { if (e.key === "Enter") onClick(); }}
-    >
-      <CardContent className="p-3 space-y-1.5">
-        <div className="flex items-center justify-between gap-1">
-          <p className="font-medium text-sm truncate flex-1" title={deal.title}>{deal.title}</p>
-          <div className="flex items-center gap-1 shrink-0">
-            <Badge variant="outline" className="text-[9px] h-5 px-1" title="Deal-Score (Priorisierung)">
-              {calculateDealScore(deal)}%
-            </Badge>
-            {onShare && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onShare(deal); }}
-                className="p-1 rounded hover:bg-secondary transition-colors"
-                aria-label="Deal teilen"
-              >
-                <Share2 className="h-3 w-3 text-muted-foreground" />
-              </button>
-            )}
-            {isStale && <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0" />}
-          </div>
-        </div>
-        {deal.address && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-            <MapPin className="h-3 w-3 shrink-0" /> {deal.address}
-          </p>
-        )}
-        {deal.address && (
-          <Link
-            to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(deal.address)}`}
-            className="text-[10px] text-primary hover:underline flex items-center gap-1 w-fit"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="WGH in Umgebung suchen"
-          >
-            <Store className="h-3 w-3 shrink-0" /> WGH in Umgebung
-          </Link>
-        )}
-        <div className="flex items-center justify-between flex-wrap gap-1">
-          {(deal.purchase_price ?? 0) > 0 && <span className="text-xs font-medium">{fmt(deal.purchase_price!)}</span>}
-          {(() => {
-            const price = deal.purchase_price ?? 0;
-            const rent = deal.expected_rent ?? 0;
-            const yieldPct = price > 0 && rent > 0 ? (rent * 12 / price) * 100 : deal.expected_yield ?? 0;
-            return yieldPct > 0 ? (
-              <Badge variant="outline" className="text-[10px]">{yieldPct.toFixed(1)}% Brutto</Badge>
-            ) : null;
-          })()}
-        </div>
-        {(deal.purchase_price ?? 0) > 0 && (deal.sqm ?? 0) > 0 && (
-          <p className="text-[10px] text-muted-foreground">{fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²</p>
-        )}
-        {(deal.expected_rent ?? 0) > 0 && !((deal.purchase_price ?? 0) > 0 && (deal.sqm ?? 0) > 0) && (
-          <p className="text-[10px] text-muted-foreground">{fmt((deal.expected_rent ?? 0) * 12)} J/Miete</p>
-        )}
-        {/* UPD-15: Show source badge on Kanban cards */}
-        <div className="flex items-center justify-between">
-          {deal.contact_name && (
-            <p className="text-[10px] text-muted-foreground truncate">{deal.contact_name}</p>
-          )}
-          {isTelegram && (
-            <Badge variant="secondary" className="text-[10px] h-4 gap-0.5">
-              <MessageSquare className="h-2.5 w-2.5" /> Telegram
-            </Badge>
-          )}
-        </div>
-        {/* UPD-16: Deal age with color coding */}
-        <p className={cn("text-[10px] flex items-center gap-1", getDealAgeColor(dealAge))}>
-          <Clock className="h-2.5 w-2.5" /> {dealAge}d
-        </p>
-        {/* IMP-55: One-Click Convert for abgeschlossen deals — render inline on card */}
-        {deal.stage === "abgeschlossen" && (
-          <div className="pt-2 border-t border-border mt-2" onClick={e => e.stopPropagation()}>
-            <DealToPropertyConverter
-              deal={{
-                id: deal.id,
-                title: deal.title,
-                address: deal.address,
-                purchase_price: deal.purchase_price,
-                expected_rent: deal.expected_rent,
-                sqm: deal.sqm,
-                units: deal.units,
-                property_type: deal.property_type,
-              }}
-              onConverted={onConverted}
-            />
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-});
-DealCard.displayName = "DealCard";
-
-/* UPD-17: Sort options for list view */
-type SortKey = "created_at" | "title" | "purchase_price" | "stage";
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "created_at", label: "Erstellt" },
-  { key: "title", label: "Titel" },
-  { key: "purchase_price", label: "Preis" },
-  { key: "stage", label: "Stage" },
-];
+import { DealCard } from "./deals/DealCard";
+import { isFormValid, formatDealCurrency as fmt, SORT_OPTIONS, filterAndSortDeals, type SortKey } from "./deals/dealUtils";
 
 const Deals = () => {
   const { user } = useAuth();
@@ -646,27 +496,10 @@ const Deals = () => {
   }, [deals]);
 
   /* UPD-29: Filtered and sorted deals for list view */
-  const filteredDeals = useMemo(() => {
-    let result = [...deals];
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      result = result.filter(d =>
-        d.title.toLowerCase().includes(q) ||
-        d.address?.toLowerCase().includes(q) ||
-        d.contact_name?.toLowerCase().includes(q) ||
-        d.source?.toLowerCase().includes(q)
-      );
-    }
-    result.sort((a, b) => {
-      const av = a[sortKey] ?? "";
-      const bv = b[sortKey] ?? "";
-      if (typeof av === "number" && typeof bv === "number") return sortAsc ? av - bv : bv - av;
-      return sortAsc
-        ? String(av).localeCompare(String(bv), "de")
-        : String(bv).localeCompare(String(av), "de");
-    });
-    return result;
-  }, [deals, debouncedSearch, sortKey, sortAsc]);
+  const filteredDeals = useMemo(
+    () => filterAndSortDeals(deals, debouncedSearch, sortKey, sortAsc),
+    [deals, debouncedSearch, sortKey, sortAsc],
+  );
 
   /* UPD-30: Export deals as CSV */
   const exportCSV = useCallback(() => {

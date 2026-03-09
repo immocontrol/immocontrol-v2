@@ -125,9 +125,17 @@ function estimateBodenrichtwert(lat: number, lon: number, address: string): numb
 
 type Step = "upload" | "review" | "results";
 
+const PAGE_TITLE = "Immobilienbewertung – ImmoControl";
+
 const ImmobilienBewertung = () => {
   const [step, setStep] = useState<Step>("upload");
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const prev = document.title;
+    document.title = PAGE_TITLE;
+    return () => { document.title = prev; };
+  }, []);
   const [parsedData, setParsedData] = useState<ParsedExposeData | null>(null);
   const [brwLoading, setBrwLoading] = useState(false);
   const [sparkasseLoading, setSparkasseLoading] = useState(false);

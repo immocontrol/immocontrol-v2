@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { useProperties } from "@/context/PropertyContext";
 import { EmptyState } from "@/components/EmptyState";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
@@ -106,7 +106,7 @@ const InvoiceManagement = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Status aktualisiert");
+      toastSuccess("Status aktualisiert");
     },
   });
 
@@ -117,7 +117,7 @@ const InvoiceManagement = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success("Gelöscht");
+      toastSuccess("Gelöscht");
     },
     onError: createMutationErrorHandler("Rechnung löschen", "Fehler beim Löschen"),
   });

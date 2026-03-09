@@ -16,6 +16,12 @@ const Einladung = () => {
   const [redirectCount, setRedirectCount] = useState(5);
 
   useEffect(() => {
+    const prev = document.title;
+    document.title = "Einladung annehmen – ImmoControl";
+    return () => { document.title = prev; };
+  }, []);
+
+  useEffect(() => {
     if (!token) {
       setStatus("no-token");
       return;

@@ -108,6 +108,7 @@ const MeterManagement = ({ propertyId }: Props) => {
       if (error) throw error;
     },
     onSuccess: () => {
+      setDeleteTargetMeterId(null);
       toast.success("Zähler entfernt");
       qc.invalidateQueries({ queryKey: ["meters", propertyId] });
     },
@@ -115,7 +116,6 @@ const MeterManagement = ({ propertyId }: Props) => {
       handleError(e, { context: "supabase", details: "meters.delete", showToast: false });
       toastErrorWithRetry("Fehler beim Entfernen", () => { if (lastDeletedMeterIdRef.current) deleteMeter.mutate(lastDeletedMeterIdRef.current); });
     },
-    onSuccess: () => { setDeleteTargetMeterId(null); },
   });
 
   const getLatestReading = (meterId: string) => {

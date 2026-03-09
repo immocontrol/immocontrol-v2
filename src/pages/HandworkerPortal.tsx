@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, LogOut, ClipboardList, User, CheckCircle2, Clock, AlertTriangle, BarChart3, Euro, Building2, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { HandworkerTickets } from "@/components/TicketSystem";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -24,6 +24,12 @@ const HandworkerPortal = () => {
   const [stats, setStats] = useState<TicketSummary>({ open: 0, inProgress: 0, resolved: 0, totalCost: 0, avgResolutionDays: 0 });
   const [propertyCount, setPropertyCount] = useState(0);
   const [categoryBreakdown, setCategoryBreakdown] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const prev = document.title;
+    document.title = "Handwerkerportal – ImmoControl";
+    return () => { document.title = prev; };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -97,7 +103,7 @@ const HandworkerPortal = () => {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground hidden sm:block">{displayName}</span>
-            <Button variant="ghost" size="icon" onClick={() => { signOut(); toast.success("Abgemeldet"); }}>
+            <Button variant="ghost" size="icon" aria-label="Abmelden" onClick={() => { signOut(); toastSuccess("Abgemeldet"); }}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -320,7 +326,7 @@ const HandworkerPortal = () => {
                               <h2 className="text-sm font-semibold">Abmelden</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">Vom Handwerkerportal abmelden</p>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => { signOut(); toast.success("Abgemeldet"); }}>
+                <Button variant="destructive" size="sm" onClick={() => { signOut(); toastSuccess("Abgemeldet"); }}>
                   <LogOut className="h-4 w-4 mr-1.5" /> Abmelden
                 </Button>
               </div>

@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES, propertyDetail } from "@/lib/routes";
+import { handleError } from "@/lib/handleError";
 import { logger } from "@/lib/logger";
 
 interface AppNotification {
@@ -171,6 +172,7 @@ export function useNotifications() {
       }
     } catch (e) {
       logger.warn("Notifications check failed (best-effort)", { error: e });
+      handleError(e, { context: "general", silent: true, details: "useNotifications.checkNotifications" });
     }
 
     /* Sort: unread first, then by severity, then by date */

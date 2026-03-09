@@ -85,7 +85,7 @@ export const NotificationBell = () => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8">
+        <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Benachrichtigungen">
           <Bell className="h-4 w-4" />
           {total > 0 && (
             <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-loss text-[10px] text-destructive-foreground font-bold flex items-center justify-center pulse-notification">

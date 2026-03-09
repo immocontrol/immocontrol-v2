@@ -5,6 +5,7 @@ import { isValidEmail } from "@/lib/validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
-import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { toastErrorWithRetry, toastSuccess } from "@/lib/toastMessages";
 import TenantPortalPreview from "@/components/TenantPortalPreview";
 import { formatCurrency } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -138,7 +139,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
       }
     },
     onSuccess: () => {
-      toast.success(editTenant ? "Mieter aktualisiert" : "Mieter angelegt");
+      toastSuccess(editTenant ? "Mieter aktualisiert" : "Mieter angelegt");
       resetForm();
       setOpen(false);
       invalidate();
@@ -311,9 +312,9 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                 <Input type="number" value={form.deposit} onChange={(e) => setForm({ ...form, deposit: Number(e.target.value) })} className="h-9 text-sm" />
               </div>
             </div>
-            <Button onClick={() => saveMutation.mutate()} className="w-full mt-2" disabled={saveMutation.isPending}>
+            <LoadingButton onClick={() => saveMutation.mutate()} className="w-full mt-2" loading={saveMutation.isPending} disabled={saveMutation.isPending}>
               {editTenant ? "Speichern" : "Mieter anlegen"}
-            </Button>
+            </LoadingButton>
           </DialogContent>
         </Dialog>
       </div>
@@ -435,7 +436,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                 {/* UI-UPDATE-29: Tooltip on edit tenant action */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mieter bearbeiten" onClick={() => openEdit(t)}>
                       <Edit2 className="h-3 w-3" />
                     </Button>
                   </TooltipTrigger>
@@ -444,7 +445,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                 {/* UI-UPDATE-30: Tooltip on deactivate tenant action */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deactivateMutation.mutate(t)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Mieter deaktivieren" onClick={() => deactivateMutation.mutate(t)}>
                       <Home className="h-3 w-3" />
                     </Button>
                   </TooltipTrigger>

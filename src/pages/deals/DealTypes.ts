@@ -14,6 +14,8 @@ export interface DealRecord {
   sqm?: number;
   units?: number;
   property_type?: string;
+  /** Set when deal was converted to a property (links to Objekte) */
+  property_id?: string | null;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;

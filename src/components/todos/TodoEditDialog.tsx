@@ -91,8 +91,9 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Fälligkeitsdatum</label>
+            <label htmlFor="todo-edit-due-date" className="text-xs text-muted-foreground">Fälligkeitsdatum</label>
             <Input
+              id="todo-edit-due-date"
               type="date"
               value={form.due_date}
               onChange={(e) => onFormChange((f) => ({ ...f, due_date: e.target.value }))}
@@ -100,8 +101,9 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Uhrzeit</label>
+            <label htmlFor="todo-edit-due-time" className="text-xs text-muted-foreground">Uhrzeit</label>
             <Input
+              id="todo-edit-due-time"
               type="time"
               value={form.due_time}
               onChange={(e) => onFormChange((f) => ({ ...f, due_time: e.target.value }))}
@@ -111,9 +113,9 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Priorität</label>
+            <label htmlFor="todo-edit-priority" className="text-xs text-muted-foreground">Priorität</label>
             <Select value={String(form.priority)} onValueChange={(v) => onFormChange((f) => ({ ...f, priority: Number(v) }))}>
-              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="todo-edit-priority" className="h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
                   <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>
@@ -122,8 +124,9 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
             </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Projekt</label>
+            <label htmlFor="todo-edit-project" className="text-xs text-muted-foreground">Projekt</label>
             <Input
+              id="todo-edit-project"
               value={form.project}
               onChange={(e) => onFormChange((f) => ({ ...f, project: e.target.value }))}
               placeholder="z.B. Arbeit"

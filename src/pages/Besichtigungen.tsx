@@ -966,7 +966,7 @@ function MediaThumb({
       {url && isVideo ? (
         <video src={url} className="w-full h-full object-cover" muted />
       ) : url ? (
-        <img src={url} alt="" className="w-full h-full object-cover" />
+        <img src={url} alt="Medieninhalt Besichtigung" className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

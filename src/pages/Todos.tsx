@@ -17,7 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptimisticMutation } from "@/hooks/useOptimisticMutation";
 import { queryKeys } from "@/lib/queryKeys";
 import { createDebounce, groupBy, sortByKey, truncate, pluralDE, parseNaturalDateDE } from "@/lib/formatters";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { useSwipeAction } from "@/hooks/useSwipeAction";
 import {
@@ -265,7 +265,7 @@ const Todos = () => {
     /* UX-4: Haptic + UX-15: Success animation on save */
     haptic.success();
     triggerSuccess();
-    toast.success("Aufgabe gespeichert");
+    toastSuccess("Aufgabe gespeichert");
   }, [editTodo, editForm, updateMutation, haptic, triggerSuccess]);
 
   /* IMP-41-7: Smart quick-add with natural language date parsing
@@ -523,7 +523,7 @@ const Todos = () => {
                   <DropdownMenuItem onClick={() => {
                     const uncompleted = filtered.filter(t => !t.completed);
                     uncompleted.forEach(t => updateMutation.mutate({ id: t.id, updates: { completed: true, completed_at: new Date().toISOString() } }));
-                    toast.success(`${uncompleted.length} Aufgaben erledigt`);
+                    toastSuccess(`${uncompleted.length} Aufgaben erledigt`);
                   }}>
                     <CheckCheck className="h-3.5 w-3.5 mr-2" /> Alle erledigen
                   </DropdownMenuItem>
@@ -776,11 +776,11 @@ const Todos = () => {
                         sort_order: todoToRestore.sort_order ?? 0,
                       }).select().single();
                       if (error) {
-                        toast.error("Wiederherstellen fehlgeschlagen");
+                        toastError("Wiederherstellen fehlgeschlagen");
                         return;
                       }
                       qc.invalidateQueries({ queryKey: todoQueryKey });
-                      toast.success("Aufgabe wiederhergestellt");
+                      toastSuccess("Aufgabe wiederhergestellt");
                     },
                   });
                 }
@@ -809,7 +809,7 @@ const Todos = () => {
               onClick={() => {
                 if (deleteBulkCompletedIds?.length) {
                   deleteBulkCompletedIds.forEach(id => deleteMutation.mutate(id));
-                  toast.success(`${deleteBulkCompletedIds.length} erledigte gelöscht`);
+                  toastSuccess(`${deleteBulkCompletedIds.length} erledigte gelöscht`);
                   setDeleteBulkCompletedIds(null);
                 }
               }}

@@ -28,7 +28,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { toastSuccess, toastInfo } from "@/lib/toastMessages";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -200,7 +200,7 @@ const Loans = () => {
     if (!user || !newBankName.trim()) return;
     const { error } = await supabase.from("user_banks").insert({ user_id: user.id, name: newBankName.trim() });
     if (error && error.code === "23505") {
-      toast.info("Diese Bank existiert bereits");
+      toastInfo("Diese Bank existiert bereits");
     } else if (error) {
       handleError(error, { context: "supabase", showToast: false });
       toastErrorWithRetry("Fehler beim Hinzufügen", addCustomBank);
@@ -213,7 +213,7 @@ const Loans = () => {
     setAddingNewBank(false);
     setBankPopoverOpen(false);
     await qc.invalidateQueries({ queryKey: queryKeys.userBanks.all });
-    toast.success(`"${addedName}" hinzugefügt`);
+    toastSuccess(`"${addedName}" hinzugefügt`);
   };
 
   const deleteCustomBank = async (bankName: string) => {
@@ -233,7 +233,7 @@ const Loans = () => {
     setDeletingBank(null);
     setDeleteConfirmText("");
     qc.invalidateQueries({ queryKey: queryKeys.userBanks.all });
-    toast.success(`"${bankName}" gelöscht`);
+    toastSuccess(`"${bankName}" gelöscht`);
   };
 
   const saveMutation = useMutation({
@@ -263,7 +263,7 @@ const Loans = () => {
       }
     },
     onSuccess: () => {
-      toast.success(editLoan ? "Darlehen aktualisiert" : "Darlehen angelegt");
+      toastSuccess(editLoan ? "Darlehen aktualisiert" : "Darlehen angelegt");
       resetForm();
       setOpen(false);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
@@ -277,7 +277,7 @@ const Loans = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Darlehen gelöscht");
+      toastSuccess("Darlehen gelöscht");
       setDeleteTargetLoan(null);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
     },
@@ -596,7 +596,7 @@ const Loans = () => {
               const a = document.createElement("a");
               a.href = url; a.download = `darlehen_${new Date().toISOString().split("T")[0]}.csv`; a.click();
               URL.revokeObjectURL(url);
-              toast.success("Darlehen als CSV exportiert!");
+              toastSuccess("Darlehen als CSV exportiert!");
             }}>
               <Download className="h-3.5 w-3.5" /> CSV
             </Button>

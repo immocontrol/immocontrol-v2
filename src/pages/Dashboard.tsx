@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate, Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
@@ -340,8 +340,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const sharePortfolio = () => {
     const text = `Portfolio: ${stats.propertyCount} Objekte, ${stats.totalUnits} Einheiten\nGesamtwert: ${formatCurrency(stats.totalValue)}\nEigenkapital: ${formatCurrency(stats.equity)}\nMiete: ${formatCurrency(stats.totalRent)}/M\nCashflow: ${formatCurrency(stats.totalCashflow)}/M\nBrutto-Rendite: ${stats.avgRendite.toFixed(1)}%`;
     navigator.clipboard.writeText(text).then(
-      () => toast.success("Portfolio-Zusammenfassung kopiert!"),
-      () => toast.error("Kopieren fehlgeschlagen")
+      () => toastSuccess("Portfolio-Zusammenfassung kopiert!"),
+      () => toastError("Kopieren fehlgeschlagen")
     );
   };
 

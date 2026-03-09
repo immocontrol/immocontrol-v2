@@ -743,7 +743,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                     ? `https://www.openstreetmap.org/?bbox=${lastBbox.west},${lastBbox.south},${lastBbox.east},${lastBbox.north}`
                     : `https://www.openstreetmap.org/?mlat=${lastCenter!.lat}&mlon=${lastCenter!.lng}&zoom=15`}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   aria-label="Suchgebiet auf OpenStreetMap anzeigen"
                 >
                   <Map className="h-3 w-3" /> Auf Karte anzeigen

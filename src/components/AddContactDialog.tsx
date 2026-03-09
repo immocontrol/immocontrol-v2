@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -80,7 +79,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
         : first.phone?.length ? friendly.phone
         : first.category?.length ? friendly.category
         : "Bitte Name oder Kontaktdaten (E-Mail/Telefon) eingeben.";
-      toast.error(msg);
+      toastError(msg);
       return;
     }
     setSaving(true);
@@ -97,7 +96,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
         notes: data.notes || null,
       });
       if (error) throw error;
-      toast.success(`${data.name} angelegt`);
+      toastSuccess(`${data.name} angelegt`);
       announce(`${data.name} wurde als Kontakt angelegt.`);
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.contacts.all });

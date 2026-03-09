@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { toastSuccess, toastInfo } from "@/lib/toastMessages";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency } from "@/lib/formatters";
@@ -230,7 +230,7 @@ const ContactManagement = () => {
       haptic.success();
       /* UX-15: Success animation */
       triggerSuccess();
-      toast.success(editContact ? "Kontakt aktualisiert" : "Kontakt angelegt");
+      toastSuccess(editContact ? "Kontakt aktualisiert" : "Kontakt angelegt");
       resetForm();
       setOpen(false);
       invalidate();
@@ -269,7 +269,7 @@ const ContactManagement = () => {
       const { error } = await supabase.from("contacts").update({ deleted_at: null }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Kontakt wiederhergestellt"); invalidate(); },
+    onSuccess: () => { toastSuccess("Kontakt wiederhergestellt"); invalidate(); },
     onError: createMutationErrorHandler("Kontakt wiederherstellen", "Fehler beim Wiederherstellen"),
   });
 
@@ -279,7 +279,7 @@ const ContactManagement = () => {
       const { error } = await supabase.from("contacts").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Kontakt endg\u00fcltig gel\u00f6scht"); invalidate(); },
+    onSuccess: () => { toastSuccess("Kontakt endgültig gelöscht"); invalidate(); },
     onError: createMutationErrorHandler("Kontakt endgültig löschen", "Fehler beim endgültigen Löschen"),
   });
 
@@ -383,7 +383,7 @@ const ContactManagement = () => {
               a.click();
               /* FIX-3: Delay revoke — immediate revoke can race with download on slow devices */
               setTimeout(() => URL.revokeObjectURL(url), 1000);
-              toast.success("Kontakte als vCard exportiert!");
+              toastSuccess("Kontakte als vCard exportiert!");
             }}>
               <Download className="h-3.5 w-3.5" /> vCard
             </Button>
@@ -715,7 +715,7 @@ const ContactManagement = () => {
                             className="h-7 w-7 text-primary"
                             onClick={() => {
                               navigate(ROUTES.DEALS, { state: { fromContact: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: c.address, notes: c.notes } } });
-                              toast.info("Deal-Vorlage aus Kontakt übernommen");
+                              toastInfo("Deal-Vorlage aus Kontakt übernommen");
                             }}
                           >
                             <Briefcase className="h-3 w-3" />

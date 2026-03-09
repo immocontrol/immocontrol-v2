@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { useProperties } from "@/context/PropertyContext";
 import { useAccessibility } from "@/components/AccessibilityProvider";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { focusNextField } from "@/hooks/useEnterToNext";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -194,9 +194,9 @@ const AddPropertyDialog = () => {
           fieldEl.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         const errorMsg = liveErrors[firstInvalidField]?.message as string;
-        toast.error(errorMsg || `Bitte "${firstInvalidField}" ausfüllen`);
+        toastError(errorMsg || `Bitte "${firstInvalidField}" ausfüllen`);
       } else {
-        toast.error("Bitte alle Pflichtfelder ausfüllen");
+        toastError("Bitte alle Pflichtfelder ausfüllen");
       }
     }
   }, [step, trigger, form]);
@@ -227,10 +227,10 @@ const AddPropertyDialog = () => {
       return;
     }
     if (wasFirst) {
-      toast.success("Dein erstes Objekt ist angelegt – dein Portfolio startet hier.");
+      toastSuccess("Dein erstes Objekt ist angelegt – dein Portfolio startet hier.");
       announce("Erstes Objekt angelegt. Portfolio startet hier.");
     } else {
-      toast.success(`${data.name} wurde angelegt!`);
+      toastSuccess(`${data.name} wurde angelegt!`);
       announce(`${data.name} wurde angelegt.`);
     }
     reset(FORM_DEFAULTS);

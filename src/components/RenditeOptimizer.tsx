@@ -242,7 +242,7 @@ export default function RenditeOptimizer() {
               <SelectItem value="30">30 Jahre</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={reset}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Zurücksetzen" onClick={reset}>
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
         </div>

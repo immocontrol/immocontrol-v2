@@ -77,7 +77,7 @@ const SteuerCockpit = memo(() => {
           <h3 className="text-sm font-semibold">Steuer-Cockpit</h3>
           <Badge variant="outline" className="text-[10px] h-5">{new Date().getFullYear()}</Badge>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
+        <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={expanded ? "Bereich einklappen" : "Bereich aufklappen"} onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </Button>
       </div>

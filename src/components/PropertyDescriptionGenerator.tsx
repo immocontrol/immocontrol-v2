@@ -123,7 +123,7 @@ export function PropertyDescriptionGenerator({ property }: PropertyDescriptionGe
           <div className="rounded-lg border bg-muted/30 p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-muted-foreground">Ergebnis</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyResult}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="In Zwischenablage kopieren" onClick={copyResult}>
                 {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
             </div>

@@ -71,7 +71,7 @@ export const navEntries: NavEntry[] = [
     label: "Verwaltung",
     icon: FileText,
     items: [
-      { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "" },
+      { path: ROUTES.OBJEKTE, label: "Objekte", icon: Building2, shortcut: "O" },
       { path: ROUTES.SYNDICATION, label: "Syndication", icon: Users, shortcut: "" },
       { path: ROUTES.VERTRAEGE_KONTAKTE, label: "Verträge & Kontakte", icon: FileText, shortcut: "4" },
       { path: ROUTES.AUFGABEN_DOKUMENTE, label: "Aufgaben & Dokumente", icon: CheckSquare, shortcut: "6" },

@@ -220,7 +220,7 @@ export const MobileAvatarGroup = memo(function MobileAvatarGroup({
                     {person.avatarUrl ? (
                       <img
                         src={person.avatarUrl}
-                        alt=""
+                        alt={`Avatar von ${person.name}`}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (

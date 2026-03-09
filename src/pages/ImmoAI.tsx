@@ -61,6 +61,11 @@ const SUGGESTIONS = [
 export default function ImmoAI() {
   const { session } = useAuth();
   const { properties, stats } = useProperties();
+
+  useEffect(() => {
+    document.title = "Immo-Chat – ImmoControl";
+    return () => { document.title = "ImmoControl"; };
+  }, []);
   const { data: loans = [] } = useQuery({
     queryKey: queryKeys.loans.all,
     queryFn: async () => {

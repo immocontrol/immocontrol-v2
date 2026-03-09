@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Wrench, Plus, AlertTriangle, Clock, Check, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
@@ -11,10 +12,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 import { isDeepSeekConfigured, suggestMaintenanceNotes } from "@/integrations/ai/extractors";
-import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { toastErrorWithRetry, toastSuccess } from "@/lib/toastMessages";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -85,7 +85,7 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Maßnahme geplant");
+      toastSuccess("Maßnahme geplant");
       setForm({ title: "", category: "Sonstiges", priority: "medium", estimated_cost: 0, planned_date: "", notes: "" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["maintenance", propertyId] });
@@ -196,9 +196,9 @@ const MaintenancePlanner = ({ propertyId }: MaintenancePlannerProps) => {
                 </div>
                 <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
               </div>
-              <Button onClick={() => addMutation.mutate()} className="w-full" disabled={addMutation.isPending || !form.title.trim()}>
+              <LoadingButton onClick={() => addMutation.mutate()} className="w-full" loading={addMutation.isPending} disabled={addMutation.isPending || !form.title.trim()}>
                 Planen
-              </Button>
+              </LoadingButton>
             </div>
           </DialogContent>
         </Dialog>

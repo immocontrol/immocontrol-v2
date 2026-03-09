@@ -113,10 +113,10 @@ export function KeyboardShortcutSettings() {
                     if (e.key === "Escape") { setEditingShortcut(null); setShortcutWarning(""); }
                   }}
                 />
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={saveShortcut}>
+                <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Tastenkürzel speichern" onClick={saveShortcut}>
                   <Check className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setEditingShortcut(null); setShortcutWarning(""); }}>
+                <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Abbrechen" onClick={() => { setEditingShortcut(null); setShortcutWarning(""); }}>
                   <X className="h-3 w-3" />
                 </Button>
               </div>

@@ -35,3 +35,11 @@ Dieses Projekt ist so aufgebaut, dass du die **Entwicklungsumgebung und das „V
 - `supabase/functions/*` – können eigene Env-Keys für AI-Gateways haben; beim Wechsel Keys/URLs anpassen
 
 Der **Rest der Codebase** soll keine Referenzen auf Lovable, Replit, Cursor, Devin o. Ä. enthalten (außer in Kommentaren, die „optional“ oder „z. B.“ erwähnen).
+
+## Refactoring & Synergien
+
+- **Wiederverwendbare UI:** `ExpandableCard` (Collapsible-basiert) und Hook `useDisclosure` für einheitliches Aufklappen/Einklappen; weitere Widgets können schrittweise umgestellt werden.
+- **Routen:** `src/lib/routes.ts` – zentrale Helper z. B. `dokumenteForProperty(propertyId)`, `finanzierungForProperty(propertyId)` für Deep-Links von Objektseiten.
+- **Fehlerbehandlung:** `handleError` (mit optional `silent: true` für Best-Effort-Flows), `toastErrorWithRetry`, `toastSuccess` aus `toastMessages.ts`; Hintergrund-Checks (z. B. useNotifications, GlobalSearch) melden Fehler an das Tracking.
+- **Formulare:** `LoadingButton` und zentrale Toasts für konsistentes Lade- und Erfolgs-Feedback; Mutations nutzen einheitlich `queryKeys` und Invalidierung.
+- **Objekt als Hub:** PropertyDetail verlinkt zu Darlehen, Dokumente (gefiltert), Finanzierungs-Cockpit (vorgewählt), Mietübersicht; DealCard zeigt „Zum Objekt“, wenn `property_id` gesetzt ist.

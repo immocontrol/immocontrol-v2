@@ -87,9 +87,19 @@ export function viewingsWithId(id: string): string {
   return `${ROUTES.BESICHTIGUNGEN}?id=${encodeURIComponent(id)}`;
 }
 
-/** Helper: Dokumente page with ID filter */
+/** Helper: Dokumente page with ID filter (document id) */
 export function documentsWithId(id: string): string {
   return `${ROUTES.DOKUMENTE}?id=${encodeURIComponent(id)}`;
+}
+
+/** Helper: Dokumente page filtered by property */
+export function dokumenteForProperty(propertyId: string): string {
+  return `${ROUTES.DOKUMENTE}?property=${encodeURIComponent(propertyId)}`;
+}
+
+/** Helper: Finanzierungs-Cockpit with property pre-selected */
+export function finanzierungForProperty(propertyId: string): string {
+  return `${ROUTES.FINANZIERUNG}?property=${encodeURIComponent(propertyId)}`;
 }
 
 /** Helper: Darlehen page with ID filter */

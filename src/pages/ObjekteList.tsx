@@ -43,6 +43,11 @@ const ObjekteList = () => {
   const [sort, setSort] = useState<SortType>(() => loadListState().sort);
 
   useEffect(() => {
+    document.title = `Objekte (${properties.length}) – ImmoControl`;
+    return () => { document.title = "ImmoControl"; };
+  }, [properties.length]);
+
+  useEffect(() => {
     sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ search, sort }));
   }, [search, sort]);
 

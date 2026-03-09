@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "sonner";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { cn } from "@/lib/utils";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -130,7 +130,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   const addCustomBank = async () => {
     if (!user || !newBankName.trim()) return;
     const { error } = await supabase.from("user_banks").insert({ user_id: user.id, name: newBankName.trim() });
-    if (error && error.code !== "23505") { toast.error("Fehler beim Hinzufügen"); return; }
+    if (error && error.code !== "23505") { toastError("Fehler beim Hinzufügen"); return; }
     const name = newBankName.trim();
     setForm(f => ({ ...f, bank_name: name }));
     setBankSearch(name);
@@ -138,7 +138,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     setAddingNewBank(false);
     setBankPopoverOpen(false);
     await qc.invalidateQueries({ queryKey: ["user_banks"] });
-    toast.success(`"${name}" hinzugefügt`);
+    toastSuccess(`"${name}" hinzugefügt`);
   };
 
   const deleteCustomBank = async (bankName: string) => {
@@ -147,7 +147,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     await supabase.from("user_banks").delete().eq("id", bank.id);
     if (form.bank_name === bankName) { setForm(f => ({ ...f, bank_name: "" })); setBankSearch(""); }
     qc.invalidateQueries({ queryKey: ["user_banks"] });
-    toast.success(`"${bankName}" gelöscht`);
+    toastSuccess(`"${bankName}" gelöscht`);
   };
 
   const handleSave = async () => {
@@ -162,7 +162,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     if (errors.length > 0) {
       setValidationErrors(errors);
       setHighlightFields(fields);
-      toast.error(errors[0]);
+      toastError(errors[0]);
       /* Auto-clear highlight after flash animation */
       setTimeout(() => setHighlightFields([]), 2000);
       /* Navigate to the step containing the first missing field */
@@ -202,7 +202,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
         toastErrorWithRetry(`Fehler beim Speichern: ${error.message || "Unbekannter Fehler"}`, handleSave);
         return;
       }
-      toast.success("Darlehen angelegt");
+      toastSuccess("Darlehen angelegt");
       announce("Darlehen wurde angelegt.", "polite");
       handleOpenChange(false);
       qc.invalidateQueries({ queryKey: queryKeys.loans.all });
