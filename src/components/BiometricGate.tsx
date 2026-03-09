@@ -30,13 +30,6 @@ export function BiometricGate({ children }: BiometricGateProps) {
 
   const biometricEnabled = isBiometricUnlockEnabled();
 
-  /* Auto-trigger biometric prompt when gate is shown (e.g. after login / app open) */
-  useEffect(() => {
-    if (!user || !biometricEnabled || verified) return;
-    const t = setTimeout(runVerification, 400);
-    return () => clearTimeout(t);
-  }, [user, biometricEnabled, verified, runVerification]);
-
   const runVerification = useCallback(async () => {
     setError(null);
     setChecking(true);
@@ -54,6 +47,13 @@ export function BiometricGate({ children }: BiometricGateProps) {
       setChecking(false);
     }
   }, []);
+
+  /* Auto-trigger biometric prompt when gate is shown (e.g. after login / app open) */
+  useEffect(() => {
+    if (!user || !biometricEnabled || verified) return;
+    const t = setTimeout(runVerification, 400);
+    return () => clearTimeout(t);
+  }, [user, biometricEnabled, verified, runVerification]);
 
   if (!user || !biometricEnabled) {
     return <>{children}</>;
