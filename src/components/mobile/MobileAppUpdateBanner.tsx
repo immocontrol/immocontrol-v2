@@ -1,7 +1,7 @@
 /**
  * MOB5-20: Mobile App Update Banner
- * Shows update notification when a new app version is available via Service Worker.
- * Includes "Update now" button and dismissible banner with auto-recheck.
+ * Shows update notification when a new app version is available (Service Worker or version.json check).
+ * Includes "Jetzt aktualisieren" / "Später" and dismissible banner with auto-recheck.
  */
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -19,8 +19,35 @@ interface MobileAppUpdateBannerProps {
   className?: string;
 }
 
+/** Polls /version.json (cache-busted) and compares to __APP_VERSION__ (set at build). Used when hosting on Railway/GitHub so new deploys are detected even if SW does not update. */
+function useAppVersionCheck(checkInterval: number) {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const clientVersion = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : null;
+
+  useEffect(() => {
+    if (!clientVersion || checkInterval <= 0) return;
+
+    const check = async () => {
+      try {
+        const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { version?: string };
+        if (data.version && data.version !== clientVersion) setUpdateAvailable(true);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    check();
+    const interval = setInterval(check, checkInterval);
+    return () => clearInterval(interval);
+  }, [clientVersion, checkInterval]);
+
+  return updateAvailable;
+}
+
 /**
- * Hook to detect Service Worker updates.
+ * Hook to detect Service Worker updates (new SW waiting after deploy).
  */
 function useServiceWorkerUpdate(checkInterval: number) {
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -52,31 +79,22 @@ function useServiceWorkerUpdate(checkInterval: number) {
           currentReg = reg;
           setRegistration(reg);
 
-          // Check for waiting worker
-          if (reg.waiting) {
-            setUpdateAvailable(true);
-          }
+          if (reg.waiting) setUpdateAvailable(true);
 
-          // Attach updatefound listener only once
           if (!listenerAttachedRef.current) {
             reg.addEventListener("updatefound", onUpdateFound);
             listenerAttachedRef.current = true;
           }
 
-          // Trigger update check
           await reg.update();
         }
       } catch {
-        // Service worker not available
+        /* Service worker not available */
       }
     };
 
     checkForUpdates();
-
-    // Periodic check
-    if (checkInterval > 0) {
-      interval = setInterval(checkForUpdates, checkInterval);
-    }
+    if (checkInterval > 0) interval = setInterval(checkForUpdates, checkInterval);
 
     return () => {
       if (interval) clearInterval(interval);
@@ -91,7 +109,6 @@ function useServiceWorkerUpdate(checkInterval: number) {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
-    // Reload after short delay to allow SW to activate
     setTimeout(() => window.location.reload(), 500);
   }, [registration]);
 
@@ -105,7 +122,9 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
   className,
 }: MobileAppUpdateBannerProps) {
   const isMobile = useIsMobile();
-  const { updateAvailable, applyUpdate } = useServiceWorkerUpdate(checkInterval);
+  const versionUpdateAvailable = useAppVersionCheck(checkInterval);
+  const { updateAvailable: swUpdateAvailable, applyUpdate } = useServiceWorkerUpdate(checkInterval);
+  const updateAvailable = versionUpdateAvailable || swUpdateAvailable;
   const [isDismissed, setIsDismissed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

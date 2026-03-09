@@ -30,7 +30,7 @@ import { scheduleAutoBackup } from "@/lib/autoBackup";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
-import { MobileOfflineQueue, MobileSearchOverlay } from "@/components/mobile";
+import { MobileOfflineQueue, MobileSearchOverlay, MobileAppUpdateBanner } from "@/components/mobile";
 import { ActiveCallBar } from "@/components/ActiveCallBar";
 // NotificationCenter import removed — duplicate bell icon with NotificationBell
 
@@ -644,6 +644,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <BackToTop />
       <ActiveCallBar />
       <ImmoAIBubble mobileSubmenuExpanded={!!mobileActiveGroup} />
+
+      {/* App update: neue Version (Railway/GitHub) — Jetzt aktualisieren / Später */}
+      <MobileAppUpdateBanner />
 
       {/* MOB-11: Enhanced offline queue with action sync — mobile only */}
       <div className="md:hidden"><MobileOfflineQueue /></div>

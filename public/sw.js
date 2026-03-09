@@ -10,7 +10,7 @@ const PRECACHE_URLS = [
 /* OFFLINE-2: Offline fallback page content */
 const OFFLINE_HTML = '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ImmoControl - Offline</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0a0a0a;color:#e5e5e5}.c{text-align:center;padding:2rem}h1{font-size:1.5rem}p{color:#a1a1aa;font-size:.875rem}button{margin-top:1rem;padding:.5rem 1.5rem;border-radius:.5rem;border:1px solid #333;background:#1a1a2e;color:#e5e5e5;cursor:pointer}</style></head><body><div class="c"><h1>Keine Internetverbindung</h1><p>ImmoControl ist offline. Daten sind lokal gespeichert.</p><button onclick="location.reload()">Erneut versuchen</button></div></body></html>';
 
-/* Install — precache essential assets + offline page */
+/* Install — precache essential assets + offline page. Do not skipWaiting here so the client can show "Update now / Later" and trigger skipWaiting on user choice. */
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -21,7 +21,11 @@ self.addEventListener("install", (event) => {
       );
     })
   );
-  self.skipWaiting();
+});
+
+/* When the user clicks "Jetzt aktualisieren", the client posts SKIP_WAITING so we activate and the page can reload. */
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 /* Activate — clean old caches */
