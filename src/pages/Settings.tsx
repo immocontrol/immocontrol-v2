@@ -197,11 +197,16 @@ const Settings = () => {
 
   const refFor = (id: string) => (el: HTMLElement | null) => { sectionRefs.current[id] = el; };
 
+  /* Ein Flex-Container: Mobile = Spalte (nur Tabs + Inhalt), Desktop = Zeile (Sidebar + Inhalt). Sidebar auf Mobile nicht im DOM. */
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full min-w-0 max-w-full overflow-x-hidden" role="main" aria-label="Einstellungen">
-      {/* MOB-IMPROVE-3: Mobile horizontal scrollable section tabs (oberhalb des Inhalts, kein Row-Layout) */}
+    <div
+      className={`w-full min-w-0 max-w-full overflow-x-hidden flex ${isMobile ? "flex-col" : "flex-row gap-6"}`}
+      style={{ maxWidth: "100%" }}
+      role="main"
+      aria-label="Einstellungen"
+    >
       {isMobile && (
-        <div className="sticky top-0 z-30 shrink-0 w-full max-w-full bg-background/95 backdrop-blur-md border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain relative">
+        <div className="shrink-0 w-full bg-background border-b border-border overflow-x-auto scrollbar-hide overscroll-x-contain">
           <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
           <div className="flex gap-1 min-w-max justify-start pl-1 pr-6 py-2">
             {SETTINGS_SECTIONS.map((section) => {
@@ -224,9 +229,9 @@ const Settings = () => {
         </div>
       )}
 
-      {/* Settings sidebar navigation – sticky, always visible while scrolling */}
-      <aside className="hidden lg:flex w-48 shrink-0 self-start sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-        <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
+      {!isMobile && (
+        <aside className="hidden lg:flex w-48 shrink-0 self-start sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+          <nav className="w-full relative py-1" aria-label="Einstellungen-Navigation">
           {/* Single vertical track + progress fill */}
           {(() => {
             const activeIdx = SETTINGS_SECTIONS.findIndex(s => s.id === activeSection);
@@ -282,11 +287,12 @@ const Settings = () => {
               );
             });
           })()}
-        </nav>
-      </aside>
+          </nav>
+        </aside>
+      )}
 
-      {/* Main settings content — auf Mobile volle Breite unter den Tabs, auf Desktop neben Sidebar */}
-      <div className="w-full space-y-6 max-w-lg mx-auto flex-1 min-w-0 px-1 sm:px-0">
+      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar */}
+      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0">
         <div className="flex items-center gap-2">
           <SettingsIcon className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>

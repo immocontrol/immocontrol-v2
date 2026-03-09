@@ -603,14 +603,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </header>
 
-      {/* IMP-41-3: Offline indicator banner — persistent visual feedback when no connection */}
-      {!isOnline && (
-        <div className="bg-destructive/10 border-b border-destructive/20 px-4 py-2 text-center text-xs text-destructive font-medium flex items-center justify-center gap-2" role="alert">
-          <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-          Keine Internetverbindung — Änderungen werden lokal gespeichert
-        </div>
-      )}
-
       {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
       <main
         id="main-content"

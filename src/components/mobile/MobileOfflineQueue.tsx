@@ -4,7 +4,7 @@
  * and auto-synced on reconnect. Shows "3 Änderungen synchronisiert" toast.
  */
 import { memo, useState, useEffect, useCallback, useRef } from "react";
-import { WifiOff, Wifi, CloudUpload, Check, AlertCircle } from "lucide-react";
+import { Wifi, CloudUpload, Check, AlertCircle } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -174,22 +174,8 @@ export const MobileOfflineQueue = memo(function MobileOfflineQueue({ onSync }: M
     );
   }
 
-  // Offline
-  if (!isOnline) {
-    return (
-      <div className="fixed top-14 left-0 right-0 z-[250] bg-destructive/10 border-b border-destructive/20 px-4 py-2.5 animate-fade-in" role="alert" aria-live="assertive">
-        <div className="flex items-center justify-center gap-2 text-xs font-medium text-destructive">
-          <WifiOff className="h-3.5 w-3.5 animate-pulse" />
-          <span>Keine Internetverbindung</span>
-          {queueCount > 0 && (
-            <span className="bg-destructive/20 px-1.5 py-0.5 rounded text-[10px]">
-              {queueCount} {queueCount === 1 ? "Änderung" : "Änderungen"} in Warteschlange
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
+  /* Offline: Kein eigenes Banner — AppLayout zeigt oben einmal „Keine Internetverbindung“. */
+  if (!isOnline) return null;
 
   return null;
 });

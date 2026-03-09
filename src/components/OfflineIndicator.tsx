@@ -37,7 +37,9 @@ export function OfflineIndicator() {
     };
   }, []);
 
+  /* Nur "wieder online"-Hinweis; Offline-Hinweis kommt einmal vom AppLayout-Banner oben. */
   if (isOnline && !wasOffline) return null;
+  if (!isOnline) return null;
 
   if (isOnline && wasOffline) {
     return (
@@ -48,10 +50,5 @@ export function OfflineIndicator() {
     );
   }
 
-  return (
-    <div className="fixed top-14 left-0 right-0 z-[250] bg-destructive/10 border-b border-destructive/20 px-4 py-2.5 text-center text-xs font-medium flex items-center justify-center gap-2" role="alert" aria-live="assertive">
-      <WifiOff className="h-3.5 w-3.5 text-destructive animate-pulse" />
-      <span className="text-destructive">Keine Internetverbindung — Änderungen werden lokal gespeichert</span>
-    </div>
-  );
+  return null;
 }
