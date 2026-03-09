@@ -52,8 +52,8 @@ const SETTINGS_SECTIONS = [
   { id: "manus-ai", label: "Manus AI", icon: Bot },
   { id: "error-scanner", label: "Error Scanner", icon: Bug },
   { id: "team", label: "Team", icon: Users },
-  { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
   { id: "system-info", label: "System-Info", icon: Database },
+  { id: "gefahrenzone", label: "Gefahrenzone", icon: AlertTriangle },
 ] as const;
 
 const Settings = () => {
@@ -604,13 +604,10 @@ const Settings = () => {
           <TeamManagement />
         </div>
 
-        {/* FIX-13: Removed standalone "Von allen Geräten abmelden" section.
-            The logout functionality is already in the Gefahrenzone section below,
-            and DeviceSettings provides the "Alle anderen Geräte abmelden" feature.
-            Having it here was duplicate and the subtitle was misleading (it only
-            logged out the current session, not all devices). */}
+        <SystemInfoSettings sectionRef={refFor("system-info")} totpEnabled={totpEnabled} />
+        <DataBackup />
 
-        {/* Danger zone */}
+        {/* Gefahrenzone immer ganz unten */}
         <div id="gefahrenzone" ref={refFor("gefahrenzone")} role="alert" className="rounded-xl border-2 border-destructive/20 p-5 space-y-4 animate-fade-in [animation-delay:200ms] scroll-mt-20">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -669,9 +666,6 @@ const Settings = () => {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-
-        <SystemInfoSettings sectionRef={refFor("system-info")} totpEnabled={totpEnabled} />
-        <DataBackup />
 
         <div className="text-center py-4 space-y-1 animate-fade-in [animation-delay:250ms]">
           <p className="text-[10px] text-muted-foreground">ImmoControl v2.0</p>

@@ -3,6 +3,16 @@
   publish = "dist"
   environment = { NODE_VERSION = "20" }
 
+# Nach Redeploy: version.json nie cachen, index.html nicht lang cachen
+[[headers]]
+  for = "/version.json"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

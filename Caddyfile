@@ -1,0 +1,12 @@
+# Railway (and local preview): serve Vite SPA from dist/ with Cache-Control for redeploy-safe updates
+:{$PORT:8080} {
+  bind 0.0.0.0
+  root * dist
+
+  # Nach Redeploy: version.json und index.html nicht cachen (wie Vercel/Netlify)
+  header /version.json Cache-Control "no-store, no-cache, must-revalidate"
+  header /index.html Cache-Control "no-cache, must-revalidate"
+
+  try_files {path} /index.html
+  file_server
+}

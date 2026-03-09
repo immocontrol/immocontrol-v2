@@ -2,11 +2,13 @@
  * MOB5-20: Mobile App Update Banner
  * Live-Erkennung neuer Version (Railway/GitHub): version.json-Polling + Check bei Tab-Fokus/Reconnect.
  * Zeigt "Jetzt aktualisieren" / "Später" mit Ausblenden für 1 h.
+ * Beim Aktualisieren: SW-Caches leeren + Reload, damit nach Redeploy wirklich die neue Version geladen wird.
  */
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RefreshCw, X, ArrowUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { clearServiceWorkerCaches, unregisterServiceWorker } from "@/lib/serviceWorkerRegistration";
 
 interface MobileAppUpdateBannerProps {
   /** Check interval in ms (default: 2 min); zusätzlich sofort bei Tab sichtbar / Reconnect */
@@ -15,6 +17,8 @@ interface MobileAppUpdateBannerProps {
   position?: "top" | "bottom";
   /** Custom update handler (overrides default reload) */
   onUpdate?: () => void;
+  /** Auto-reload after N ms when update detected (default: 5000); 0 = nur Banner, kein Auto-Reload */
+  autoReloadAfterMs?: number;
   /** Additional class */
   className?: string;
 }
@@ -131,11 +135,17 @@ function useServiceWorkerUpdate(checkInterval: number) {
     };
   }, [checkInterval]);
 
-  const applyUpdate = useCallback(() => {
+  const applyUpdate = useCallback(async () => {
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
-    setTimeout(() => window.location.reload(), 500);
+    try {
+      await clearServiceWorkerCaches();
+      await unregisterServiceWorker();
+    } catch {
+      /* ignore */
+    }
+    setTimeout(() => window.location.reload(), 300);
   }, [registration]);
 
   return { updateAvailable, applyUpdate };
@@ -145,6 +155,7 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
   checkInterval = 2 * 60 * 1000,
   position = "bottom",
   onUpdate,
+  autoReloadAfterMs = 5000,
   className,
 }: MobileAppUpdateBannerProps) {
   const isMobile = useIsMobile();
@@ -153,12 +164,54 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
   const updateAvailable = versionUpdateAvailable || swUpdateAvailable;
   const [isDismissed, setIsDismissed] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Clean up dismiss timer on unmount
+  // Auto-reload nach Redeploy: Countdown starten wenn Update erkannt, dann Reload (Handy + Browser)
+  useEffect(() => {
+    if (!updateAvailable || isDismissed || isUpdating || autoReloadAfterMs <= 0) {
+      if (autoReloadTimerRef.current) {
+        clearTimeout(autoReloadTimerRef.current);
+        autoReloadTimerRef.current = null;
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      setCountdown(null);
+      return;
+    }
+    setCountdown(Math.ceil(autoReloadAfterMs / 1000));
+    const countdownStep = 1000;
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((c) => (c != null && c > 1 ? c - 1 : null));
+    }, countdownStep);
+    autoReloadTimerRef.current = setTimeout(() => {
+      autoReloadTimerRef.current = null;
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      if (document.visibilityState === "visible" && !onUpdate) {
+        applyUpdate();
+      } else {
+        setCountdown(null);
+      }
+    }, autoReloadAfterMs);
+    return () => {
+      if (autoReloadTimerRef.current) clearTimeout(autoReloadTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
+  }, [updateAvailable, isDismissed, isUpdating, autoReloadAfterMs, onUpdate, applyUpdate]);
+
+  // Clean up dismiss + auto-reload timers on unmount
   useEffect(() => {
     return () => {
       if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      if (autoReloadTimerRef.current) clearTimeout(autoReloadTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
   }, []);
 
@@ -167,7 +220,7 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
     if (onUpdate) {
       onUpdate();
     } else {
-      applyUpdate();
+      await applyUpdate();
     }
   }, [onUpdate, applyUpdate]);
 
@@ -213,7 +266,9 @@ export const MobileAppUpdateBanner = memo(function MobileAppUpdateBanner({
                 Neue Version verfügbar
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Aktualisiere die App für die neuesten Verbesserungen und Fehlerbehebungen.
+                {countdown != null && countdown > 0
+                  ? `Neue Version wird in ${countdown} Sek. geladen …`
+                  : "Aktualisiere die App für die neuesten Verbesserungen und Fehlerbehebungen."}
               </p>
 
               {/* Actions */}

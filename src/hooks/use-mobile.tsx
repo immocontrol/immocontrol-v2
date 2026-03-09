@@ -2,8 +2,14 @@ import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
+/** Synchronous initial value to avoid undefined→boolean transition that can cause layout/hook inconsistencies */
+function getInitialIsMobile(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
+  const [isMobile, setIsMobile] = React.useState<boolean>(getInitialIsMobile);
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -22,5 +28,5 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
-  return !!isMobile;
+  return isMobile;
 }

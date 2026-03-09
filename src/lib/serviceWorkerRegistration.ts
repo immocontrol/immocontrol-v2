@@ -45,12 +45,9 @@ export function registerServiceWorker(config?: ServiceWorkerConfig) {
   });
 }
 
-export function unregisterServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.unregister();
-    });
-  }
+export function unregisterServiceWorker(): Promise<void> {
+  if (!("serviceWorker" in navigator)) return Promise.resolve();
+  return navigator.serviceWorker.ready.then((registration) => registration.unregister());
 }
 
 /**
