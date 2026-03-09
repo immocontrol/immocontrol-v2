@@ -316,10 +316,11 @@ const Settings = () => {
       >
         <div
           ref={mobileTabBarRef}
-          className="w-full h-full max-w-full overflow-x-auto overflow-y-hidden scrollbar-hide overscroll-x-contain scroll-smooth snap-x snap-mandatory relative"
+          className="w-full h-full max-w-full overscroll-x-contain overscroll-y-none scrollbar-hide scroll-smooth snap-x snap-mandatory relative"
+          style={{ overflowX: "auto", overflowY: "hidden" }}
         >
           <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
-          <div className="flex gap-2 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full">
+          <div className="flex flex-nowrap gap-2 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full min-h-0">
             {filteredSettingsSections.map((section) => {
               const SectionIcon = section.icon;
               const isActive = activeSection === section.id;
