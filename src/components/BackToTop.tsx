@@ -28,21 +28,18 @@ const BackToTop = forwardRef<HTMLButtonElement>((_, ref) => {
         "bottom-28 left-4 md:bottom-8 md:left-auto md:right-6",
         "h-12 w-12 md:h-11 md:w-11 rounded-full",
         "flex items-center justify-center touch-target",
-        "bg-primary/95 text-primary-foreground backdrop-blur-md",
-        "shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15),0_0_0_1px_rgba(255,255,255,0.06)_inset]",
-        "dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
-        "border border-white/15 dark:border-white/10",
-        "md:bg-background/90 md:dark:bg-background/85 md:text-foreground md:border-border",
-        "md:hover:bg-primary/10 md:hover:text-primary md:hover:border-primary/25 md:hover:shadow-md",
-        "transition-[transform,opacity,box-shadow] duration-300 ease-out",
-        "hover:scale-105 active:scale-[0.97]",
+        "bg-background/95 dark:bg-background/90 text-foreground backdrop-blur-xl",
+        "border border-border/80 shadow-lg shadow-black/5 dark:shadow-black/20",
+        "hover:bg-primary/10 hover:text-primary hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5",
+        "active:scale-[0.96]",
+        "transition-all duration-300 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         visible
           ? "opacity-100 translate-y-0 pointer-events-auto"
           : "opacity-0 translate-y-3 pointer-events-none"
       )}
     >
-      <ArrowUp className="h-5 w-5 md:h-4 md:w-4 shrink-0" strokeWidth={2.25} />
+      <ArrowUp className="h-5 w-5 md:h-4 md:w-4 shrink-0" strokeWidth={2.5} />
     </button>
   );
 });
