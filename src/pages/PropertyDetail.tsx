@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Calendar, Home, Landmark, TrendingUp, Wallet, Wrench
 import EditPropertyDialog from "@/components/EditPropertyDialog";
 import StatCard from "@/components/StatCard";
 import { useProperties } from "@/context/PropertyContext";
+import { PropertyDetailSkeleton } from "@/components/mobile/MobileSkeletonScreen";
 import PropertyDocuments from "@/components/PropertyDocuments";
 import PropertyNotes from "@/components/PropertyNotes";
 import TenantManagement from "@/components/TenantManagement";
@@ -70,7 +71,7 @@ const PropertyDetail = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { share } = useShare();
-  const { getProperty, deleteProperty, duplicateProperty } = useProperties();
+  const { getProperty, deleteProperty, duplicateProperty, loading } = useProperties();
   const { add: addRecentProperty } = useRecentProperties();
   const property = getProperty(id || "");
   const [tenantVersion, setTenantVersion] = useState(0);
@@ -175,6 +176,7 @@ const PropertyDetail = () => {
     return diffYears > 0 ? `${diffYears}J ${diffMonths}M` : `${diffMonths} Monate`;
   }, [property?.purchaseDate]);
 
+  if (loading) return <PropertyDetailSkeleton />;
   if (!property) {
     return (
       <div className="text-center py-20 space-y-3">

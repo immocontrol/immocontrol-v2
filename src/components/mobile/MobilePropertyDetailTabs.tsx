@@ -60,9 +60,15 @@ export const MobilePropertyDetailTabs = memo(function MobilePropertyDetailTabs({
 
   return (
     <div className={cn("flex flex-col min-h-0", className)}>
-      {/* Tab content area */}
-      <div className="flex-1 min-h-0 overflow-y-auto pb-16">
-        {activeContent}
+      {/* Tab content area — Skeleton-Fallback wenn Tab-Inhalt fehlt oder lädt */}
+      <div className="flex-1 min-h-0 overflow-y-auto pb-16" role="tabpanel" id={`tabpanel-${activeTab}`}>
+        {activeContent ?? (
+          <div className="p-4 space-y-3 animate-pulse" aria-busy="true">
+            <div className="h-4 bg-muted rounded w-3/4" />
+            <div className="h-20 bg-muted rounded" />
+            <div className="h-20 bg-muted rounded" />
+          </div>
+        )}
       </div>
 
       {/* Bottom tab bar */}

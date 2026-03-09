@@ -118,47 +118,18 @@ const VertraegeKontaktePage = lazy(vertraegeKontakteImport);
 const AufgabenDokumentePage = lazy(aufgabenDokumenteImport);
 const DealsBewertungPage = lazy(dealsBewertungImport);
 
-/* BUG-6: Fix double-loading when switching tabs — preload all lazy routes eagerly after initial render
-   so that subsequent tab switches render instantly from cache without triggering a second Suspense fallback */
-const preloadRoutes = () => {
+/* BUG-6: Preload nur häufig genutzte Routen — reduziert Bandbreite auf Mobile, rest lädt on-demand */
+const preloadHighTrafficRoutes = () => {
   dashboardImport();
   propertyDetailImport();
-  analysisImport();
-  settingsImport();
-  contactsImport();
+  objekteListImport();
   loansImport();
-  cashForecastImport();
-  todosImport();
-  notFoundImport();
-  nebenkostenImport();
-  berichteImport();
-  mietuebersichtImport();
+  contactsImport();
+  settingsImport();
   vertraegeImport();
+  mietuebersichtImport();
   crmImport();
   dealsImport();
-  dokumenteImport();
-  wartungsplanerImport();
-  hockeyStickImport();
-  newstickerImport();
-  bewertungImport();
-  objekteListImport();
-  besichtigungenImport();
-  finanzierungsCockpitImport();
-  steuerCockpitImport();
-  refinanzierungImport();
-  stressTestImport();
-  diversifikationImport();
-  mietspiegelImport();
-  kpiZeitreiseImport();
-  benachrichtigungenImport();
-  syndicationImport();
-  dealBenchmarkImport();
-  mietenBetriebImport();
-  analyseRisikoImport();
-  vertraegeKontakteImport();
-  aufgabenDokumenteImport();
-  dealsBewertungImport();
-  onboardingImport();
 };
 
 const PageLoader = () => (
@@ -271,9 +242,9 @@ const RoleRouter = () => {
     checkOnboarding();
   }, [user]);
 
-  /* BUG-6: Preload routes on demand — delay 3s to prioritise initial paint, then preload likely next routes */
+  /* BUG-6: Preload high-traffic routes — delay 3s to prioritise initial paint */
   useEffect(() => {
-    const timer = setTimeout(preloadRoutes, 3000);
+    const timer = setTimeout(preloadHighTrafficRoutes, 3000);
     return () => clearTimeout(timer);
   }, []);
 

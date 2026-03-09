@@ -14,6 +14,7 @@ type ErrorContext =
   | "file"
   | "export"
   | "import"
+  | "ai"
   | "general";
 
 interface HandleErrorOptions {
@@ -38,6 +39,7 @@ const CONTEXT_MESSAGES: Record<ErrorContext, string> = {
   file: "Datei konnte nicht verarbeitet werden. Format oder Größe prüfen.",
   export: "Export fehlgeschlagen. Bitte erneut versuchen.",
   import: "Import fehlgeschlagen. Bitte Datei prüfen und erneut versuchen.",
+  ai: "KI-Funktion vorübergehend nicht verfügbar. Bitte später erneut versuchen.",
   general: "Ein Fehler ist aufgetreten. Bitte erneut versuchen.",
 };
 
