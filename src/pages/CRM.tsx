@@ -857,6 +857,7 @@ const CRM = () => {
                 setAddDialogOpen(true);
               }}
               onAddAsDeal={(b) => navigate(ROUTES.DEALS, { state: { fromScout: { name: b.name, address: b.address ?? undefined, phone: b.phone ?? undefined, email: b.email ?? undefined } } })}
+              onAddAsDealBatch={(batch) => navigate(ROUTES.DEALS, { state: { fromScoutBatch: batch } })}
               onAddAsViewing={(b) => navigate(ROUTES.BESICHTIGUNGEN, { state: { fromScout: { title: b.name, address: b.address ?? "" } } })}
             />
           </WidgetErrorBoundary>

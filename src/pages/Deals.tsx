@@ -15,7 +15,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles, Store, CalendarCheck } from "lucide-react";
+import { Plus, Building2, FileText, MapPin, Trash2, Clock, AlertTriangle, Search, X, Download, MessageSquare, Loader2, Camera, Share2, Sparkles, Store, CalendarCheck, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
@@ -70,6 +70,9 @@ const Deals = () => {
   const [sortAsc, setSortAsc] = useState(false);
   /* UPD-19: Delete confirmation dialog state */
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  /* SYNERGY: WGH-Scout „Erste 10 als Deals“ – Batch aus Scout-Treffern nacheinander anlegen */
+  const [scoutBatch, setScoutBatch] = useState<Array<{ name: string; address?: string | null; phone?: string | null; email?: string | null }>> | null>(null);
+  const [scoutBatchIndex, setScoutBatchIndex] = useState(0);
   /* Exposé-Analyse: Ladezustand + Deal-Score nach PDF-Import */
   const [exposeAnalyzing, setExposeAnalyzing] = useState(false);
   const [dealScore, setDealScore] = useState<number | null>(null);
@@ -169,6 +172,8 @@ const Deals = () => {
       toast.success(editDeal ? "Deal aktualisiert" : "Deal angelegt");
       setAddOpen(false);
       setEditDeal(null);
+      setScoutBatch(null);
+      setScoutBatchIndex(0);
       clearDealDraft();
     },
     onError: (e: unknown) => {
@@ -543,8 +548,29 @@ const Deals = () => {
       fromLead?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string };
       fromContact?: { name: string; company?: string; phone?: string; email?: string; address?: string; notes?: string };
       fromScout?: { name: string; address?: string; phone?: string; email?: string };
+      fromScoutBatch?: Array<{ name: string; address?: string | null; phone?: string | null; email?: string | null }>;
       fromProperty?: { title: string; address?: string };
     };
+    const fromScoutBatch = state?.fromScoutBatch;
+    if (Array.isArray(fromScoutBatch) && fromScoutBatch.length > 0) {
+      setScoutBatch(fromScoutBatch);
+      setScoutBatchIndex(0);
+      const first = fromScoutBatch[0];
+      setForm(p => ({
+        ...p,
+        title: first.name ?? "",
+        address: first.address ?? "",
+        contact_name: first.name ?? "",
+        contact_phone: first.phone ?? "",
+        contact_email: first.email ?? "",
+        source: "WGH-Scout",
+      }));
+      setEditDeal(null);
+      setAddOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+      toast.info(`Scout-Batch: 1 von ${fromScoutBatch.length} – Deal anlegen, dann „Nächsten übernehmen“ für die weiteren.`);
+      return;
+    }
     const fromLead = state?.fromLead;
     const fromContact = state?.fromContact;
     const fromScout = state?.fromScout;
@@ -987,7 +1013,7 @@ const Deals = () => {
 
       {/* UX-1: ResponsiveDialog — Bottom Sheet on mobile, Dialog on desktop */}
       {/* Fix: Don't reset form on close — preserve draft for recovery. Only clearDealDraft() on successful save. */}
-      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); setDealScore(null); setScoreReason(null); } }} className="max-w-lg">
+      <ResponsiveDialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) { setEditDeal(null); setDealScore(null); setScoreReason(null); setScoutBatch(null); setScoutBatchIndex(0); } }} className="max-w-lg">
           <ResponsiveDialogHeader>
             <div className="flex items-center justify-between gap-2">
               <ResponsiveDialogTitle>{editDeal ? "Deal bearbeiten" : "Neuen Deal anlegen"}</ResponsiveDialogTitle>
@@ -1008,6 +1034,38 @@ const Deals = () => {
             </div>
           </ResponsiveDialogHeader>
           <div className="space-y-3">
+            {scoutBatch && scoutBatch.length > 0 && !editDeal && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 p-2 text-sm">
+                <span className="text-muted-foreground">
+                  Scout-Batch: {scoutBatchIndex + 1} von {scoutBatch.length}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  disabled={scoutBatchIndex >= scoutBatch.length - 1}
+                  onClick={() => {
+                    const next = scoutBatchIndex + 1;
+                    if (next >= scoutBatch.length) return;
+                    setScoutBatchIndex(next);
+                    const item = scoutBatch[next];
+                    setForm(p => ({
+                      ...p,
+                      title: item.name ?? "",
+                      address: item.address ?? "",
+                      contact_name: item.name ?? "",
+                      contact_phone: item.phone ?? "",
+                      contact_email: item.email ?? "",
+                      source: "WGH-Scout",
+                    }));
+                    toast.info(`Treffer ${next + 1} von ${scoutBatch.length} übernommen`);
+                  }}
+                >
+                  Nächsten übernehmen <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             {isDeepSeekConfigured() && !editDeal && (
               <div className="flex items-center gap-2">
                 <input

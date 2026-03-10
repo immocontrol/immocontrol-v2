@@ -135,10 +135,14 @@ export async function searchNominatimAutocomplete(query: string, signal?: AbortS
   }
 }
 
-/* ── OSM Overpass API: building size estimation ── */
+/* ── OSM Overpass API: building size estimation & WGH-Scout ── */
 
-const OVERPASS_TIMEOUT_RADIUS = 15;
-const OVERPASS_TIMEOUT_BBOX = 25;
+const OVERPASS_TIMEOUT_RADIUS = 18;
+const OVERPASS_TIMEOUT_BBOX = 28;
+
+/** Erweiterte Amenity-Typen für WGH-Scout (Wohn- und Geschäftshäuser): Gewerbe, Dienstleister, Gastronomie. */
+const OVERPASS_AMENITY_WGH =
+  "restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser|marketplace|fast_food|ice_cream|pub|biergarten|cinema|theatre|library|post_office|townhall|community_centre|arts_centre|clinic|hospital|lawyer|notary|insurance|estate_agent|car_rental|travel_agency|driving_school|language_school|music_school";
 
 function buildingCentroidFromGeom(geom: { lat: number; lon: number }[]): { lat: number; lon: number } | null {
   if (!geom || geom.length < 3) return null;
@@ -515,18 +519,21 @@ export interface CommercialPOIWithCoord extends NearbyBusiness {
   lon: number;
 }
 
-/** Fetch commercial POIs in bbox (for whole-place search). Optional signal to cancel. */
+/** Fetch commercial POIs in bbox (for whole-place search). Erweiterte Erkennung für WGH (Wohn- und Geschäftshäuser). */
 export async function fetchCommercialPOIsInBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
   const { south, north, west, east } = bbox;
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
 (
   node["shop"](${south},${west},${north},${east});
   node["office"](${south},${west},${north},${east});
-  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](${south},${west},${north},${east});
+  node["amenity"~"${OVERPASS_AMENITY_WGH}"](${south},${west},${north},${east});
   node["craft"](${south},${west},${north},${east});
   way["shop"](${south},${west},${north},${east});
   way["office"](${south},${west},${north},${east});
-  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](${south},${west},${north},${east});
+  way["amenity"~"${OVERPASS_AMENITY_WGH}"](${south},${west},${north},${east});
+  way["craft"](${south},${west},${north},${east});
+  relation["shop"](${south},${west},${north},${east});
+  relation["office"](${south},${west},${north},${east});
 );
 out body center;`;
   try {
@@ -538,9 +545,11 @@ out body center;`;
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const pois = data.elements?.filter((e: { tags?: Record<string, string> }) => e.tags?.name) || [];
     const centerLat = (bbox.south + bbox.north) / 2;
     const centerLon = (bbox.west + bbox.east) / 2;
+    const pois = (data.elements ?? []).filter(
+      (e: { tags?: Record<string, string> }) => e.tags && (e.tags.name || e.tags.shop || e.tags.office || e.tags.amenity || e.tags.craft)
+    );
     return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number; center?: { lat: number; lon: number } }) => {
       const tags = poi.tags || {};
       const lat = poi.lat ?? poi.center?.lat ?? centerLat;
@@ -560,6 +569,210 @@ out body center;`;
         lon,
       };
     });
+  } catch {
+    return [];
+  }
+}
+
+/** Mindest-Grundfläche (m²) für reine WGH-Gebäude-POIs (ohne Gewerbe-Node). */
+const WGH_BUILDING_MIN_FOOTPRINT = 80;
+/** Mindest-Geschosse für Mehrfamilien-/WGH-Gebäude mit Adresse. */
+const WGH_LEVELS_MIN = 3;
+
+/** Mehrstöckige Gebäude (building=yes + addr:street, levels ≥ 3) als WGH-POIs – typische Wohn- und Geschäftshäuser. */
+export async function fetchWGHBuildingsLevelsBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
+  const { south, north, west, east } = bbox;
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
+way["building"]["addr:street"](${south},${west},${north},${east});
+out body geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const elements = (data.elements ?? []).filter(
+      (e: OverpassBuilding) => e.type === "way" && e.tags?.building && e.tags["addr:street"]
+    ) as OverpassBuilding[];
+    const centerLat = (bbox.south + bbox.north) / 2;
+    const centerLon = (bbox.west + bbox.east) / 2;
+    const result: CommercialPOIWithCoord[] = [];
+    for (const el of elements) {
+      const footprintArea = footprintFromElement(el);
+      if (footprintArea < WGH_BUILDING_MIN_FOOTPRINT) continue;
+      const levels = effectiveLevelsFromTags(el.tags, 1);
+      if (levels < WGH_LEVELS_MIN) continue;
+      const geom = el.geometry;
+      const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+      const cent = centroidFromElement(el, coords);
+      if (!cent) continue;
+      const address = el.tags!["addr:street"]
+        ? `${el.tags!["addr:street"]} ${el.tags!["addr:housenumber"] || ""}`.trim()
+        : (el.tags!["addr:full"] || null);
+      result.push({
+        name: el.tags!.name || address || "Gebäude (WGH)",
+        type: "Gebäude (WGH)",
+        phone: null,
+        website: null,
+        email: null,
+        distance: Math.round(distanceMeters({ lat: cent.lat, lon: cent.lon }, { lat: centerLat, lon: centerLon })),
+        address,
+        opening_hours: null,
+        lat: cent.lat,
+        lon: cent.lon,
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/** Mehrstöckige Gebäude mit Adresse im Umkreis. */
+export async function fetchWGHBuildingsLevelsRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
+way["building"]["addr:street"](around:${radiusM},${lat},${lng});
+out body geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const elements = (data.elements ?? []).filter(
+      (e: OverpassBuilding) => e.type === "way" && e.tags?.building && e.tags["addr:street"]
+    ) as OverpassBuilding[];
+    const result: CommercialPOIWithCoord[] = [];
+    for (const el of elements) {
+      const footprintArea = footprintFromElement(el);
+      if (footprintArea < WGH_BUILDING_MIN_FOOTPRINT) continue;
+      const levels = effectiveLevelsFromTags(el.tags, 1);
+      if (levels < WGH_LEVELS_MIN) continue;
+      const geom = el.geometry;
+      const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+      const cent = centroidFromElement(el, coords);
+      if (!cent) continue;
+      const address = el.tags!["addr:street"]
+        ? `${el.tags!["addr:street"]} ${el.tags!["addr:housenumber"] || ""}`.trim()
+        : (el.tags!["addr:full"] || null);
+      result.push({
+        name: el.tags!.name || address || "Gebäude (WGH)",
+        type: "Gebäude (WGH)",
+        phone: null,
+        website: null,
+        email: null,
+        distance: Math.round(distanceMeters({ lat: cent.lat, lon: cent.lon }, { lat, lon: lng })),
+        address,
+        opening_hours: null,
+        lat: cent.lat,
+        lon: cent.lon,
+      });
+    }
+    return result.sort((a, b) => a.distance - b.distance);
+  } catch {
+    return [];
+  }
+}
+
+/** Gebäude mit Nutzung commercial/retail/apartments und Adresse/Name als POIs (WGH-Scout). Liefert bereits geschätzte Fläche. */
+export async function fetchWGHBuildingPOIsBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
+  const { south, north, west, east } = bbox;
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_BBOX}];
+way["building"~"commercial|retail|apartments"](${south},${west},${north},${east});
+out body geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const elements = (data.elements ?? []).filter(
+      (e: OverpassBuilding) => e.type === "way" && e.tags?.building && (e.tags["addr:street"] || e.tags?.name)
+    ) as OverpassBuilding[];
+    const centerLat = (bbox.south + bbox.north) / 2;
+    const centerLon = (bbox.west + bbox.east) / 2;
+    const result: CommercialPOIWithCoord[] = [];
+    for (const el of elements) {
+      const footprintArea = footprintFromElement(el);
+      if (footprintArea < WGH_BUILDING_MIN_FOOTPRINT) continue;
+      const geom = el.geometry;
+      const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+      const cent = centroidFromElement(el, coords);
+      if (!cent) continue;
+      const levels = effectiveLevelsFromTags(el.tags, 2);
+      const address = el.tags!["addr:street"]
+        ? `${el.tags!["addr:street"]} ${el.tags!["addr:housenumber"] || ""}`.trim()
+        : (el.tags!["addr:full"] || null);
+      result.push({
+        name: el.tags!.name || address || "Gebäude (WGH)",
+        type: "Gebäude (WGH)",
+        phone: null,
+        website: null,
+        email: null,
+        distance: Math.round(distanceMeters({ lat: cent.lat, lon: cent.lon }, { lat: centerLat, lon: centerLon })),
+        address,
+        opening_hours: null,
+        lat: cent.lat,
+        lon: cent.lon,
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/** WGH-Gebäude im Umkreis als POIs. */
+export async function fetchWGHBuildingPOIsRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
+  const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
+way["building"~"commercial|retail|apartments"](around:${radiusM},${lat},${lng});
+out body geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      ...(signal && { signal }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const elements = (data.elements ?? []).filter(
+      (e: OverpassBuilding) => e.type === "way" && e.tags?.building && (e.tags["addr:street"] || e.tags?.name)
+    ) as OverpassBuilding[];
+    const result: CommercialPOIWithCoord[] = [];
+    for (const el of elements) {
+      const footprintArea = footprintFromElement(el);
+      if (footprintArea < WGH_BUILDING_MIN_FOOTPRINT) continue;
+      const geom = el.geometry;
+      const coords = geom && geom.length >= 3 ? geom.map((g) => ({ lat: g.lat, lon: g.lon })) : [];
+      const cent = centroidFromElement(el, coords);
+      if (!cent) continue;
+      const address = el.tags!["addr:street"]
+        ? `${el.tags!["addr:street"]} ${el.tags!["addr:housenumber"] || ""}`.trim()
+        : (el.tags!["addr:full"] || null);
+      result.push({
+        name: el.tags!.name || address || "Gebäude (WGH)",
+        type: "Gebäude (WGH)",
+        phone: null,
+        website: null,
+        email: null,
+        distance: Math.round(distanceMeters({ lat: cent.lat, lon: cent.lon }, { lat, lon: lng })),
+        address,
+        opening_hours: null,
+        lat: cent.lat,
+        lon: cent.lon,
+      });
+    }
+    return result.sort((a, b) => a.distance - b.distance);
   } catch {
     return [];
   }
@@ -589,8 +802,14 @@ export function attachBuildingSizes(
   });
 }
 
-/** Deduplicate POIs by location (same building): round to grid ~50m, keep one with largest estimatedGrossArea per cell. */
-export function dedupeScoutResults<T extends { lat: number; lon: number; estimatedGrossArea?: number | null }>(items: T[]): T[] {
+/** Adresse normalisieren für Vergleich (Trim, Kleinbuchstaben, mehrfache Leerzeichen → eines). */
+function normalizeAddress(addr: string | null | undefined): string {
+  if (addr == null || typeof addr !== "string") return "";
+  return addr.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** Deduplicate POIs: zuerst nach Raster (~50 m), dann bei gleicher Adresse und Nähe (< 35 m) den mit größerer Fläche behalten. */
+export function dedupeScoutResults<T extends { lat: number; lon: number; address?: string | null; estimatedGrossArea?: number | null }>(items: T[]): T[] {
   const grid = new Map<string, T>();
   const round = (v: number, step: number) => Math.round(v / step) * step;
   for (const item of items) {
@@ -600,20 +819,51 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; estimat
     const existingArea = existing?.estimatedGrossArea ?? 0;
     if (!existing || area > existingArea) grid.set(key, item);
   }
-  return Array.from(grid.values());
+  let list = Array.from(grid.values());
+  const addrNormToItem = new Map<string, T>();
+  const result: T[] = [];
+  for (const item of list) {
+    const addrNorm = normalizeAddress(item.address);
+    if (addrNorm.length < 5) {
+      result.push(item);
+      continue;
+    }
+    const existing = addrNormToItem.get(addrNorm);
+    if (!existing) {
+      addrNormToItem.set(addrNorm, item);
+      result.push(item);
+      continue;
+    }
+    const dist = distanceMeters({ lat: item.lat, lon: item.lon }, { lat: existing.lat, lon: existing.lon });
+    if (dist >= 35) {
+      result.push(item);
+      continue;
+    }
+    const area = item.estimatedGrossArea ?? 0;
+    const existingArea = existing.estimatedGrossArea ?? 0;
+    if (area > existingArea) {
+      addrNormToItem.set(addrNorm, item);
+      const idx = result.indexOf(existing);
+      if (idx !== -1) result[idx] = item;
+    }
+  }
+  return result.length ? result : list;
 }
 
-/** Fetch commercial POIs in configurable radius (WGH-Scout). Returns POIs with coords for building-size matching. Optional signal to cancel. */
+/** Fetch commercial POIs in radius (WGH-Scout). Erweiterte Erkennung für Wohn- und Geschäftshäuser. */
 export async function fetchCommercialPOIsInRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<CommercialPOIWithCoord[]> {
   const query = `[out:json][timeout:${OVERPASS_TIMEOUT_RADIUS}];
 (
   node["shop"](around:${radiusM},${lat},${lng});
   node["office"](around:${radiusM},${lat},${lng});
-  node["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+  node["amenity"~"${OVERPASS_AMENITY_WGH}"](around:${radiusM},${lat},${lng});
   node["craft"](around:${radiusM},${lat},${lng});
   way["shop"](around:${radiusM},${lat},${lng});
   way["office"](around:${radiusM},${lat},${lng});
-  way["amenity"~"restaurant|cafe|bar|pharmacy|bank|doctors|dentist|veterinary|hairdresser"](around:${radiusM},${lat},${lng});
+  way["amenity"~"${OVERPASS_AMENITY_WGH}"](around:${radiusM},${lat},${lng});
+  way["craft"](around:${radiusM},${lat},${lng});
+  relation["shop"](around:${radiusM},${lat},${lng});
+  relation["office"](around:${radiusM},${lat},${lng});
 );
 out body center;`;
   try {
@@ -625,7 +875,9 @@ out body center;`;
     });
     if (!res.ok) return [];
     const data = await res.json();
-    const pois = data.elements?.filter((e: { tags?: Record<string, string> }) => e.tags?.name) || [];
+    const pois = (data.elements ?? []).filter(
+      (e: { tags?: Record<string, string> }) => e.tags && (e.tags.name || e.tags.shop || e.tags.office || e.tags.amenity || e.tags.craft)
+    );
     return pois.map((poi: { tags?: Record<string, string>; lat?: number; lon?: number; center?: { lat: number; lon: number } }) => {
       const tags = poi.tags || {};
       const poiLat = poi.lat ?? poi.center?.lat ?? lat;

@@ -95,15 +95,23 @@ const Settings = () => {
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
-  /* Sidebar scroll spy: aktive Sektion aus vertikalem Scroll ableiten (größerer sichtbarer Bereich = reaktiver) */
+  /* Sidebar scroll spy: aktive Sektion aus vertikalem Scroll. Debounce verhindert Wackeln zwischen Items. */
+  const activeSectionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.2) {
-          setActiveSection(entry.target.id);
-        }
-      }
+      const visible = entries.filter((e) => e.isIntersecting && e.intersectionRatio > 0.2);
+      const candidate = visible.reduce<IntersectionObserverEntry | null>(
+        (best, e) => (best ? (e.intersectionRatio > best.intersectionRatio ? e : best) : e),
+        null,
+      );
+      if (!candidate) return;
+      const newId = candidate.target.id;
+      if (activeSectionDebounceRef.current) clearTimeout(activeSectionDebounceRef.current);
+      activeSectionDebounceRef.current = setTimeout(() => {
+        setActiveSection(newId);
+        activeSectionDebounceRef.current = null;
+      }, 80);
     };
     SETTINGS_SECTIONS.forEach(section => {
       const el = sectionRefs.current[section.id];
@@ -116,25 +124,45 @@ const Settings = () => {
         observers.push(observer);
       }
     });
-    return () => observers.forEach(o => o.disconnect());
+    return () => {
+      observers.forEach((o) => o.disconnect());
+      if (activeSectionDebounceRef.current) clearTimeout(activeSectionDebounceRef.current);
+    };
   }, [profileLoading]);
 
-  /* Mobile: Tab-Leiste horizontal mitscrollen – aktiver Menüpunkt zentriert, parallel zum vertikalen Scrollen */
+  /* Progress 0..1 für Progress-Bar (welche Sektion von wie vielen) */
+  const settingsProgress = useMemo(() => {
+    const list = filteredSettingsSections;
+    const idx = list.findIndex((s) => s.id === activeSection);
+    if (idx < 0 || list.length <= 1) return list.length ? 1 : 0;
+    return idx / (list.length - 1);
+  }, [activeSection, filteredSettingsSections]);
+
+  /* Mobile: Tab-Leiste horizontal mit weicher Easing-Animation zentrieren (smoother als native smooth) */
   useEffect(() => {
     const container = mobileTabBarRef.current;
     if (!container) return;
     const activeBtn = container.querySelector<HTMLElement>(`[data-settings-tab="${activeSection}"]`);
     if (!activeBtn) return;
-    const centerTab = () => {
-      const cw = container.clientWidth;
-      const btnLeft = activeBtn.offsetLeft;
-      const btnWidth = activeBtn.offsetWidth;
-      const targetScroll = btnLeft - cw / 2 + btnWidth / 2;
-      const maxScroll = Math.max(0, container.scrollWidth - cw);
-      container.scrollTo({ left: Math.max(0, Math.min(targetScroll, maxScroll)), behavior: "smooth" });
+    const cw = container.clientWidth;
+    const btnLeft = activeBtn.offsetLeft;
+    const btnWidth = activeBtn.offsetWidth;
+    const targetScroll = Math.max(0, Math.min(btnLeft - cw / 2 + btnWidth / 2, Math.max(0, container.scrollWidth - cw)));
+    const startScroll = container.scrollLeft;
+    const distance = targetScroll - startScroll;
+    if (Math.abs(distance) < 2) return;
+    const duration = 380;
+    const start = performance.now();
+    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+    let rafId: number;
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(elapsed / duration, 1);
+      container.scrollLeft = startScroll + distance * easeOutCubic(t);
+      if (t < 1) rafId = requestAnimationFrame(tick);
     };
-    const raf = requestAnimationFrame(centerTab);
-    return () => cancelAnimationFrame(raf);
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [activeSection, filteredSettingsSections]);
 
   /* Check existing TOTP factors for SystemInfo */
@@ -314,9 +342,16 @@ const Settings = () => {
         className="lg:hidden fixed left-0 right-0 z-[140] w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-[0_1px_0_0_hsl(var(--border))]"
         style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))", height: mobileTabBarHeight }}
       >
+        {/* Progress als Schatten/Hintergrund über die volle Höhe der Tab-Leiste */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+          <div
+            className="absolute inset-y-0 left-0 h-full bg-primary/[0.06] transition-[width] duration-500 ease-out"
+            style={{ width: `${settingsProgress * 100}%` }}
+          />
+        </div>
         <div
           ref={mobileTabBarRef}
-          className="w-full h-full max-w-full overscroll-x-contain overscroll-y-none scrollbar-hide scroll-smooth snap-x snap-mandatory relative"
+          className="relative z-[1] w-full h-full max-w-full overscroll-x-contain overscroll-y-none scrollbar-hide scroll-smooth"
           style={{ overflowX: "auto", overflowY: "hidden" }}
         >
           <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
@@ -329,7 +364,7 @@ const Settings = () => {
                   key={section.id}
                   data-settings-tab={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className={`flex shrink-0 snap-center snap-always items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-300 ease-out ${
+                  className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-300 ease-out ${
                     isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
                   }`}
                 >

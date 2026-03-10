@@ -9,6 +9,7 @@
 import type { ScoutProvider, ScoutPOI, PlaceBbox, GeocodeResult, BuildingWithSize } from "./types";
 import { osmScoutProvider } from "./osmProvider";
 import { brandenburgScoutProvider } from "./brandenburgProvider";
+import { googleScoutProvider, isGoogleScoutEnabled } from "./googleProvider";
 import {
   aggregateGeocode as aggGeocode,
   aggregateGeocodeToBbox as aggGeocodeToBbox,
@@ -24,17 +25,18 @@ export { attachBuildingSizesToScoutPOIs, dedupeScoutPOIs } from "./aggregator";
 const PROVIDER_REGISTRY: Map<string, ScoutProvider> = new Map([
   [osmScoutProvider.id, osmScoutProvider],
   [brandenburgScoutProvider.id, brandenburgScoutProvider],
-  // Weitere Provider hier registrieren, sobald implementiert:
-  // [googleScoutProvider.id, googleScoutProvider],
+  [googleScoutProvider.id, googleScoutProvider],
 ]);
 
-/** Kommagetrennte Liste aus Env (z. B. "openstreetmap,google"). Default: openstreetmap. */
+/** Kommagetrennte Liste aus Env (z. B. "openstreetmap,google"). Default: openstreetmap + brandenburg; Google wenn VITE_GOOGLE_PLACES_API_KEY gesetzt. */
 function getActiveProviderIds(): string[] {
   const raw = typeof import.meta !== "undefined" && import.meta.env?.VITE_SCOUT_PROVIDERS;
   if (typeof raw === "string" && raw.trim()) {
     return raw.split(",").map((id) => id.trim().toLowerCase()).filter(Boolean);
   }
-  return ["openstreetmap", "brandenburg"];
+  const ids: string[] = ["openstreetmap", "brandenburg"];
+  if (isGoogleScoutEnabled()) ids.push("google");
+  return ids;
 }
 
 /** Alle registrierten Provider. */

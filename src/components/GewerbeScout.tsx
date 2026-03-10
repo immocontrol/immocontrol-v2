@@ -4,7 +4,7 @@
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users, TriangleAlert, ChevronDown, Lightbulb } from "lucide-react";
+import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users, TriangleAlert, ChevronDown, Lightbulb, Star, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,8 @@ import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ROUTES, crmWithTab } from "@/lib/routes";
+import * as XLSX from "xlsx";
+import { ScoutMap } from "@/components/ScoutMap";
 
 type SearchMode = "ort" | "umkreis";
 
@@ -49,11 +51,12 @@ const RADIUS_OPTIONS = [
 /** POI-Typ-Filter: OSM-Werte zu Kategorien. */
 const POI_TYPE_CATEGORIES: { value: string; label: string; match: (t: string) => boolean }[] = [
   { value: "all", label: "Alle Typen", match: () => true },
+  { value: "wgh", label: "Gebäude (WGH)", match: (t) => /Gebäude \(WGH\)|^WGH$/i.test(t || "") },
   { value: "gastronomie", label: "Gastronomie", match: (t) => /restaurant|cafe|bar/i.test(t) },
   { value: "laden", label: "Laden", match: (t) => /shop|supermarket|bakery|kiosk|convenience|retail|mall|clothes/i.test(t || "") },
   { value: "buero", label: "Büro", match: (t) => /office/i.test(t) },
   { value: "handwerk", label: "Handwerk", match: (t) => /craft/i.test(t) },
-  { value: "sonstige", label: "Sonstige", match: (t) => !/restaurant|cafe|bar|shop|office|craft/i.test(t) },
+  { value: "sonstige", label: "Sonstige", match: (t) => !/Gebäude \(WGH\)|^WGH$|restaurant|cafe|bar|shop|office|craft/i.test(t || "") },
 ];
 
 const MIN_SIZE_OPTIONS = [
@@ -131,6 +134,10 @@ type LoadingStep = "ort" | "gewerbe" | "gebaeude" | null;
 export type ScoutResult = ScoutPOI;
 
 const SCOUT_STORAGE_KEY = "gewerbe_scout_last";
+const SCOUT_HISTORY_KEY = "gewerbe_scout_history";
+const SCOUT_FAVORITES_KEY = "gewerbe_scout_favorites";
+const SCOUT_HISTORY_MAX = 10;
+const SCOUT_CACHE_TTL_MS = 10 * 60 * 1000; // 10 Min
 
 /** Liest persistierte Scout-Filter/Suche aus sessionStorage (nur für Initial-State). */
 function getScoutStorage(): Record<string, unknown> | null {
@@ -140,6 +147,50 @@ function getScoutStorage(): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+/** Suchverlauf: letzte N Suchorte (ohne Duplikate, neueste zuerst). */
+function getSearchHistory(): string[] {
+  try {
+    const s = sessionStorage.getItem(SCOUT_HISTORY_KEY);
+    if (!s) return [];
+    const arr = JSON.parse(s) as unknown[];
+    return Array.isArray(arr) ? arr.slice(0, SCOUT_HISTORY_MAX).filter((x): x is string => typeof x === "string" && x.trim().length >= 2) : [];
+  } catch {
+    return [];
+  }
+}
+
+function pushSearchHistory(query: string) {
+  const q = query.trim();
+  if (q.length < 2) return;
+  const prev = getSearchHistory().filter((x) => x.toLowerCase() !== q.toLowerCase());
+  sessionStorage.setItem(SCOUT_HISTORY_KEY, JSON.stringify([q, ...prev].slice(0, SCOUT_HISTORY_MAX)));
+}
+
+/** Favoriten: gespeicherte Treffer (lat_lon als id). */
+export type ScoutFavoriteId = string;
+
+function getFavorites(): ScoutFavoriteId[] {
+  try {
+    const s = localStorage.getItem(SCOUT_FAVORITES_KEY);
+    if (!s) return [];
+    const arr = JSON.parse(s) as unknown[];
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function toggleFavorite(id: ScoutFavoriteId): ScoutFavoriteId[] {
+  const list = getFavorites();
+  const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id].slice(-200);
+  localStorage.setItem(SCOUT_FAVORITES_KEY, JSON.stringify(next));
+  return next;
+}
+
+function scoutResultId(b: ScoutResult): ScoutFavoriteId {
+  return `${b.lat.toFixed(6)}_${b.lon.toFixed(6)}_${b.name.slice(0, 30)}`;
 }
 
 function ScoutAiCallPopover({ business }: { business: ScoutResult }) {
@@ -243,17 +294,22 @@ function ScoutInterestPopover({ business }: { business: ScoutResult }) {
   );
 }
 
+/** Ein Treffer für den Batch „Erste N als Deals“. */
+export type ScoutDealBatchItem = { name: string; address?: string | null; phone?: string | null; email?: string | null };
+
 export interface GewerbeScoutProps {
   onAddAsLead?: (business: { name: string; address: string | null; phone: string | null }) => void;
   /** Als Deal anlegen (navigiert zu Deals mit vorausgefüllten Daten). */
-  onAddAsDeal?: (business: { name: string; address: string | null; phone: string | null; email?: string | null }) => void;
+  onAddAsDeal?: (business: ScoutDealBatchItem) => void;
+  /** Erste N Treffer als Deals-Batch an Deals-Seite übergeben (z. B. „Erste 10 als Deals“). */
+  onAddAsDealBatch?: (batch: ScoutDealBatchItem[]) => void;
   /** Als Besichtigung anlegen (navigiert zu Besichtigungen mit Titel/Adresse vorausgefüllt). */
   onAddAsViewing?: (business: { name: string; address: string | null }) => void;
   /** Vorausgefüllte Suche (z. B. von Deals oder URL ?q=). */
   initialQuery?: string;
 }
 
-export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing, initialQuery }: GewerbeScoutProps) {
+export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatch, onAddAsViewing, initialQuery }: GewerbeScoutProps) {
   const [query, setQuery] = useState(() => (getScoutStorage()?.query as string) ?? "");
   const [mode, setMode] = useState<SearchMode>(() =>
     getScoutStorage()?.mode === "umkreis" ? "umkreis" : "ort"
@@ -298,11 +354,14 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
   const [suggestions, setSuggestions] = useState<{ formatted: string; subtitle?: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => getSearchHistory());
+  const [favoriteIds, setFavoriteIds] = useState<ScoutFavoriteId[]>(() => getFavorites());
   const suggestionRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
   const resultsListRef = useRef<HTMLUListElement>(null);
   const resultsSectionRef = useRef<HTMLDivElement>(null);
+  const scoutCacheRef = useRef<{ key: string; pois: ScoutResult[]; ts: number } | null>(null);
   /* Abort in-flight search on unmount to avoid setState after unmount */
   useEffect(() => () => { searchAbortRef.current?.abort(); }, []);
   /** Roving tabindex: index of the focused result row (keyboard nav). */
@@ -438,6 +497,52 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
     toast.success("CSV exportiert");
   }, [sortedResults, searchLabel]);
 
+  const exportExcel = useCallback(() => {
+    if (sortedResults.length === 0) return;
+    const headers = ["Name", "Typ", "Adresse", "Telefon", "E-Mail", "Website", "Öffnungszeiten", "ca. m²", "Grundstück m²", "Entfernung (m)", "Quelle"];
+    const rows = sortedResults.map((b) => [
+      b.name,
+      b.type,
+      b.address ?? "",
+      b.phone ?? "",
+      b.email ?? "",
+      b.website ?? "",
+      b.opening_hours ?? "",
+      b.estimatedGrossArea != null ? b.estimatedGrossArea : "",
+      b.parcelArea != null ? b.parcelArea : "",
+      b.distance > 0 ? b.distance : "",
+      sourceLabel(b.source ?? ""),
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "WGH-Scout");
+    const name = `wgh-scout-${searchLabel ? searchLabel.replace(/\s*[(\u2013–)].*$/u, "").trim().replace(/\s+/g, "-") : "export"}.xlsx`;
+    XLSX.writeFile(wb, name);
+    toast.success("Excel exportiert");
+  }, [sortedResults, searchLabel]);
+
+  const addFirstAsDeal = useCallback(() => {
+    if (!onAddAsDeal || visibleResults.length === 0) return;
+    const b = visibleResults[0];
+    onAddAsDeal({ name: b.name, address: b.address, phone: b.phone, email: b.email });
+    if (visibleResults.length > 1) {
+      toast.success(`Erster Treffer als Deal-Vorlage. Weitere einzeln über „Deal“ anlegen.`);
+    } else {
+      toast.success("Treffer als Deal-Vorlage übernommen");
+    }
+  }, [onAddAsDeal, visibleResults]);
+
+  const addFirst10AsDeals = useCallback(() => {
+    if (!onAddAsDealBatch || visibleResults.length === 0) return;
+    const batch = visibleResults.slice(0, 10).map((b) => ({
+      name: b.name,
+      address: b.address ?? null,
+      phone: b.phone ?? null,
+      email: b.email ?? null,
+    }));
+    onAddAsDealBatch(batch);
+  }, [onAddAsDealBatch, visibleResults]);
+
   const search = useCallback(async () => {
     if (!query.trim()) {
       toast.error("Bitte Ort oder Adresse eingeben");
@@ -468,13 +573,24 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
           setLastCenter(null);
           setLoadingStep("gewerbe");
         }
-        const { pois: deduped } = await aggregatePOIsByBbox(bbox, signal);
-        if (signal.aborted) return;
+        const cacheKey = `bbox_${bbox.south.toFixed(5)}_${bbox.north.toFixed(5)}_${bbox.west.toFixed(5)}_${bbox.east.toFixed(5)}`;
+        const cached = scoutCacheRef.current && scoutCacheRef.current.key === cacheKey && (Date.now() - scoutCacheRef.current.ts) < SCOUT_CACHE_TTL_MS;
+        let deduped: ScoutResult[];
+        if (cached) {
+          deduped = scoutCacheRef.current!.pois;
+        } else {
+          const out = await aggregatePOIsByBbox(bbox, signal);
+          if (signal.aborted) return;
+          deduped = out.pois;
+          scoutCacheRef.current = { key: cacheKey, pois: deduped, ts: Date.now() };
+        }
         if (!signal.aborted) {
           setLoadingStep("gebaeude");
           setResults(deduped);
           setLoadingStep(null);
         }
+        pushSearchHistory(query.trim());
+        setSearchHistory(getSearchHistory());
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "ort", radius,
@@ -497,13 +613,24 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
           setLastCenter({ lat: coord.lat, lng: coord.lng });
           setLoadingStep("gewerbe");
         }
-        const { pois: deduped } = await aggregatePOIsByRadius(coord.lat, coord.lng, radius, signal);
-        if (signal.aborted) return;
+        const cacheKey = `radius_${coord.lat.toFixed(5)}_${coord.lng.toFixed(5)}_${radius}`;
+        const cached = scoutCacheRef.current && scoutCacheRef.current.key === cacheKey && (Date.now() - scoutCacheRef.current.ts) < SCOUT_CACHE_TTL_MS;
+        let deduped: ScoutResult[];
+        if (cached) {
+          deduped = scoutCacheRef.current!.pois;
+        } else {
+          const out = await aggregatePOIsByRadius(coord.lat, coord.lng, radius, signal);
+          if (signal.aborted) return;
+          deduped = out.pois;
+          scoutCacheRef.current = { key: cacheKey, pois: deduped, ts: Date.now() };
+        }
         if (!signal.aborted) {
           setLoadingStep("gebaeude");
           setResults(deduped);
           setLoadingStep(null);
         }
+        pushSearchHistory(query.trim());
+        setSearchHistory(getSearchHistory());
         try {
           sessionStorage.setItem(SCOUT_STORAGE_KEY, JSON.stringify({
             query: query.trim(), mode: "umkreis", radius,
@@ -533,6 +660,11 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
           {searchLabel != null && results.length > 0 && (
             <span className="text-xs font-normal text-muted-foreground">
               {results.length} Treffer
+            </span>
+          )}
+          {favoriteIds.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground flex items-center gap-1" title="Gespeicherte Treffer">
+              <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Gespeichert ({favoriteIds.length})
             </span>
           )}
         </CardTitle>
@@ -683,6 +815,24 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
               )}
             </div>
           </div>
+          {searchHistory.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <History className="h-3 w-3" /> Letzte Suchen:
+              </span>
+              {searchHistory.slice(0, 8).map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  className="text-xs px-2 py-1 rounded-md bg-muted/70 hover:bg-muted text-foreground touch-target min-h-[32px]"
+                  onClick={() => { setQuery(h); search(); }}
+                  aria-label={`Suchen: ${h}`}
+                >
+                  {h.length > 28 ? `${h.slice(0, 26)}…` : h}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading && loadingStep && (
@@ -758,8 +908,20 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe flex-1 min-w-0">
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
-              <p className="text-muted-foreground mt-1">Tipps: Bei „Ganzer Ort“ den Stadtnamen genau prüfen. Bei „Umkreis“ den Radius vergrößern (5 km, 10 km). Mindestfläche-Filter entfernen, falls gesetzt.</p>
+              <p className="text-muted-foreground mt-1">
+                Tipps: Bei „Ganzer Ort“ den Stadtnamen genau prüfen (z. B. „Berlin“ statt „Berlin Mitte“). Bei „Umkreis“ den Radius vergrößern (5 km, 10 km). Mindestfläche-Filter entfernen, falls gesetzt. Anderen Ort aus dem Suchverlauf probieren.
+              </p>
               <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {lastBbox && (
+                  <a
+                    href={`https://www.openstreetmap.org/?bbox=${lastBbox.west},${lastBbox.south},${lastBbox.east},${lastBbox.north}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline text-xs inline-flex items-center gap-1"
+                  >
+                    <Map className="h-3 w-3" /> Suchgebiet auf OSM prüfen →
+                  </a>
+                )}
                 <Link to={crmWithTab("search")} className="text-primary hover:underline text-xs">Stattdessen Adresssuche im CRM →</Link>
                 <Link to={ROUTES.BESICHTIGUNGEN} className="text-primary hover:underline text-xs inline-flex items-center gap-1" aria-label="Besichtigung planen">
                   <CalendarCheck className="h-3 w-3" /> Besichtigung planen →
@@ -811,6 +973,28 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {onAddAsDeal && visibleResults.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]"
+                    onClick={addFirstAsDeal}
+                    aria-label="Ersten Treffer als Deal anlegen"
+                  >
+                    <Handshake className="h-3.5 w-3.5" /> Als Deal
+                  </Button>
+                )}
+                {onAddAsDealBatch && visibleResults.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]"
+                    onClick={addFirst10AsDeals}
+                    aria-label="Erste 10 Treffer als Deals anlegen"
+                  >
+                    <Handshake className="h-3.5 w-3.5" /> Erste 10 als Deals
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -825,6 +1009,9 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                   aria-label="Suche teilen (Link kopieren)"
                 >
                   <Share2 className="h-3.5 w-3.5" /> Teilen
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px] text-muted-foreground" onClick={exportExcel} disabled={sortedResults.length === 0} aria-label="Als Excel exportieren">
+                  <Download className="h-3.5 w-3.5" /> Excel
                 </Button>
                 {isMobile && (
                   <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
@@ -882,7 +1069,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
                             <SelectTrigger className="h-9 min-h-[44px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="size">Nach Gebäudegröße (größte zuerst)</SelectItem>
+                              <SelectItem value="size">Vermietbare Fläche (absteigend)</SelectItem>
                               <SelectItem value="distance">Nach Entfernung</SelectItem>
                               <SelectItem value="name">Nach Name</SelectItem>
                               <SelectItem value="source">Nach Quelle</SelectItem>
@@ -913,9 +1100,14 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                         <Button variant="secondary" className="w-full gap-1.5" onClick={() => { setOnlyWithPhone(false); setOnlyWithWebsite(false); setOnlyWithEmail(false); setOnlyWithOpeningHours(false); setMinSize(0); setMaxSize(0); setPoiTypeFilter("all"); setFilterSheetOpen(false); }} aria-label="Filter zurücksetzen">
                           <RotateCcw className="h-3.5 w-3.5" /> Filter zurücksetzen
                         </Button>
-                        <Button variant="outline" className="w-full gap-1.5" onClick={exportCsv} aria-label="CSV exportieren">
-                          <Download className="h-3.5 w-3.5" /> CSV exportieren
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="outline" className="flex-1 gap-1.5" onClick={exportCsv} disabled={sortedResults.length === 0} aria-label="CSV exportieren">
+                            <Download className="h-3.5 w-3.5" /> CSV
+                          </Button>
+                          <Button variant="outline" className="flex-1 gap-1.5" onClick={exportExcel} disabled={sortedResults.length === 0} aria-label="Excel exportieren">
+                            <Download className="h-3.5 w-3.5" /> Excel
+                          </Button>
+                        </div>
                       </div>
                     </SheetContent>
                   </Sheet>
@@ -1008,7 +1200,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="size">Nach Gebäudegröße (größte zuerst)</SelectItem>
+                      <SelectItem value="size">Vermietbare Fläche (absteigend)</SelectItem>
                       <SelectItem value="distance">Nach Entfernung</SelectItem>
                       <SelectItem value="name">Nach Name</SelectItem>
                       <SelectItem value="source">Nach Quelle</SelectItem>
@@ -1039,6 +1231,26 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                 )}
               </div>
             </div>
+            {visibleResults.length > 0 && (
+              <Collapsible defaultOpen={false} className="w-full">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="group h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground w-full justify-start touch-target min-h-[36px]">
+                    <Map className="h-3.5 w-3.5" />
+                    Karte anzeigen
+                    <ChevronDown className="h-3.5 w-3.5 ml-auto transition-transform group-data-[state=open]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ScoutMap
+                    pois={visibleResults}
+                    bbox={lastBbox}
+                    center={lastCenter}
+                    height="280px"
+                    className="mt-2 border rounded-lg overflow-hidden bg-muted/30"
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
             {sortedResults.length > SCOUT_DISPLAY_CAP && (
               <p className="text-xs text-muted-foreground">
                 {SCOUT_DISPLAY_CAP} von {sortedResults.length} angezeigt. Bitte Filter (Typ, Mindest-/Max. Fläche, Nur mit Telefon/Web/E-Mail/Öffnungszeiten) nutzen, um die Liste einzugrenzen.
@@ -1105,8 +1317,9 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       <span>{b.type}</span>
                       {b.estimatedGrossArea != null && b.estimatedGrossArea > 0 && (() => {
                         const areaWarn = getAreaWarning(b.estimatedGrossArea, b.parcelArea);
+                        const areaSource = b.parcelArea != null && b.parcelArea > 0 ? "Geschätzte GF aus OSM-Gebäude; Grundstück aus ALKIS (amtlich)." : "Geschätzte Fläche aus nächstem OSM-Gebäude.";
                         return (
-                          <span className="flex items-center gap-0.5">
+                          <span className="flex items-center gap-0.5" title={areaSource}>
                             <Building2 className="h-3 w-3" /> ca. {b.estimatedGrossArea.toLocaleString("de-DE")} m²
                             {areaWarn && (
                               <span className="inline-flex items-center text-amber-600 dark:text-amber-500" title={areaWarn} aria-label={areaWarn}>
@@ -1170,6 +1383,32 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsViewing,
                       >
                         <ExternalLink className="h-3.5 w-3.5" /> Maps
                       </a>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-8 gap-1 text-xs touch-target min-h-[36px] sm:min-h-[32px]" asChild>
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${b.lat}&mlon=${b.lon}&zoom=17`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`OpenStreetMap: ${b.name}`}
+                        title="Auf OpenStreetMap anzeigen"
+                      >
+                        <Map className="h-3.5 w-3.5" /> OSM
+                      </a>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn("h-8 w-8 p-0 touch-target min-h-[36px] sm:min-h-[32px]", favoriteIds.includes(scoutResultId(b)) && "text-amber-500")}
+                      onClick={() => {
+                        const id = scoutResultId(b);
+                        const next = toggleFavorite(id);
+                        setFavoriteIds(next);
+                        toast.success(next.includes(id) ? "Gespeichert" : "Aus Favoriten entfernt");
+                      }}
+                      aria-label={favoriteIds.includes(scoutResultId(b)) ? "Aus Favoriten entfernen" : "Merken"}
+                      title={favoriteIds.includes(scoutResultId(b)) ? "Aus Favoriten entfernen" : "Merken"}
+                    >
+                      <Star className={cn("h-3.5 w-3.5", favoriteIds.includes(scoutResultId(b)) && "fill-current")} />
                     </Button>
                     <Button
                       variant="ghost"

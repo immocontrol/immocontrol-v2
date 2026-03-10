@@ -8,7 +8,7 @@ import type { ScoutProvider } from "./types";
 import { distanceMeters, dedupeScoutResults } from "@/lib/crmUtils";
 import { isBboxInBrandenburg, isPointInBrandenburgForBuildings } from "./brandenburgProvider";
 
-const MAX_BUILDING_DIST_M = 60;
+const MAX_BUILDING_DIST_M = 85;
 
 /** Geschätzte Fläche an POIs hängen (nächstes Gebäude innerhalb maxDistM). */
 export function attachBuildingSizesToScoutPOIs(
@@ -75,34 +75,59 @@ export async function aggregateGeocodeToBbox(
   return null;
 }
 
-/** POIs aus allen Providern (Bbox), zusammenführen und deduplizieren. */
+/** Ab welcher Bbox-Fläche (in Grad²) wird in 2x2 Kacheln geteilt (große Orte, weniger Timeout). */
+const BBOX_SPLIT_THRESHOLD_DEG2 = 0.008;
+
+function splitBbox(bbox: PlaceBbox): PlaceBbox[] {
+  const { south, north, west, east } = bbox;
+  const midLat = (south + north) / 2;
+  const midLon = (west + east) / 2;
+  return [
+    { ...bbox, south, north: midLat, west, east: midLon, display_name: bbox.display_name },
+    { ...bbox, south: midLat, north, west, east: midLon, display_name: bbox.display_name },
+    { ...bbox, south, north: midLat, west: midLon, east, display_name: bbox.display_name },
+    { ...bbox, south: midLat, north, west: midLon, east, display_name: bbox.display_name },
+  ];
+}
+
+/** POIs aus allen Providern (Bbox), zusammenführen und deduplizieren. Bei großer Bbox: 2x2-Split. */
 export async function aggregatePOIsByBbox(
   providers: ScoutProvider[],
   bbox: PlaceBbox,
   signal?: AbortSignal
 ): Promise<{ pois: ScoutPOI[]; buildings: BuildingWithSize[] }> {
-  const withBbox = providers.filter((p) => p.fetchPOIsByBbox);
-  const results = await Promise.all(
-    withBbox.map((p) => p.fetchPOIsByBbox!(bbox, signal).catch(() => [] as ScoutPOI[]))
-  );
-  let pois: ScoutPOI[] = results.flat();
+  const areaDeg2 = (bbox.north - bbox.south) * (bbox.east - bbox.west);
+  const bboxes = areaDeg2 > BBOX_SPLIT_THRESHOLD_DEG2 ? splitBbox(bbox) : [bbox];
 
-  let buildings: BuildingWithSize[] = [];
-  const buildingProviders = providers.filter((p) => p.fetchBuildingsByBbox);
-  const preferBrandenburg = isBboxInBrandenburg(bbox);
-  const buildingProvider = preferBrandenburg && buildingProviders.some((p) => p.id === "brandenburg")
-    ? buildingProviders.find((p) => p.id === "brandenburg") ?? buildingProviders[0]
-    : buildingProviders[0];
-  if (buildingProvider?.fetchBuildingsByBbox) {
-    try {
-      buildings = await buildingProvider.fetchBuildingsByBbox(bbox, signal);
-    } catch {
-      // ignore
+  const withBbox = providers.filter((p) => p.fetchPOIsByBbox);
+  const allPois: ScoutPOI[] = [];
+  let allBuildings: BuildingWithSize[] = [];
+
+  for (const b of bboxes) {
+    if (signal?.aborted) break;
+    const results = await Promise.all(
+      withBbox.map((p) => p.fetchPOIsByBbox!(b, signal).catch(() => [] as ScoutPOI[]))
+    );
+    allPois.push(...results.flat());
+
+    const buildingProviders = providers.filter((p) => p.fetchBuildingsByBbox);
+    const preferBrandenburg = isBboxInBrandenburg(b);
+    const buildingProvider = preferBrandenburg && buildingProviders.some((p) => p.id === "brandenburg")
+      ? buildingProviders.find((p) => p.id === "brandenburg") ?? buildingProviders[0]
+      : buildingProviders[0];
+    if (buildingProvider?.fetchBuildingsByBbox) {
+      try {
+        const buildings = await buildingProvider.fetchBuildingsByBbox(b, signal);
+        allBuildings.push(...buildings);
+      } catch {
+        // ignore
+      }
     }
   }
-  pois = attachBuildingSizesToScoutPOIs(pois, buildings);
+
+  let pois = attachBuildingSizesToScoutPOIs(allPois, allBuildings);
   pois = dedupeScoutPOIs(pois);
-  return { pois, buildings };
+  return { pois, buildings: allBuildings };
 }
 
 /** POIs aus allen Providern (Umkreis), zusammenführen und deduplizieren. */

@@ -152,9 +152,7 @@ export const TeamManagement = () => {
         toast.error(`Fehler beim Einladen: ${insertError.message || "Unbekannter Fehler"}`);
       }
     } else {
-      /* Send invitation email: try Edge Function first, then fall back to
-         Supabase built-in auth invite, then graceful degradation */
-      let emailSent = false;
+      /* Send invitation email via Edge Function (inviteUserByEmail or add existing user) */
       try {
         const fnRes = await supabase.functions.invoke("invite-team-member", {
           body: {
@@ -165,26 +163,25 @@ export const TeamManagement = () => {
           },
         });
         if (fnRes.error) throw fnRes.error;
-        emailSent = true;
-      } catch {
-        /* Edge Function unavailable — try Supabase auth invite as fallback */
-        try {
-          const { error: inviteErr } = await supabase.auth.signInWithOtp({
-            email: email.trim().toLowerCase(),
-            options: {
-              shouldCreateUser: false,
-              emailRedirectTo: `${window.location.origin}/einstellungen`,
-            },
-          });
-          if (!inviteErr) emailSent = true;
-        } catch {
-          /* OTP also failed — silent fallback */
+        const data = fnRes.data as { success?: boolean; error?: string; added_directly?: boolean } | null;
+        if (data?.error) throw new Error(data.error);
+        if (data?.added_directly) {
+          toast.success(`${email} existiert bereits und wurde zum Team hinzugefügt`);
+        } else {
+          toast.success(`Einladung per E-Mail an ${email} gesendet`);
         }
-      }
-      if (emailSent) {
-        toast.success(`Einladung per E-Mail an ${email} gesendet`);
-      } else {
-        toast.success(`Einladung an ${email} erstellt. Das Mitglied sieht sie nach dem Login.`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Einladung konnte nicht gesendet werden";
+        toast.error(msg);
+        /* Rollback: pending row löschen, damit erneuter Versuch möglich ist */
+        await supabase
+          .from("team_members")
+          .delete()
+          .eq("owner_id", user.id)
+          .eq("member_email", email.trim().toLowerCase())
+          .eq("status", "pending");
+        setLoading(false);
+        return;
       }
       setEmail("");
       setRole("viewer");

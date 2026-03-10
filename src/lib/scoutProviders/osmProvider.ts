@@ -7,6 +7,10 @@ import { geocodeToCoord, geocodePlaceToBbox } from "@/integrations/geocoding";
 import {
   fetchCommercialPOIsInBbox,
   fetchCommercialPOIsInRadius,
+  fetchWGHBuildingPOIsBbox,
+  fetchWGHBuildingPOIsRadius,
+  fetchWGHBuildingsLevelsBbox,
+  fetchWGHBuildingsLevelsRadius,
   fetchBuildingsInBbox,
   fetchBuildingsInRadius,
   type PlaceBbox as CrmPlaceBbox,
@@ -36,13 +40,21 @@ export const osmScoutProvider: ScoutProvider = {
   },
 
   async fetchPOIsByBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<ScoutPOI[]> {
-    const list = await fetchCommercialPOIsInBbox(bbox as CrmPlaceBbox, signal);
-    return list.map(toScoutPOI);
+    const [commercial, wghBuildings, wghLevels] = await Promise.all([
+      fetchCommercialPOIsInBbox(bbox as CrmPlaceBbox, signal),
+      fetchWGHBuildingPOIsBbox(bbox as CrmPlaceBbox, signal),
+      fetchWGHBuildingsLevelsBbox(bbox as CrmPlaceBbox, signal),
+    ]);
+    return [...commercial, ...wghBuildings, ...wghLevels].map(toScoutPOI);
   },
 
   async fetchPOIsByRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<ScoutPOI[]> {
-    const list = await fetchCommercialPOIsInRadius(lat, lng, radiusM, signal);
-    return list.map(toScoutPOI);
+    const [commercial, wghBuildings, wghLevels] = await Promise.all([
+      fetchCommercialPOIsInRadius(lat, lng, radiusM, signal),
+      fetchWGHBuildingPOIsRadius(lat, lng, radiusM, signal),
+      fetchWGHBuildingsLevelsRadius(lat, lng, radiusM, signal),
+    ]);
+    return [...commercial, ...wghBuildings, ...wghLevels].map(toScoutPOI);
   },
 
   async fetchBuildingsByBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<BuildingWithSize[]> {
