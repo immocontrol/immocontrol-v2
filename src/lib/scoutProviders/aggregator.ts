@@ -16,11 +16,12 @@ export function attachBuildingSizesToScoutPOIs(
   buildings: BuildingWithSize[],
   maxDistM = MAX_BUILDING_DIST_M
 ): ScoutPOI[] {
-  return pois.map((poi) => {
+  const buildingList = Array.isArray(buildings) ? buildings : [];
+  return (Array.isArray(pois) ? pois : []).map((poi) => {
     let best: BuildingWithSize | null = null;
     let bestDist = maxDistM + 1;
     const p = { lat: poi.lat, lon: poi.lon };
-    for (const b of buildings) {
+    for (const b of buildingList) {
       const d = distanceMeters(p, { lat: b.lat, lon: b.lon });
       if (d < bestDist) {
         bestDist = d;
@@ -35,8 +36,39 @@ export function attachBuildingSizesToScoutPOIs(
   });
 }
 
-export function dedupeScoutPOIs<T extends ScoutPOI>(items: T[]): T[] {
-  return dedupeScoutResults(items) as T[];
+/** preferredSources (z. B. ["google"]) werden bei gleicher Fläche bei Duplikaten bevorzugt. */
+export function dedupeScoutPOIs<T extends ScoutPOI>(items: T[], preferredSources?: string[]): T[] {
+  return dedupeScoutResults(items, preferredSources) as T[];
+}
+
+/** Namen und Adressen bereinigen, fehlende Namen aus Adresse ableiten. Verbessert Anzeige und Sortierung. */
+export function normalizeScoutPOIQuality<T extends ScoutPOI>(pois: T[]): T[] {
+  const list = Array.isArray(pois) ? pois : [];
+  return list.map((p) => {
+    const name = (p.name ?? "").trim().replace(/\s+/g, " ");
+    const address = (p.address ?? "").trim().replace(/\s+/g, " ") || null;
+    const displayName =
+      name && !/^Unbekannt|^Unbenanntes Gewerbe$/i.test(name)
+        ? name
+        : (address ? address.split(",")[0]?.trim() || name || "Unbenanntes Gewerbe" : name || "Unbenanntes Gewerbe");
+    return {
+      ...p,
+      name: displayName,
+      address: address || p.address,
+    } as T;
+  });
+}
+
+/** Entfernt POIs ohne brauchbaren Namen und ohne Adresse (Rauschen reduzieren). */
+export function filterLowQualityScoutPOIs<T extends ScoutPOI>(pois: T[]): T[] {
+  const list = Array.isArray(pois) ? pois : [];
+  return list.filter((p) => {
+    const name = (p.name ?? "").trim();
+    const address = (p.address ?? "").trim();
+    const hasRealName = name.length > 0 && !/^Unbekannt|^Unbenanntes Gewerbe$/i.test(name);
+    const hasRealAddress = address.length >= 5;
+    return hasRealName || hasRealAddress;
+  });
 }
 
 /** Erste Geocode-Antwort unter den aktiven Providern. */
@@ -108,7 +140,8 @@ export async function aggregatePOIsByBbox(
     const results = await Promise.all(
       withBbox.map((p) => p.fetchPOIsByBbox!(b, signal).catch(() => [] as ScoutPOI[]))
     );
-    allPois.push(...results.flat());
+    const flat = results.flat();
+    allPois.push(...(Array.isArray(flat) ? flat : []));
 
     const buildingProviders = providers.filter((p) => p.fetchBuildingsByBbox);
     const preferBrandenburg = isBboxInBrandenburg(b);
@@ -118,7 +151,7 @@ export async function aggregatePOIsByBbox(
     if (buildingProvider?.fetchBuildingsByBbox) {
       try {
         const buildings = await buildingProvider.fetchBuildingsByBbox(b, signal);
-        allBuildings.push(...buildings);
+        allBuildings.push(...(Array.isArray(buildings) ? buildings : []));
       } catch {
         // ignore
       }
@@ -126,7 +159,9 @@ export async function aggregatePOIsByBbox(
   }
 
   let pois = attachBuildingSizesToScoutPOIs(allPois, allBuildings);
-  pois = dedupeScoutPOIs(pois);
+  pois = dedupeScoutPOIs(pois, ["google"]);
+  pois = normalizeScoutPOIQuality(pois);
+  pois = filterLowQualityScoutPOIs(pois);
   return { pois, buildings: allBuildings };
 }
 
@@ -142,7 +177,8 @@ export async function aggregatePOIsByRadius(
   const results = await Promise.all(
     withRadius.map((p) => p.fetchPOIsByRadius!(lat, lng, radiusM, signal).catch(() => [] as ScoutPOI[]))
   );
-  let pois: ScoutPOI[] = results.flat();
+  const flat = results.flat();
+  let pois: ScoutPOI[] = Array.isArray(flat) ? flat : [];
 
   let buildings: BuildingWithSize[] = [];
   const buildingProviders = providers.filter((p) => p.fetchBuildingsByRadius);
@@ -152,12 +188,15 @@ export async function aggregatePOIsByRadius(
     : buildingProviders[0];
   if (buildingProvider?.fetchBuildingsByRadius) {
     try {
-      buildings = await buildingProvider.fetchBuildingsByRadius(lat, lng, radiusM, signal);
+      const raw = await buildingProvider.fetchBuildingsByRadius(lat, lng, radiusM, signal);
+      buildings = Array.isArray(raw) ? raw : [];
     } catch {
       // ignore
     }
   }
   pois = attachBuildingSizesToScoutPOIs(pois, buildings);
-  pois = dedupeScoutPOIs(pois);
+  pois = dedupeScoutPOIs(pois, ["google"]);
+  pois = normalizeScoutPOIQuality(pois);
+  pois = filterLowQualityScoutPOIs(pois);
   return { pois, buildings };
 }

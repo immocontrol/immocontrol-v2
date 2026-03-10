@@ -127,7 +127,7 @@ function sourceLabel(source: string): string {
   return SOURCE_LABELS[source] ?? source;
 }
 
-type SortBy = "size" | "distance" | "name" | "source";
+type SortBy = "size" | "distance" | "name" | "source" | "relevance";
 type LoadingStep = "ort" | "gewerbe" | "gebaeude" | null;
 
 /** Ein Treffer im WGH-Scout (kann von OSM, Google, Foursquare etc. kommen). */
@@ -349,7 +349,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
   const [lastCenter, setLastCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [sortBy, setSortBy] = useState<SortBy>(() => {
     const v = getScoutStorage()?.sortBy as string | undefined;
-    return v === "size" || v === "distance" || v === "name" || v === "source" ? v : "size";
+    return v === "size" || v === "distance" || v === "name" || v === "source" || v === "relevance" ? v : "size";
   });
   const [suggestions, setSuggestions] = useState<{ formatted: string; subtitle?: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -375,7 +375,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
 
   const effectiveArea = (r: ScoutResult) => r.estimatedGrossArea ?? r.parcelArea ?? 0;
   const sortedResults = useMemo(() => {
-    let list = [...results];
+    let list = Array.isArray(results) ? [...results] : [];
     if (minSize > 0) list = list.filter((r) => effectiveArea(r) >= minSize);
     if (maxSize > 0) list = list.filter((r) => effectiveArea(r) <= maxSize);
     if (onlyWithPhone) list = list.filter((r) => r.phone != null && r.phone.trim() !== "");
@@ -390,6 +390,17 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
       list.sort((a, b) => a.distance - b.distance);
     } else if (sortBy === "source") {
       list.sort((a, b) => (a.source ?? "").localeCompare(b.source ?? "") || a.name.localeCompare(b.name));
+    } else if (sortBy === "relevance") {
+      const hasContact = (r: ScoutResult) => (r.phone?.trim() ? 1 : 0) + (r.email?.trim() ? 1 : 0);
+      list.sort((a, b) => {
+        const contactA = hasContact(a);
+        const contactB = hasContact(b);
+        if (contactB !== contactA) return contactB - contactA;
+        const areaA = effectiveArea(a);
+        const areaB = effectiveArea(b);
+        if (areaB !== areaA) return areaB - areaA;
+        return a.distance - b.distance;
+      });
     } else {
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
@@ -586,7 +597,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
         }
         if (!signal.aborted) {
           setLoadingStep("gebaeude");
-          setResults(deduped);
+          setResults(Array.isArray(deduped) ? deduped : []);
           setLoadingStep(null);
         }
         pushSearchHistory(query.trim());
@@ -626,7 +637,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
         }
         if (!signal.aborted) {
           setLoadingStep("gebaeude");
-          setResults(deduped);
+          setResults(Array.isArray(deduped) ? deduped : []);
           setLoadingStep(null);
         }
         pushSearchHistory(query.trim());
@@ -1073,6 +1084,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
                               <SelectItem value="distance">Nach Entfernung</SelectItem>
                               <SelectItem value="name">Nach Name</SelectItem>
                               <SelectItem value="source">Nach Quelle</SelectItem>
+                              <SelectItem value="relevance">Nach Relevanz</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1204,6 +1216,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
                       <SelectItem value="distance">Nach Entfernung</SelectItem>
                       <SelectItem value="name">Nach Name</SelectItem>
                       <SelectItem value="source">Nach Quelle</SelectItem>
+                      <SelectItem value="relevance">Nach Relevanz</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

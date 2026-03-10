@@ -99,20 +99,53 @@ async function searchNearby(
       const openingHours = p.regularOpeningHours?.weekdayDescriptions?.length
         ? p.regularOpeningHours.weekdayDescriptions.join("; ")
         : null;
+      const rawName = (p.displayName?.text ?? "").trim();
+      const address = p.formattedAddress ?? null;
+      const name =
+        rawName ||
+        (address ? address.split(",")[0]?.trim() || null) ||
+        "Unbenanntes Gewerbe";
+      const type = mapPlaceTypeToLabel(p.primaryType ?? "establishment");
       return {
-        name: p.displayName?.text ?? "Unbekannt",
-        type: p.primaryType ?? "establishment",
+        name,
+        type,
         phone: p.nationalPhoneNumber ?? p.internationalPhoneNumber ?? null,
         website: p.websiteUri ?? null,
         email: null,
         distance: dist,
-        address: p.formattedAddress ?? null,
+        address,
         opening_hours: openingHours,
         lat: latP,
         lon: lngP,
         source: SOURCE_ID,
       };
     });
+}
+
+/** Google primaryType → lesbare deutsche Bezeichnung für Anzeige und Filter. */
+function mapPlaceTypeToLabel(primaryType: string): string {
+  const map: Record<string, string> = {
+    restaurant: "Restaurant",
+    cafe: "Café",
+    bar: "Bar",
+    store: "Geschäft",
+    supermarket: "Supermarkt",
+    shopping_mall: "Einkaufszentrum",
+    pharmacy: "Apotheke",
+    bank: "Bank",
+    real_estate_agency: "Immobilien",
+    lawyer: "Rechtsanwalt",
+    insurance_agency: "Versicherung",
+    hair_care: "Friseur",
+    dentist: "Zahnarzt",
+    doctor: "Arzt",
+    veterinary_care: "Tierarzt",
+    food: "Gastronomie",
+    point_of_interest: "Punkt",
+    establishment: "Gewerbe",
+  };
+  const key = primaryType.toLowerCase().replace(/\s+/g, "_");
+  return map[key] ?? primaryType;
 }
 
 /** Bbox-Mitte und Radius (halbe Diagonale) in Metern. */
@@ -123,6 +156,24 @@ function bboxToCenterAndRadius(bbox: PlaceBbox): { lat: number; lng: number; rad
   const dLng = (bbox.east - bbox.west) / 2;
   const radiusM = Math.min(50000, Math.round(distanceMeters({ lat, lon: lng }, { lat: lat + dLat, lon: lng + dLng })));
   return { lat, lng, radiusM: Math.max(500, radiusM) };
+}
+
+/** Ab dieser Bbox-Fläche (Grad²) 4 Zentren (2x2), um mehr als 20 Treffer zu bekommen. */
+const BBOX_MULTI_CENTER_THRESHOLD = 0.0005;
+
+function bboxToCenterAndRadiusList(bbox: PlaceBbox): { lat: number; lng: number; radiusM: number }[] {
+  const single = bboxToCenterAndRadius(bbox);
+  const areaDeg2 = (bbox.north - bbox.south) * (bbox.east - bbox.west);
+  if (areaDeg2 < BBOX_MULTI_CENTER_THRESHOLD) return [single];
+  const midLat = (bbox.south + bbox.north) / 2;
+  const midLng = (bbox.west + bbox.east) / 2;
+  const radiusM = Math.max(Math.round(single.radiusM / 2), 800);
+  return [
+    { lat: (bbox.south + midLat) / 2, lng: (bbox.west + midLng) / 2, radiusM },
+    { lat: (bbox.south + midLat) / 2, lng: (midLng + bbox.east) / 2, radiusM },
+    { lat: (midLat + bbox.north) / 2, lng: (bbox.west + midLng) / 2, radiusM },
+    { lat: (midLat + bbox.north) / 2, lng: (midLng + bbox.east) / 2, radiusM },
+  ];
 }
 
 export const googleScoutProvider: ScoutProvider = {
@@ -139,8 +190,21 @@ export const googleScoutProvider: ScoutProvider = {
   },
 
   async fetchPOIsByBbox(bbox: PlaceBbox, signal?: AbortSignal): Promise<ScoutPOI[]> {
-    const { lat, lng, radiusM } = bboxToCenterAndRadius(bbox);
-    return searchNearby(lat, lng, radiusM, signal);
+    const centers = bboxToCenterAndRadiusList(bbox);
+    const all: ScoutPOI[] = [];
+    const seen = new Set<string>();
+    for (const { lat, lng, radiusM } of centers) {
+      if (signal?.aborted) break;
+      const batch = await searchNearby(lat, lng, radiusM, signal);
+      for (const p of batch) {
+        const key = `${p.lat.toFixed(5)}_${p.lon.toFixed(5)}_${p.name}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          all.push(p);
+        }
+      }
+    }
+    return all;
   },
 
   async fetchPOIsByRadius(lat: number, lng: number, radiusM: number, signal?: AbortSignal): Promise<ScoutPOI[]> {

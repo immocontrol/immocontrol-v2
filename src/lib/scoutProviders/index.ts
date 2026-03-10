@@ -28,15 +28,16 @@ const PROVIDER_REGISTRY: Map<string, ScoutProvider> = new Map([
   [googleScoutProvider.id, googleScoutProvider],
 ]);
 
-/** Kommagetrennte Liste aus Env (z. B. "openstreetmap,google"). Default: openstreetmap + brandenburg; Google wenn VITE_GOOGLE_PLACES_API_KEY gesetzt. */
+/** Kommagetrennte Liste aus Env (z. B. "openstreetmap,google"). Default: Google zuerst wenn Key gesetzt, sonst OSM + Brandenburg. */
 function getActiveProviderIds(): string[] {
   const raw = typeof import.meta !== "undefined" && import.meta.env?.VITE_SCOUT_PROVIDERS;
   if (typeof raw === "string" && raw.trim()) {
     return raw.split(",").map((id) => id.trim().toLowerCase()).filter(Boolean);
   }
-  const ids: string[] = ["openstreetmap", "brandenburg"];
-  if (isGoogleScoutEnabled()) ids.push("google");
-  return ids;
+  if (isGoogleScoutEnabled()) {
+    return ["google", "openstreetmap", "brandenburg"];
+  }
+  return ["openstreetmap", "brandenburg"];
 }
 
 /** Alle registrierten Provider. */

@@ -1034,7 +1034,7 @@ const Deals = () => {
             </div>
           </ResponsiveDialogHeader>
           <div className="space-y-3">
-            {scoutBatch && scoutBatch.length > 0 && !editDeal && (
+            {Array.isArray(scoutBatch) && scoutBatch.length > 0 && !editDeal && (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 p-2 text-sm">
                 <span className="text-muted-foreground">
                   Scout-Batch: {scoutBatchIndex + 1} von {scoutBatch.length}
@@ -1050,6 +1050,7 @@ const Deals = () => {
                     if (next >= scoutBatch.length) return;
                     setScoutBatchIndex(next);
                     const item = scoutBatch[next];
+                    if (!item) return;
                     setForm(p => ({
                       ...p,
                       title: item.name ?? "",

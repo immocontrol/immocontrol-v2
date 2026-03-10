@@ -808,16 +808,26 @@ function normalizeAddress(addr: string | null | undefined): string {
   return addr.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-/** Deduplicate POIs: zuerst nach Raster (~50 m), dann bei gleicher Adresse und Nähe (< 35 m) den mit größerer Fläche behalten. */
-export function dedupeScoutResults<T extends { lat: number; lon: number; address?: string | null; estimatedGrossArea?: number | null }>(items: T[]): T[] {
+/** Deduplicate POIs: zuerst nach Raster (~50 m), dann bei gleicher Adresse und Nähe (< 35 m) den mit größerer Fläche behalten. Bei gleicher Fläche: preferredSources (z. B. ["google"]) bevorzugen. */
+export function dedupeScoutResults<T extends { lat: number; lon: number; address?: string | null; estimatedGrossArea?: number | null }>(
+  items: T[],
+  preferredSources?: string[]
+): T[] {
+  const list = Array.isArray(items) ? items : [];
+  const hasSource = (x: T) => (x as { source?: string }).source != null;
+  const isPreferred = (x: T) => Array.isArray(preferredSources) && preferredSources.length > 0 && preferredSources.includes((x as { source?: string }).source ?? "");
   const grid = new Map<string, T>();
   const round = (v: number, step: number) => Math.round(v / step) * step;
-  for (const item of items) {
+  for (const item of list) {
     const key = `${round(item.lat, 0.0005)}_${round(item.lon, 0.0005)}`;
     const existing = grid.get(key);
     const area = item.estimatedGrossArea ?? 0;
     const existingArea = existing?.estimatedGrossArea ?? 0;
-    if (!existing || area > existingArea) grid.set(key, item);
+    const preferNew =
+      !existing ||
+      area > existingArea ||
+      (area === existingArea && isPreferred(item) && (!hasSource(existing) || !isPreferred(existing)));
+    if (preferNew) grid.set(key, item);
   }
   let list = Array.from(grid.values());
   const addrNormToItem = new Map<string, T>();
@@ -841,7 +851,10 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; address
     }
     const area = item.estimatedGrossArea ?? 0;
     const existingArea = existing.estimatedGrossArea ?? 0;
-    if (area > existingArea) {
+    const preferNew =
+      area > existingArea ||
+      (area === existingArea && isPreferred(item) && (!hasSource(existing) || !isPreferred(existing)));
+    if (preferNew) {
       addrNormToItem.set(addrNorm, item);
       const idx = result.indexOf(existing);
       if (idx !== -1) result[idx] = item;
