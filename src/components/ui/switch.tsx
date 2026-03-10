@@ -8,24 +8,28 @@ const Switch = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
+    ref={ref}
     className={cn(
-      "peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-0 transition-all duration-300 ease-out",
-      "data-[state=unchecked]:bg-muted-foreground/25 hover:data-[state=unchecked]:bg-muted-foreground/30",
-      "data-[state=checked]:bg-primary data-[state=checked]:shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]",
+      // Base
+      "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border/60 bg-input",
+      // State
+      "data-[state=checked]:bg-primary data-[state=checked]:border-primary/70",
+      // Hover / active
+      "hover:bg-accent hover:data-[state=checked]:bg-primary/90",
+      // Focus
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      // Disabled
       "disabled:cursor-not-allowed disabled:opacity-50",
+      "transition-colors duration-200 ease-out",
       className,
     )}
     {...props}
-    ref={ref}
   >
     <SwitchPrimitives.Thumb
       className={cn(
-        "pointer-events-none block h-6 w-6 rounded-full ring-0 transition-all duration-300 ease-out",
-        "shadow-[0_2px_8px_rgba(0,0,0,0.15)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.4)]",
-        "bg-white dark:bg-white",
-        "data-[state=unchecked]:translate-x-0.5 data-[state=checked]:translate-x-[22px]",
-        "data-[state=checked]:shadow-[0_2px_8px_hsl(var(--primary)/0.35)]",
+        "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-sm ring-0",
+        "transition-transform duration-200 ease-out",
+        "data-[state=unchecked]:translate-x-0.5 data-[state=checked]:translate-x-[18px]",
       )}
     />
   </SwitchPrimitives.Root>

@@ -25,12 +25,13 @@ const BackToTop = forwardRef<HTMLButtonElement>((_, ref) => {
       aria-label="Nach oben scrollen"
       className={cn(
         "fixed z-40",
-        "bottom-28 left-4 md:bottom-8 md:left-auto md:right-6",
-        "h-12 w-12 md:h-11 md:w-11 rounded-full",
+        "bottom-24 left-4 md:bottom-8 md:left-auto md:right-6",
+        "h-11 w-11 md:h-10 md:w-10 rounded-full",
         "flex items-center justify-center touch-target",
-        "bg-background/95 dark:bg-background/90 text-foreground backdrop-blur-xl",
-        "border border-border/80 shadow-lg shadow-black/5 dark:shadow-black/20",
-        "hover:bg-primary/10 hover:text-primary hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5",
+        // Modern floating FAB style
+        "bg-primary text-primary-foreground shadow-lg shadow-primary/25",
+        "border border-primary/70 backdrop-blur-xl",
+        "hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/35",
         "active:scale-[0.96]",
         "transition-all duration-300 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -39,7 +40,7 @@ const BackToTop = forwardRef<HTMLButtonElement>((_, ref) => {
           : "opacity-0 translate-y-3 pointer-events-none"
       )}
     >
-      <ArrowUp className="h-5 w-5 md:h-4 md:w-4 shrink-0" strokeWidth={2.5} />
+      <ArrowUp className="h-5 w-5 md:h-4 md:w-4 shrink-0" strokeWidth={2.4} />
     </button>
   );
 });
