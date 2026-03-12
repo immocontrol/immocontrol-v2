@@ -829,10 +829,10 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; address
       (area === existingArea && isPreferred(item) && (!hasSource(existing) || !isPreferred(existing)));
     if (preferNew) grid.set(key, item);
   }
-  let list = Array.from(grid.values());
+  const gridList = Array.from(grid.values());
   const addrNormToItem = new Map<string, T>();
   const result: T[] = [];
-  for (const item of list) {
+  for (const item of gridList) {
     const addrNorm = normalizeAddress(item.address);
     if (addrNorm.length < 5) {
       result.push(item);
@@ -860,7 +860,7 @@ export function dedupeScoutResults<T extends { lat: number; lon: number; address
       if (idx !== -1) result[idx] = item;
     }
   }
-  return result.length ? result : list;
+  return result.length ? result : gridList;
 }
 
 /** Fetch commercial POIs in radius (WGH-Scout). Erweiterte Erkennung für Wohn- und Geschäftshäuser. */

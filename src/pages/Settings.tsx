@@ -380,8 +380,8 @@ const Settings = () => {
       {/* Mobile: Spacer damit der Inhalt nicht unter der fixierten Tab-Leiste beginnt */}
       <div className="lg:hidden shrink-0 w-full" style={{ height: mobileTabBarHeight }} aria-hidden />
 
-      {/* Desktop: Sidebar (nur ab lg) — sticky; Gefahrenzone immer ganz unten */}
-      <aside className="hidden lg:flex flex-col w-48 shrink-0 self-start sticky top-0 max-h-[calc(100vh-2rem)] z-10 bg-background border-r border-border pr-2 -mr-2">
+      {/* Desktop: Sidebar (nur ab lg) — scrollt mit der Seite mit; Gefahrenzone immer ganz unten */}
+      <aside className="hidden lg:flex flex-col w-48 shrink-0 self-start z-10 bg-background border-r border-border pr-2 -mr-2">
           <nav className="w-full flex flex-col min-h-0 flex-1" aria-label="Einstellungen-Navigation">
           {/* Scrollbarer Bereich: restliche Sektionen */}
           <div className="flex-1 min-h-0 overflow-y-auto py-1">

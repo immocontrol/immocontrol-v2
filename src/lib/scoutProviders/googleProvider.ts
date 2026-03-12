@@ -103,7 +103,7 @@ async function searchNearby(
       const address = p.formattedAddress ?? null;
       const name =
         rawName ||
-        (address ? address.split(",")[0]?.trim() || null) ||
+        (address ? (address.split(",")[0]?.trim() ?? null) : null) ||
         "Unbenanntes Gewerbe";
       const type = mapPlaceTypeToLabel(p.primaryType ?? "establishment");
       return {

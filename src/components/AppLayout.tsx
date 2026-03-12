@@ -507,7 +507,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   return (
                     <div
                       key={entry.label}
-                      className="relative"
+                      className={`relative ${openDropdown === entry.label ? "pb-[380px]" : ""}`}
                       onMouseLeave={() => openDropdown === entry.label && setOpenDropdown(null)}
                     >
                       {/* BUG-5: Click-based dropdown instead of hover-only — fixes hidden dropdowns */}
@@ -522,9 +522,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         {entry.label}
                         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
-                      <div className={`absolute top-full left-0 mt-1 min-w-[200px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] overflow-hidden ${
-                        openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
-                      }`}>
+                      <div
+                        className={`absolute top-full left-0 mt-1 min-w-[200px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] overflow-hidden ${
+                          openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+                        }`}
+                        onMouseLeave={() => openDropdown === entry.label && setOpenDropdown(null)}
+                      >
                         {items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
                           const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
