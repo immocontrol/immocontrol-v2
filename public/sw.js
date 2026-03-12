@@ -81,6 +81,12 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (request.url.includes("supabase.co") || request.url.includes("supabase.in")) return;
 
+  /* Version-Check immer frisch vom Netz (kein Cache), damit Update-Banner zuverlässig erkennt */
+  if (request.url.includes("/version.json")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (request.mode === "navigate") {
     /* Navigation requests — network first, fallback to cached index.html, then offline page */
     event.respondWith(
@@ -118,7 +124,7 @@ self.addEventListener("fetch", (event) => {
         return updatePromise.then((response) => response || Response.error());
       })
     );
-  } else if (request.url.match(/\.(json|xml|txt)$/)) {
+  } else if (request.url.match(/\.(json|xml|txt)$/) && !request.url.includes("version.json")) {
     /* Data files — network first with cache fallback */
     event.respondWith(
       fetch(request)

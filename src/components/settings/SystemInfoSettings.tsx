@@ -6,7 +6,7 @@ import { Database, Trash2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { clearServiceWorkerCaches } from "@/lib/serviceWorkerRegistration";
+import { clearAllAppCaches } from "@/lib/serviceWorkerRegistration";
 
 interface SystemInfoSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -46,9 +46,16 @@ export function SystemInfoSettings({ sectionRef, totpEnabled }: SystemInfoSettin
   const handleClearCache = async () => {
     setClearing(true);
     try {
-      await clearServiceWorkerCaches();
-      toast.success("Cache geleert. Seite wird neu geladen.");
-      window.setTimeout(() => window.location.reload(), 800);
+      const result = await clearAllAppCaches();
+      const parts: string[] = [];
+      if (result.caches > 0) parts.push(`${result.caches} Cache(s)`);
+      if (result.indexedDB) parts.push("Offline-Daten");
+      if (result.session) parts.push("Sitzungscache");
+      const msg = parts.length > 0
+        ? `${parts.join(", ")} geleert. Seite wird neu geladen.`
+        : "Cache geleert. Seite wird neu geladen.";
+      toast.success(msg);
+      window.setTimeout(() => window.location.reload(), 1000);
     } catch {
       toast.error("Cache konnte nicht geleert werden.");
       setClearing(false);
@@ -94,7 +101,7 @@ export function SystemInfoSettings({ sectionRef, totpEnabled }: SystemInfoSettin
           {clearing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
           {clearing ? "Leere …" : "Cache leeren"}
         </Button>
-        <p className="text-[10px] text-muted-foreground mt-1.5">Löscht Offline-Cache des Service Workers; die Seite wird danach neu geladen.</p>
+        <p className="text-[10px] text-muted-foreground mt-1.5">Löscht alle App-Caches (Service Worker, Offline-Daten, Sitzung). Anmeldung bleibt erhalten. Seite wird danach neu geladen.</p>
       </div>
     </div>
   );

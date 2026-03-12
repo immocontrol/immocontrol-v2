@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RefreshCw, X, ArrowUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { clearServiceWorkerCaches, unregisterServiceWorker } from "@/lib/serviceWorkerRegistration";
+import { clearAllAppCaches, unregisterServiceWorker } from "@/lib/serviceWorkerRegistration";
 
 interface MobileAppUpdateBannerProps {
   /** Check interval in ms (default: 2 min); zusätzlich sofort bei Tab sichtbar / Reconnect */
@@ -140,7 +140,7 @@ function useServiceWorkerUpdate(checkInterval: number) {
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
     try {
-      await clearServiceWorkerCaches();
+      await clearAllAppCaches();
       await unregisterServiceWorker();
     } catch {
       /* ignore */
