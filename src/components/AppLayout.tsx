@@ -175,6 +175,31 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => document.removeEventListener("click", handleClick);
   }, [openDropdown]);
 
+  /* Refs für Schließen beim Verlassen (Maus außerhalb Trigger + Panel) */
+  const openDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const openDropdownPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handleMove = (e: MouseEvent) => {
+      const trigger = openDropdownTriggerRef.current;
+      const panel = openDropdownPanelRef.current;
+      const x = e.clientX;
+      const y = e.clientY;
+      const inTrigger = trigger && (() => {
+        const r = trigger.getBoundingClientRect();
+        return x >= r.left - 2 && x <= r.right + 2 && y >= r.top - 2 && y <= r.bottom + 2;
+      })();
+      const inPanel = panel && (() => {
+        const r = panel.getBoundingClientRect();
+        return x >= r.left - 2 && x <= r.right + 2 && y >= r.top - 2 && y <= r.bottom + 2;
+      })();
+      if (!inTrigger && !inPanel) setOpenDropdown(null);
+    };
+    document.addEventListener("mousemove", handleMove, { passive: true });
+    return () => document.removeEventListener("mousemove", handleMove);
+  }, [openDropdown]);
+
   /* UPD-47: Safe logout with error handling */
   const handleLogout = async () => {
     try {
@@ -505,13 +530,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   const items = getGroupItems(entry);
                   const groupActive = items.some(i => isRouteActive(i.path, location.pathname));
                   return (
-                    <div
-                      key={entry.label}
-                      className={`relative ${openDropdown === entry.label ? "pb-[380px]" : ""}`}
-                      onMouseLeave={() => openDropdown === entry.label && setOpenDropdown(null)}
-                    >
-                      {/* BUG-5: Click-based dropdown instead of hover-only — fixes hidden dropdowns */}
+                    <div key={entry.label} className="relative">
                       <button
+                        ref={openDropdown === entry.label ? openDropdownTriggerRef : undefined}
                         data-nav-top
                         onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === entry.label ? null : entry.label); }}
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all touch-target ${
@@ -523,10 +544,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
                       <div
+                        ref={openDropdown === entry.label ? openDropdownPanelRef : undefined}
                         className={`absolute top-full left-0 mt-1 min-w-[200px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] overflow-hidden ${
                           openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                         }`}
-                        onMouseLeave={() => openDropdown === entry.label && setOpenDropdown(null)}
                       >
                         {items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
@@ -626,7 +647,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
       <main
         id="main-content"
-        className="flex-1 container py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-6 overflow-x-hidden min-w-0"
+        className="flex-1 min-h-0 container py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-6 overflow-x-hidden overflow-y-auto min-w-0"
         onKeyDown={enterToNextHandler}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
