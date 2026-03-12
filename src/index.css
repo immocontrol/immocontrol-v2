@@ -1304,6 +1304,110 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
+/* iOS-26 Switch: Pill-Track (grau/grün), weißer Knob – !important damit Radix-Defaults überschrieben werden */
+button.ui-switch-ios26,
+[data-radix-collection-item].ui-switch-ios26,
+.ui-switch-ios26 {
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 1.5rem !important;
+  width: 2.75rem !important;
+  min-width: 2.75rem !important;
+  border-radius: 9999px !important;
+  border: none !important;
+  padding: 0 2px !important;
+  background: #e5e5e5 !important;
+  transition: background-color 0.2s ease-out !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+.ui-switch-ios26[data-state="checked"] {
+  background: #34c759 !important;
+}
+.dark .ui-switch-ios26 {
+  background: #525252 !important;
+}
+.dark .ui-switch-ios26[data-state="checked"] {
+  background: #30d158 !important;
+}
+.ui-switch-ios26-thumb,
+[data-state].ui-switch-ios26-thumb {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  min-width: 1.25rem !important;
+  border-radius: 9999px !important;
+  background: #fff !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transition: transform 0.2s ease-out !important;
+}
+.ui-switch-ios26-thumb[data-state="unchecked"] {
+  transform: translateX(0) !important;
+}
+.ui-switch-ios26-thumb[data-state="checked"] {
+  transform: translateX(22px) !important;
+}
+/* Fallback: Thumb-Position über Root (Radix setzt data-state ggf. nur am Root) */
+.ui-switch-ios26[data-state="unchecked"] {
+  --thumb-x: 0;
+}
+.ui-switch-ios26[data-state="checked"] {
+  --thumb-x: 22px;
+}
+.ui-switch-ios26[data-state="unchecked"] .ui-switch-ios26-thumb {
+  transform: translateX(var(--thumb-x, 0)) !important;
+}
+.ui-switch-ios26[data-state="checked"] .ui-switch-ios26-thumb {
+  transform: translateX(var(--thumb-x, 22px)) !important;
+}
+.dark .ui-switch-ios26-thumb {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Back-to-top: iOS-26 FAB – feste Werte mit !important */
+button.btn-back-to-top,
+.btn-back-to-top {
+  position: fixed !important;
+  z-index: 40 !important;
+  bottom: 6rem !important;
+  left: 1rem !important;
+  right: auto !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  min-width: 3rem !important;
+  min-height: 3rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #34c759 !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(52, 199, 89, 0.4) !important;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out !important;
+  -webkit-tap-highlight-color: transparent !important;
+  appearance: none !important;
+}
+.btn-back-to-top:hover {
+  background: #30d158 !important;
+  box-shadow: 0 6px 18px rgba(52, 199, 89, 0.45) !important;
+}
+.btn-back-to-top:active {
+  transform: scale(0.95) !important;
+}
+@media (min-width: 768px) {
+  .btn-back-to-top {
+    bottom: 2rem !important;
+    left: auto !important;
+    right: 1.5rem !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    min-width: 2.75rem !important;
+    min-height: 2.75rem !important;
+  }
+}
+
 /* UI-39: Scroll-to-top button animation */
 .scroll-top-animate {
   transition: opacity 0.3s ease, transform 0.3s ease;

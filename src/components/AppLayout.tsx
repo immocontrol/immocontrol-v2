@@ -505,7 +505,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   const items = getGroupItems(entry);
                   const groupActive = items.some(i => isRouteActive(i.path, location.pathname));
                   return (
-                    <div key={entry.label} className="relative">
+                    <div
+                      key={entry.label}
+                      className="relative"
+                      onMouseLeave={() => openDropdown === entry.label && setOpenDropdown(null)}
+                    >
                       {/* BUG-5: Click-based dropdown instead of hover-only — fixes hidden dropdowns */}
                       <button
                         data-nav-top

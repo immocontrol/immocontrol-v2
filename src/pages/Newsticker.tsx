@@ -200,11 +200,23 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, "text/xml");
-    const entries = doc.querySelectorAll("item, entry");
+    const parseError = doc.querySelector("parsererror");
+    if (parseError) return [];
+    let entries = doc.querySelectorAll("item, entry");
+    if (entries.length === 0) {
+      const byTag = doc.getElementsByTagName("item");
+      if (byTag.length > 0) entries = byTag as unknown as NodeListOf<Element>;
+      else {
+        const byEntry = doc.getElementsByTagName("entry");
+        if (byEntry.length > 0) entries = byEntry as unknown as NodeListOf<Element>;
+      }
+    }
     entries.forEach((entry) => {
       const title = entry.querySelector("title")?.textContent?.trim() || "";
-      const link = entry.querySelector("link")?.textContent?.trim()
-        || entry.querySelector("link")?.getAttribute("href") || "";
+      const linkEl = entry.querySelector("link");
+      const link = (linkEl?.textContent?.trim() || linkEl?.getAttribute("href") || "").trim();
+      const guid = entry.querySelector("guid")?.textContent?.trim() || "";
+      const articleUrl = link || guid;
       const description = (
         entry.querySelector("description")?.textContent?.trim()
         || entry.querySelector("summary")?.textContent?.trim()
@@ -219,12 +231,12 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
         || entry.querySelector("enclosure")?.getAttribute("url")
         || undefined;
       const imageUrl = mediaUrl && /\.(jpg|jpeg|png|webp|gif)/i.test(mediaUrl) ? mediaUrl : undefined;
-      if (title && link) {
+      if (title && articleUrl) {
         try {
           const category = categoriseNews(title, description);
           const region = detectRegion(title, description);
           const sentiment = detectSentiment(title, description);
-          const safeId = `${source}-${encodeURIComponent(link).slice(0, 120)}`;
+          const safeId = `${source}-${encodeURIComponent(articleUrl).slice(0, 120)}`;
           let publishedAt: string;
           try {
             publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
@@ -232,7 +244,7 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
           } catch {
             publishedAt = new Date().toISOString();
           }
-          items.push({ id: safeId, title, description, url: link, source, sourceIcon: icon, publishedAt, category, region, imageUrl, sentiment });
+          items.push({ id: safeId, title, description, url: articleUrl, source, sourceIcon: icon, publishedAt, category, region, imageUrl, sentiment });
         } catch {
           /* skip malformed item */
         }
@@ -249,22 +261,24 @@ const CORS_PROXIES = [
   (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   (url: string) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+  (url: string) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
 ];
 
 async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
   for (const buildProxyUrl of CORS_PROXIES) {
     try {
-      /* Reduced timeout from 10s to 6s for faster failover between proxies */
-      const resp = await fetch(buildProxyUrl(feedUrl), { signal: AbortSignal.timeout(6000) });
+      const proxyUrl = buildProxyUrl(feedUrl);
+      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
       if (!resp.ok) continue;
       const text = await resp.text();
+      if (!text || text.length < 100) continue;
       const items = parseRSSItems(text, source, icon);
       if (items.length > 0) return items;
     } catch {
       continue;
     }
   }
-  /* Last resort: rss2json API */
+  /* Last resort: rss2json API (free tier may require API key) */
   try {
     const resp = await fetch(
       `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
@@ -272,7 +286,7 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
     );
     if (resp.ok) {
       const data = await resp.json();
-      if (data.status === "ok" && Array.isArray(data.items)) {
+      if (data.status === "ok" && Array.isArray(data.items) && data.items.length > 0) {
         return data.items.map((item: { title?: string; link?: string; description?: string; pubDate?: string; thumbnail?: string }, idx: number) => {
           const title = item.title?.trim() || "";
           const description = (item.description || "").replace(/<[^>]+>/g, "").slice(0, 300);
@@ -864,15 +878,26 @@ const Newsticker = () => {
 
       {/* News list */}
       {filteredNews.length === 0 ? (
-        <div className="text-center py-12">
-          <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
+        <div className="text-center py-12 px-4">
+          <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground mb-1">
             {showBookmarksOnly
               ? "Keine Lesezeichen vorhanden."
               : news.length === 0
-                ? "Keine Nachrichten verf\u00fcgbar."
+                ? "Es konnten keine Nachrichten geladen werden."
                 : "Keine Nachrichten f\u00fcr diese Filter."}
           </p>
+          {news.length === 0 && !showBookmarksOnly && (
+            <p className="text-xs text-muted-foreground mb-4 max-w-md mx-auto">
+              Die RSS-Quellen werden \u00fcber CORS-Proxies geladen. Bitte erneut versuchen oder sp\u00e4ter die Seite aktualisieren.
+            </p>
+          )}
+          {news.length === 0 && !showBookmarksOnly && (
+            <Button variant="default" size="sm" className="gap-2" onClick={() => fetchAllNews(true)} disabled={refreshing}>
+              <RefreshCw className={refreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+              Erneut versuchen
+            </Button>
+          )}
         </div>
       ) : viewMode === "compact" ? (
         /* ─── Compact list view ─── */
