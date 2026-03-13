@@ -647,7 +647,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
       <main
         id="main-content"
-        className="flex-1 min-h-0 container py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-6 overflow-x-hidden overflow-y-auto min-w-0"
+        role="main"
+        tabIndex={-1}
+        className="flex-1 min-h-0 container py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-6 overflow-x-hidden overflow-y-auto min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onKeyDown={enterToNextHandler}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}

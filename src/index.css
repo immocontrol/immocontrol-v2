@@ -145,12 +145,17 @@
     border-radius: calc(var(--radius) - 4px);
   }
 
-  /* Smooth scroll behavior */
+  /* Smooth scroll behavior; reduced-motion: Nutzerpräferenz respektieren (A11y) */
   html {
     scroll-behavior: smooth;
     /* IMP-7: Prevent horizontal scroll globally
        Use clip instead of hidden — hidden creates a scroll context that breaks position:sticky */
     overflow-x: clip;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto !important;
+    }
   }
 
   /* IMP-8: Prevent horizontal overflow on body */
@@ -1304,10 +1309,12 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* iOS-26 Switch: Pill-Track (grau/grün), weißer Knob – !important damit Radix-Defaults überschrieben werden */
+/* iOS-26 Switch: Pill-Track (grau/grün), weißer Knob – wie im Browser; auf iPhone native Darstellung abschalten */
 button.ui-switch-ios26,
 [data-radix-collection-item].ui-switch-ios26,
 .ui-switch-ios26 {
+  -webkit-appearance: none !important;
+  appearance: none !important;
   display: inline-flex !important;
   align-items: center !important;
   height: 1.5rem !important;
@@ -1319,6 +1326,8 @@ button.ui-switch-ios26,
   background: #e5e5e5 !important;
   transition: background-color 0.2s ease-out !important;
   -webkit-tap-highlight-color: transparent !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 .ui-switch-ios26[data-state="checked"] {
   background: #34c759 !important;
@@ -1331,6 +1340,8 @@ button.ui-switch-ios26,
 }
 .ui-switch-ios26-thumb,
 [data-state].ui-switch-ios26-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
   width: 1.25rem !important;
   height: 1.25rem !important;
   min-width: 1.25rem !important;
@@ -1339,6 +1350,7 @@ button.ui-switch-ios26,
   border: none !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
   transition: transform 0.2s ease-out !important;
+  box-sizing: border-box !important;
 }
 .ui-switch-ios26-thumb[data-state="unchecked"] {
   transform: translateX(0) !important;

@@ -42,3 +42,8 @@ export function toastErrorWithRetry(
 export function toastSaved(label?: string) {
   toastSuccess(label ? `${label} gespeichert` : "Gespeichert");
 }
+
+/** Einheitliche Meldung bei Netzwerkfehlern (statt generischem "Fehler"). */
+export function toastNetworkError(duration = TOAST_DURATION_ERROR) {
+  toast.error("Verbindungsproblem. Bitte prüfe deine Internetverbindung.", { duration });
+}

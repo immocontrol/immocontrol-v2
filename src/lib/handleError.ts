@@ -5,6 +5,7 @@
  */
 import { trackError, copyErrorReportToClipboard } from "@/lib/errorTracking";
 import { toast } from "sonner";
+import { toastNetworkError } from "@/lib/toastMessages";
 
 export type ErrorContext =
   | "supabase"
@@ -93,6 +94,10 @@ export function handleError(error: unknown, options: HandleErrorOptions = {}): v
 
   // Show toast unless silent
   if (showToast && !silent) {
+    if (context === "network") {
+      toastNetworkError();
+      return;
+    }
     const message =
       toastMessage ||
       getFriendlyMessage(err, context) ||

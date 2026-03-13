@@ -380,10 +380,10 @@ const Settings = () => {
       {/* Mobile: Spacer damit der Inhalt nicht unter der fixierten Tab-Leiste beginnt */}
       <div className="lg:hidden shrink-0 w-full" style={{ height: mobileTabBarHeight }} aria-hidden />
 
-      {/* Desktop: Sidebar (nur ab lg) — scrollt mit der Seite mit, kein internes Scroll */}
-      <aside className="hidden lg:block w-48 shrink-0 z-10 bg-background border-r border-border pr-2 -mr-2">
-          <nav className="w-full flex flex-col py-1" aria-label="Einstellungen-Navigation">
-          <div className="py-1">
+      {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar; innen scrollt nur die Sektionen-Liste */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-48 lg:shrink-0 lg:self-start lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] z-10 bg-background border-r border-border pr-2 -mr-2">
+          <nav className="w-full flex flex-col min-h-0 flex-1" aria-label="Einstellungen-Navigation">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1">
             {(() => {
               const activeIdx = filteredSettingsSections.findIndex(s => s.id === activeSection);
               const sectionsWithoutDanger = filteredSettingsSections.filter(s => s.id !== "gefahrenzone");
@@ -426,8 +426,8 @@ const Settings = () => {
               });
             })()}
           </div>
-          {/* Gefahrenzone unter den restlichen Sektionen */}
-          <div className="pt-2 mt-2 border-t border-border">
+          {/* Gefahrenzone immer am unteren Rand der Sidebar */}
+          <div className="shrink-0 pt-2 mt-auto border-t border-border">
             <div className="relative">
               <button
                 data-settings-nav="gefahrenzone"

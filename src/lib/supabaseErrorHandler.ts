@@ -4,6 +4,7 @@
  */
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { toastNetworkError } from "@/lib/toastMessages";
 
 export interface SupabaseResult<T> {
   data: T | null;
@@ -64,7 +65,10 @@ export function handleSupabaseResult<T>(
       details: result.error.details,
     });
     if (showToast) {
-      toast.error(userMessage);
+      const isNetwork =
+        result.error.message.includes("Failed to fetch") || result.error.message.includes("NetworkError");
+      if (isNetwork) toastNetworkError();
+      else toast.error(userMessage);
     }
     return null;
   }
@@ -96,7 +100,7 @@ export async function withSupabaseError<T>(
     const message = err instanceof Error ? err.message : "Unbekannter Fehler";
     logger.error(`Supabase exception in ${context}`, context, { message });
     if (options?.showToast !== false) {
-      toast.error("Netzwerkfehler \u2014 bitte erneut versuchen");
+      toastNetworkError();
     }
     return null;
   }
