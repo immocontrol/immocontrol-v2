@@ -43,9 +43,9 @@ workflows:
       - name: Build web app (Vite)
         script: npm run build
       - name: Add iOS platform (falls noch nicht vorhanden)
-        script: npx cap add ios || true
+        script: npx @capacitor/cli add ios || true
       - name: Sync Capacitor iOS
-        script: npx cap sync ios
+        script: npx @capacitor/cli sync ios
       - name: Keychain für Code Signing
         script: keychain initialize
       - name: Signing-Dateien von App Store Connect holen
