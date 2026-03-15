@@ -380,8 +380,10 @@ const Settings = () => {
       {/* Mobile: Spacer damit der Inhalt nicht unter der fixierten Tab-Leiste beginnt */}
       <div className="lg:hidden shrink-0 w-full" style={{ height: mobileTabBarHeight }} aria-hidden />
 
-      {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar; innen scrollt nur die Sektionen-Liste */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-48 lg:shrink-0 lg:self-start lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] z-10 bg-background border-r border-border pr-2 -mr-2">
+      {/* Desktop: Sidebar (nur ab lg) — fixed, bleibt beim Hoch/Runterscrollen immer sichtbar; innen scrollt nur die Sektionen-Liste */}
+      <aside
+        className="hidden lg:flex lg:flex-col lg:w-48 lg:flex-none lg:fixed lg:left-[max(1.5rem,env(safe-area-inset-left))] lg:top-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:bottom-0 lg:h-[calc(100vh-3.5rem)] z-10 bg-background border-r border-border pr-2"
+      >
           <nav className="w-full flex flex-col min-h-0 flex-1" aria-label="Einstellungen-Navigation">
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1">
             {(() => {
@@ -458,8 +460,8 @@ const Settings = () => {
           </nav>
       </aside>
 
-      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar; overflow-x nur hier, damit sticky Tab-Leiste nicht bricht */}
-      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 overflow-x-hidden">
+      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben fixierter Sidebar (ml-48 = Platz für Sidebar) */}
+      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 lg:ml-48 overflow-x-hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-6 w-6 text-primary" />
