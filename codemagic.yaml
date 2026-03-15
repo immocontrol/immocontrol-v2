@@ -45,9 +45,9 @@ workflows:
       - name: Add and sync iOS platform
         script: |
           if [ ! -d "ios/App" ]; then
-            npx @capacitor/cli add ios
+            ./node_modules/.bin/cap add ios
           fi
-          npx @capacitor/cli sync ios
+          ./node_modules/.bin/cap sync ios
       - name: Keychain für Code Signing
         script: keychain initialize
       - name: Signing-Dateien von App Store Connect holen
