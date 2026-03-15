@@ -112,7 +112,7 @@ export function BulkRentAdjustment() {
     } finally {
       setIsApplying(false);
     }
-  }, [preview, value]);
+  }, [preview, value, queryClient]);
 
   if (tenants.length === 0) return null;
 

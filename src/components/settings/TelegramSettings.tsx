@@ -49,7 +49,7 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
   });
   const webhookActive = !!webhookConfig?.id;
   const manusRepliesEnabled = !!webhookConfig?.manus_replies_enabled;
-  const invalidateWebhook = () => queryClient.invalidateQueries({ queryKey: ["telegram_webhook_config", user?.id] });
+  const invalidateWebhook = useCallback(() => queryClient.invalidateQueries({ queryKey: ["telegram_webhook_config", user?.id] }), [queryClient, user?.id]);
 
   const telegram = useTelegramBot();
 

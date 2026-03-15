@@ -67,7 +67,7 @@ export const MobileOfflineBanner = memo(function MobileOfflineBanner({
     } finally {
       setSyncing(false);
     }
-  }, [onSync, syncing, haptic]);
+  }, [onSync, syncing, haptic, syncResetTimer]);
 
   // Don't show if online and no queue
   if (isOnline && queueCount === 0 && !justSynced) return null;

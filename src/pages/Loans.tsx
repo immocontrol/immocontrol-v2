@@ -287,7 +287,7 @@ const Loans = () => {
     },
   });
 
-  const openEdit = (l: Loan) => {
+  const openEdit = useCallback((l: Loan) => {
     setEditLoan(l);
     setForm({
       property_id: l.property_id, bank_name: l.bank_name,
@@ -300,7 +300,7 @@ const Loans = () => {
     });
     setBankSearch(l.bank_name);
     setOpen(true);
-  };
+  }, []);
 
   /* IMP-24: Memoize property lookup helpers to avoid re-creation on every render */
   const getPropertyOwnership = useCallback((propId: string) => properties.find(p => p.id === propId)?.ownership || "privat", [properties]);

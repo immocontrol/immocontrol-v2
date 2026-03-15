@@ -97,7 +97,7 @@ export const MobilePropertyCompare = memo(function MobilePropertyCompare({
     return allNormalized;
   }, [properties, metricKeys, showRadar]);
 
-  const radarColors = ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b"];
+  const radarColors = useMemo(() => ["#3b82f6", "#ef4444", "#22c55e", "#f59e0b"], []);
 
   // SVG radar chart
   const renderRadar = useCallback(() => {

@@ -96,8 +96,9 @@ export const MobileMultiStepUpload = memo(function MobileMultiStepUpload({
 
   // Cleanup object URLs on unmount to prevent memory leaks
   useEffect(() => {
+    const urls = objectUrlsRef.current;
     return () => {
-      objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      urls.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
 
