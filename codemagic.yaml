@@ -1,0 +1,81 @@
+# ImmoControl – Codemagic CI/CD für iOS (Vite + React + Capacitor)
+# Kein React Native: Web-App bauen, dann Capacitor iOS, dann Xcode-Archiv.
+#
+# Vor dem ersten Build in Codemagic:
+# 1. In Codemagic UI: Application/Team → Environment variables → Gruppen anlegen:
+#    - app_store_credentials (APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY)
+#    - certificate_credentials (CERTIFICATE_PRIVATE_KEY)
+#    Siehe: https://docs.codemagic.io/code-signing-yaml/signing-ios/
+# 2. App in App Store Connect anlegen, dann APP_STORE_APPLE_ID (App-ID Nummer) in Umgebungsvariablen setzen.
+
+workflows:
+  ios-immo-control:
+    name: ImmoControl iOS
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - app_store_credentials
+        - certificate_credentials
+      vars:
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.immocontrol.app"
+        # APP_STORE_APPLE_ID: in Codemagic UI setzen (App Store Connect → App → General → App Information)
+      xcode: latest
+      node: 20
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - node_modules
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: "*"
+          include: true
+          source: true
+    scripts:
+      - name: npm install
+        script: npm ci
+      - name: Build web app (Vite)
+        script: npm run build
+      - name: Add iOS platform (falls noch nicht vorhanden)
+        script: npx cap add ios || true
+      - name: Sync Capacitor iOS
+        script: npx cap sync ios
+      - name: Keychain für Code Signing
+        script: keychain initialize
+      - name: Signing-Dateien von App Store Connect holen
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+      - name: Zertifikate in Keychain
+        script: keychain add-certificates
+      - name: Code Signing in Xcode-Projekt setzen
+        script: xcode-project use-profiles
+      - name: Build-Nummer erhöhen
+        working_directory: ios/App
+        script: |
+          if [ -n "${APP_STORE_APPLE_ID}" ]; then
+            agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID") + 1))
+          else
+            agvtool new-version -all $((${BUILD_NUMBER:-1} + 1))
+          fi
+      - name: IPA bauen
+        script: xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+      email:
+        recipients:
+          - deine-email@example.com   # In Codemagic UI durch deine E-Mail ersetzen oder hier anpassen
+        notify:
+          success: true
+          failure: true
