@@ -292,7 +292,7 @@ serve(async (req) => {
         console.error("telegram-webhook Manus:", e);
         try {
           await sendTelegram(cfg.bot_token!, chat.id, "Antwort konnte nicht erstellt werden. Bitte später erneut versuchen.");
-        } catch {}
+        } catch (err) { console.warn("Fallback send failed", err); }
       }
       return new Response("OK", { status: 200 });
     }

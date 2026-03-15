@@ -249,6 +249,21 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     { key: "privat", label: "Privat" },
   ];
 
+  /* UX-1: Kurz-Hinweis beim ersten Besuch (dismissible, localStorage) — before any early return (rules-of-hooks) */
+  const [showDashboardHint, setShowDashboardHint] = useState(() => {
+    try {
+      return localStorage.getItem("immocontrol_dashboard_hint_dismissed") !== "1";
+    } catch {
+      return true;
+    }
+  });
+  const dismissDashboardHint = useCallback(() => {
+    setShowDashboardHint(false);
+    try {
+      localStorage.setItem("immocontrol_dashboard_hint_dismissed", "1");
+    } catch { /* ignore */ }
+  }, []);
+
   // Feature 6: Loading skeleton — MOB-10: Enhanced skeleton screens
   if (loading) {
     return <DashboardSkeleton />;
@@ -307,20 +322,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     );
   }
 
-  /* UX-1: Kurz-Hinweis beim ersten Besuch (dismissible, localStorage) */
-  const [showDashboardHint, setShowDashboardHint] = useState(() => {
-    try {
-      return localStorage.getItem("immocontrol_dashboard_hint_dismissed") !== "1";
-    } catch {
-      return true;
-    }
-  });
-  const dismissDashboardHint = useCallback(() => {
-    setShowDashboardHint(false);
-    try {
-      localStorage.setItem("immocontrol_dashboard_hint_dismissed", "1");
-    } catch { /* ignore */ }
-  }, []);
 
   /* IMP20-2: Use pre-computed stats from PropertyContext — eliminates 3 redundant reduce() calls */
   const totalSqm = stats.totalSqm;
@@ -561,7 +562,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               <TooltipTrigger asChild>
                 <span className="inline-flex cursor-help" aria-label="Hilfe zu LTV"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">Loan-to-Value: Darlehen in % des Gesamtwerts. Unter 60 % gilt als solide.</TooltipContent>
+              <TooltipContent side="top" className="max-w-xs">Loan-to-Value: Darlehen in % des Gesamtwerts. Unter 60% gilt als solide.</TooltipContent>
             </Tooltip>
           </p>
           <p className={`text-lg font-bold ${portfolioLTV <= 60 ? "text-profit" : portfolioLTV <= 80 ? "text-gold" : "text-loss"}`}>{portfolioLTV.toFixed(1)}%</p>
@@ -573,7 +574,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
               <TooltipTrigger asChild>
                 <span className="inline-flex cursor-help" aria-label="Hilfe zu Leerstand"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
               </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">Anteil nicht vermieteter Einheiten am Gesamtbestand. Unter 10 % gilt als gut.</TooltipContent>
+              <TooltipContent side="top" className="max-w-xs">Anteil nicht vermieteter Einheiten am Gesamtbestand. Unter 10% gilt als gut.</TooltipContent>
             </Tooltip>
           </p>
           <p className={`text-lg font-bold ${vacancyRate === 0 ? "text-profit" : vacancyRate <= 10 ? "text-gold" : "text-loss"}`}>{vacancyRate.toFixed(0)}%</p>
