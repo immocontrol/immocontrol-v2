@@ -1,0 +1,10 @@
+{
+  "appId": "com.immocontrol.app",
+  "appName": "ImmoControl",
+  "webDir": "dist",
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

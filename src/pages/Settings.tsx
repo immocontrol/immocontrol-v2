@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search, Eye, EyeOff, Check, Bug } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Eye, EyeOff, Check, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,7 +76,6 @@ const Settings = () => {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const mobileTabBarRef = useRef<HTMLDivElement>(null);
   const [uiZoom, setUIZoom] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("immocontrol_ui_zoom") || "100" : "100"));
-  const [settingsSearchQuery, setSettingsSearchQuery] = useState("");
   /* E-Mail ändern: direkt bei Profil, kein eigenes Sektion */
   const [emailStep, setEmailStep] = useState<"idle" | "password" | "new-email" | "new-code">("idle");
   const [emailPassword, setEmailPassword] = useState("");
@@ -85,13 +84,10 @@ const Settings = () => {
   const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   const filteredSettingsSections = useMemo(() => {
-    const q = settingsSearchQuery.trim().toLowerCase();
-    const main = !q ? [...SETTINGS_SECTIONS_MAIN] : SETTINGS_SECTIONS_MAIN.filter((s) => s.label.toLowerCase().includes(q));
-    const withDanger = q ? (GEFAHRENZONE_SECTION.label.toLowerCase().includes(q) ? [GEFAHRENZONE_SECTION] : []) : [GEFAHRENZONE_SECTION];
-    let list = [...main, ...withDanger];
+    let list = [...SETTINGS_SECTIONS];
     if (isMobile) list = list.filter((s) => s.id !== "tastenkombinationen");
     return list;
-  }, [settingsSearchQuery, isMobile]);
+  }, [isMobile]);
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
@@ -380,8 +376,10 @@ const Settings = () => {
       {/* Mobile: Spacer damit der Inhalt nicht unter der fixierten Tab-Leiste beginnt */}
       <div className="lg:hidden shrink-0 w-full" style={{ height: mobileTabBarHeight }} aria-hidden />
 
-      {/* Desktop: Sidebar (nur ab lg) — sticky, bleibt beim Scrollen sichtbar; innen scrollt nur die Sektionen-Liste */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-48 lg:shrink-0 lg:self-start lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] z-10 bg-background border-r border-border pr-2 -mr-2">
+      {/* Desktop: Sidebar (nur ab lg) — fixed, bleibt beim Hoch/Runterscrollen immer sichtbar; innen scrollt nur die Sektionen-Liste */}
+      <aside
+        className="hidden lg:flex lg:flex-col lg:w-48 lg:flex-none lg:fixed lg:left-[max(1.5rem,env(safe-area-inset-left))] lg:top-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:bottom-0 lg:h-[calc(100vh-3.5rem)] z-10 bg-background border-r border-border pr-2"
+      >
           <nav className="w-full flex flex-col min-h-0 flex-1" aria-label="Einstellungen-Navigation">
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1">
             {(() => {
@@ -458,29 +456,12 @@ const Settings = () => {
           </nav>
       </aside>
 
-      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben Sidebar; overflow-x nur hier, damit sticky Tab-Leiste nicht bricht */}
-      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 overflow-x-hidden">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Main settings content — mittig zentriert; auf Desktop neben fixierter Sidebar (lg:ml-48) */}
+      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 lg:ml-48 overflow-x-hidden">
+        <div className="w-full flex justify-center">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
-          </div>
-          {/* C8: Suchfeld „Einstellung finden“ — filtert Tabs/Sidebar */}
-          <div className="w-full sm:w-56 shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Einstellung finden…"
-                value={settingsSearchQuery}
-                onChange={(e) => setSettingsSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm"
-                aria-label="Einstellung suchen"
-              />
-            </div>
-            {settingsSearchQuery.trim() && filteredSettingsSections.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1.5">Keine Einstellung für „{settingsSearchQuery.trim()}“ gefunden.</p>
-            )}
           </div>
         </div>
 

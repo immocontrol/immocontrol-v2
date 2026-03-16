@@ -3,18 +3,26 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string) ?? "";
-const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ?? "";
+/** Prefer anon key (Supabase docs); fallback to publishable key for compatibility. */
+const SUPABASE_ANON_KEY =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ?? (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ?? "";
 
-/** True if Supabase env vars were set at build time (required for Netlify/Vercel etc.). */
+/** True if Supabase env vars were set at build time (required for Deploy). */
 export const isSupabaseConfigured = (): boolean =>
-  !!SUPABASE_URL && SUPABASE_URL.length > 5 && !!SUPABASE_PUBLISHABLE_KEY && SUPABASE_PUBLISHABLE_KEY.length > 10;
+  !!SUPABASE_URL && SUPABASE_URL.length > 5 && !!SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.length > 10;
+
+/** URL and anon key for direct fetch calls (e.g. Edge Functions). Uses same env as client. */
+export const getSupabaseEnv = (): { url: string; anonKey: string } => ({
+  url: SUPABASE_URL,
+  anonKey: SUPABASE_ANON_KEY,
+});
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(
   SUPABASE_URL || "https://placeholder.supabase.co",
-  SUPABASE_PUBLISHABLE_KEY || "placeholder-key",
+  SUPABASE_ANON_KEY || "placeholder-key",
   {
     auth: {
       storage: localStorage,

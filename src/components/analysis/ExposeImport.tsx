@@ -8,6 +8,7 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
 import { saveExposeHistoryEntry } from "./ExposeHistory";
 import { extractDealFromExposeText, isDeepSeekConfigured } from "@/integrations/ai/extractors";
+import { getSupabaseEnv } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -77,13 +78,14 @@ const ExposeImport = ({ onImport }: Props) => {
     setResult(null);
 
     try {
+      const { url: baseUrl, anonKey } = getSupabaseEnv();
       const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-expose`,
+        `${baseUrl}/functions/v1/extract-expose`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${anonKey}`,
           },
           body: JSON.stringify({ url: url.trim() }),
         }

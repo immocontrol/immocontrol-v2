@@ -6,6 +6,7 @@
  * yield computation, loan amortization, and DATEV export tests.
  */
 import { describe, it, expect } from "vitest";
+import { ROUTES, propertyDetail } from "@/lib/routes";
 
 /* ── FUND-15: Auth Flow Tests ── */
 
@@ -72,6 +73,18 @@ describe("FUND-15: Auth Flows", () => {
       expect(isValidCode("1234567")).toBe(false); // too long
       expect(isValidCode("abcdef")).toBe(false); // not digits
     });
+  });
+});
+
+describe("Routes and helpers", () => {
+  it("should expose public legal routes without login", () => {
+    expect(ROUTES.DATENSCHUTZ).toBe("/datenschutz");
+    expect(ROUTES.IMPRESSUM).toBe("/impressum");
+    expect(ROUTES.NUTZUNGSBEDINGUNGEN).toBe("/nutzungsbedingungen");
+  });
+
+  it("propertyDetail should build correct path", () => {
+    expect(propertyDetail("abc-123")).toBe("/objekt/abc-123");
   });
 });
 

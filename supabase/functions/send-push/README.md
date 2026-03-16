@@ -31,3 +31,7 @@ await supabase.functions.invoke("send-push", {
 2. Optional: `VAPID_CONTACT_MAIL` (z. B. `noreply@immocontrol.app`).
 
 Ohne `VAPID_KEYS_JSON` antwortet die Function mit 503 und Hinweis auf die Konfiguration.
+
+## iOS / Apple Watch (APNs)
+
+Die App speichert APNs-Geräte-Tokens in der Tabelle **`device_tokens`** (Spalten: `user_id`, `token`, `platform = 'ios'`). Um wichtige Benachrichtigungen auch auf dem iPhone und gespiegelt auf der **Apple Watch** anzuzeigen, muss ein separater Send-Weg (z. B. eigene Edge Function oder externer Service) die Nachrichten per **APNs** an diese Tokens senden. Dabei für „wichtige“ Benachrichtigungen den APNs-Header **`apns-push-type: alert`** und im Payload **`aps.relevance-score`** bzw. **`aps.interruption-level`** nutzen; für sofortige Anzeige inkl. Watch empfiehlt Apple **`interruption-level: time-sensitive`** (siehe [Apple: Sending Notification Requests to APNs](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/sending_notification_requests_to_apns)). Die vorliegende `send-push`-Function versendet nur Web-Push (VAPID); APNs-Versand wäre eine Erweiterung mit Apple Developer Key (.p8) und z. B. `node-apn` oder einem APNs-HTTP/2-Client.

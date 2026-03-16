@@ -212,8 +212,3 @@ export function isPointInBrandenburgForBuildings(lat: number, lon: number): bool
   return isPointInBrandenburg(lat, lon);
 }
 
-/** @deprecated Nutze isBboxInBrandenburg (kein Hook). */
-export const useBrandenburgBuildings = isBboxInBrandenburg;
-
-/** @deprecated Nutze isPointInBrandenburgForBuildings (kein Hook). */
-export const useBrandenburgBuildingsForPoint = isPointInBrandenburgForBuildings;

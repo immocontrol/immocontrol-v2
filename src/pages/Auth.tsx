@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Building2, Mail, Lock, User, Eye, EyeOff, ArrowLeft, KeyRound, Shield, Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { PasswordStrength } from "@/components/PasswordStrength";
@@ -544,7 +544,14 @@ const Auth = () => {
               </button>
               <button
                 type="button"
-                onClick={async () => { await supabase.auth.signOut(); setNeeds2FA(false); setTotpCode(""); setBackupCode(""); }}
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                  } catch { /* ignore */ }
+                  setNeeds2FA(false);
+                  setTotpCode("");
+                  setBackupCode("");
+                }}
                 className="text-xs text-muted-foreground hover:text-foreground text-center"
               >
                 Zurück zur Anmeldung
@@ -801,11 +808,33 @@ const Auth = () => {
             </p>
             {mode === "register" && (
               <p className="text-[10px] text-muted-foreground">
-                Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen und Datenschutzrichtlinie.
+                Mit der Registrierung akzeptierst du unsere{" "}
+                <Link to={ROUTES.NUTZUNGSBEDINGUNGEN} className="text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary rounded">
+                  Nutzungsbedingungen
+                </Link>
+                {" "}und{" "}
+                <Link to={ROUTES.DATENSCHUTZ} className="text-primary hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary rounded">
+                  Datenschutzrichtlinie
+                </Link>
+                .
               </p>
             )}
           </div>
         )}
+        <div className="text-center flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <Link
+            to={ROUTES.DATENSCHUTZ}
+            className="text-[10px] text-muted-foreground hover:text-foreground hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary rounded"
+          >
+            Datenschutz
+          </Link>
+          <Link
+            to={ROUTES.IMPRESSUM}
+            className="text-[10px] text-muted-foreground hover:text-foreground hover:underline focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary rounded"
+          >
+            Impressum
+          </Link>
+        </div>
       </div>
     </div>
   );

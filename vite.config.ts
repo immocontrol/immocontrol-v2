@@ -9,6 +9,7 @@ const DEFAULT_OG_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/db
 /** Plugins: optional tool-specific taggers (e.g. lovable-tagger). Build works without them. */
 async function getPlugins(mode: string, buildVersion?: string) {
   const env = loadEnv(mode, process.cwd(), "");
+  const wantAnalyze = process.env.ANALYZE === "1" || process.env.ANALYZE === "true";
   const plugins: unknown[] = [
     react(),
     {
@@ -30,6 +31,14 @@ async function getPlugins(mode: string, buildVersion?: string) {
     if (mode === "development" && componentTagger) plugins.push(componentTagger());
   } catch {
     /* optional: no tagger — run with any IDE/tool */
+  }
+  if (wantAnalyze) {
+    try {
+      const { visualizer } = await import("rollup-plugin-visualizer");
+      plugins.push(visualizer({ open: false, filename: "dist/stats.html", gzipSize: true }));
+    } catch {
+      /* optional: npm install rollup-plugin-visualizer für build:analyze */
+    }
   }
   plugins.push({
     name: "version-json",

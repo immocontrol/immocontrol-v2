@@ -1,0 +1,162 @@
+# ImmoControl – Codemagic CI/CD für iOS (Vite + React + Capacitor)
+# Kein React Native: Web-App bauen, dann Capacitor iOS, dann Xcode-Archiv.
+#
+# Vor dem ersten Build in Codemagic:
+# 0. App-Backend (Pflicht, sonst "Konfiguration fehlt" auf dem Gerät):
+#    Gruppe "supabase_config" (oder beliebiger Name) mit:
+#    - VITE_SUPABASE_URL = deine Supabase Project URL
+#    - VITE_SUPABASE_ANON_KEY oder VITE_SUPABASE_PUBLISHABLE_KEY = Supabase anon key
+#    Gruppe in environment.groups eintragen (siehe unten).
+# 1. app_store_credentials (als "Secure"): APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY
+# 2. certificate_credentials: CERTIFICATE_PRIVATE_KEY
+# 3. APP_STORE_APPLE_ID: numerische App-ID (App Store Connect → App → General).
+# Siehe: https://docs.codemagic.io/code-signing-yaml/signing-ios/
+#
+# 422 "Another build in the same train is already in beta review": Pro Version darf nur ein Build
+# gleichzeitig in TestFlight-Review sein. Version in package.json erhöhen (z. B. 1.0.0 → 1.0.1),
+# pushen und neuen Build starten – dann ist der neue Build eine andere Train.
+
+workflows:
+  ios-immo-control:
+    name: ImmoControl iOS
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - supabase_config      # VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY oder VITE_SUPABASE_PUBLISHABLE_KEY
+        - app_store_credentials
+        - certificate_credentials
+      vars:
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.immocontrol.app"
+        # APP_STORE_APPLE_ID: in Codemagic UI setzen (App Store Connect → App → General → App Information)
+      xcode: latest
+      node: 20
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - node_modules
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: "*"
+          include: true
+          source: true
+    scripts:
+      - name: npm install
+        script: npm ci
+      - name: Supabase-Konfiguration prüfen (sonst "Konfiguration fehlt" in der App)
+        script: |
+          if [ -z "${VITE_SUPABASE_URL}" ]; then
+            echo "=============================================="
+            echo "Fehlende Supabase-Umgebungsvariablen"
+            echo "=============================================="
+            echo "VITE_SUPABASE_URL fehlt. Die App wird sonst mit 'Konfiguration fehlt' starten."
+            echo "In Codemagic: Gruppe 'supabase_config' (oder in environment.groups eintragen) mit:"
+            echo "  - VITE_SUPABASE_URL = deine Supabase Project URL"
+            echo "  - VITE_SUPABASE_ANON_KEY oder VITE_SUPABASE_PUBLISHABLE_KEY = Supabase anon key"
+            exit 1
+          fi
+          if [ -z "${VITE_SUPABASE_ANON_KEY}" ] && [ -z "${VITE_SUPABASE_PUBLISHABLE_KEY}" ]; then
+            echo "=============================================="
+            echo "Fehlende Supabase-Umgebungsvariablen"
+            echo "=============================================="
+            echo "Weder VITE_SUPABASE_ANON_KEY noch VITE_SUPABASE_PUBLISHABLE_KEY gesetzt."
+            echo "In Codemagic: In der Gruppe einen der beiden Keys setzen (Supabase Dashboard → API → anon public)."
+            exit 1
+          fi
+          echo "Supabase-Konfiguration vorhanden."
+      - name: App-Icon prüfen
+        script: |
+          if [ ! -f "resources/ios/AppIcon-1024.png" ]; then
+            echo "=============================================="
+            echo "App-Icon fehlt: resources/ios/AppIcon-1024.png"
+            echo "=============================================="
+            echo "Bitte diese Datei (1024x1024 PNG) ins Repo committen."
+            exit 1
+          fi
+          echo "App-Icon gefunden."
+      - name: Build web app (Vite)
+        script: npm run build
+      - name: Add and sync iOS platform
+        script: |
+          if [ ! -d "ios/App" ]; then
+            ./node_modules/.bin/cap add ios
+          fi
+          ./node_modules/.bin/cap sync ios
+      - name: iOS App-Icon setzen
+        script: chmod +x scripts/ios-app-icon.sh && ./scripts/ios-app-icon.sh
+      - name: Push Notifications (APNs) aktivieren
+        script: chmod +x scripts/ios-push-capability.sh && ./scripts/ios-push-capability.sh
+      - name: Keychain für Code Signing
+        script: keychain initialize
+      - name: App-Store-Credentials prüfen
+        script: |
+          if [ -z "${APP_STORE_CONNECT_ISSUER_ID}" ] || [ -z "${APP_STORE_CONNECT_KEY_IDENTIFIER}" ] || [ -z "${APP_STORE_CONNECT_PRIVATE_KEY}" ]; then
+            echo "=============================================="
+            echo "Fehlende App Store Connect Credentials"
+            echo "=============================================="
+            echo "In Codemagic: Application → Environment variables"
+            echo "Gruppe 'app_store_credentials' anlegen/zuweisen mit:"
+            echo "  - APP_STORE_CONNECT_ISSUER_ID (App Store Connect → Users and Access → Integrations)"
+            echo "  - APP_STORE_CONNECT_KEY_IDENTIFIER"
+            echo "  - APP_STORE_CONNECT_PRIVATE_KEY (Inhalt der .p8-Datei)"
+            echo "Siehe: https://docs.codemagic.io/code-signing-yaml/signing-ios/"
+            exit 1
+          fi
+      - name: Signing-Dateien von App Store Connect holen
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+      - name: Zertifikate in Keychain
+        script: keychain add-certificates
+      - name: Code Signing in Xcode-Projekt setzen
+        script: xcode-project use-profiles
+      - name: Export Compliance setzen (vor IPA-Build)
+        script: |
+          set -e
+          PLIST="ios/App/App/Info.plist"
+          if [ ! -f "$PLIST" ]; then echo "Error: $PLIST not found"; ls -la ios/App/ 2>/dev/null || true; exit 1; fi
+          /usr/libexec/PlistBuddy -c "Delete :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+          echo "Export Compliance in Info.plist:"
+          /usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST"
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          if [ -f "$PBXPROJ" ] && ! grep -q "INFOPLIST_KEY_ITSAppUsesNonExemptEncryption" "$PBXPROJ"; then
+            perl -i -0pe 's/(INFOPLIST_FILE = App\/Info\.plist;)/$1\n\t\t\tINFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;/g' "$PBXPROJ"
+            echo "Added INFOPLIST_KEY_ITSAppUsesNonExemptEncryption to project.pbxproj"
+          fi
+      - name: iOS-Version aus package.json setzen
+        script: |
+          VERSION=$(node -p "require('./package.json').version")
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" ios/App/App/Info.plist
+          echo "Marketing-Version auf $VERSION gesetzt."
+      - name: Build-Nummer erhöhen
+        working_directory: ios/App
+        script: |
+          if [ -n "${APP_STORE_APPLE_ID}" ]; then
+            agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID") + 1))
+          else
+            agvtool new-version -all $((${BUILD_NUMBER:-1} + 1))
+          fi
+      - name: IPA bauen
+        script: xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        # Numerische App-ID (altool braucht sie für Upload). In Codemagic als APP_STORE_APPLE_ID setzen.
+        apple_id: $APP_STORE_APPLE_ID
+        submit_to_testflight: true
+      email:
+        recipients:
+          - deine-email@example.com   # In Codemagic UI (Publishing → Email) ersetzen oder hier eintragen
+        notify:
+          success: true
+          failure: true

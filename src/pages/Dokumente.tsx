@@ -468,11 +468,16 @@ const Dokumente = () => {
                         size="icon"
                         className="h-8 w-8"
                         onClick={async () => {
-                          const { data } = await supabase.storage.from("property-documents").download(doc.file_path);
-                          if (data) {
-                            const url = URL.createObjectURL(data);
-                            setPdfPreviewUrl(url);
-                            setPreviewDoc(doc);
+                          try {
+                            const { data, error } = await supabase.storage.from("property-documents").download(doc.file_path);
+                            if (error) throw error;
+                            if (data) {
+                              const url = URL.createObjectURL(data);
+                              setPdfPreviewUrl(url);
+                              setPreviewDoc(doc);
+                            }
+                          } catch (e) {
+                            toastError("Vorschau konnte nicht geladen werden.");
                           }
                         }}
                       >

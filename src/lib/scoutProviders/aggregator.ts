@@ -133,7 +133,7 @@ export async function aggregatePOIsByBbox(
 
   const withBbox = providers.filter((p) => p.fetchPOIsByBbox);
   const allPois: ScoutPOI[] = [];
-  let allBuildings: BuildingWithSize[] = [];
+  const allBuildings: BuildingWithSize[] = [];
 
   for (const b of bboxes) {
     if (signal?.aborted) break;

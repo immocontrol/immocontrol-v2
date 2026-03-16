@@ -920,7 +920,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
             <div className="text-sm text-wrap-safe flex-1 min-w-0">
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
               <p className="text-muted-foreground mt-1">
-                Tipps: Bei „Ganzer Ort“ den Stadtnamen genau prüfen (z. B. „Berlin“ statt „Berlin Mitte“). Bei „Umkreis“ den Radius vergrößern (5 km, 10 km). Mindestfläche-Filter entfernen, falls gesetzt. Anderen Ort aus dem Suchverlauf probieren.
+                Tipps: Bei „Ganzer Ort“ den Stadtnamen genau prüfen (z. B. „Berlin“ statt „Berlin Mitte“). Bei „Umkreis“ den Radius vergrößern (5 km, 10 km). Mindestfläche-Filter entfernen, falls gesetzt. Anderen Ort aus dem Suchverlauf probieren.
               </p>
               <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 {lastBbox && (

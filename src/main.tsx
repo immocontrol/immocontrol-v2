@@ -3,8 +3,15 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerServiceWorker } from "@/lib/serviceWorkerRegistration";
 import { initSentryIfConfigured } from "@/lib/sentryInit";
+import { trackError } from "@/lib/errorTracking";
 
 initSentryIfConfigured();
+
+/* STABILITY: Track unhandled promise rejections so they don't fail silently */
+window.addEventListener("unhandledrejection", (event) => {
+  const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+  trackError(err, "unhandledrejection");
+});
 
 /* REDEPLOY-FIX: Version mismatch after redeploy can cause React 310 (hooks) when old chunks mix with new.
    Force full reload if server version differs from bundled version. */

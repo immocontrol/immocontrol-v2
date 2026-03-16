@@ -36,6 +36,29 @@ Dieses Projekt ist so aufgebaut, dass du die **Entwicklungsumgebung und das „V
 
 Der **Rest der Codebase** soll keine Referenzen auf Lovable, Replit, Cursor, Devin o. Ä. enthalten (außer in Kommentaren, die „optional“ oder „z. B.“ erwähnen).
 
+## Hauptmodule
+
+| Modul | Beschreibung |
+|-------|--------------|
+| **App.tsx** | Router, RoleRouter (Tenant/Handworker/Onboarding), geschützte Routen, Lazy-Loading der Seiten. |
+| **Auth** | `src/pages/Auth.tsx` + `useAuth` (`src/hooks/useAuth.tsx`): Login, Registrierung, 2FA, Passwort vergessen. Session über Supabase Auth. |
+| **PropertyContext** | `src/context/PropertyContext.tsx`: Objektliste, Stats (Rendite, Cashflow, etc.), CRUD über Supabase `properties`. |
+| **React Query** | Server-State; `queryKeys` in `src/lib/queryKeys.ts`; staleTime pro Entity in App.tsx. |
+| **Offline** | `useOfflineCache`, Service Worker (`public/sw.js`), Pending-Mutations-Queue. |
+
+## Auth-Flow
+
+1. **Einstieg:** Ungeloggt → Redirect auf `/auth`. Nach Login/Register prüft `RoleRouter` Rolle (`user_roles`) und Onboarding (`profiles.onboarding_completed`).
+2. **Rollen:** `tenant` → Mieterportal; `handworker` → Handwerker-Portal; sonst → Haupt-App mit AppLayout.
+3. **Session:** Supabase `autoRefreshToken: true`; Inaktivitäts-Hinweis nach 45 Min (`useInactivityHint`), Abmeldung nach 90 Min Inaktivität (`useSessionIdleTimeout`).
+4. **2FA:** Optional; nach Login AAL-Check; vertraute Geräte 30 Tage über localStorage.
+
+## Supabase-Nutzung
+
+- **Tabellen (Beispiele):** `properties`, `profiles`, `user_roles`, `tenants`, `loans`, `deals`, `property_viewings`, `documents`, etc. Typen in `src/integrations/supabase/types.ts`.
+- **Realtime:** `useRealtimeSync` invalidiert React-Query-Cache bei Änderungen von anderen Geräten.
+- **Edge Functions:** z. B. `immo-ai-chat` für KI; optional `VITE_DEEPSEEK_API_KEY` im Frontend für direkten DeepSeek-Call (Key dann im Client sichtbar – für Produktion Proxy empfohlen).
+
 ## Refactoring & Synergien
 
 - **Wiederverwendbare UI:** `ExpandableCard` (Collapsible-basiert) und Hook `useDisclosure` für einheitliches Aufklappen/Einklappen; weitere Widgets können schrittweise umgestellt werden.

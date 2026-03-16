@@ -25,6 +25,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useInactivityHint } from "@/hooks/useInactivityHint";
+import { useSessionIdleTimeout } from "@/hooks/useSessionIdleTimeout";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
 import { useNotificationChecks } from "@/hooks/useNotificationChecks";
 import { scheduleAutoBackup } from "@/lib/autoBackup";
@@ -72,6 +73,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { handleKeyDown: enterToNextHandler } = useEnterToNext();
 
   useInactivityHint();
+  useSessionIdleTimeout(signOut, !!user);
 
   /* Dokument- und Darlehens-Fristen → In-App + ggf. Browser-Benachrichtigungen */
   useNotificationChecks();
