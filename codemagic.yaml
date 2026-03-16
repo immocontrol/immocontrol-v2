@@ -151,8 +151,7 @@ workflows:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        # Numerische App-ID (altool braucht sie für Upload). In Codemagic als APP_STORE_APPLE_ID setzen.
-        apple_id: $APP_STORE_APPLE_ID
+        # apple_id weggelassen: Schema erwartet E-Mail; bei API-Key-Auth nicht nötig. Numerische App-ID nur als Env APP_STORE_APPLE_ID für Build-Nummer-Script.
         submit_to_testflight: true
       email:
         recipients:
