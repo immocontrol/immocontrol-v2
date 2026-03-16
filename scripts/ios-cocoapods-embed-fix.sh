@@ -21,9 +21,9 @@ if awk '/\[CP\] Embed Pods Frameworks/,/^[[:space:]]*};/ { if (/alwaysOutOfDate/
 fi
 
 # Füge alwaysOutOfDate = 1 in der [CP] Embed Pods Frameworks Build-Phase ein
-# (direkt nach der Zeile mit name = "[CP] Embed Pods Frameworks";)
+# (direkt nach der Zeile mit name = "[CP] Embed Pods Frameworks";, Einrückung übernehmen)
 if grep -q 'name = "\[CP\] Embed Pods Frameworks";' "$PBXPROJ"; then
-  perl -i -0pe 's/(name = "\[CP\] Embed Pods Frameworks";)(\s*\n)/$1$2\t\t\t\talwaysOutOfDate = 1;$2/g' "$PBXPROJ"
+  perl -i -0pe 's/(\s*)(name = "\[CP\] Embed Pods Frameworks";)(\s*\n)/$1$2$3$1alwaysOutOfDate = 1;$3/g' "$PBXPROJ"
   echo "project.pbxproj: alwaysOutOfDate = 1 für [CP] Embed Pods Frameworks gesetzt."
 else
   echo "Hinweis: [CP] Embed Pods Frameworks Phase nicht gefunden (evtl. keine Pods). Überspringe."

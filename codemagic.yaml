@@ -149,15 +149,10 @@ workflows:
         script: |
           ./scripts/ios-cocoapods-embed-fix.sh
           mkdir -p build
-          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME" 2>&1 | tee build/archive.log
-          r=${PIPESTATUS[0]}
-          if [ $r -ne 0 ]; then
-            echo ""
-            echo "========== ARCHIVE FAILED – LAST 300 LINES OF BUILD LOG =========="
-            tail -300 build/archive.log
-            echo "========== END LOG =========="
-            exit $r
-          fi
+          # Direkt xcodebuild ausführen, damit die echte Fehlerausgabe im Log erscheint
+          chmod +x scripts/ios-build-ipa-direct.sh
+          ./scripts/ios-build-ipa-direct.sh 2>&1 | tee build/archive.log
+          exit ${PIPESTATUS[0]}
     artifacts:
       - build/ios/ipa/*.ipa
       - build/archive.log
