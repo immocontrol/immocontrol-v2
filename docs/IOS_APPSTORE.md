@@ -36,6 +36,8 @@ Ohne gesetzte Credentials schlägt der Schritt „Signing-Dateien holen“ oder 
 
 Ohne diesen Schritt schlägt der Archiv-Schritt mit „doesn't include the aps-environment entitlement“ fehl.
 
+**Workaround (nur bis zum Profil-Fix):** In Codemagic eine **Umgebungsvariable** setzen: **`BUILD_WITHOUT_PUSH_CAPABILITY=1`**. Dann wird vor dem Archiv das Push-Entitlement entfernt und der Build läuft mit dem bestehenden Profil durch – die App hat in diesem Build **keine** Push-Benachrichtigungen. Sobald du im Developer Portal Push aktiviert und das Profil neu erzeugt hast, Variable wieder löschen und neu bauen.
+
 **E-Mail für Build-Benachrichtigungen:** In der `codemagic.yaml` ist ein Platzhalter für die E-Mail-Empfänger. Entweder in Codemagic unter **Publishing** → **Email notifications** deine E-Mail eintragen oder in der YAML die Zeile `recipients:` mit deiner E-Mail anpassen.
 
 ### TestFlight: Checkliste in App Store Connect (einmalig)
