@@ -92,6 +92,8 @@ workflows:
         script: chmod +x scripts/ios-app-icon.sh && ./scripts/ios-app-icon.sh
       - name: Push Notifications (APNs) aktivieren
         script: chmod +x scripts/ios-push-capability.sh && ./scripts/ios-push-capability.sh
+      - name: CocoaPods Embed-Phase für Xcode 15+ anpassen
+        script: chmod +x scripts/ios-cocoapods-embed-fix.sh && ./scripts/ios-cocoapods-embed-fix.sh
       - name: Keychain für Code Signing
         script: keychain initialize
       - name: App-Store-Credentials prüfen
