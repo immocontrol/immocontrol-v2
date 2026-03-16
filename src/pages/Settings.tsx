@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
-import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Search, Eye, EyeOff, Check, Bug } from "lucide-react";
+import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Eye, EyeOff, Check, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,7 +76,6 @@ const Settings = () => {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const mobileTabBarRef = useRef<HTMLDivElement>(null);
   const [uiZoom, setUIZoom] = useState<string>(() => (typeof window !== "undefined" ? localStorage.getItem("immocontrol_ui_zoom") || "100" : "100"));
-  const [settingsSearchQuery, setSettingsSearchQuery] = useState("");
   /* E-Mail ändern: direkt bei Profil, kein eigenes Sektion */
   const [emailStep, setEmailStep] = useState<"idle" | "password" | "new-email" | "new-code">("idle");
   const [emailPassword, setEmailPassword] = useState("");
@@ -85,13 +84,10 @@ const Settings = () => {
   const [showEmailPassword, setShowEmailPassword] = useState(false);
 
   const filteredSettingsSections = useMemo(() => {
-    const q = settingsSearchQuery.trim().toLowerCase();
-    const main = !q ? [...SETTINGS_SECTIONS_MAIN] : SETTINGS_SECTIONS_MAIN.filter((s) => s.label.toLowerCase().includes(q));
-    const withDanger = q ? (GEFAHRENZONE_SECTION.label.toLowerCase().includes(q) ? [GEFAHRENZONE_SECTION] : []) : [GEFAHRENZONE_SECTION];
-    let list = [...main, ...withDanger];
+    let list = [...SETTINGS_SECTIONS];
     if (isMobile) list = list.filter((s) => s.id !== "tastenkombinationen");
     return list;
-  }, [settingsSearchQuery, isMobile]);
+  }, [isMobile]);
 
   useEffect(() => { document.title = "Einstellungen \u2013 ImmoControl"; }, []);
 
