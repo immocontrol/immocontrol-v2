@@ -110,6 +110,7 @@ workflows:
             echo "Siehe: https://docs.codemagic.io/code-signing-yaml/signing-ios/"
             exit 1
           fi
+      # Provisioning Profile muss Push Notifications enthalten (App ID im Developer Portal: Push aktivieren, Profil ggf. neu erzeugen). Siehe docs/IOS_APPSTORE.md.
       - name: Signing-Dateien von App Store Connect holen
         script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: Zertifikate in Keychain

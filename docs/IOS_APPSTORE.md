@@ -28,6 +28,14 @@ Ohne gesetzte Credentials schlägt der Schritt „Signing-Dateien holen“ oder 
 **Push-Benachrichtigungen (inkl. Apple Watch):** Die App registriert sich für APNs und speichert den Geräte-Token in Supabase (`device_tokens`). In der **Codemagic-Pipeline** aktiviert das Skript **`scripts/ios-push-capability.sh`** automatisch die Push-Capability (Entitlements + `CODE_SIGN_ENTITLEMENTS`) und fügt die nötigen Methoden in **AppDelegate.swift** ein (Weitergabe des Device-Tokens an Capacitor). Du musst dafür nichts mehr manuell in Xcode einstellen.  
 **Versand:** Die Edge Function **`send-push-ios`** sendet mit **`interruption-level: time-sensitive`**, sodass Benachrichtigungen auf dem iPhone und gespiegelt auf der Apple Watch erscheinen. Dafür in Supabase die Secrets `APPLE_TEAM_ID`, `APPLE_KEY_ID` und `APPLE_P8_KEY` setzen (siehe `supabase/functions/send-push-ios/README.md`).
 
+**Fehler „Provisioning profile doesn't include the Push Notifications capability“:** Die App nutzt Push (aps-environment). Das **Provisioning Profile** in Apple muss dieselbe Capability haben. Einmalig im [Apple Developer Portal](https://developer.apple.com/account):
+
+1. **Identifiers** → **App IDs** → deine App-ID (z. B. `com.immocontrol.app`) auswählen.
+2. **Push Notifications** aktivieren (Haken setzen), speichern.
+3. **Profiles** → das **App Store**-Provisioning-Profil für diese Bundle-ID suchen → **Edit** → **Generate** (oder Profil löschen, dann legt Codemagic beim nächsten Build mit `--create` ein neues an, das Push enthält).
+
+Ohne diesen Schritt schlägt der Archiv-Schritt mit „doesn't include the aps-environment entitlement“ fehl.
+
 **E-Mail für Build-Benachrichtigungen:** In der `codemagic.yaml` ist ein Platzhalter für die E-Mail-Empfänger. Entweder in Codemagic unter **Publishing** → **Email notifications** deine E-Mail eintragen oder in der YAML die Zeile `recipients:` mit deiner E-Mail anpassen.
 
 ### TestFlight: Checkliste in App Store Connect (einmalig)
