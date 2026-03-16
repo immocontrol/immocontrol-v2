@@ -266,6 +266,7 @@ export const MobilePhotoThumbnails = memo(function MobilePhotoThumbnails({
               src={img.src}
               alt={img.alt || `Bild ${idx + 1}`}
               className="w-full h-full object-cover hover:scale-105 transition-transform"
+              loading="lazy"
             />
             {idx === maxVisible - 1 && remaining > 0 && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">

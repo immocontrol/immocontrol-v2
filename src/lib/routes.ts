@@ -7,6 +7,12 @@ export const ROUTES = {
   PERSONAL_DASHBOARD: "/dashboard",
   HOCKEY_STICK: "/hockey-stick",
   AUTH: "/auth",
+  /** Öffentliche Datenschutz-Seite (ohne Anmeldung erreichbar) */
+  DATENSCHUTZ: "/datenschutz",
+  /** Öffentliche Impressum-Seite */
+  IMPRESSUM: "/impressum",
+  /** Öffentliche Nutzungsbedingungen-Seite */
+  NUTZUNGSBEDINGUNGEN: "/nutzungsbedingungen",
   /** Passwort-Reset nach Klick auf E-Mail-Link – nur Formular, danach Abmeldung und Anmeldung */
   PASSWORD_RESET: "/passwort-zuruecksetzen",
   ONBOARDING: "/onboarding",

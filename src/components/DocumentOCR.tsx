@@ -65,12 +65,12 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
 
   /* FIX-4: Revoke previous Object URL when a new one is set, and on unmount */
   useEffect(() => {
-    if (prevUrlRef.current && prevUrlRef.current !== previewUrl) {
-      URL.revokeObjectURL(prevUrlRef.current);
-    }
+    const prev = prevUrlRef.current;
+    if (prev && prev !== previewUrl) URL.revokeObjectURL(prev);
     prevUrlRef.current = previewUrl;
+    const currentUrl = previewUrl;
     return () => {
-      if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current);
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
     };
   }, [previewUrl]);
 

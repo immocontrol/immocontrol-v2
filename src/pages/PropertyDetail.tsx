@@ -331,9 +331,13 @@ const PropertyDetail = () => {
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   aria-label="Objekt duplizieren"
                   onClick={async () => {
-                    await duplicateProperty(property.id);
-                    toastSuccess(`${property.name} wurde dupliziert`);
-                    navigate(ROUTES.HOME);
+                    try {
+                      await duplicateProperty(property.id);
+                      toastSuccess(`${property.name} wurde dupliziert`);
+                      navigate(ROUTES.HOME);
+                    } catch (e) {
+                      toastError("Duplizieren fehlgeschlagen. Bitte erneut versuchen.");
+                    }
                   }}
                 >
                   <Copy className="h-4 w-4" />
@@ -364,9 +368,13 @@ const PropertyDetail = () => {
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={async () => {
-                      await deleteProperty(property.id);
-                      toastSuccess(`${property.name} wurde gelöscht.`);
-                      navigate(ROUTES.HOME);
+                      try {
+                        await deleteProperty(property.id);
+                        toastSuccess(`${property.name} wurde gelöscht.`);
+                        navigate(ROUTES.HOME);
+                      } catch (e) {
+                        toastError("Löschen fehlgeschlagen. Bitte erneut versuchen.");
+                      }
                     }}
                   >
                     Löschen

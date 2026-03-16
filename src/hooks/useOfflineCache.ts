@@ -148,43 +148,54 @@ let syncInProgress: Promise<number> | null = null;
 /**
  * OFFLINE-4: Sync pending mutations when coming back online
  * Replays stored mutations against Supabase and clears them on success.
+ * STABILITY: Whole sync wrapped in try/catch so dynamic import or DB errors don't throw.
  */
 async function syncPendingToServerImpl(): Promise<number> {
-  const pending = await getPendingMutations();
-  if (pending.length === 0) return 0;
+  try {
+    const pending = await getPendingMutations();
+    if (pending.length === 0) return 0;
 
-  let synced = 0;
-  for (const mutation of pending) {
-    try {
-      // Dynamic import to avoid circular dependency
-      const { supabase } = await import("@/integrations/supabase/client");
-      if (mutation.type === "insert") {
-        const { error } = await supabase.from(mutation.table).insert(mutation.data);
-        if (error) throw error;
-      } else if (mutation.type === "update" && mutation.id) {
-        const { error } = await supabase.from(mutation.table).update(mutation.data).eq("id", mutation.id);
-        if (error) throw error;
-      } else if (mutation.type === "delete" && mutation.id) {
-        const { error } = await supabase.from(mutation.table).delete().eq("id", mutation.id);
-        if (error) throw error;
-      } else {
-        logger.warn(`Skipping unprocessable mutation: type=${mutation.type}, id=${mutation.id}`, "OfflineSync");
+    let synced = 0;
+    let supabaseInstance: (typeof import("@/integrations/supabase/client"))["supabase"] | null = null;
+
+    for (const mutation of pending) {
+      try {
+        if (!supabaseInstance) {
+          const mod = await import("@/integrations/supabase/client");
+          supabaseInstance = mod.supabase;
+        }
+        const supabase = supabaseInstance;
+        if (mutation.type === "insert") {
+          const { error } = await supabase.from(mutation.table).insert(mutation.data);
+          if (error) throw error;
+        } else if (mutation.type === "update" && mutation.id) {
+          const { error } = await supabase.from(mutation.table).update(mutation.data).eq("id", mutation.id);
+          if (error) throw error;
+        } else if (mutation.type === "delete" && mutation.id) {
+          const { error } = await supabase.from(mutation.table).delete().eq("id", mutation.id);
+          if (error) throw error;
+        } else {
+          logger.warn(`Skipping unprocessable mutation: type=${mutation.type}, id=${mutation.id}`, "OfflineSync");
+          synced++;
+          continue;
+        }
         synced++;
-        continue;
+      } catch {
+        /* Stop on first failure — remaining mutations stay pending */
+        break;
       }
-      synced++;
-    } catch {
-      /* Stop on first failure — remaining mutations stay pending */
-      break;
     }
+    /* Only clear the mutations that were actually synced, not all of them */
+    if (synced === pending.length) {
+      await clearPendingMutations();
+    } else if (synced > 0) {
+      await clearFirstNPendingMutations(synced);
+    }
+    return synced;
+  } catch (err) {
+    logger.warn("Offline sync failed", "OfflineSync", { error: err instanceof Error ? err.message : String(err) });
+    return 0;
   }
-  /* Only clear the mutations that were actually synced, not all of them */
-  if (synced === pending.length) {
-    await clearPendingMutations();
-  } else if (synced > 0) {
-    await clearFirstNPendingMutations(synced);
-  }
-  return synced;
 }
 
 /** Public entry point with concurrency guard */
@@ -207,15 +218,19 @@ export function useBackgroundSync() {
   const qc = useQueryClient();
 
   const runSync = useCallback(() => {
-    syncPendingToServer().then((count) => {
-      if (count > 0) {
-        logger.info(`${count} pending mutations synced`, "OfflineSync");
-        qc.invalidateQueries({ queryKey: queryKeys.properties.all });
-        qc.invalidateQueries({ queryKey: queryKeys.loans.all });
-        qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
-        qc.invalidateQueries({ queryKey: queryKeys.deals.all });
-      }
-    });
+    syncPendingToServer()
+      .then((count) => {
+        if (count > 0) {
+          logger.info(`${count} pending mutations synced`, "OfflineSync");
+          qc.invalidateQueries({ queryKey: queryKeys.properties.all });
+          qc.invalidateQueries({ queryKey: queryKeys.loans.all });
+          qc.invalidateQueries({ queryKey: queryKeys.contacts.all });
+          qc.invalidateQueries({ queryKey: queryKeys.deals.all });
+        }
+      })
+      .catch((err) => {
+        logger.warn("Background sync failed", "OfflineSync", { error: err instanceof Error ? err.message : String(err) });
+      });
   }, [qc]);
 
   useEffect(() => {

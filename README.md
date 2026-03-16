@@ -7,8 +7,10 @@ Immobilien-Portfolio verwalten: Renditen, Cashflow und Wertentwicklung auf einen
 - **Vite** – Build & Dev-Server
 - **React 18** + **TypeScript**
 - **Tailwind CSS** + **shadcn/ui** (Radix)
-- **Supabase** – Auth, DB, Storage
+- **Supabase** – Datenbank, Auth, Storage (einzige Backend-Datenbank)
 - **React Query** – Server State
+
+**Deployment:** Web-App über **Railway**, iOS-App über **Codemagic**.
 
 Das Projekt ist **tool-unabhängig**: Du kannst es in beliebigen IDEs und mit beliebigen Tools (Cursor, VS Code, Lovable, Replit, Bolt, GitHub Codespaces, etc.) bearbeiten. Der Code nutzt Standard-NPM-Skripte und keine plattformspezifischen Pfade.
 
@@ -23,6 +25,7 @@ npm run dev
 
 - App: **http://localhost:8080**
 - Build: `npm run build`
+- Build mit Bundle-Analyse (erzeugt `dist/stats.html`): `ANALYZE=1 npm run build` bzw. `npm run build:analyze` (Unix)
 - Preview: `npm run preview`
 - Tests: `npm run test`
 
@@ -41,9 +44,8 @@ Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 
 ## Deployment
 
-- **Vercel**: Repo auf [vercel.com](https://vercel.com) importieren (Import Git Repository). `vercel.json` ist vorhanden – Build & Deploy laufen automatisch. Env-Variablen (Supabase, optional DeepSeek) im Vercel-Dashboard unter Settings → Environment Variables setzen.
-- **Netlify**: Repo auf [netlify.com](https://netlify.com) importieren. `netlify.toml` ist vorhanden – Build-Kommando und `publish`-Ordner sind gesetzt. **Wichtig:** `VITE_SUPABASE_URL` und `VITE_SUPABASE_PUBLISHABLE_KEY` unter Site configuration → Environment variables eintragen, Scope **Build** (oder **All**) wählen, danach „Clear cache and deploy site“. Ohne diese Variablen erscheint nach dem Deploy eine Konfigurations-Hinweisseite statt der App.
-- **Beliebige Plattform**: `npm run build` → Ordner `dist/` auf einen Static-/SPA-Host (GitHub Pages, eigener Server) deployen.
+- **Web (Railway)**: Projekt auf [Railway](https://railway.app) deployen. Env-Variablen (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` etc.) im Railway-Dashboard unter dem Service → Variables setzen. Build: `npm run build`, Output: `dist/` (z. B. mit Caddy oder `npm run start`).
+- **iOS (Codemagic)**: Build und TestFlight/App Store über [Codemagic](https://codemagic.io). Env-Variablen in Codemagic unter Environment variables (z. B. Gruppe `supabase_config`) setzen und dem Workflow zuweisen.
 - **Canonical / OG**: Beim Build werden `__VITE_APP_URL__` und `__VITE_APP_OG_IMAGE__` in `index.html` durch die genannten Env-Variablen ersetzt.
 
 ## Projektstruktur (wichtig für Tool-Wechsel)
@@ -74,6 +76,7 @@ Weitere Keys (z. B. für Auth-Provider) je nach Deployment.
 - **CHANGELOG.md** – Änderungshistorie (Neu, Geändert, Behoben)
 - **.github/CONTRIBUTING.md** – Commit-Konventionen
 - **docs/** – Architektur, AI (DEEPSEEK_NUTZUNG), Synergien (SYNERGIEN), Mobile (MOBILE_BREAKPOINTS, USABILITY_UND_MOBILE), Dokumentationsrichtlinien (DOKUMENTATION)
+- **docs/IOS_APPSTORE.md** – ImmoControl als native iOS-App im App Store (Capacitor, Xcode, App Store Connect)
 
 ## Lizenz & Support
 

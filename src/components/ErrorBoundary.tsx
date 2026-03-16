@@ -75,6 +75,9 @@ class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-muted-foreground max-w-sm mb-2">
             {this.state.error?.message || "Ein unerwarteter Fehler ist aufgetreten."}
           </p>
+          <p className="text-xs text-muted-foreground max-w-sm mb-2">
+            Bitte später erneut versuchen oder zur Startseite wechseln.
+          </p>
           {/* IMP-44-4: Show error timestamp for debugging context */}
           <p className="text-[10px] text-muted-foreground mb-4">
             Zeitpunkt: {new Date().toLocaleString("de-DE")}

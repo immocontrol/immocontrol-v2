@@ -105,6 +105,21 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
   const WIDGET_STORAGE_KEY = "immo-dashboard-widget-order";
   const { loadLayout, saveLayout } = useWidgetLayout(WIDGET_STORAGE_KEY);
 
+  /* UX-1: Hint state must be declared before any early return (rules-of-hooks) */
+  const [showDashboardHint, setShowDashboardHint] = useState(() => {
+    try {
+      return localStorage.getItem("immocontrol_dashboard_hint_dismissed") !== "1";
+    } catch {
+      return true;
+    }
+  });
+  const dismissDashboardHint = useCallback(() => {
+    setShowDashboardHint(false);
+    try {
+      localStorage.setItem("immocontrol_dashboard_hint_dismissed", "1");
+    } catch { /* ignore */ }
+  }, []);
+
   const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
     try {
       const stored = localStorage.getItem(WIDGET_STORAGE_KEY);
@@ -123,14 +138,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   /* Load layout from Supabase on mount — overrides localStorage if cloud version is newer */
   useEffect(() => {
-    loadLayout().then(cloudOrder => {
-      if (!cloudOrder || cloudOrder.length === 0) return;
-      const valid = cloudOrder.filter(w => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)) as WidgetId[];
-      const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
-      const merged = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
-      setWidgetOrder(merged);
-      try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(merged)); } catch { /* */ }
-    });
+    loadLayout()
+      .then(cloudOrder => {
+        if (!cloudOrder || cloudOrder.length === 0) return;
+        const valid = cloudOrder.filter(w => DEFAULT_WIDGET_ORDER.includes(w as WidgetId)) as WidgetId[];
+        const missing = DEFAULT_WIDGET_ORDER.filter(w => !valid.includes(w));
+        const merged = valid.length > 0 ? [...valid, ...missing] : DEFAULT_WIDGET_ORDER;
+        setWidgetOrder(merged);
+        try { localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(merged)); } catch { /* */ }
+      })
+      .catch(() => { /* cloud load optional; ignore */ });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -249,21 +266,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     { key: "privat", label: "Privat" },
   ];
 
-  /* UX-1: Kurz-Hinweis beim ersten Besuch (dismissible, localStorage) — before any early return (rules-of-hooks) */
-  const [showDashboardHint, setShowDashboardHint] = useState(() => {
-    try {
-      return localStorage.getItem("immocontrol_dashboard_hint_dismissed") !== "1";
-    } catch {
-      return true;
-    }
-  });
-  const dismissDashboardHint = useCallback(() => {
-    setShowDashboardHint(false);
-    try {
-      localStorage.setItem("immocontrol_dashboard_hint_dismissed", "1");
-    } catch { /* ignore */ }
-  }, []);
-
   // Feature 6: Loading skeleton — MOB-10: Enhanced skeleton screens
   if (loading) {
     return <DashboardSkeleton />;
@@ -322,7 +324,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
     );
   }
 
-
   /* IMP20-2: Use pre-computed stats from PropertyContext — eliminates 3 redundant reduce() calls */
   const totalSqm = stats.totalSqm;
   const avgPricePerSqm = totalSqm > 0 ? stats.totalValue / totalSqm : 0;
@@ -339,7 +340,8 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   /* UPD-48: Portfolio share with clipboard error handling */
   const sharePortfolio = () => {
-    const text = `Portfolio: ${stats.propertyCount} Objekte, ${stats.totalUnits} Einheiten\nGesamtwert: ${formatCurrency(stats.totalValue)}\nEigenkapital: ${formatCurrency(stats.equity)}\nMiete: ${formatCurrency(stats.totalRent)}/M\nCashflow: ${formatCurrency(stats.totalCashflow)}/M\nBrutto-Rendite: ${stats.avgRendite.toFixed(1)}%`;
+    const rendite = stats.avgRendite ?? 0;
+    const text = `Portfolio: ${stats.propertyCount} Objekte, ${stats.totalUnits} Einheiten\nGesamtwert: ${formatCurrency(stats.totalValue)}\nEigenkapital: ${formatCurrency(stats.equity)}\nMiete: ${formatCurrency(stats.totalRent)}/M\nCashflow: ${formatCurrency(stats.totalCashflow)}/M\nBrutto-Rendite: ${rendite.toFixed(1)}%`;
     navigator.clipboard.writeText(text).then(
       () => toastSuccess("Portfolio-Zusammenfassung kopiert!"),
       () => toastError("Kopieren fehlgeschlagen")
@@ -459,7 +461,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         totalValue={stats.totalValue}
         totalCashflow={stats.totalCashflow}
         totalRent={stats.totalRent}
-        yieldPercent={stats.avgRendite}
+        yieldPercent={stats.avgRendite ?? 0}
         propertyCount={stats.propertyCount}
         occupancyRate={totalUnitsFromProps > 0 ? ((occupiedUnits / totalUnitsFromProps) * 100) : undefined}
       />
@@ -526,7 +528,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         <StatCard
           label="Mieteinnahmen/M"
           value={formatCurrency(stats.totalRent)}
-          subValue={`${stats.avgRendite.toFixed(1)}% Brutto-Rendite`}
+          subValue={`${(stats.avgRendite ?? 0).toFixed(1)}% Brutto-Rendite`}
           trend="up"
           icon={<Wallet className="h-4 w-4" />}
           delay={100}

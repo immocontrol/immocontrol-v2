@@ -456,29 +456,12 @@ const Settings = () => {
           </nav>
       </aside>
 
-      {/* Main settings content — auf Mobile unter Tabs, auf Desktop neben fixierter Sidebar (ml-48 = Platz für Sidebar) */}
+      {/* Main settings content — mittig zentriert; auf Desktop neben fixierter Sidebar (lg:ml-48) */}
       <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 lg:ml-48 overflow-x-hidden">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full flex justify-center">
           <div className="flex items-center gap-2">
             <SettingsIcon className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
-          </div>
-          {/* C8: Suchfeld „Einstellung finden“ — filtert Tabs/Sidebar */}
-          <div className="w-full sm:w-56 shrink-0">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Einstellung finden…"
-                value={settingsSearchQuery}
-                onChange={(e) => setSettingsSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm"
-                aria-label="Einstellung suchen"
-              />
-            </div>
-            {settingsSearchQuery.trim() && filteredSettingsSections.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1.5">Keine Einstellung für „{settingsSearchQuery.trim()}“ gefunden.</p>
-            )}
           </div>
         </div>
 

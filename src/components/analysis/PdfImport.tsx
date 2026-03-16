@@ -9,6 +9,7 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
 import { saveExposeHistoryEntry } from "./ExposeHistory";
 import { extractPdfText } from "@/lib/exposeParser";
+import { getSupabaseEnv } from "@/integrations/supabase/client";
 
 interface Props {
   onImport: (updates: Partial<AnalysisInputState>) => void;
@@ -78,12 +79,13 @@ const PdfImport = ({ onImport }: Props) => {
 
       setLoadingStep("analyzing");
 
+      const { url: baseUrl, anonKey } = getSupabaseEnv();
       const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pdf`,
+        `${baseUrl}/functions/v1/extract-pdf`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${anonKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ text: pdfText, filename: file.name }),

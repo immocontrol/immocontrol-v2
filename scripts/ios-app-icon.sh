@@ -22,11 +22,13 @@ fi
 mkdir -p "$ICONSET"
 cd "$ICONSET"
 
+# Alle benötigten Pixelgrößen (von 1024 skaliert)
 sizes="20 29 40 58 60 76 80 87 120 152 167 180 1024"
 for size in $sizes; do
   sips -z "$size" "$size" "$SOURCE" --out "Icon-${size}.png"
 done
 
+# Contents.json für iPhone, iPad und App Store
 cat > Contents.json << 'CONTENTS_EOF'
 {
   "images" : [

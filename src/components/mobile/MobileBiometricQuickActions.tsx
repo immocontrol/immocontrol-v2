@@ -81,7 +81,7 @@ export const MobileBiometricQuickActions = memo(function MobileBiometricQuickAct
   // Check availability on mount
   useEffect(() => {
     if (biometricProp !== undefined) return;
-    checkBiometricAvailability().then(setBiometricSupported);
+    checkBiometricAvailability().then(setBiometricSupported).catch(() => setBiometricSupported(false));
   }, [biometricProp]);
 
   const handleAuth = useCallback(async (): Promise<boolean> => {

@@ -24,6 +24,7 @@ import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
 import { PrivacyProvider } from "@/components/PrivacyMode";
 import { NotificationPreferencesProvider } from "@/context/NotificationPreferencesContext";
 import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
+import { registerNativePush } from "@/integrations/nativePush";
 
 import { ROUTES } from "@/lib/routes";
 
@@ -38,6 +39,9 @@ const tenantPortalImport = () => import("@/pages/TenantPortal");
 const handworkerPortalImport = () => import("@/pages/HandworkerPortal");
 const einladungImport = () => import("@/pages/Einladung");
 const passwordResetImport = () => import("@/pages/PasswordReset");
+const datenschutzImport = () => import("@/pages/Datenschutz");
+const impressumImport = () => import("@/pages/Impressum");
+const nutzungsbedingungenImport = () => import("@/pages/Nutzungsbedingungen");
 const notFoundImport = () => import("@/pages/NotFound");
 const loansImport = () => import("@/pages/Loans");
 const cashForecastImport = () => import("@/pages/CashForecast");
@@ -83,6 +87,9 @@ const TenantPortal = lazy(tenantPortalImport);
 const HandworkerPortal = lazy(handworkerPortalImport);
 const Einladung = lazy(einladungImport);
 const PasswordReset = lazy(passwordResetImport);
+const Datenschutz = lazy(datenschutzImport);
+const Impressum = lazy(impressumImport);
+const Nutzungsbedingungen = lazy(nutzungsbedingungenImport);
 const NotFound = lazy(notFoundImport);
 const Loans = lazy(loansImport);
 const CashForecast = lazy(cashForecastImport);
@@ -139,7 +146,18 @@ const PageLoader = () => (
 );
 
 /* #7: React Query with exponential backoff retry logic
-   #20: refetchOnWindowFocus enabled for stale-data awareness */
+   #20: refetchOnWindowFocus enabled for stale-data awareness
+   STABILITY: Don't retry on auth/4xx — avoids retry storms and repeated failed requests */
+function isNonRetryableError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  const s = msg.toLowerCase();
+  return (
+    s.includes("jwt") || s.includes("session") || s.includes("unauthorized") ||
+    s.includes("403") || s.includes("forbidden") || s.includes("permission") ||
+    s.includes("404") || s.includes("not found") || s.includes("pgrst116")
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -147,7 +165,11 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60_000,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      retry: 3,
+      retry: (failureCount, error) => {
+        if (failureCount >= 3) return false;
+        if (isNonRetryableError(error)) return false;
+        return true;
+      },
       retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30_000),
     },
     mutations: {
@@ -241,6 +263,12 @@ const RoleRouter = () => {
     };
     checkOnboarding();
   }, [user]);
+
+  /* Native Push (iOS/Android): Token für APNs/FCM registrieren → Benachrichtigungen inkl. Apple Watch */
+  useEffect(() => {
+    if (!user?.id) return;
+    registerNativePush(user.id).catch(() => { /* non-blocking; errors logged in nativePush */ });
+  }, [user?.id]);
 
   /* BUG-6: Preload high-traffic routes — delay 3s to prioritise initial paint */
   useEffect(() => {
@@ -374,6 +402,9 @@ const App = () => {
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path={ROUTES.AUTH} element={<Auth />} />
+                      <Route path={ROUTES.DATENSCHUTZ} element={<Datenschutz />} />
+                      <Route path={ROUTES.IMPRESSUM} element={<Impressum />} />
+                      <Route path={ROUTES.NUTZUNGSBEDINGUNGEN} element={<Nutzungsbedingungen />} />
                       <Route path={ROUTES.INVITATION} element={<Einladung />} />
                       <Route path={ROUTES.PASSWORD_RESET} element={<PasswordReset />} />
                       <Route path="/*" element={<RoleRouter />} />

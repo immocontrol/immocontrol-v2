@@ -36,8 +36,6 @@ interface PropertyContextType {
   deleteProperty: (id: string) => Promise<void>;
   duplicateProperty: (id: string) => Promise<void>;
   getProperty: (id: string) => Property | undefined;
-  /** @deprecated Use `stats` instead */
-  getStats: () => PortfolioStats;
 }
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);
@@ -328,11 +326,10 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
   }, [properties, user, addProperty]);
 
   const getProperty = useCallback((id: string) => properties.find((p) => p.id === id), [properties]);
-  const getStats = useCallback(() => stats, [stats]);
 
   const contextValue = useMemo(() => ({
-    properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty, getStats,
-  }), [properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty, getStats]);
+    properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty,
+  }), [properties, loading, stats, addProperty, updateProperty, deleteProperty, duplicateProperty, getProperty]);
 
   return (
     <PropertyContext.Provider value={contextValue}>
