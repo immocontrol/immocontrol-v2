@@ -13,9 +13,16 @@ interface SystemInfoSettingsProps {
   totpEnabled: boolean;
 }
 
-/** Angezeigte Version/Build (Build-Zeitstempel oder "Entwicklung") */
-function getBuildLabel(): string {
+/** Angezeigte App-Version (package.json, z. B. 1.0.1) */
+function getAppVersionLabel(): string {
   if (import.meta.env.DEV) return "Entwicklung";
+  if (typeof __APP_PACKAGE_VERSION__ !== "undefined" && __APP_PACKAGE_VERSION__) return __APP_PACKAGE_VERSION__;
+  return "–";
+}
+
+/** Angezeigter Build (Zeitstempel) */
+function getBuildLabel(): string {
+  if (import.meta.env.DEV) return "–";
   if (typeof __APP_BUILD_TIME__ !== "undefined" && __APP_BUILD_TIME__) return __APP_BUILD_TIME__;
   return "–";
 }
@@ -68,8 +75,12 @@ export function SystemInfoSettings({ sectionRef, totpEnabled }: SystemInfoSettin
         <Database className="h-4 w-4 text-muted-foreground" /> System-Info
       </h2>
       <div className="grid grid-cols-2 gap-2 text-xs" aria-label="Systeminformationen">
-        <div className="p-2 rounded-lg bg-secondary/30 col-span-2">
-          <span className="text-muted-foreground">Version / Build</span>
+        <div className="p-2 rounded-lg bg-secondary/30">
+          <span className="text-muted-foreground">App-Version</span>
+          <p className="font-medium font-mono text-[11px]">{getAppVersionLabel()}</p>
+        </div>
+        <div className="p-2 rounded-lg bg-secondary/30">
+          <span className="text-muted-foreground">Build</span>
           <p className="font-medium font-mono text-[11px] break-all">{getBuildLabel()}</p>
         </div>
         <div className="p-2 rounded-lg bg-secondary/30">

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ClipboardList, Download, Plus, Trash2, Star } from "lucide-react";
+import { ClipboardList, Download, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/formatters";
+import { useAuth } from "@/hooks/useAuth";
+import { useProperties } from "@/context/PropertyContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ROUTES } from "@/lib/routes";
+import { queryKeys } from "@/lib/queryKeys";
 
 interface Room {
   name: string;
@@ -55,7 +60,12 @@ const DEFAULT_ROOMS: Room[] = [
 const CONDITION_LABELS = ["", "Mangelhaft", "Ausreichend", "Befriedigend", "Gut", "Sehr gut"];
 
 export function HandoverProtocol() {
+  const { user } = useAuth();
+  const { properties } = useProperties();
+  const queryClient = useQueryClient();
   const [type, setType] = useState<"einzug" | "auszug">("einzug");
+  const [propertyId, setPropertyId] = useState("");
+  const [tenantId, setTenantId] = useState("");
   const [tenant, setTenant] = useState("");
   const [address, setAddress] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -63,6 +73,56 @@ export function HandoverProtocol() {
   const [meterStand, setMeterStand] = useState({ strom: "", gas: "", wasser: "", heizung: "" });
   const [keysCount, setKeysCount] = useState("2");
   const [generalNotes, setGeneralNotes] = useState("");
+  const [lastConfirmLink, setLastConfirmLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const { data: tenants = [] } = useQuery({
+    queryKey: ["tenants", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase.from("tenants").select("id, first_name, last_name, property_id").eq("property_id", propertyId).eq("is_active", true);
+      return (data || []) as Array<{ id: string; first_name: string; last_name: string; property_id: string }>;
+    },
+    enabled: !!propertyId,
+  });
+
+  const selectedProperty = properties.find((p) => p.id === propertyId);
+  const selectedTenant = tenants.find((t) => t.id === tenantId);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id || !propertyId || !tenantId) throw new Error("Objekt und Mieter auswählen.");
+      const protocolData = {
+        tenant: tenant || (selectedTenant ? `${selectedTenant.first_name} ${selectedTenant.last_name}`.trim() : ""),
+        address: address || selectedProperty?.address || "",
+        date,
+        keysCount,
+        meterStand,
+        rooms,
+        generalNotes,
+      };
+      const { data, error } = await supabase
+        .from("handover_protocols")
+        .insert({
+          property_id: propertyId,
+          tenant_id: tenantId,
+          created_by: user.id,
+          type,
+          protocol_data: protocolData,
+        })
+        .select("id, confirm_token")
+        .single();
+      if (error) throw error;
+      return data as { id: string; confirm_token: string };
+    },
+    onSuccess: (data) => {
+      const base = typeof window !== "undefined" ? window.location.origin : "";
+      const link = `${base}${ROUTES.HANDOVER_CONFIRM}/${data.confirm_token}`;
+      setLastConfirmLink(link);
+      queryClient.invalidateQueries({ queryKey: queryKeys.handoverProtocols.all });
+      toast.success("Protokoll gespeichert. Link zum Bestätigen kopieren und an den Mieter senden.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Speichern fehlgeschlagen."),
+  });
 
   const updateRoom = (idx: number, updates: Partial<Room>) => {
     setRooms(prev => prev.map((r, i) => i === idx ? { ...r, ...updates } : r));
@@ -142,6 +202,31 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Link zum Bestätigen (nach Speichern) */}
+          {lastConfirmLink && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <p className="text-xs font-medium text-foreground">Link an Mieter senden (zum Bestätigen):</p>
+              <div className="flex gap-2">
+                <Input readOnly value={lastConfirmLink} className="text-xs font-mono flex-1 min-w-0" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(lastConfirmLink);
+                    setLinkCopied(true);
+                    toast.success("Link kopiert.");
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  }}
+                >
+                  {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {linkCopied ? "Kopiert" : "Kopieren"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Header Info */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -158,8 +243,30 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
               <Label className="text-xs">Datum</Label>
               <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="h-9 text-sm" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 col-span-2">
+              <Label className="text-xs">Objekt</Label>
+              <Select value={propertyId} onValueChange={(v) => { setPropertyId(v); setTenantId(""); const prop = properties.find((p) => p.id === v); setAddress(prop?.address || ""); }}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Objekt wählen" /></SelectTrigger>
+                <SelectContent>
+                  {properties.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name || p.address || p.id}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1 col-span-2">
               <Label className="text-xs">Mieter</Label>
+              <Select value={tenantId} onValueChange={(v) => { setTenantId(v); const t = tenants.find(x => x.id === v); setTenant(t ? `${t.first_name} ${t.last_name}`.trim() : ""); setAddress(selectedProperty?.address || address); }}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Mieter wählen" /></SelectTrigger>
+                <SelectContent>
+                  {tenants.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.first_name} {t.last_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Mieter (Anzeige)</Label>
               <Input value={tenant} onChange={e => setTenant(e.target.value)} placeholder="Name des Mieters" className="h-9 text-sm" />
             </div>
             <div className="space-y-1">
@@ -242,9 +349,18 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
             <Textarea value={generalNotes} onChange={e => setGeneralNotes(e.target.value)} className="text-xs min-h-[60px]" placeholder="Sonstige Bemerkungen..." />
           </div>
 
-          <Button onClick={exportPDF} className="w-full gap-1.5">
-            <Download className="h-4 w-4" /> Protokoll als PDF drucken
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending || !propertyId || !tenantId}
+              className="w-full gap-1.5"
+            >
+              {saveMutation.isPending ? "Speichern…" : "Speichern & Link erstellen"}
+            </Button>
+            <Button variant="outline" onClick={exportPDF} className="w-full gap-1.5">
+              <Download className="h-4 w-4" /> Protokoll als PDF drucken
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

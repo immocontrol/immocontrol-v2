@@ -386,7 +386,7 @@ const Auth = () => {
 
   if (user && isRecoverySession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Neues Passwort setzen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Neues Passwort setzen">
         <div className="w-full max-w-sm space-y-6 animate-fade-in">
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
@@ -455,7 +455,7 @@ const Auth = () => {
   return (
     /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
     /* IMP-44-6: ARIA landmark for auth page */
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Authentifizierung">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Authentifizierung">
       <div className="w-full max-w-sm space-y-6 animate-fade-in [animation-delay:100ms]">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">
@@ -503,7 +503,6 @@ const Auth = () => {
                   onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="000000"
                   className="h-12 text-center text-xl font-mono tracking-[0.5em]"
-                  autoFocus
                 />
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
@@ -526,7 +525,6 @@ const Auth = () => {
                   onChange={(e) => setBackupCode(e.target.value.toUpperCase())}
                   placeholder="XXXX-XXXX"
                   className="h-12 text-center text-lg font-mono tracking-wider"
-                  autoFocus
                 />
                 <Button onClick={verifyBackupCode} disabled={loading || backupCode.length < 9} className="w-full">
                   {loading ? "Verifiziere..." : "Mit Backup-Code anmelden"}
@@ -648,7 +646,6 @@ const Auth = () => {
                     required
                     className="pl-10 h-10"
                     autoComplete="email"
-                    autoFocus
                   />
                 </div>
               </div>

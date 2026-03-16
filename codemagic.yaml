@@ -132,6 +132,8 @@ workflows:
             perl -i -0pe 's/(INFOPLIST_FILE = App\/Info\.plist;)/$1\n\t\t\tINFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;/g' "$PBXPROJ"
             echo "Added INFOPLIST_KEY_ITSAppUsesNonExemptEncryption to project.pbxproj"
           fi
+      - name: Face-ID-Usage-Description setzen (für Biometrie-Entsperrung)
+        script: chmod +x scripts/ios-face-id-usage.sh && ./scripts/ios-face-id-usage.sh
       - name: iOS-Version aus package.json setzen
         script: |
           VERSION=$(node -p "require('./package.json').version")

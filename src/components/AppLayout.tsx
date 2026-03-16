@@ -24,6 +24,7 @@ import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useInactivityHint } from "@/hooks/useInactivityHint";
 import { useSessionIdleTimeout } from "@/hooks/useSessionIdleTimeout";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
@@ -78,14 +79,17 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   /* Dokument- und Darlehens-Fristen → In-App + ggf. Browser-Benachrichtigungen */
   useNotificationChecks();
 
-  /* #11: Pull-to-Refresh for mobile — invalidates all queries on pull gesture */
+  /* #11: Pull-to-Refresh for mobile — content pulls down with finger (iOS-style), then refresh */
   const qc = useQueryClient();
   const isFetching = useIsFetching();
+  const isMobile = useIsMobile();
+  const mainContentRef = useRef<HTMLElement>(null);
   const { indicatorRef: pullIndicatorRef } = usePullToRefresh({
     onRefresh: async () => {
       await qc.invalidateQueries();
       toast.success("Daten aktualisiert");
     },
+    contentRef: isMobile ? mainContentRef : undefined,
   });
 
   /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
@@ -648,6 +652,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* FIX: Global Enter → next field handler for mobile keyboard navigation */}
       <main
+        ref={mainContentRef}
         id="main-content"
         role="main"
         tabIndex={-1}

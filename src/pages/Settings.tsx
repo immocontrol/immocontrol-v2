@@ -727,7 +727,9 @@ const Settings = () => {
         </div>
 
         <div className="text-center py-4 space-y-1 animate-fade-in [animation-delay:250ms]">
-          <p className="text-[10px] text-muted-foreground">ImmoControl v2.0</p>
+          <p className="text-[10px] text-muted-foreground">
+          ImmoControl{typeof __APP_PACKAGE_VERSION__ !== "undefined" && __APP_PACKAGE_VERSION__ ? ` v${__APP_PACKAGE_VERSION__}` : " v2.0"}
+        </p>
         </div>
       </div>
     </div>

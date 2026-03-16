@@ -44,6 +44,7 @@ const Nebenkosten = () => {
     prepayments: "0",
   });
   const [itemForm, setItemForm] = useState({ category: "Grundsteuer", description: "", total_amount: "", distribution_key: "Fläche", tenant_amount: "" });
+  const DISTRIBUTION_KEYS = ["Fläche", "Verbrauch", "Personen", "Einheiten"] as const;
   const [deleteItemTarget, setDeleteItemTarget] = useState<string | null>(null);
   const [deleteBillingTarget, setDeleteBillingTarget] = useState<string | null>(null);
   const lastDeletedItemIdRef = useRef<string | null>(null);
@@ -223,6 +224,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
 <tr><td colspan="4">Vorauszahlungen</td><td>-${formatCurrency(Number(billing.prepayments))}</td></tr>
 <tr class="total"><td colspan="4">${Number(billing.balance) >= 0 ? "Nachzahlung" : "Guthaben"}</td><td class="${Number(billing.balance) >= 0 ? "negative" : "positive"}">${formatCurrency(Math.abs(Number(billing.balance)))}</td></tr>
 </table>
+<p style="font-size:10px;color:#555;margin-top:24px;line-height:1.4">Die Abrechnung erfolgt nach den Bestimmungen der Betriebskostenverordnung (BetrKV). Gemäß § 259 Abs. 3 BGB ist die Abrechnung dem Mieter bis zum Ablauf des zwölften Monats nach Ende des Abrechnungszeitraums mitzuteilen. Einwendungen können Sie innerhalb von 12 Monaten nach Zugang geltend machen.</p>
 <div class="footer">ImmoControl · Nebenkostenabrechnung · Erstellt am ${new Date().toLocaleDateString("de-DE")}</div>
 </body></html>`;
     const w = window.open("", "_blank");
@@ -268,6 +270,12 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
     doc.setFont("helvetica", "bold");
     doc.text(Number(billing.balance) >= 0 ? "Nachzahlung" : "Guthaben", m, y);
     doc.text(formatCurrency(Math.abs(Number(billing.balance))), m + 120, y);
+    y += 14;
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.text("Die Abrechnung erfolgt nach der Betriebskostenverordnung (BetrKV). Gemäß § 259 Abs. 3 BGB ist die", m, y);
+    doc.text("Abrechnung dem Mieter bis zum Ablauf des 12. Monats nach Ende des Abrechnungszeitraums mitzuteilen.", m, y + 4);
+    doc.text("Einwendungen können innerhalb von 12 Monaten nach Zugang geltend gemacht werden.", m, y + 8);
     doc.setFontSize(8);
     doc.text(`ImmoControl · Erstellt am ${new Date().toLocaleDateString("de-DE")}`, m, 285);
     return doc.output("blob") as Blob;

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2, MessageCircle, Send, LogOut, Home, FileText, CreditCard,
-  Wrench, Settings, Bell, Calendar, Euro, ChevronRight, Phone, Mail,
+  Wrench, Bell, Calendar, Euro, ChevronRight, Phone, Mail,
   ClipboardList, User, Download, AlertTriangle, CheckCircle2, Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -392,7 +393,7 @@ const TenantDashboard = ({
   );
 };
 
-type Tab = "dashboard" | "messages" | "tickets" | "documents" | "payments" | "profile";
+type Tab = "dashboard" | "messages" | "tickets" | "documents" | "payments" | "handover" | "profile";
 
 const TenantPortal = () => {
   const { user, signOut } = useAuth();
@@ -404,6 +405,36 @@ const TenantPortal = () => {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  const { data: handoverProtocols = [] } = useQuery({
+    queryKey: ["handover_protocols", tenantInfo?.id],
+    queryFn: async () => {
+      if (!tenantInfo?.id) return [];
+      const { data } = await supabase
+        .from("handover_protocols")
+        .select("id, type, protocol_data, tenant_confirmed_at, created_at")
+        .eq("tenant_id", tenantInfo.id)
+        .order("created_at", { ascending: false });
+      return (data || []) as Array<{ id: string; type: string; protocol_data: { date?: string; address?: string }; tenant_confirmed_at: string | null; created_at: string }>;
+    },
+    enabled: !!tenantInfo?.id && activeTab === "handover",
+  });
+
+  const confirmHandover = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("handover_protocols")
+        .update({ tenant_confirmed_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["handover_protocols", tenantInfo?.id] });
+      toastSuccess("Übergabeprotokoll bestätigt.");
+    },
+    onError: () => toastError("Bestätigung fehlgeschlagen."),
+  });
 
   useEffect(() => {
     const fetchTenantInfo = async () => {
@@ -499,6 +530,7 @@ const TenantPortal = () => {
     { key: "tickets", label: "Anfragen", icon: Wrench },
     { key: "documents", label: "Dokumente", icon: FileText },
     { key: "payments", label: "Zahlungen", icon: CreditCard },
+    { key: "handover", label: "Übergabe", icon: ClipboardList },
     { key: "profile", label: "Profil", icon: User },
   ];
 
@@ -651,6 +683,47 @@ const TenantPortal = () => {
             monthlyRent={tenantInfo.monthly_rent || 0}
             deposit={tenantInfo.deposit || 0}
           />
+        )}
+
+        {/* HANDOVER PROTOCOLS TAB */}
+        {activeTab === "handover" && (
+          <div className="space-y-4">
+            <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in">
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-muted-foreground" /> Übergabeprotokolle
+              </h2>
+              {handoverProtocols.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-8">
+                  Keine Übergabeprotokolle vorhanden.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {handoverProtocols.map((hp) => (
+                    <li key={hp.id} className="border border-border rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium">{hp.type === "auszug" ? "Auszug" : "Einzug"} – {hp.protocol_data?.date ? new Date(hp.protocol_data.date).toLocaleDateString("de-DE") : new Date(hp.created_at).toLocaleDateString("de-DE")}</p>
+                        {hp.protocol_data?.address && <p className="text-xs text-muted-foreground">{hp.protocol_data.address}</p>}
+                      </div>
+                      {hp.tenant_confirmed_at ? (
+                        <span className="text-xs text-profit flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Bestätigt am {new Date(hp.tenant_confirmed_at).toLocaleDateString("de-DE")}
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="gap-1"
+                          disabled={confirmHandover.isPending}
+                          onClick={() => confirmHandover.mutate(hp.id)}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Bestätigen
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         )}
 
         {/* PROFILE TAB */}

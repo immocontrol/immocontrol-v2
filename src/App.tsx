@@ -76,6 +76,7 @@ const analyseRisikoImport = () => import("@/pages/AnalyseRisikoPage");
 const vertraegeKontakteImport = () => import("@/pages/VertraegeKontaktePage");
 const aufgabenDokumenteImport = () => import("@/pages/AufgabenDokumentePage");
 const dealsBewertungImport = () => import("@/pages/DealsBewertungPage");
+const handoverConfirmImport = () => import("@/pages/HandoverConfirmPage");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -124,6 +125,7 @@ const AnalyseRisikoPage = lazy(analyseRisikoImport);
 const VertraegeKontaktePage = lazy(vertraegeKontakteImport);
 const AufgabenDokumentePage = lazy(aufgabenDokumenteImport);
 const DealsBewertungPage = lazy(dealsBewertungImport);
+const HandoverConfirmPage = lazy(handoverConfirmImport);
 
 /* BUG-6: Preload nur häufig genutzte Routen — reduziert Bandbreite auf Mobile, rest lädt on-demand */
 const preloadHighTrafficRoutes = () => {
@@ -407,6 +409,7 @@ const App = () => {
                       <Route path={ROUTES.NUTZUNGSBEDINGUNGEN} element={<Nutzungsbedingungen />} />
                       <Route path={ROUTES.INVITATION} element={<Einladung />} />
                       <Route path={ROUTES.PASSWORD_RESET} element={<PasswordReset />} />
+                      <Route path={`${ROUTES.HANDOVER_CONFIRM}/:token`} element={<HandoverConfirmPage />} />
                       <Route path="/*" element={<RoleRouter />} />
                     </Routes>
                   </Suspense>

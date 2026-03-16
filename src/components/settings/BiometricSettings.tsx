@@ -23,8 +23,16 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
   const [biometricSupported, setBiometricSupported] = useState(false);
   const [registering, setRegistering] = useState(false);
 
+  const [isNativeIos, setIsNativeIos] = useState(false);
   useEffect(() => {
     const check = async () => {
+      let nativeIos = false;
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios") nativeIos = true;
+      } catch { /* ignore */ }
+      setIsNativeIos(nativeIos);
+
       const supported = typeof window !== "undefined" &&
         !!window.PublicKeyCredential &&
         typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function";
@@ -84,9 +92,16 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
         Nutze Face ID, Touch ID oder deinen Fingerabdruck für schnelleren Login.
       </p>
       {!biometricSupported ? (
-        <p className="text-xs text-muted-foreground flex items-center gap-1 p-3 rounded-lg bg-secondary/30 border border-border">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Dein Gerät unterstützt keine biometrische Authentifizierung
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground flex items-center gap-1 p-3 rounded-lg bg-secondary/30 border border-border">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Dein Gerät unterstützt keine biometrische Authentifizierung
+          </p>
+          {isNativeIos && (
+            <p className="text-[11px] text-muted-foreground">
+              iPhone-App: Face ID wird aktiviert, sobald du die neueste App-Version aus dem App Store installierst. Danach hier erneut prüfen.
+            </p>
+          )}
+        </div>
       ) : (
         <SettingsToggleRow
           label="Face ID / Touch ID für Login"

@@ -71,6 +71,8 @@ export const ROUTES = {
   AUFGABEN_DOKUMENTE: "/aufgaben-dokumente",
   /** Sammel-Seite mit Tabs: CRM, Deals, Deal-Benchmark, Schnellbewertung */
   DEALS_BEWERTUNG: "/deals-bewertung",
+  /** Öffentlicher Link: Mieter bestätigt Übergabeprotokoll (Token in URL) */
+  HANDOVER_CONFIRM: "/uebergabe",
 } as const;
 
 /** Helper: Property detail URL */

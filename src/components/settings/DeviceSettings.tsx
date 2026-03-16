@@ -23,8 +23,9 @@ function parseDeviceName(ua: string): string {
   return "Unbekanntes Ger\u00e4t";
 }
 
-/** Parse browser from user agent */
-function parseBrowser(ua: string): string {
+/** Parse browser from user agent (or "App" when native app) */
+function parseBrowser(ua: string, isNativeIosOrAndroid = false): string {
+  if (isNativeIosOrAndroid) return "App";
   if (/Firefox/i.test(ua)) return "Firefox";
   if (/Edg/i.test(ua)) return "Edge";
   if (/Chrome/i.test(ua)) return "Chrome";
@@ -35,6 +36,20 @@ function parseBrowser(ua: string): string {
 export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
   const [devices, setDevices] = useState<Array<{ id: string; userAgent: string; lastActive: string; isCurrent: boolean }>>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (Capacitor.isNativePlatform()) {
+          if (!cancelled) setIsNativeApp(true);
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const fetchDevices = useCallback(async () => {
     setDevicesLoading(true);
@@ -131,7 +146,7 @@ export function DeviceSettings({ sectionRef }: DeviceSettingsProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-medium truncate">{parseDeviceName(device.userAgent)}</span>
-                  <span className="text-[10px] text-muted-foreground">{parseBrowser(device.userAgent)}</span>
+                  <span className="text-[10px] text-muted-foreground">{parseBrowser(device.userAgent, device.isCurrent && isNativeApp)}</span>
                   {device.isCurrent && (
                     <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold shrink-0">Dieses Gerät</span>
                   )}

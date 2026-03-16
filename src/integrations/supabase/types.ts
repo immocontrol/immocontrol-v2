@@ -1823,6 +1823,54 @@ export type Database = {
           },
         ]
       }
+      handover_protocols: {
+        Row: {
+          id: string
+          property_id: string
+          tenant_id: string
+          created_by: string
+          type: string
+          protocol_data: Json
+          pdf_storage_path: string | null
+          confirm_token: string | null
+          tenant_confirmed_at: string | null
+          tenant_signature_data: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          tenant_id: string
+          created_by: string
+          type: string
+          protocol_data?: Json
+          pdf_storage_path?: string | null
+          confirm_token?: string | null
+          tenant_confirmed_at?: string | null
+          tenant_signature_data?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          tenant_id?: string
+          created_by?: string
+          type?: string
+          protocol_data?: Json
+          pdf_storage_path?: string | null
+          confirm_token?: string | null
+          tenant_confirmed_at?: string | null
+          tenant_signature_data?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "handover_protocols_property_id_fkey", columns: ["property_id"], referencedRelation: "properties", referencedColumns: ["id"] },
+          { foreignKeyName: "handover_protocols_tenant_id_fkey", columns: ["tenant_id"], referencedRelation: "tenants", referencedColumns: ["id"] },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1840,6 +1888,8 @@ export type Database = {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
       }
+      get_handover_by_token: { Args: { _token: string }; Returns: Json }
+      confirm_handover_by_token: { Args: { _token: string; _signature_data?: string | null }; Returns: boolean }
     }
     Enums: {
       app_role: "landlord" | "tenant" | "handworker"
