@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { FileText, Download, Loader2, ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
+import { FileText, Download, Loader2, ChevronLeft, ChevronRight, Check, Sparkles, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,10 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
+import { queryKeys } from "@/lib/queryKeys";
 import { isDeepSeekConfigured, suggestSelbstauskunftSummary } from "@/integrations/ai/extractors";
 
 /* IMPROVE-14: Remove unused jsPDF import (smaller bundle, fewer dependencies) */
@@ -107,10 +109,12 @@ const STEPS = [
 export const SelbstauskunftGenerator = () => {
   const { user } = useAuth();
   const { properties } = useProperties();
+  const qc = useQueryClient();
   const [data, setData] = useState<SelbstauskunftData>(defaultData);
   const [generating, setGenerating] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const [savePropertyId, setSavePropertyId] = useState("");
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -388,23 +392,66 @@ export const SelbstauskunftGenerator = () => {
         });
       }
 
-      // ── Save ──
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Selbstauskunft_" + (data.name || "Entwurf") + "_" + new Date().toISOString().split("T")[0] + ".pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Selbstauskunft als PDF heruntergeladen! (Felder sind editierbar)");
+      const fileName = "Selbstauskunft_" + (data.name || "Entwurf") + "_" + new Date().toISOString().split("T")[0] + ".pdf";
+      return { blob, fileName };
     } catch (err: unknown) {
       handleError(err, { context: "file", showToast: false });
-      toastErrorWithRetry("Fehler beim Erstellen: " + (err instanceof Error ? err.message : "Unbekannt"), () => generatePDF());
+      toastErrorWithRetry("Fehler beim Erstellen: " + (err instanceof Error ? err.message : "Unbekannt"), () => buildPDFBlob());
+      return null;
     } finally {
       setGenerating(false);
     }
   }, [data, user, properties]);
+
+  const buildPDFBlob = generatePDF;
+
+  const handleDownload = useCallback(async () => {
+    const result = await buildPDFBlob();
+    if (!result) return;
+    const { blob, fileName } = result;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Selbstauskunft als PDF heruntergeladen! (Felder sind editierbar)");
+  }, [buildPDFBlob]);
+
+  const handleSaveToDocuments = useCallback(async (propertyId: string) => {
+    if (!user || !propertyId) return;
+    setGenerating(true);
+    try {
+      const result = await buildPDFBlob();
+      if (!result) return;
+      const { blob, fileName } = result;
+      const filePath = `${user.id}/${propertyId}/${Date.now()}_${fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("property-documents")
+        .upload(filePath, blob, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+      const { error: dbError } = await supabase.from("property_documents").insert({
+        user_id: user.id,
+        property_id: propertyId,
+        file_name: fileName,
+        file_path: filePath,
+        file_size: blob.size,
+        file_type: "application/pdf",
+        category: "Selbstauskunft",
+      } as never);
+      if (dbError) throw dbError;
+      qc.invalidateQueries({ queryKey: queryKeys.documents.byProperty(propertyId) });
+      qc.invalidateQueries({ queryKey: ["all_documents"] });
+      toast.success("Selbstauskunft in Objekt-Dokumente gespeichert.");
+    } catch (e) {
+      toast.error("Speichern fehlgeschlagen.");
+      console.error(e);
+    } finally {
+      setGenerating(false);
+    }
+  }, [user, buildPDFBlob, qc]);
 
   // Render helpers as plain functions (not components) to fix focus bug
   const inp = (label: string, field: keyof SelbstauskunftData, type = "text", placeholder = "") => {
@@ -627,10 +674,36 @@ export const SelbstauskunftGenerator = () => {
                 </div>
               )}
             </div>
-            <Button onClick={generatePDF} disabled={generating} className="w-full gap-2" size="lg">
+            <Button onClick={handleDownload} disabled={generating} className="w-full gap-2" size="lg">
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               {generating ? "Wird erstellt..." : "PDF herunterladen"}
             </Button>
+            {properties.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+                <Select value={savePropertyId || "_none"} onValueChange={v => setSavePropertyId(v === "_none" ? "" : v)}>
+                  <SelectTrigger className="w-[200px] h-9 text-xs">
+                    <SelectValue placeholder="Objekt für Dokument wählen …" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none" className="text-xs">Objekt wählen …</SelectItem>
+                    {properties.map(p => (
+                      <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={generating || !savePropertyId}
+                  onClick={() => savePropertyId && handleSaveToDocuments(savePropertyId)}
+                  className="gap-1.5"
+                >
+                  {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  In Dokumente speichern
+                </Button>
+              </div>
+            )}
           </div>
         );
       default:

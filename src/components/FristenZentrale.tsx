@@ -262,6 +262,24 @@ export default function FristenZentrale() {
       .slice(0, LIMIT);
   }, [contracts, loans, mietvertraege, docExpiries, insurances, serviceContracts, getProperty]);
 
+  const zinsbindungProminent = useMemo(() => {
+    return loans
+      .filter((l) => {
+        const d = daysLeft(l.fixed_interest_until);
+        return d > -30 && d <= HORIZON_DAYS;
+      })
+      .sort((a, b) => daysLeft(a.fixed_interest_until) - daysLeft(b.fixed_interest_until))
+      .slice(0, 5)
+      .map((l) => ({
+        id: l.id,
+        bank_name: l.bank_name,
+        property_id: l.property_id,
+        propertyName: getProperty(l.property_id)?.name ?? l.property_id,
+        date: l.fixed_interest_until,
+        daysLeft: daysLeft(l.fixed_interest_until),
+      }));
+  }, [loans, getProperty]);
+
   const typeIcon: Record<DeadlineType, React.ReactNode> = {
     vertrag: <FileText className="h-3.5 w-3.5 shrink-0" />,
     kuendigung: <AlertTriangle className="h-3.5 w-3.5 shrink-0" />,
@@ -304,6 +322,31 @@ export default function FristenZentrale() {
       <p className="text-[10px] text-muted-foreground mb-3">
         Nächste {items.length} Fristen (Verträge, Zinsbindung, Mieterhöhung §558, Dokumente, Versicherungen)
       </p>
+      {zinsbindungProminent.length > 0 && (
+        <div className="mb-4 rounded-xl border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold flex items-center gap-1.5 text-primary">
+              <Landmark className="h-4 w-4" /> Zinsbindungsende — Refinanzierung planen
+            </span>
+            <Link to={ROUTES.LOANS} className="text-[10px] text-primary hover:underline font-medium">
+              Darlehen →
+            </Link>
+          </div>
+          <ul className="space-y-1.5">
+            {zinsbindungProminent.map((z) => (
+              <li key={z.id} className="flex items-center justify-between text-xs">
+                <span className="font-medium truncate max-w-[180px]">{z.propertyName} · {z.bank_name}</span>
+                <span className={cn(
+                  "shrink-0 font-semibold",
+                  z.daysLeft <= 90 ? "text-loss" : "text-gold"
+                )}>
+                  {formatDate(z.date)} ({z.daysLeft} T)
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <ul className="space-y-2">
         {items.map((item) => {
           const isUrgent = item.daysLeft <= 30;

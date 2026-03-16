@@ -6,6 +6,8 @@ import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, safeDivide } from "@/lib/formatters";
 import { calcMonthlyCashflow } from "@/lib/calculations";
+import { Label } from "@/components/ui/label";
+import { NumberInput } from "@/components/NumberInput";
 
 interface Scenario {
   label: string;
@@ -50,6 +52,7 @@ const SCENARIOS: Scenario[] = [
 export function CashflowScenarios() {
   const { properties, stats } = useProperties();
   const [years, setYears] = useState(5);
+  const [nkNachzahlung, setNkNachzahlung] = useState(0);
 
   const scenarios = useMemo(() => {
     if (properties.length === 0) return [];
@@ -99,6 +102,16 @@ export function CashflowScenarios() {
           ))}
         </select>
       </div>
+      <div className="mb-3">
+        <Label className="text-[10px] text-muted-foreground">Einmalige NK-Nachzahlung (€) — mindert Gesamt-Cashflow</Label>
+        <NumberInput
+          value={nkNachzahlung}
+          onValueChange={v => setNkNachzahlung(v ?? 0)}
+          className="h-8 text-xs mt-0.5 max-w-[120px]"
+          min={0}
+          placeholder="0"
+        />
+      </div>
 
       <div className="space-y-3">
         {scenarios.map((s, i) => (
@@ -131,9 +144,12 @@ export function CashflowScenarios() {
               </div>
               <div>
                 <span className="text-muted-foreground block">{years}J Gesamt</span>
-                <span className={`font-bold ${s.totalCashflow >= 0 ? "text-profit" : "text-loss"}`}>
-                  {formatCurrency(s.totalCashflow)}
+                <span className={`font-bold ${(s.totalCashflow - nkNachzahlung) >= 0 ? "text-profit" : "text-loss"}`}>
+                  {formatCurrency(s.totalCashflow - nkNachzahlung)}
                 </span>
+                {nkNachzahlung > 0 && (
+                  <span className="block text-muted-foreground text-[9px]">inkl. NK −{formatCurrency(nkNachzahlung)}</span>
+                )}
               </div>
             </div>
 

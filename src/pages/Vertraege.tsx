@@ -9,6 +9,7 @@ import ContractLifecycleManager from "@/components/ContractLifecycleManager";
 import FristenZentrale from "@/components/FristenZentrale";
 import { ContractTemplates } from "@/components/ContractTemplates";
 import { KuendigungsfristRechner } from "@/components/KuendigungsfristRechner";
+import { KuendigungsschreibenLetter } from "@/components/KuendigungsschreibenLetter";
 import { AfASchnellrechner } from "@/components/AfASchnellrechner";
 import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart, Store, Calculator, Landmark } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
@@ -237,6 +238,7 @@ const Vertraege = () => {
       )}
 
       <KuendigungsfristRechner />
+      <KuendigungsschreibenLetter />
       <AfASchnellrechner />
 
       <div ref={tabsRef} className="scroll-mt-20">
