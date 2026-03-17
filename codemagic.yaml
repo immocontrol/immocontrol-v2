@@ -15,6 +15,9 @@
 # 422 "Another build in the same train is already in beta review": Pro Version darf nur ein Build
 # gleichzeitig in TestFlight-Review sein. Version in package.json erhöhen (z. B. 1.0.0 → 1.0.1),
 # pushen und neuen Build starten – dann ist der neue Build eine andere Train.
+#
+# Build fehlgeschlagen? Die echte Fehlermeldung steht in Codemagic unter Build → Logs (nach unten
+# scrollen zum ersten roten Schritt). Siehe docs/CODEMAGIC_TROUBLESHOOTING.md für typische Fehler.
 
 workflows:
   ios-immo-control:
