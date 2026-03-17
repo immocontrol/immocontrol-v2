@@ -10,6 +10,7 @@ import FristenZentrale from "@/components/FristenZentrale";
 import { ContractTemplates } from "@/components/ContractTemplates";
 import { KuendigungsfristRechner } from "@/components/KuendigungsfristRechner";
 import { KuendigungsschreibenLetter } from "@/components/KuendigungsschreibenLetter";
+import { MietvertragCreateAndSign } from "@/components/MietvertragCreateAndSign";
 import { AfASchnellrechner } from "@/components/AfASchnellrechner";
 import { FileText, Receipt, Wrench, AlertTriangle, Clock, CalendarClock, FolderOpen, BarChart3, FileBarChart, Store, Calculator, Landmark } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
@@ -96,9 +97,9 @@ const Vertraege = () => {
 
   return (
     /* IMP-16: ARIA landmark for Verträge page */
-    <div className="space-y-6 max-w-5xl mx-auto" role="main" aria-label="Verträge und Verwaltung">
+    <div className="space-y-6 max-w-5xl mx-auto min-w-0" role="main" aria-label="Verträge und Verwaltung">
       {/* Improvement 8: Mobile responsive heading */}
-      <div>
+      <div className="min-w-0">
         <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>
         <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
           {/* IMPROVE-14: Show total active items count */}
@@ -268,6 +269,8 @@ const Vertraege = () => {
       </Tabs>
       </div>
 
+      {/* Mietvertrag ausstellen und zur digitalen Unterschrift senden */}
+      <MietvertragCreateAndSign />
       {/* Vertragsvorlagen — moved from Dashboard */}
       <ContractTemplates />
     </div>

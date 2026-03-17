@@ -70,14 +70,14 @@ const SteuerCockpit = memo(() => {
   if (properties.length === 0) return null;
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Receipt className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">Steuer-Cockpit</h3>
-          <Badge variant="outline" className="text-[10px] h-5">{new Date().getFullYear()}</Badge>
+    <div className="gradient-card rounded-xl border border-border p-4 animate-fade-in min-w-0">
+      <div className="flex items-center justify-between mb-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Receipt className="h-4 w-4 text-primary shrink-0" />
+          <h3 className="text-sm font-semibold text-wrap-safe break-words">Steuer-Cockpit</h3>
+          <Badge variant="outline" className="text-[10px] h-5 shrink-0">{new Date().getFullYear()}</Badge>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={expanded ? "Bereich einklappen" : "Bereich aufklappen"} onClick={() => setExpanded(!expanded)}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 touch-target min-h-[44px]" aria-label={expanded ? "Bereich einklappen" : "Bereich aufklappen"} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </Button>
       </div>
@@ -85,7 +85,7 @@ const SteuerCockpit = memo(() => {
       {taxProjection && (
         <>
           {/* Summary row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 min-w-0">
             <div className="text-center p-2 rounded-lg bg-background/50">
               <p className="text-[10px] text-muted-foreground">Mieteinnahmen</p>
               <p className="text-xs font-bold text-profit">{formatCurrency(taxProjection.annualRent)}</p>
@@ -106,11 +106,11 @@ const SteuerCockpit = memo(() => {
 
           {/* Optimization tips */}
           {taxProjection.tips.length > 0 && (
-            <div className="space-y-1 mb-3">
+            <div className="space-y-1 mb-3 min-w-0">
               {taxProjection.tips.map((tip, i) => (
-                <div key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+                <div key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground min-w-0">
                   <TrendingDown className="h-3 w-3 text-profit shrink-0 mt-0.5" />
-                  <span>{tip}</span>
+                  <span className="text-wrap-safe break-words">{tip}</span>
                 </div>
               ))}
             </div>
@@ -120,21 +120,23 @@ const SteuerCockpit = memo(() => {
 
       {/* Expanded: Tabs for AnlageV, TaxYear, AfA */}
       {expanded && (
-        <div className="mt-3 border-t border-border pt-3">
-          <div className="flex gap-1 mb-3">
+        <div className="mt-3 border-t border-border pt-3 min-w-0">
+          <div className="flex flex-wrap gap-1 mb-3 min-w-0" role="tablist" aria-label="Steuer-Bereiche">
             {(["overview", "anlageV", "afa", "manus"] as const).map(tab => (
               <Button
                 key={tab}
                 variant={activeTab === tab ? "default" : "ghost"}
                 size="sm"
-                className="text-[10px] h-6 px-2"
+                className="text-[10px] h-8 px-2 touch-target min-h-[36px]"
                 onClick={() => setActiveTab(tab)}
+                role="tab"
+                aria-selected={activeTab === tab}
               >
                 {tab === "overview" ? "Übersicht" : tab === "anlageV" ? "Anlage V" : tab === "afa" ? "AfA-Rechner" : "Manus AI"}
               </Button>
             ))}
           </div>
-          <Suspense fallback={<div className="h-20 bg-secondary/50 rounded animate-pulse" />}>
+          <Suspense fallback={<div className="h-20 bg-secondary/50 rounded animate-pulse min-w-0" role="status" aria-label="Bereich wird geladen" />}>
             {activeTab === "overview" && <TaxYearOverview />}
             {activeTab === "anlageV" && <AnlageVExport />}
             {activeTab === "afa" && <AfACalculator />}

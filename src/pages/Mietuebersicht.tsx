@@ -256,7 +256,11 @@ const Mietuebersicht = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6" role="main" aria-label="Mietübersicht">
+      <div className="space-y-6 min-w-0" role="main" aria-label="Mietübersicht">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
+          <p className="text-sm text-muted-foreground mt-1">Zahlungen, Mahnwesen und Bank-Abgleich</p>
+        </div>
         <TablePageSkeleton rows={6} />
       </div>
     );
@@ -265,7 +269,8 @@ const Mietuebersicht = () => {
   return (
     <div className="space-y-6 min-w-0" role="main" aria-label="Mietübersicht">
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Mietübersicht</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Zahlungen, Mahnwesen und Bank-Abgleich</p>
         <div className="flex items-center gap-x-2 gap-y-2 mt-1 flex-wrap min-w-0">
           <p className="text-sm text-muted-foreground">
             {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat

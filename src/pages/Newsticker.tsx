@@ -544,11 +544,42 @@ const Newsticker = () => {
   /* Loading skeleton */
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-64 bg-secondary animate-pulse rounded" />
-        <div className="grid gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-28 bg-secondary animate-pulse rounded-xl" />
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="space-y-2">
+            <div className="h-7 w-56 bg-secondary animate-pulse rounded" />
+            <div className="h-4 w-44 bg-secondary/70 animate-pulse rounded" />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-9 w-24 bg-secondary animate-pulse rounded-md" />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border border-border p-4 space-y-2">
+              <div className="h-3 w-20 bg-secondary animate-pulse rounded" />
+              <div className="h-4 w-full bg-secondary/80 animate-pulse rounded" />
+              <div className="h-4 w-3/4 bg-secondary/60 animate-pulse rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="h-10 w-full max-w-md bg-secondary/50 animate-pulse rounded-md" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border p-4 flex gap-4">
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex gap-2">
+                  <div className="h-5 w-16 bg-secondary animate-pulse rounded-full" />
+                  <div className="h-5 w-14 bg-secondary animate-pulse rounded-full" />
+                </div>
+                <div className="h-4 w-full bg-secondary/80 animate-pulse rounded" />
+                <div className="h-4 w-4/5 bg-secondary/60 animate-pulse rounded" />
+                <div className="h-3 w-32 bg-secondary/50 animate-pulse rounded" />
+              </div>
+              <div className="w-24 h-20 rounded-lg bg-secondary animate-pulse shrink-0 hidden sm:block" />
+            </div>
           ))}
         </div>
       </div>
@@ -862,7 +893,7 @@ const Newsticker = () => {
               className="text-xs"
               onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedRegion("all"); setSelectedCity("all"); }}
             >
-              Alle Filter zur&#252;cksetzen
+              Alle Filter zurücksetzen
             </Button>
           )}
         </div>
@@ -878,24 +909,31 @@ const Newsticker = () => {
 
       {/* News list */}
       {filteredNews.length === 0 ? (
-        <div className="text-center py-12 px-4">
-          <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground mb-1">
+        <div className="text-center py-16 px-4 rounded-xl border border-dashed border-border bg-muted/20">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" aria-hidden />
+          <p className="text-sm font-medium text-foreground mb-1">
             {showBookmarksOnly
-              ? "Keine Lesezeichen vorhanden."
+              ? "Keine Lesezeichen vorhanden"
               : news.length === 0
-                ? "Es konnten keine Nachrichten geladen werden."
-                : "Keine Nachrichten f\u00fcr diese Filter."}
+                ? "Nachrichten konnten nicht geladen werden"
+                : "Keine Treffer für die gewählten Filter"}
           </p>
-          {news.length === 0 && !showBookmarksOnly && (
-            <p className="text-xs text-muted-foreground mb-4 max-w-md mx-auto">
-              Die RSS-Quellen werden \u00fcber CORS-Proxies geladen. Bitte erneut versuchen oder sp\u00e4ter die Seite aktualisieren.
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground mb-4 max-w-sm mx-auto text-pretty">
+            {showBookmarksOnly
+              ? "Speichere Artikel über das Lesezeichen-Symbol, um sie hier wiederzufinden."
+              : news.length === 0
+                ? "Die Quellen werden über CORS-Proxies geladen. Bitte erneut versuchen oder die Seite später aktualisieren."
+                : "Kategorien, Region oder Stimmung anpassen oder Suchbegriff ändern."}
+          </p>
           {news.length === 0 && !showBookmarksOnly && (
             <Button variant="default" size="sm" className="gap-2" onClick={() => fetchAllNews(true)} disabled={refreshing}>
               <RefreshCw className={refreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
               Erneut versuchen
+            </Button>
+          )}
+          {news.length > 0 && !showBookmarksOnly && (
+            <Button variant="outline" size="sm" onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedRegion("all"); setSelectedCity("all"); setSearch(""); setDisplayCount(20); }}>
+              Filter zurücksetzen
             </Button>
           )}
         </div>
@@ -916,6 +954,7 @@ const Newsticker = () => {
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={item.title}
                   className="flex-1 min-w-0 text-xs font-medium truncate hover:text-primary transition-colors"
                 >
                   {item.title}
@@ -976,14 +1015,16 @@ const Newsticker = () => {
                       </span>
                     </div>
                     {/* Title */}
-                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="block">
-                      <h3 className="text-sm font-semibold leading-tight hover:text-primary transition-colors line-clamp-2">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="block" title={item.title}>
+                      <h3 className="text-sm font-semibold leading-tight hover:text-primary transition-colors line-clamp-2 text-wrap-safe">
                         {item.title}
                       </h3>
                     </a>
                     {/* Description */}
                     {item.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3 text-wrap-safe hyphens-auto min-w-0" title={item.description}>
+                        {item.description}
+                      </p>
                     )}
                     {/* Meta */}
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground">

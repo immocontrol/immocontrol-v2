@@ -57,6 +57,7 @@ import { FileImportPicker } from "@/components/FileImportPicker";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
 import { handleError } from "@/lib/handleError";
+import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { logger } from "@/lib/logger";
 import { fromTable } from "@/lib/typedSupabase";
 import { ViewingAISummary } from "@/components/ViewingAISummary";
@@ -288,7 +289,10 @@ const Besichtigungen = () => {
       announce("Besichtigung angelegt", "polite");
       toast.success("Besichtigung angelegt — Medien hinzufügen");
     },
-    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Speichern fehlgeschlagen" }),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Besichtigung konnte nicht angelegt werden", () => handleCreate());
+    },
   });
 
   const updateMutation = useMutation({
@@ -311,7 +315,10 @@ const Besichtigungen = () => {
       announce("Besichtigung gespeichert", "polite");
       toast.success("Gespeichert");
     },
-    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Aktualisierung fehlgeschlagen" }),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Änderungen konnten nicht gespeichert werden", () => handleUpdate());
+    },
   });
 
   const deleteMutation = useMutation({
@@ -337,7 +344,10 @@ const Besichtigungen = () => {
       announce("Besichtigung gelöscht", "polite");
       toast.success("Besichtigung gelöscht");
     },
-    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Löschen fehlgeschlagen" }),
+    onError: (err) => {
+      handleError(err, { context: "supabase", showToast: false });
+      toastErrorWithRetry("Besichtigung konnte nicht gelöscht werden", () => deleteId && deleteMutation.mutate(deleteId));
+    },
   });
 
   const openEdit = useCallback((v: ViewingRecord) => {
@@ -479,34 +489,34 @@ const Besichtigungen = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="z. B. Titel oder Adresse"
+            placeholder="z. B. Titel, Adresse oder Notizen"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
             aria-label="Besichtigungen durchsuchen"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm min-w-0"
             aria-label="Sortieren nach"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>{o.label}</option>
             ))}
           </select>
-          <Button variant="ghost" size="sm" onClick={() => setSortAsc((a) => !a)} aria-label={sortAsc ? "Aufsteigend" : "Absteigend"}>
+          <Button variant="ghost" size="sm" onClick={() => setSortAsc((a) => !a)} aria-label={sortAsc ? "Aufsteigend" : "Absteigend"} className="shrink-0">
             {sortAsc ? "↑" : "↓"}
           </Button>
           <select
             value={ratingFilter ?? "all"}
             onChange={(e) => setRatingFilter(e.target.value === "all" ? null : Number(e.target.value))}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm min-w-0"
             aria-label="Filter Bewertung"
           >
             <option value="all">Alle Bewertungen</option>
@@ -514,16 +524,28 @@ const Besichtigungen = () => {
               <option key={r} value={r}>★ {r}+</option>
             ))}
           </select>
+          {(debouncedSearch.trim() || ratingFilter != null) && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap" aria-live="polite">
+              {filteredViewings.length} {filteredViewings.length === 1 ? "Treffer" : "Treffer"}
+            </span>
+          )}
         </div>
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
+        <div className="grid gap-4 sm:grid-cols-2" role="status" aria-label="Besichtigungen werden geladen">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse overflow-hidden">
               <CardHeader className="pb-2">
-                <div className="h-5 bg-muted rounded w-3/4" />
-                <div className="h-4 bg-muted rounded w-1/2 mt-2" />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="h-5 bg-muted rounded w-2/3" />
+                  <div className="h-6 w-12 bg-muted rounded shrink-0" />
+                </div>
+                <div className="h-4 bg-muted/80 rounded w-1/2 mt-2" />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="h-6 w-20 bg-muted/70 rounded-full" />
+                  <div className="h-6 w-14 bg-muted/70 rounded-full" />
+                </div>
               </CardHeader>
             </Card>
           ))}
@@ -531,10 +553,24 @@ const Besichtigungen = () => {
       ) : filteredViewings.length === 0 ? (
         <EmptyState
           icon={Camera}
-          title="Noch keine Besichtigungen"
-          description="Lege eine Besichtigung an, um Notizen, Pro/Kontra-Punkte, Bilder und Videos zu erfassen. Deals in Stage Besichtigung erzeugen automatisch einen Eintrag."
+          title={viewings.length === 0 ? "Noch keine Besichtigungen" : "Keine Treffer"}
+          description={
+            viewings.length === 0
+              ? "Lege eine Besichtigung an, um vor Ort Notizen, Pro/Kontra, Bewertung sowie Bilder und Videos zu erfassen. Deals in Stage „Besichtigung“ erzeugen automatisch einen Eintrag."
+              : "Suche oder Bewertungsfilter anpassen, um mehr Einträge zu sehen."
+          }
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
+              {viewings.length > 0 ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="touch-target min-h-[44px]"
+                  onClick={() => { setSearchQuery(""); setRatingFilter(null); }}
+                >
+                  Filter zurücksetzen
+                </Button>
+              ) : null}
               <Button onClick={() => openAdd(false)} className="touch-target min-h-[44px] gap-1.5">
                 <Plus className="h-4 w-4" /> Besichtigung anlegen
               </Button>
@@ -543,6 +579,9 @@ const Besichtigungen = () => {
               </Button>
               <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
                 <Link to={ROUTES.CRM_SCOUT}>WGH finden</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+                <Link to={ROUTES.DOKUMENTE}>Dokumente</Link>
               </Button>
             </div>
           }

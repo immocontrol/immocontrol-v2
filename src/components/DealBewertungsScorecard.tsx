@@ -130,10 +130,10 @@ const DealBewertungsScorecard = memo(() => {
           <Badge variant="outline" className="text-[10px] h-5">{evaluations.length} Deals</Badge>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowNew(!showNew)}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowNew(!showNew)} aria-label={showNew ? "Neuen Deal ausblenden" : "Neuen Deal bewerten"}>
             <Plus className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)} aria-label={expanded ? "Liste einklappen" : "Alle Bewertungen anzeigen"}>
             {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           </Button>
         </div>
@@ -198,10 +198,10 @@ const DealBewertungsScorecard = memo(() => {
             deal.rating === "C" ? "bg-gold/5 border-gold/20" :
             "bg-loss/5 border-loss/20"
           }`}>
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="font-medium">{deal.name}</span>
-                {deal.address && <span className="text-muted-foreground ml-1">{deal.address}</span>}
+            <div className="flex justify-between items-start gap-2 min-w-0">
+              <div className="min-w-0 text-wrap-safe break-words">
+                <span className="font-medium" title={deal.name}>{deal.name}</span>
+                {deal.address && <span className="text-muted-foreground ml-1" title={deal.address}>{deal.address}</span>}
               </div>
               <div className="flex items-center gap-1">
                 <Badge className={`text-[10px] h-5 ${
@@ -235,7 +235,9 @@ const DealBewertungsScorecard = memo(() => {
           </div>
         ))}
         {evaluations.length === 0 && (
-          <p className="text-[10px] text-muted-foreground text-center py-3">Noch keine Deals bewertet — klicke + um zu starten</p>
+          <p className="text-[10px] text-muted-foreground text-center py-4 px-2">
+            Noch keine Deals bewertet. Klicke auf <strong>+</strong>, um einen Deal mit Kriterien (Rendite, Lage, Zustand …) zu bewerten und ein A–D-Rating zu erhalten.
+          </p>
         )}
       </div>
     </div>

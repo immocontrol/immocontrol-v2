@@ -119,7 +119,7 @@ const DashboardActionCenter = () => {
         </h2>
         {/* Synergy 3: Quick context stats + Benachrichtigungen */}
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          <Link to={ROUTES.BENACHRICHTIGUNGEN} className="flex items-center gap-0.5 hover:text-primary transition-colors touch-target min-h-[36px] items-center" aria-label="Fristen und Benachrichtigungen">
+          <Link to={ROUTES.BENACHRICHTIGUNGEN} className="flex items-center gap-0.5 hover:text-primary transition-colors touch-target min-h-[44px] items-center" aria-label="Fristen und Benachrichtigungen">
             <Bell className="h-3 w-3" /> Fristen & Benachrichtigungen
           </Link>
           <span className="flex items-center gap-0.5"><Users className="h-3 w-3" /> {stats.activeTenants} Mieter</span>
@@ -205,7 +205,7 @@ const DashboardActionCenter = () => {
           {dealsInBesichtigung > 0 && (
             <Link
               to={ROUTES.DEALS}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors text-sm font-medium touch-target min-h-[44px] items-center"
             >
               <Landmark className="h-4 w-4 text-primary" />
               <span>{dealsInBesichtigung} Deal{dealsInBesichtigung !== 1 ? "s" : ""} in Besichtigung</span>
@@ -215,7 +215,8 @@ const DashboardActionCenter = () => {
           {recentViewings.length > 0 && (
             <Link
               to={ROUTES.BESICHTIGUNGEN}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/80 hover:bg-secondary transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/80 hover:bg-secondary transition-colors text-sm font-medium touch-target min-h-[44px] items-center"
+              aria-label="Besichtigungen"
             >
               <Camera className="h-4 w-4 text-muted-foreground" />
               <span>{recentViewings.length} Besichtigung{recentViewings.length !== 1 ? "en" : ""}</span>
@@ -256,7 +257,7 @@ const DashboardActionCenter = () => {
             <Link
               key={ticket.id}
               to={propertyDetail(ticket.property_id)}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/80 transition-colors group"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/80 transition-colors group touch-target min-h-[44px] items-center"
             >
               <span className="text-sm">{categoryIcons[ticket.category] || "📋"}</span>
               <span className="text-xs font-medium truncate flex-1">{ticket.title}</span>

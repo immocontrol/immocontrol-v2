@@ -709,19 +709,26 @@ const Deals = () => {
       </div>
 
       {/* UPD-38: Search bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="z. B. Adresse oder Deal-Titel"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-9 pr-9 h-9 search-focus-ring"
-          aria-label="Deals durchsuchen"
-        />
-        {search && (
-          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Suche l\u00f6schen">
-            <X className="h-4 w-4" />
-          </button>
+      <div className="relative flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-0 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="z. B. Adresse, Titel oder Kontakt"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9 pr-9 h-9 search-focus-ring"
+            aria-label="Deals durchsuchen"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Suche löschen">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        {debouncedSearch.trim() && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap" aria-live="polite">
+            {filteredDeals.length} {filteredDeals.length === 1 ? "Treffer" : "Treffer"}
+          </span>
         )}
       </div>
 
@@ -763,12 +770,12 @@ const Deals = () => {
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Quellen</p>
                 <div className="space-y-1.5">
                   {Object.entries(sourceAnalytics).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([source, count]) => (
-                    <div key={source} className="flex items-center justify-between">
-                      <span className="text-xs truncate flex items-center gap-1.5">
+                    <div key={source} className="flex items-center justify-between gap-2 min-w-0">
+                      <span className="text-xs truncate flex items-center gap-1.5 min-w-0" title={source}>
                         {source.toLowerCase().includes("telegram") && <MessageSquare className="h-3 w-3 text-blue-500 shrink-0" />}
                         {source}
                       </span>
-                      <span className="text-xs font-medium bg-secondary px-1.5 py-0.5 rounded">{count}</span>
+                      <span className="text-xs font-medium bg-secondary px-1.5 py-0.5 rounded shrink-0">{count}</span>
                     </div>
                   ))}
                 </div>
@@ -853,8 +860,8 @@ const Deals = () => {
                     </MobileSwipeableDealCard>
                   ))}
                   {stageDeals.length === 0 && (
-                    <div className="py-4 text-center text-xs text-muted-foreground/50 border border-dashed rounded-lg">
-                      Keine Deals
+                    <div className="py-6 px-3 text-center text-xs text-muted-foreground border border-dashed rounded-lg bg-muted/20">
+                      Keine Deals in dieser Phase
                     </div>
                   )}
                 </div>
@@ -969,37 +976,40 @@ const Deals = () => {
                     <div className="p-4">
                       <EmptyState
                         icon={Building2}
-                        title={search ? `Keine Deals für „${search}"` : "Noch keine Deals"}
+                        title={search ? "Keine Treffer" : "Noch keine Deals"}
                         description={
                           search
-                            ? "Suchbegriff anpassen oder neuen Deal anlegen."
-                            : "Lege einen Deal an, um Angebote und Besichtigungen zu verfolgen. Oder importiere aus dem CRM oder Telegram."
+                            ? `Keine Deals für „${search}". Suche zurücksetzen oder neuen Deal anlegen.`
+                            : "Lege einen Deal an, um Angebote und Besichtigungen zu verfolgen. Oder importiere aus CRM oder Telegram."
                         }
                         action={
-                          !search ? (
-                            <div className="flex flex-wrap items-center justify-center gap-2">
-                              <Button
-                                size="sm"
-                                className="gap-1.5 touch-target min-h-[44px]"
-                                onClick={() => {
-                                  if (!hasDealDraft) setForm({ ...emptyForm });
-                                  setEditDeal(null);
-                                  setAddOpen(true);
-                                }}
-                              >
-                                <Plus className="h-3.5 w-3.5" /> Deal anlegen
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            {search && (
+                              <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => setSearch("")}>
+                                Suche zurücksetzen
                               </Button>
-                              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5">
-                                <Link to={ROUTES.CRM}>Leads aus CRM</Link>
-                              </Button>
-                              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="WGH-Scout">
-                                <Link to={ROUTES.CRM_SCOUT}><Store className="h-3 w-3" /> WGH</Link>
-                              </Button>
-                              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="Besichtigung planen">
-                                <Link to={ROUTES.BESICHTIGUNGEN}><CalendarCheck className="h-3 w-3" /> Besichtigung</Link>
-                              </Button>
-                            </div>
-                          ) : undefined
+                            )}
+                            <Button
+                              size="sm"
+                              className="gap-1.5 touch-target min-h-[44px]"
+                              onClick={() => {
+                                if (!hasDealDraft) setForm({ ...emptyForm });
+                                setEditDeal(null);
+                                setAddOpen(true);
+                              }}
+                            >
+                              <Plus className="h-3.5 w-3.5" /> Deal anlegen
+                            </Button>
+                            <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5">
+                              <Link to={ROUTES.CRM}>Leads aus CRM</Link>
+                            </Button>
+                            <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="WGH-Scout">
+                              <Link to={ROUTES.CRM_SCOUT}><Store className="h-3 w-3" /> WGH</Link>
+                            </Button>
+                            <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="Besichtigung planen">
+                              <Link to={ROUTES.BESICHTIGUNGEN}><CalendarCheck className="h-3 w-3" /> Besichtigung</Link>
+                            </Button>
+                          </div>
                         }
                       />
                     </div>

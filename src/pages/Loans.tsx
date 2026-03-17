@@ -451,9 +451,9 @@ const Loans = () => {
         </div>
         <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-none">{l.bank_name}</span>
+            <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-none" title={l.bank_name}>{l.bank_name}</span>
             <Badge variant="secondary" className="text-[10px] h-4 shrink-0">{loanTypeLabels[l.loan_type] || l.loan_type}</Badge>
-            {prop && <Link to={propertyDetail(prop.id)} className="text-[10px] text-muted-foreground truncate hidden sm:inline hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()}>· {prop.name}</Link>}
+            {prop && <Link to={propertyDetail(prop.id)} className="text-[10px] text-muted-foreground truncate hidden sm:inline hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()} title={prop.name}>· {prop.name}</Link>}
             {monthsLeft !== null && monthsLeft <= 12 && (
               <span className="text-[10px] bg-loss/10 text-loss px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5" title={daysUntilFixedEnd != null && daysUntilFixedEnd <= 90 ? "Anschlussfinanzierung prüfen" : undefined}>
                 <AlertTriangle className="h-2.5 w-2.5" />
@@ -506,9 +506,17 @@ const Loans = () => {
     );
   }, [properties, isMobile, openEdit, setDeleteTargetLoan]);
 
+  const hasActiveFilter = filterBank !== "alle" || filterOwnership !== "alle";
+
   if (isLoading) {
     return (
-      <div className="space-y-6" role="main" aria-label="Darlehensverwaltung">
+      <div className="space-y-6 min-w-0" role="main" aria-label="Darlehensverwaltung">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Landmark className="h-6 w-6 text-primary shrink-0" /> Darlehen
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">Kredite, Zinsbindung und Tilgung im Überblick</p>
+        </div>
         <TablePageSkeleton rows={5} />
       </div>
     );
@@ -518,10 +526,10 @@ const Loans = () => {
     <div className="space-y-6 min-w-0" role="main" aria-label="Darlehensverwaltung">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          {/* UI-11: heading-gradient */}
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 heading-gradient">
-            <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Darlehen
+            <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Darlehen
           </h1>
+          <p className="text-sm text-muted-foreground mt-1">Kredite, Zinsbindung und Tilgung im Überblick</p>
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
             {/* OPT-10: pluralDE for correct pluralization */}
             {pluralDE(loans.length, "Darlehen", "Darlehen")} · {formatCurrency(totalBalance)} Restschuld
@@ -570,9 +578,14 @@ const Loans = () => {
           )}
 
           {filterBank !== "alle" && (
-            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => setFilterBank("alle")}>
+            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs touch-target min-h-[44px]" onClick={() => setFilterBank("alle")} aria-label="Bank-Filter zurücksetzen">
               <X className="h-3 w-3 mr-1" /> Filter
             </Button>
+          )}
+          {hasActiveFilter && filteredLoans.length > 0 && (
+            <span className="text-xs text-muted-foreground" aria-live="polite">
+              {filteredLoans.length === 1 ? "1 Darlehen" : `${filteredLoans.length} Darlehen`}
+            </span>
           )}
 
           {/* IMP20-17: Enhanced Loans CSV export — includes Tilgungsfortschritt, Zinsanteil, Restlaufzeit */}
@@ -913,7 +926,7 @@ const Loans = () => {
       )}
 
       {/* KPI Cards — UI-2: card-stagger-enter */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter min-w-0">
         <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Restschuld gesamt</p>
           <p className="text-xl font-bold mt-1 currency-display">{formatCurrency(totalBalance)}</p>
@@ -950,7 +963,7 @@ const Loans = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid md:grid-cols-2 gap-3 min-w-0">
         {zinsBindungData.length > 0 && (
           <div className="gradient-card rounded-xl border border-border p-5">
             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
@@ -1004,24 +1017,39 @@ const Loans = () => {
       {filteredLoans.length === 0 ? (
         <EmptyState
           icon={Landmark}
-          title="Noch keine Darlehen"
-          description="Lege dein erstes Darlehen an, um Zinsbindungen und Tilgungsfortschritt zu überwachen."
+          title={loans.length === 0 ? "Noch keine Darlehen" : "Keine Treffer"}
+          description={
+            loans.length === 0
+              ? "Lege dein erstes Darlehen an, um Zinsbindungen und Tilgungsfortschritt zu überwachen."
+              : "Kein Darlehen entspricht dem aktuellen Filter. Filter zurücksetzen für alle Darlehen."
+          }
           action={
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
-              <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.OBJEKTE)} className="touch-target min-h-[44px] gap-2">
-                <Building2 className="h-4 w-4" /> Objekt anlegen
+            loans.length > 0 && hasActiveFilter ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="touch-target min-h-[44px]"
+                onClick={() => { setFilterBank("alle"); setFilterOwnership("alle"); }}
+              >
+                Filter zurücksetzen
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2">
-                <Handshake className="h-4 w-4" /> Deals
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.RENT)} className="touch-target min-h-[44px] gap-2">
-                <BarChart3 className="h-4 w-4" /> Mietübersicht
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Berichte">
-                <FileBarChart className="h-4 w-4" /> Berichte
-              </Button>
-            </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
+                <AddLoanDialog onCreated={() => qc.invalidateQueries({ queryKey: queryKeys.loans.all })} />
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.OBJEKTE)} className="touch-target min-h-[44px] gap-2">
+                  <Building2 className="h-4 w-4 shrink-0" /> Objekt anlegen
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2">
+                  <Handshake className="h-4 w-4 shrink-0" /> Deals
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.RENT)} className="touch-target min-h-[44px] gap-2">
+                  <BarChart3 className="h-4 w-4 shrink-0" /> Mietübersicht
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.REPORTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Berichte">
+                  <FileBarChart className="h-4 w-4 shrink-0" /> Berichte
+                </Button>
+              </div>
+            )
           }
         />
       ) : filteredLoans.length >= VIRTUAL_LIST_THRESHOLD ? (

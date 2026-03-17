@@ -108,11 +108,35 @@ const ObjekteList = () => {
 
   if (loading) {
     return (
-      <div className="p-4 md:p-6 space-y-4">
-        <div className="h-10 bg-muted animate-pulse rounded w-64" />
+      <div className="p-4 md:p-6 space-y-4 min-w-0" role="status" aria-label="Objekte werden geladen">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="h-7 w-48 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-36 bg-muted/70 animate-pulse rounded" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="h-9 w-56 bg-muted animate-pulse rounded-md" />
+            <div className="h-9 w-28 bg-muted animate-pulse rounded-md" />
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-muted animate-pulse rounded-lg" />
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-xl border border-border p-4 space-y-3">
+              <div className="flex justify-between gap-2">
+                <div className="h-5 bg-muted animate-pulse rounded w-2/3" />
+                <div className="h-5 w-12 bg-muted animate-pulse rounded shrink-0" />
+              </div>
+              <div className="h-4 bg-muted/80 animate-pulse rounded w-full" />
+              <div className="flex gap-2">
+                <div className="h-6 w-14 bg-muted/70 animate-pulse rounded" />
+                <div className="h-6 w-20 bg-muted/70 animate-pulse rounded" />
+              </div>
+              <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/50">
+                {[1, 2, 3, 4].map((j) => (
+                  <div key={j} className="h-10 bg-muted/60 animate-pulse rounded" />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -122,13 +146,18 @@ const ObjekteList = () => {
   return (
     <div className="p-4 md:p-6 space-y-4 min-w-0 overflow-x-hidden" id="main-content">
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between min-w-0">
-        <h1 className="text-xl font-semibold flex items-center gap-2 shrink-0">
-          <Building2 className="h-5 w-5" />
-          Objekte
-        </h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <Building2 className="h-5 w-5 shrink-0" />
+            Objekte
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {properties.length} {properties.length === 1 ? "Objekt" : "Objekte"} im Portfolio
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           <div className="relative flex-1 sm:min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               ref={searchInputRef}
               placeholder="z. B. Musterstraße oder Objektname"
@@ -138,6 +167,11 @@ const ObjekteList = () => {
               aria-label="Objekte durchsuchen"
             />
           </div>
+          {search.trim() && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap" aria-live="polite">
+              {filtered.length} {filtered.length === 1 ? "Treffer" : "Treffer"}
+            </span>
+          )}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortType)}
@@ -180,30 +214,33 @@ const ObjekteList = () => {
       {sorted.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title={search ? "Keine Objekte gefunden" : "Noch keine Objekte"}
+          title={search ? "Keine Treffer" : "Noch keine Objekte"}
           description={
             search
-              ? "Suchbegriff anpassen oder neues Objekt anlegen."
-              : "Lege dein erstes Objekt an – dann siehst du hier dein Portfolio."
+              ? `Keine Objekte für „${search}". Suche zurücksetzen oder neues Objekt anlegen.`
+              : "Lege dein erstes Objekt an – dann siehst du hier dein Portfolio mit Wert, Miete und Rendite."
           }
           action={
-            !search ? (
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <AddPropertyDialog />
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Deals">
-                  <Briefcase className="h-4 w-4" /> Deals
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {search && (
+                <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => setSearch("")}>
+                  Suche zurücksetzen
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Besichtigungen">
-                  <Camera className="h-4 w-4" /> Besichtigungen
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-2" aria-label="WGH-Scout">
-                  <Store className="h-4 w-4" /> WGH-Scout
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Verträgen">
-                  <FileText className="h-4 w-4" /> Verträge
-                </Button>
-              </div>
-            ) : undefined
+              )}
+              <AddPropertyDialog />
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Deals">
+                <Briefcase className="h-4 w-4" /> Deals
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Besichtigungen">
+                <Camera className="h-4 w-4" /> Besichtigungen
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="touch-target min-h-[44px] gap-2" aria-label="WGH-Scout">
+                <Store className="h-4 w-4" /> WGH-Scout
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Verträgen">
+                <FileText className="h-4 w-4" /> Verträge
+              </Button>
+            </div>
           }
         />
       ) : sorted.length > VIRTUAL_LIST_THRESHOLD ? (

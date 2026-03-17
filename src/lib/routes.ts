@@ -73,6 +73,8 @@ export const ROUTES = {
   DEALS_BEWERTUNG: "/deals-bewertung",
   /** Öffentlicher Link: Mieter bestätigt Übergabeprotokoll (Token in URL) */
   HANDOVER_CONFIRM: "/uebergabe",
+  /** Öffentlicher Link: Mieter unterschreibt Mietvertrag (Token in URL) */
+  CONTRACT_SIGN: "/vertrag",
 } as const;
 
 /** Helper: Property detail URL */

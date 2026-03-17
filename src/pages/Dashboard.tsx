@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays, Info, MoreHorizontal } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays, Info, MoreHorizontal, LayoutDashboard } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
@@ -268,20 +268,29 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   // Feature 6: Loading skeleton — MOB-10: Enhanced skeleton screens
   if (loading) {
-    return <DashboardSkeleton />;
+    return (
+      <div className="min-w-0" role="main" aria-label="Portfolio Dashboard">
+        <DashboardSkeleton />
+      </div>
+    );
   }
 
   // Feature 3: Empty state
   if (properties.length === 0) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Portfolio</h1>
+      <div className="space-y-6 min-w-0" role="main" aria-label="Portfolio Dashboard">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 min-w-0">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+              <LayoutDashboard className="h-6 w-6 text-primary shrink-0" /> Portfolio
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">Überblick über Objekte und Kennzahlen</p>
+          </div>
           <AddPropertyDialog />
         </div>
 
         {/* Preview KPI cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 min-w-0">
           {[
             { label: "Gesamtwert", icon: <Building2 className="h-4 w-4" /> },
             { label: "Eigenkapital", icon: <PiggyBank className="h-4 w-4" /> },
@@ -306,16 +315,16 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             <div className="flex flex-wrap items-center justify-center gap-2">
               <AddPropertyDialog />
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="gap-1.5 touch-target min-h-[44px]">
-                <Briefcase className="h-3.5 w-3.5" /> Zu Deals
+                <Briefcase className="h-3.5 w-3.5 shrink-0" /> Zu Deals
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.ANALYSE)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Zur Analyse">
-                <BarChart3 className="h-3.5 w-3.5" /> Zur Analyse
+                <BarChart3 className="h-3.5 w-3.5 shrink-0" /> Zur Analyse
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CRM_SCOUT)} className="gap-1.5 touch-target min-h-[44px]" aria-label="WGH finden">
-                <Store className="h-3.5 w-3.5" /> WGH finden
+                <Store className="h-3.5 w-3.5 shrink-0" /> WGH finden
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="gap-1.5 touch-target min-h-[44px]" aria-label="Verträge">
-                <FileText className="h-3.5 w-3.5" /> Verträge
+                <FileText className="h-3.5 w-3.5 shrink-0" /> Verträge
               </Button>
             </div>
           }
@@ -360,7 +369,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
   return (
     /* IMP-3: Reduced spacing for less crowded layout */
-    <div className="space-y-4" role="main" aria-label="Portfolio Dashboard">
+    <div className="space-y-4 min-w-0" role="main" aria-label="Portfolio Dashboard">
       {mode === "personal" ? (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="min-w-0">
@@ -402,7 +411,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient whitespace-nowrap page-header-enter">Portfolio</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight heading-gradient flex items-center gap-2 page-header-enter">
+              <LayoutDashboard className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Portfolio
+            </h1>
             <p className="text-sm text-muted-foreground mt-1" aria-live="polite">
               {pluralDE(stats.propertyCount, "Objekt", "Objekte")} · {pluralDE(stats.totalUnits, "Einheit", "Einheiten")}
             </p>
@@ -467,7 +478,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       />
 
       {/* Favorites bar + Layout speichern (nebeneinander) */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap min-w-0">
         <FavoritesBar />
         {mode === "personal" && (
           <DashboardPresets
@@ -508,7 +519,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       {/* IMPROVE-40: Responsive stat card grid — 2 columns on mobile, 5 on desktop for optimal readability */}
       {/* Key stats — UI-2: card-stagger-enter */}
       {/* IMP-44-10: Add aria-label to stat card grid for screen readers */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter" aria-label="Portfolio-Kennzahlen">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 card-stagger-enter min-w-0" aria-label="Portfolio-Kennzahlen">
         <StatCard
           label="Gesamtwert"
           value={formatCurrency(stats.totalValue)}
@@ -556,7 +567,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* Improvement 15: Quick KPI row — UI-2/UI-15/UI-42 + Eigenkapitalrendite, Jahr-zu-Jahr */}
       {/* IMP-44-11: Add aria-label to quick KPI row for screen readers */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 card-stagger-enter" aria-label="Schnell-KPIs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 card-stagger-enter min-w-0" aria-label="Schnell-KPIs">
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
             LTV
@@ -614,7 +625,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nächste Besichtigung</p>
-            <p className="text-sm font-semibold truncate">{nextViewing.title}</p>
+            <p className="text-sm font-semibold truncate" title={nextViewing.title}>{nextViewing.title}</p>
             <p className="text-xs text-muted-foreground">
               {nextViewing.visited_at ? new Date(nextViewing.visited_at).toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" }) : "–"}
             </p>
@@ -624,7 +635,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       )}
 
       {/* FUNC-1/2/3/5 + OPT-11: render memoized portfolio insights */}
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid md:grid-cols-2 gap-3 min-w-0">
         <AITipCard />
         <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <div className="flex items-center justify-between">
@@ -704,7 +715,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* Debt overview + Improvement 3: Monthly cost summary */}
       {/* UI-14: progress-smooth for animated progress bars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
         <div className="gradient-card rounded-xl border border-border p-4 card-accent-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -754,20 +765,20 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* IMP-4: Consolidated best/worst performer — removed redundant advanced metrics row, holding period, and top 3 */}
       {properties.length >= 2 && bestPerformer && worstPerformer && bestPerformer.id !== worstPerformer.id && (
-        <div className="grid grid-cols-2 gap-2">
-          <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 min-w-0">
+          <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-2 min-w-0">
             <Trophy className="h-4 w-4 text-primary shrink-0" />
             <div className="min-w-0">
               <p className="text-[10px] text-muted-foreground">Top Cashflow</p>
-              <p className="text-xs font-semibold truncate">{bestPerformer.name}</p>
+              <p className="text-xs font-semibold truncate" title={bestPerformer.name}>{bestPerformer.name}</p>
               <p className="text-[10px] text-profit font-medium">{formatCurrency(bestPerformer.monthlyCashflow)}/M</p>
             </div>
           </div>
-          <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-2">
+          <div className="gradient-card rounded-xl border border-border p-3 flex items-center gap-2 min-w-0">
             <AlertTriangle className="h-4 w-4 text-loss shrink-0" />
             <div className="min-w-0">
               <p className="text-[10px] text-muted-foreground">Schwächster</p>
-              <p className="text-xs font-semibold truncate">{worstPerformer.name}</p>
+              <p className="text-xs font-semibold truncate" title={worstPerformer.name}>{worstPerformer.name}</p>
               <p className={`text-[10px] font-medium ${worstPerformer.monthlyCashflow >= 0 ? "text-profit" : "text-loss"}`}>
                 {formatCurrency(worstPerformer.monthlyCashflow)}/M
               </p>
@@ -798,17 +809,19 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       )}
 
       {mode === "portfolio" && (
-        <>
+        <section className="min-w-0" aria-label="Portfolio Objektliste">
           {/* Search + Sort + Filter - MOVED UP for sticky properties */}
-      <div className="flex flex-col gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col gap-3 min-w-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden />
           <Input
             ref={searchRef}
+            type="search"
             placeholder="z. B. Musterstraße 12 oder Objektname (⌘K)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 pr-8 h-9 text-sm"
+            aria-label="Objekte suchen nach Name, Adresse oder Typ"
           />
           {search && (
             <button
@@ -822,7 +835,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         </div>
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           <Select value={sort} onValueChange={(v) => setSort(v as SortType)}>
-            <SelectTrigger className="h-9 min-w-[120px] max-w-[160px] text-sm">
+            <SelectTrigger className="h-9 min-w-[120px] max-w-[160px] text-sm" aria-label="Sortierung">
               <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
               <SelectValue placeholder="Sortierung" />
             </SelectTrigger>
@@ -835,7 +848,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             </SelectContent>
           </Select>
           <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-            <SelectTrigger className="h-9 min-w-[100px] max-w-[140px] text-sm">
+            <SelectTrigger className="h-9 min-w-[100px] max-w-[140px] text-sm" aria-label="Besitzart filtern">
               <SelectValue />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4}>
@@ -845,7 +858,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-            <SelectTrigger className="h-9 min-w-[90px] max-w-[130px] text-sm">
+            <SelectTrigger className="h-9 min-w-[90px] max-w-[130px] text-sm" aria-label="Objekttyp filtern">
               <SelectValue />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4}>
@@ -861,7 +874,9 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
             <TooltipTrigger asChild>
               <button
                 onClick={handleRefresh}
-                className="h-9 w-9 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                className="h-9 w-9 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                aria-label={lastRefreshed ? `Aktualisieren – zuletzt: ${lastRefreshed}` : "Portfolio-Daten aktualisieren"}
+                aria-busy={refreshing}
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
               </button>
@@ -875,15 +890,15 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* Properties header with count */}
       {filteredProperties.length > 0 && (
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground">
+        <div className="flex items-center justify-between min-w-0">
+          <h2 className="text-sm font-semibold text-muted-foreground" aria-live="polite">
             {filteredProperties.length === properties.length
               ? `${properties.length} Objekte`
               : `${filteredProperties.length} von ${properties.length} Objekten`
             }
           </h2>
           {(search || filter !== "alle" || typeFilter !== "alle") && (
-            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
+            <Button variant="ghost" size="sm" className="text-xs h-8 touch-target min-h-[44px]" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }} aria-label="Filter und Suche zurücksetzen">
               Filter zurücksetzen
             </Button>
           )}
@@ -893,12 +908,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
       {/* IMP-5: Properties — removed sticky to reduce visual clutter */}
       <div>
         {filteredProperties.length === 0 ? (
-          <div className="text-center py-8 animate-fade-in">
+          <div className="text-center py-8 animate-fade-in min-w-0" role="status" aria-label="Keine Objekte gefunden">
             <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
               <Search className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="text-sm font-medium mb-1">Keine Ergebnisse</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground text-wrap-safe">
               {search ? `Keine Objekte gefunden für „${search}"` : "Keine Objekte in dieser Kategorie"}
             </p>
             {/* STR-10: Better empty search state with search tips */}
@@ -907,12 +922,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
                 Tipp: Suche nach Name, Adresse oder Objekttyp
               </p>
             )}
-            <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
+            <Button variant="ghost" size="sm" className="mt-3 text-xs touch-target min-h-[44px]" onClick={() => { setSearch(""); setFilter("alle"); setTypeFilter("alle"); }}>
               {search ? "Suche zurücksetzen" : "Filter zurücksetzen"}
             </Button>
           </div>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 list-stagger" data-testid="property-list">
+          <div className="grid gap-3 md:grid-cols-2 list-stagger min-w-0" data-testid="property-list">
             {filteredProperties.map((property, i) => (
               <PropertyCard
                 key={property.id}
@@ -927,12 +942,12 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         )}
       </div>
 
-        </>
+        </section>
       )}
 
       {/* FUNC-11: Month-over-Month Comparison */}
       {mode === "portfolio" && properties.length > 0 && (
-        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl" />}>
+        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl min-w-0" role="status" aria-label="Vergleich wird geladen" />}>
           <MonthOverMonthComparison
             currentRent={stats.totalRent}
             currentCashflow={stats.totalCashflow}
@@ -945,14 +960,14 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* NEW-16: Mieteingangs-Tracker */}
       {mode === "portfolio" && properties.length > 0 && (
-        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl" />}>
+        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl min-w-0" role="status" aria-label="Mieteingang wird geladen" />}>
           <MieteingangsTracker />
         </Suspense>
       )}
 
       {/* NEW-18: Vermögensaufbau-Timeline */}
       {mode === "portfolio" && properties.length > 0 && (
-        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl" />}>
+        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl min-w-0" role="status" aria-label="Timeline wird geladen" />}>
           <VermoegenTimeline
             totalEquity={stats.equity}
             totalValue={stats.totalValue}

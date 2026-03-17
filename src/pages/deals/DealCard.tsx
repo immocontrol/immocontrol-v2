@@ -54,9 +54,9 @@ export const DealCard = memo(function DealCard({
       tabIndex={0}
       onKeyDown={e => { if (e.key === "Enter") onClick(); }}
     >
-      <CardContent className="p-3 space-y-1.5">
+      <CardContent className="p-3 space-y-1.5 min-w-0">
         <div className="flex items-center justify-between gap-1">
-          <p className="font-medium text-sm truncate flex-1" title={deal.title}>{deal.title}</p>
+          <p className="font-medium text-sm truncate flex-1 min-w-0" title={deal.title}>{deal.title}</p>
           <div className="flex items-center gap-1 shrink-0">
             <Badge variant="outline" className="text-[9px] h-5 px-1" title="Deal-Score (Priorisierung)">
               {calculateDealScore(deal)}%
@@ -75,7 +75,7 @@ export const DealCard = memo(function DealCard({
           </div>
         </div>
         {deal.address && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+          <p className="text-xs text-muted-foreground flex items-center gap-1 min-w-0 text-wrap-safe break-words" title={deal.address}>
             <MapPin className="h-3 w-3 shrink-0" /> {deal.address}
           </p>
         )}
@@ -108,7 +108,7 @@ export const DealCard = memo(function DealCard({
         )}
         <div className="flex items-center justify-between">
           {deal.contact_name && (
-            <p className="text-[10px] text-muted-foreground truncate">{deal.contact_name}</p>
+            <p className="text-[10px] text-muted-foreground truncate min-w-0" title={deal.contact_name}>{deal.contact_name}</p>
           )}
           {isTelegram && (
             <Badge variant="secondary" className="text-[10px] h-4 gap-0.5">

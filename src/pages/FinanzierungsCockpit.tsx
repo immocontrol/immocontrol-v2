@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SelbstauskunftGenerator } from "@/components/SelbstauskunftGenerator";
+import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 
 const FINANCING_ASSETS_KEY = "immo-financing-assets";
@@ -212,85 +213,93 @@ export default function FinanzierungsCockpit() {
   }) => {
     const isExpanded = expandedSection === id;
     return (
-      <Card>
-        <CardHeader
-          className="cursor-pointer py-4"
-          onClick={() => setExpandedSection(isExpanded ? null : id)}
-        >
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Icon className="h-4 w-4 text-muted-foreground" />
-              {title}
+      <Card className="min-w-0">
+        <CardHeader className="p-0">
+          <button
+            type="button"
+            className="w-full cursor-pointer py-4 px-6 text-left flex items-center justify-between gap-2 hover:bg-muted/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-t-lg"
+            onClick={() => setExpandedSection(isExpanded ? null : id)}
+            aria-expanded={isExpanded}
+            aria-controls={`section-content-${id}`}
+            id={`section-toggle-${id}`}
+          >
+            <CardTitle className="text-base flex items-center gap-2 font-semibold">
+              <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-wrap-safe break-words">{title}</span>
             </CardTitle>
-            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={isExpanded ? "Bereich einklappen" : "Bereich aufklappen"}>
+            <span className="shrink-0" aria-hidden>
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          </div>
+            </span>
+          </button>
         </CardHeader>
-        {isExpanded && <CardContent className="pt-0">{children}</CardContent>}
+        {isExpanded && (
+          <CardContent id={`section-content-${id}`} aria-labelledby={`section-toggle-${id}`} className="pt-0">
+            {children}
+          </CardContent>
+        )}
       </Card>
     );
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto min-w-0 overflow-x-hidden" id="main-content">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
-        <h1 className="text-xl font-semibold flex items-center gap-2 shrink-0">
-          <Landmark className="h-5 w-5 shrink-0" />
+    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto min-w-0 overflow-x-hidden" id="main-content" role="main" aria-label="Finanzierungs-Cockpit">
+      <div className="min-w-0">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Wallet className="h-6 w-6 text-primary shrink-0" />
           Finanzierungs-Cockpit
         </h1>
-        <div className="flex flex-wrap gap-x-2 gap-y-2 min-w-0">
-          <SelbstauskunftGenerator />
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.LOANS}>
-              <Landmark className="h-3.5 w-3.5 mr-1" /> Darlehen
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.OBJEKTE}>
-              <Building2 className="h-3.5 w-3.5 mr-1" /> Objekte
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.DOKUMENTE}>
-              <FileStack className="h-3.5 w-3.5 mr-1" /> Dokumente
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.STEUER_COCKPIT}>
-              <Receipt className="h-3.5 w-3.5 mr-1" /> Steuer-Cockpit
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.REFINANZIERUNG}>
-              <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refinanzierung
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.STRESS_TEST} aria-label="Stress-Test">
-              <ShieldAlert className="h-3.5 w-3.5 mr-1" /> Stress-Test
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={ROUTES.RENT}>
-              <Receipt className="h-3.5 w-3.5 mr-1" /> Mietübersicht
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`${ROUTES.RENT}?tab=bank`} aria-label="Bank-Abgleich (Mietübersicht)">
-              <Wallet className="h-3.5 w-3.5 mr-1" /> Bank-Abgleich
-            </Link>
-          </Button>
-        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Alle Daten an einem Ort für neue Finanzierungen. Objektübersicht, Kredite und Vermögen werden aus der App übernommen; Kontostände und Unterlagen-Checkliste kannst du hier pflegen.
+        </p>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Alle Daten an einem Ort für neue Finanzierungen. Objektübersicht, Kredite und Vermögen werden aus der App übernommen; Kontostände und Unterlagen-Checkliste kannst du hier pflegen.
-      </p>
+      <div className="flex flex-wrap gap-2 min-w-0">
+        <SelbstauskunftGenerator />
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.LOANS} className="gap-1.5">
+            <Landmark className="h-3.5 w-3.5 shrink-0" /> Darlehen
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.OBJEKTE} className="gap-1.5">
+            <Building2 className="h-3.5 w-3.5 shrink-0" /> Objekte
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.DOKUMENTE} className="gap-1.5">
+            <FileStack className="h-3.5 w-3.5 shrink-0" /> Dokumente
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.STEUER_COCKPIT} className="gap-1.5">
+            <Receipt className="h-3.5 w-3.5 shrink-0" /> Steuer-Cockpit
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.REFINANZIERUNG} className="gap-1.5">
+            <RefreshCw className="h-3.5 w-3.5 shrink-0" /> Refinanzierung
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.STRESS_TEST} aria-label="Stress-Test" className="gap-1.5">
+            <ShieldAlert className="h-3.5 w-3.5 shrink-0" /> Stress-Test
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={ROUTES.RENT} className="gap-1.5">
+            <Receipt className="h-3.5 w-3.5 shrink-0" /> Mietübersicht
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+          <Link to={`${ROUTES.RENT}?tab=bank`} aria-label="Bank-Abgleich (Mietübersicht)" className="gap-1.5">
+            <Wallet className="h-3.5 w-3.5 shrink-0" /> Bank-Abgleich
+          </Link>
+        </Button>
+      </div>
 
       {/* Quick-Stats: Portfolio auf einen Blick */}
       {properties.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3" aria-label="Finanzübersicht">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 min-w-0" aria-label="Finanzübersicht">
           <div className="gradient-card rounded-xl border border-border p-3">
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Gesamtwert</div>
             <div className="text-base font-bold tabular-nums">{formatCurrency(stats.totalValue)}</div>
@@ -325,12 +334,19 @@ export default function FinanzierungsCockpit() {
       {/* 1. Objektübersicht mit aktuellen Mieten */}
       <Section id="objekte" title="Objektübersicht mit aktuellen Mieten" icon={Building2}>
         {objekteMitMiete.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4">
-            Noch keine Objekte. <Link to={ROUTES.OBJEKTE} className="text-primary hover:underline">Objekte anlegen</Link>
-          </p>
+          <EmptyState
+            icon={Building2}
+            title="Noch keine Objekte"
+            description="Lege Objekte an, damit Wert, Mieten und Restschuld hier erscheinen."
+            action={
+              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+                <Link to={ROUTES.OBJEKTE}>Objekte anlegen</Link>
+              </Button>
+            }
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto min-w-0">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-2 font-medium">Objekt</th>
@@ -344,8 +360,8 @@ export default function FinanzierungsCockpit() {
               <tbody>
                 {objekteMitMiete.map((p) => (
                   <tr key={p.id} className="border-b border-border/50">
-                    <td className="py-2">
-                      <Link to={propertyDetail(p.id)} className="text-primary hover:underline font-medium">
+                    <td className="py-2 min-w-0">
+                      <Link to={propertyDetail(p.id)} className="text-primary hover:underline font-medium text-wrap-safe break-words">
                         {p.name}
                       </Link>
                     </td>
@@ -365,12 +381,19 @@ export default function FinanzierungsCockpit() {
       {/* 2. Laufende Kredite */}
       <Section id="kredite" title="Laufende Kredite (Restschuld, Laufzeit, Rate)" icon={Landmark}>
         {loansWithProperty.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4">
-            Keine Darlehen. <Link to={ROUTES.LOANS} className="text-primary hover:underline">Darlehen anlegen</Link>
-          </p>
+          <EmptyState
+            icon={Landmark}
+            title="Keine Darlehen"
+            description="Darlehen zu Objekten anlegen – dann erscheinen Restschuld, Rate und Zinsbindung hier."
+            action={
+              <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+                <Link to={ROUTES.LOANS}>Darlehen anlegen</Link>
+              </Button>
+            }
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto min-w-0">
+            <table className="w-full text-sm min-w-[520px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-2 font-medium">Bank / Objekt</th>
@@ -383,9 +406,9 @@ export default function FinanzierungsCockpit() {
               <tbody>
                 {loansWithProperty.map((l) => (
                   <tr key={l.id} className="border-b border-border/50">
-                    <td className="py-2">
-                      <span className="font-medium">{l.bank_name}</span>
-                      <span className="text-muted-foreground block text-xs">{l.propertyName}</span>
+                    <td className="py-2 min-w-0">
+                      <span className="font-medium text-wrap-safe break-words block">{l.bank_name}</span>
+                      <span className="text-muted-foreground text-xs text-wrap-safe break-words block">{l.propertyName}</span>
                     </td>
                     <td className="text-right tabular-nums">{formatCurrency(l.remaining_balance)}</td>
                     <td className="text-right tabular-nums">{formatCurrency(l.monthly_payment)}</td>

@@ -413,8 +413,8 @@ const Todos = () => {
   }
 
   return (
-    <div className="flex gap-4 sm:gap-6 min-h-[calc(100vh-8rem)]">
-      <aside className="hidden md:block w-56 shrink-0 space-y-1">
+    <div className="flex gap-4 sm:gap-6 min-h-[calc(100vh-8rem)] min-w-0">
+      <aside className="hidden md:block w-56 shrink-0 space-y-1 min-w-0">
         <div className="mb-4">
           <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-primary" /> Aufgaben
@@ -644,18 +644,30 @@ const Todos = () => {
         {filtered.length === 0 ? (
           <EmptyState
             icon={CheckSquare}
-            title={view === "completed" ? "Keine erledigten Aufgaben" : "Keine Aufgaben"}
+            title={
+              search
+                ? "Keine Treffer"
+                : view === "completed"
+                  ? "Keine erledigten Aufgaben"
+                  : "Keine Aufgaben"
+            }
             description={
-              view === "today"
-                ? "Heute nichts geplant — genieße den freien Tag!"
-                : view === "upcoming"
-                  ? "Keine bevorstehenden Aufgaben."
-                  : view === "completed"
-                    ? "Erledigte Aufgaben erscheinen hier."
-                    : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."
+              search
+                ? `Keine Aufgaben für „${search}". Suche oder Filter anpassen.`
+                : view === "today"
+                  ? "Heute nichts geplant — genieße den freien Tag!"
+                  : view === "upcoming"
+                    ? "Keine bevorstehenden Aufgaben."
+                    : view === "completed"
+                      ? "Erledigte Aufgaben erscheinen hier."
+                      : "Erstelle deine erste Aufgabe, um den Überblick zu behalten."
             }
             action={
-              (view === "inbox" || view === "today") ? (
+              search ? (
+                <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => { setSearchInput(""); setSearch(""); setPriorityFilter("all"); }}>
+                  Suche zurücksetzen
+                </Button>
+              ) : (view === "inbox" || view === "today") ? (
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Button
                     size="sm"

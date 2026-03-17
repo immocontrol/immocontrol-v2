@@ -289,8 +289,8 @@ export const GlobalSearch = () => {
     }
   };
 
-  /* IMPROVE-10: Show total result count for screen readers */
-  const resultCount = results.length;
+  const listboxId = "global-search-listbox";
+  const selectedId = results[selectedIndex] ? `global-search-option-${results[selectedIndex].id}` : undefined;
 
   // Group results by category
   const grouped = useMemo(() => {
@@ -305,11 +305,11 @@ export const GlobalSearch = () => {
   let flatIndex = -1;
 
   return (
-    <div ref={wrapperRef} className="relative hidden md:block">
+    <div ref={wrapperRef} className="relative hidden md:block min-w-0">
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <div className="relative min-w-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none shrink-0" aria-hidden />
             <Input
               ref={inputRef}
               value={query}
@@ -317,66 +317,82 @@ export const GlobalSearch = () => {
               onFocus={() => { if (query.trim()) setOpen(true); }}
               onKeyDown={handleKeyDown}
               placeholder="z. B. Objekt, Seite, Aktion"
-              className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all"
+              className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all min-w-0"
               autoComplete="off"
-              aria-label="Globale Suche"
-              /* IMPROVE-11: aria-expanded for accessibility */
+              aria-label="Globale Suche – Objekte, Seiten, Kontakte, Deals"
               aria-expanded={open && !!query.trim()}
+              aria-controls={open && query.trim() ? listboxId : undefined}
+              aria-activedescendant={selectedId}
               role="combobox"
+              aria-autocomplete="list"
             />
             {query ? (
               <button
-                onClick={() => { setQuery(""); setResults([]); setOpen(false); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                type="button"
+                onClick={() => { setQuery(""); setResults([]); setOpen(false); inputRef.current?.focus(); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground min-w-[28px] min-h-[28px] flex items-center justify-center rounded"
                 aria-label="Suche leeren"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             ) : (
-              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden md:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground">
+              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden md:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground" aria-hidden>
                 ⌘K
               </kbd>
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">Schnellsuche öffnen (Ctrl+K / ⌘K)</TooltipContent>
+        <TooltipContent side="bottom" className="text-xs">Schnellsuche (Ctrl+K / ⌘K)</TooltipContent>
       </Tooltip>
 
       {open && query.trim() && (
-        <div className="absolute top-full mt-1 right-0 w-96 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label={`Suchergebnisse${results.length > 0 ? `, ${results.length} Treffer` : ""}`}
+          className="absolute top-full mt-1 right-0 w-full min-w-[280px] max-w-[min(24rem,calc(100vw-2rem))] sm:w-96 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden"
+        >
           {loading && results.length === 0 ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Suche…
+            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-sm" role="status" aria-label="Suche wird ausgeführt">
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" /> Suche…
             </div>
           ) : results.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              Keine Ergebnisse für „{query}"
+            <div className="py-8 text-center text-sm text-muted-foreground min-w-0 px-3" role="status" aria-live="polite">
+              <p className="text-wrap-safe">Keine Ergebnisse für „{query}"</p>
+              <p className="text-xs mt-1">Tipp: Mind. 2 Zeichen für Objekte, Kontakte und Deals</p>
             </div>
           ) : (
-            <div className="max-h-80 overflow-y-auto py-1">
+            <div className="max-h-[min(80vh,320px)] overflow-y-auto py-1 min-w-0">
               {Object.entries(grouped).map(([category, items]) => (
-                <div key={category}>
-                  <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div key={category} className="min-w-0">
+                  <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" id={`${listboxId}-${category}`}>
                     {category}
                   </p>
                   {items.map(item => {
                     flatIndex++;
                     const idx = flatIndex;
+                    const optionId = `global-search-option-${item.id}`;
+                    const optionLabel = item.subtitle ? `${item.title}, ${item.subtitle}` : item.title;
                     return (
                       <button
                         key={item.id}
+                        id={optionId}
+                        type="button"
+                        role="option"
+                        aria-selected={idx === selectedIndex}
                         onClick={() => item.action()}
                         onMouseEnter={() => setSelectedIndex(idx)}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors",
+                          "w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors text-left min-w-0",
                           idx === selectedIndex ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
                         )}
+                        aria-label={optionLabel}
                       >
-                        <span className="text-muted-foreground shrink-0">{item.icon}</span>
-                        <div className="flex-1 text-left min-w-0">
-                          <span className="font-medium">{item.title}</span>
+                        <span className="text-muted-foreground shrink-0" aria-hidden>{item.icon}</span>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <span className="font-medium text-wrap-safe break-words">{item.title}</span>
                           {item.subtitle && (
-                            <span className="text-xs text-muted-foreground ml-2 truncate">{item.subtitle}</span>
+                            <span className="text-xs text-muted-foreground ml-2 truncate block sm:inline" title={item.subtitle}>{item.subtitle}</span>
                           )}
                         </div>
                       </button>
@@ -385,8 +401,8 @@ export const GlobalSearch = () => {
                 </div>
               ))}
               {loading && (
-                <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Weitere Ergebnisse laden…
+                <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground min-w-0" role="status" aria-label="Weitere Ergebnisse werden geladen">
+                  <Loader2 className="h-3 w-3 animate-spin shrink-0" /> Weitere Ergebnisse laden…
                 </div>
               )}
             </div>

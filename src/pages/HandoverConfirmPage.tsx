@@ -19,6 +19,13 @@ const CONDITION_LABELS: Record<number, string> = {
   5: "Sehr gut",
 };
 
+const METER_LABELS: Record<string, string> = {
+  strom: "Strom (kWh)",
+  gas: "Gas (m³)",
+  wasser: "Wasser (m³)",
+  heizung: "Heizung",
+};
+
 interface ProtocolData {
   id: string;
   property_id: string;
@@ -140,11 +147,15 @@ export default function HandoverConfirmPage() {
               <p><strong>Schlüssel:</strong> {pd.keysCount ?? "–"} Stück</p>
             </div>
 
-            {pd.meterStand && Object.keys(pd.meterStand).length > 0 && (
+            {pd.meterStand && Object.entries(pd.meterStand).some(([, v]) => v != null && String(v).trim() !== "") && (
               <div>
                 <h3 className="text-sm font-semibold mb-1">Zählerstände</h3>
                 <ul className="text-sm text-muted-foreground space-y-0.5">
-                  {Object.entries(pd.meterStand).map(([k, v]) => (v ? <li key={k}>{k}: {v}</li> : null))}
+                  {Object.entries(pd.meterStand)
+                    .filter(([, v]) => v != null && String(v).trim() !== "")
+                    .map(([k, v]) => (
+                      <li key={k}>{METER_LABELS[k] || k}: {String(v)}</li>
+                    ))}
                 </ul>
               </div>
             )}
@@ -166,13 +177,15 @@ export default function HandoverConfirmPage() {
             {confirmed ? (
               <div className="flex items-center gap-2 rounded-lg bg-primary/10 text-primary p-3">
                 <CheckCircle2 className="h-5 w-5 shrink-0" />
-                <span className="text-sm font-medium">Sie haben dieses Protokoll am {data.tenant_confirmed_at ? new Date(data.tenant_confirmed_at).toLocaleDateString("de-DE") : ""} bestätigt.</span>
+                <span className="text-sm font-medium">
+                  Sie haben dieses Protokoll am {data.tenant_confirmed_at ? new Date(data.tenant_confirmed_at).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" }) : ""} bestätigt.
+                </span>
               </div>
             ) : (
               <>
-                <p className="text-xs text-muted-foreground">
-                  Mit der Bestätigung erkennen Sie den dokumentierten Zustand der Wohnung an.
-                </p>
+                <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-xs text-amber-900 dark:text-amber-200 text-wrap-safe">
+                  Mit der Bestätigung erkennen Sie den dokumentierten Zustand der Wohnung (Räume, Zählerstände, Schlüssel) zum angegebenen Zeitpunkt an. Bitte prüfen Sie die Angaben vor dem Bestätigen.
+                </div>
                 <Button onClick={handleConfirm} disabled={confirming} className="w-full gap-2">
                   {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   Inhalt bestätigen

@@ -265,9 +265,11 @@ const Dokumente = () => {
     toastSuccess(`"${doc.file_name}" heruntergeladen`);
   };
 
+  const hasActiveFilter = searchQuery.trim() || filterCategory !== "all" || filterProperty !== "all";
+
   return (
     /* IMP-14: ARIA landmark for Dokumente page */
-    <div className="space-y-6 animate-fade-in" role="main" aria-label="Dokumenten-Management">
+    <div className="space-y-6 animate-fade-in min-w-0" role="main" aria-label="Dokumenten-Management">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold break-words">Dokumenten-Management</h1>
@@ -393,6 +395,11 @@ const Dokumente = () => {
       {CATEGORIES.length > 3 && (
         <p className="text-[10px] text-muted-foreground">Tipp: Nach Kategorie oder Objekt filtern</p>
       )}
+      {hasActiveFilter && (
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {filteredDocs.length === 1 ? "1 Treffer" : `${filteredDocs.length} Treffer`}
+        </p>
+      )}
 
       {/* MOB-13: Mobile Document Camera — quick capture button */}
       <div className="md:hidden">
@@ -411,22 +418,37 @@ const Dokumente = () => {
         <EmptyState
           icon={FolderOpen}
           title={documents.length === 0 ? "Noch keine Dokumente hochgeladen" : "Keine Dokumente gefunden"}
-          description={documents.length === 0 ? "Lade Verträge, Gutachten oder Nebenkostenabrechnungen hoch." : undefined}
+          description={
+            documents.length === 0
+              ? "Lade Verträge, Gutachten oder Nebenkostenabrechnungen hoch."
+              : "Suche oder Filter anpassen, um mehr Treffer zu sehen."
+          }
           action={
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2">
-                <FileSignature className="h-4 w-4" /> Verträge verwalten
+            documents.length > 0 && hasActiveFilter ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="touch-target min-h-[44px]"
+                onClick={() => { setSearchQuery(""); setFilterCategory("all"); setFilterProperty("all"); }}
+              >
+                Filter zurücksetzen
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.NK)} className="touch-target min-h-[44px] gap-2">
-                <Receipt className="h-4 w-4" /> Nebenkostenabrechnung
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Besichtigungen">
-                <CalendarCheck className="h-4 w-4" /> Besichtigungen
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2" aria-label="Finanzierungs-Cockpit">
-                <Wallet className="h-4 w-4" /> Finanzierungs-Cockpit
-              </Button>
-            </div>
+            ) : (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.CONTRACTS)} className="touch-target min-h-[44px] gap-2">
+                  <FileSignature className="h-4 w-4" /> Verträge verwalten
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.NK)} className="touch-target min-h-[44px] gap-2">
+                  <Receipt className="h-4 w-4" /> Nebenkostenabrechnung
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.BESICHTIGUNGEN)} className="touch-target min-h-[44px] gap-2" aria-label="Besichtigungen">
+                  <CalendarCheck className="h-4 w-4" /> Besichtigungen
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2" aria-label="Finanzierungs-Cockpit">
+                  <Wallet className="h-4 w-4" /> Finanzierungs-Cockpit
+                </Button>
+              </div>
+            )
           }
         />
       ) : (
@@ -436,7 +458,7 @@ const Dokumente = () => {
               <div className="shrink-0">{getFileIcon(doc.file_type, doc.file_name)}</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium truncate">{doc.file_name}</span>
+                  <span className="text-sm font-medium truncate" title={doc.file_name}>{doc.file_name}</span>
                   {doc.ocr_text && (
                     <Badge variant="secondary" className="text-[10px] h-4 gap-0.5">
                       <ScanText className="h-2.5 w-2.5" /> Text

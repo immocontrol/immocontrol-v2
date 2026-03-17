@@ -46,9 +46,9 @@ export function ViewingCard({ viewing, mediaCount, onClick }: ViewingCardProps) 
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       aria-label={`Besichtigung: ${viewing.title}`}
     >
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 min-w-0">
         <CardTitle className="text-base flex items-start justify-between gap-2">
-          <span className="truncate" title={viewing.title}>{viewing.title}</span>
+          <span className="min-w-0 text-wrap-safe break-words" title={viewing.title}>{viewing.title}</span>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[10px] font-bold text-muted-foreground bg-secondary px-1.5 py-0.5 rounded" title="Vergleichs-Score">
               {score}/10
@@ -71,7 +71,7 @@ export function ViewingCard({ viewing, mediaCount, onClick }: ViewingCardProps) 
         </CardTitle>
         {viewing.address && (
           <>
-            <p className="text-sm text-muted-foreground flex items-center gap-1 truncate" title={viewing.address}>
+            <p className="text-sm text-muted-foreground flex items-center gap-1 min-w-0 text-wrap-safe break-words" title={viewing.address}>
               <MapPin className="h-3.5 w-3 shrink-0" />
               {viewing.address}
             </p>

@@ -105,4 +105,9 @@ export const queryKeys = {
     all: ["handover_protocols"] as const,
     byProperty: (propertyId: string) => ["handover_protocols", propertyId] as const,
   },
+  contractSignatureRequests: {
+    all: ["contract_signature_requests"] as const,
+    byProperty: (propertyId: string) => ["contract_signature_requests", propertyId] as const,
+    byTenant: (tenantId: string) => ["contract_signature_requests", "tenant", tenantId] as const,
+  },
 } as const;

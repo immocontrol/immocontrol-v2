@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2 } from "lucide-react";
+import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2, Briefcase } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -530,8 +530,11 @@ const ContactManagement = () => {
       </div>
 
       {/* IMPROVE-23: Show filtered count when searching */}
-      {debouncedSearch && filtered.length > 0 && (
-        <p className="text-xs text-muted-foreground">{filtered.length} von {contacts.length} Kontakten</p>
+      {debouncedSearch && (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {filtered.length} {filtered.length === 1 ? "Kontakt" : "Kontakte"}
+          {contacts.length !== filtered.length && ` von ${contacts.length}`}
+        </p>
       )}
 
       {/* Contact list */}
@@ -592,8 +595,8 @@ const ContactManagement = () => {
                     <CatIcon className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold truncate">{c.name}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-semibold truncate min-w-0" title={c.name}>{c.name}</span>
                       <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{c.category}</span>
                       {/* Synergy 7: Active ticket count per contact */}
                       {contactTicketCounts[c.id] > 0 && (

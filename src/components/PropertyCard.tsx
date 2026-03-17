@@ -69,7 +69,7 @@ const PropertyCard = memo(({
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
-            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate min-w-0 flex-1 pr-1 leading-tight">
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate min-w-0 flex-1 pr-1 leading-tight" title={name}>
               {name}
             </h3>
             {ownership && (
@@ -95,8 +95,8 @@ const PropertyCard = memo(({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-            <MapPin className="h-3 w-3" />
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5 min-w-0 text-wrap-safe break-words" title={loc || undefined}>
+            <MapPin className="h-3 w-3 shrink-0" />
             {loc}
           </div>
         </div>

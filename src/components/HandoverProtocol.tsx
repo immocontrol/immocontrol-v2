@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ClipboardList, Download, Copy, Check } from "lucide-react";
+import { ClipboardList, Download, Copy, Check, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ROUTES } from "@/lib/routes";
 import { queryKeys } from "@/lib/queryKeys";
+import { loadJsPDF } from "@/lib/lazyImports";
+import { formatDate } from "@/lib/formatters";
 
 interface Room {
   name: string;
@@ -59,6 +61,14 @@ const DEFAULT_ROOMS: Room[] = [
 
 const CONDITION_LABELS = ["", "Mangelhaft", "Ausreichend", "Befriedigend", "Gut", "Sehr gut"];
 
+const METER_LABELS: Record<string, string> = {
+  strom: "Strom (kWh)",
+  gas: "Gas (m³)",
+  wasser: "Wasser (m³)",
+  heizung: "Heizung",
+};
+const METER_KEYS = ["strom", "gas", "wasser", "heizung"] as const;
+
 export function HandoverProtocol() {
   const { user } = useAuth();
   const { properties } = useProperties();
@@ -75,6 +85,8 @@ export function HandoverProtocol() {
   const [generalNotes, setGeneralNotes] = useState("");
   const [lastConfirmLink, setLastConfirmLink] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [pdfSaving, setPdfSaving] = useState(false);
+  const [copiedProtocolId, setCopiedProtocolId] = useState<string | null>(null);
 
   const { data: tenants = [] } = useQuery({
     queryKey: ["tenants", propertyId],
@@ -87,6 +99,27 @@ export function HandoverProtocol() {
 
   const selectedProperty = properties.find((p) => p.id === propertyId);
   const selectedTenant = tenants.find((t) => t.id === tenantId);
+
+  const { data: savedProtocols = [] } = useQuery({
+    queryKey: [...queryKeys.handoverProtocols.byProperty(propertyId)],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("handover_protocols")
+        .select("id, type, protocol_data, tenant_confirmed_at, created_at, confirm_token")
+        .eq("property_id", propertyId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return (data || []) as Array<{
+        id: string;
+        type: string;
+        protocol_data: { date?: string; address?: string; tenant?: string };
+        tenant_confirmed_at: string | null;
+        created_at: string;
+        confirm_token: string | null;
+      }>;
+    },
+    enabled: !!propertyId,
+  });
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -135,57 +168,125 @@ export function HandoverProtocol() {
     } : r));
   };
 
-  const exportPDF = useCallback(() => {
-    const html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
-<title>Übergabeprotokoll – ${tenant || "Mieter"}</title>
-<style>
-body{font-family:system-ui,sans-serif;padding:30px;color:#222;max-width:800px;margin:0 auto;font-size:13px}
-h1{font-size:20px;border-bottom:2px solid #2a9d6e;padding-bottom:8px}
-h2{font-size:15px;margin-top:20px;color:#555}
-table{width:100%;border-collapse:collapse;margin:8px 0}
-th,td{padding:6px 8px;border:1px solid #ddd;text-align:left}
-th{background:#f5f5f5;font-weight:600}
-.stars{color:#f5a623}
-.ok{color:#2a9d6e;font-weight:600}.nok{color:#d94040;font-weight:600}
-.sig{display:flex;justify-content:space-between;margin-top:60px;gap:40px}
-.sig-box{flex:1;border-top:1px solid #999;padding-top:8px;text-align:center;font-size:11px;color:#888}
-.footer{margin-top:40px;font-size:10px;color:#aaa;text-align:center}
-</style></head><body>
-<h1>📋 Wohnungsübergabeprotokoll – ${type === "einzug" ? "Einzug" : "Auszug"}</h1>
-<table>
-<tr><td><strong>Mieter:</strong> ${tenant || "–"}</td><td><strong>Datum:</strong> ${new Date(date).toLocaleDateString("de-DE")}</td></tr>
-<tr><td><strong>Objekt:</strong> ${address || "–"}</td><td><strong>Schlüssel:</strong> ${keysCount} Stück</td></tr>
-</table>
+  const buildPdfBlob = useCallback(async (): Promise<{ blob: Blob; fileName: string } | null> => {
+    try {
+      const JsPDF = await loadJsPDF();
+      const doc = new JsPDF({ format: "a4" });
+      const margin = 20;
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      let y = margin;
+      const lineH = 6;
+      const checkY = () => { if (y > pageH - 40) { doc.addPage(); y = margin; } };
 
-<h2>Zählerstände</h2>
-<table>
-<tr><th>Zähler</th><th>Stand</th></tr>
-${Object.entries(meterStand).map(([k, v]) => `<tr><td>${k.charAt(0).toUpperCase() + k.slice(1)}</td><td>${v || "–"}</td></tr>`).join("")}
-</table>
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Wohnungsübergabeprotokoll – ${type === "einzug" ? "Einzug" : "Auszug"}`, margin, y); y += lineH + 4;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Mieter: ${tenant || "–"}`, margin, y); doc.text(`Datum: ${new Date(date).toLocaleDateString("de-DE")}`, pageW - margin - 45, y); y += lineH;
+      doc.text(`Objekt: ${address || "–"}`, margin, y); doc.text(`Schlüssel: ${keysCount} Stück`, pageW - margin - 45, y); y += lineH + 6;
 
-${rooms.map(room => `
-<h2>${room.name} – ${"⭐".repeat(room.condition)} (${CONDITION_LABELS[room.condition]})</h2>
-<table>
-<tr><th>Gegenstand</th><th>Zustand</th><th>Anmerkung</th></tr>
-${room.items.map(item => `<tr><td>${item.name}</td><td class="${item.ok ? "ok" : "nok"}">${item.ok ? "✓ OK" : "✗ Mangel"}</td><td>${item.note || "–"}</td></tr>`).join("")}
-</table>
-${room.notes ? `<p><em>Anmerkung: ${room.notes}</em></p>` : ""}
-`).join("")}
+      doc.setFont("helvetica", "bold");
+      doc.text("Zählerstände", margin, y); y += lineH;
+      doc.setFont("helvetica", "normal");
+      METER_KEYS.forEach((k) => {
+        const label = METER_LABELS[k] || k;
+        const val = meterStand[k] || "–";
+        doc.text(`${label}: ${val}`, margin + 5, y); y += lineH;
+      });
+      y += 4;
 
-${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
+      rooms.forEach((room) => {
+        checkY();
+        doc.setFont("helvetica", "bold");
+        doc.text(`${room.name} – ${CONDITION_LABELS[room.condition] || ""}`, margin, y); y += lineH;
+        doc.setFont("helvetica", "normal");
+        room.items.forEach((item) => {
+          checkY();
+          doc.text(`${item.ok ? "✓" : "✗"} ${item.name}${item.note ? " – " + item.note : ""}`, margin + 5, y); y += lineH;
+        });
+        if (room.notes) { checkY(); doc.setFont("helvetica", "italic"); doc.text(room.notes.substring(0, 80), margin + 5, y); y += lineH; doc.setFont("helvetica", "normal"); }
+        y += 2;
+      });
 
-<div class="sig">
-<div class="sig-box">Vermieter<br><br><br>Datum, Unterschrift</div>
-<div class="sig-box">Mieter<br><br><br>Datum, Unterschrift</div>
-</div>
+      if (generalNotes) {
+        checkY();
+        doc.setFont("helvetica", "bold");
+        doc.text("Allgemeine Anmerkungen", margin, y); y += lineH;
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(generalNotes, pageW - 2 * margin - 10);
+        lines.forEach((line: string) => { checkY(); doc.text(line, margin + 5, y); y += lineH; });
+        y += 4;
+      }
 
-<div class="footer">Erstellt mit ImmoControl · ${new Date().toLocaleDateString("de-DE")}</div>
-</body></html>`;
+      y = Math.max(y, pageH - 50);
+      doc.setDrawColor(180);
+      doc.line(margin, y, margin + 75, y); doc.line(pageW - margin - 75, y, pageW - margin, y); y += lineH;
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text("Vermieter, Unterschrift", margin, y); doc.text("Mieter, Unterschrift", pageW - margin - 75, y);
+      doc.setFontSize(8);
+      doc.text(`Erstellt mit ImmoControl · ${new Date().toLocaleDateString("de-DE")}`, margin, pageH - 10);
+      doc.setTextColor(0);
 
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); w.print(); }
-    toast.success("Übergabeprotokoll erstellt!");
+      const out = doc.output("blob");
+      const blob = out instanceof Promise ? await out : out;
+      const safeName = (tenant || "Mieter").replace(/\s+/g, "_").replace(/[^a-zA-ZäöüÄÖÜß0-9_-]/g, "");
+      const fileName = `Uebergabeprotokoll_${type}_${safeName}_${date}.pdf`;
+      return { blob, fileName };
+    } catch (e) {
+      toast.error("PDF konnte nicht erstellt werden.");
+      console.error(e);
+      return null;
+    }
   }, [type, tenant, address, date, rooms, meterStand, keysCount, generalNotes]);
+
+  const handlePdfDownload = useCallback(async () => {
+    const result = await buildPdfBlob();
+    if (!result) return;
+    const url = URL.createObjectURL(result.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = result.fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("PDF heruntergeladen.");
+  }, [buildPdfBlob]);
+
+  const handlePdfSaveToDocuments = useCallback(async () => {
+    if (!user?.id || !propertyId) {
+      toast.error("Bitte Objekt auswählen.");
+      return;
+    }
+    setPdfSaving(true);
+    try {
+      const result = await buildPdfBlob();
+      if (!result) return;
+      const filePath = `${user.id}/${propertyId}/${Date.now()}_${result.fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("property-documents")
+        .upload(filePath, result.blob, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+      const { error: dbError } = await supabase.from("property_documents").insert({
+        user_id: user.id,
+        property_id: propertyId,
+        file_name: result.fileName,
+        file_path: filePath,
+        file_size: result.blob.size,
+        file_type: "application/pdf",
+        category: "Übergabeprotokoll",
+      } as never);
+      if (dbError) throw dbError;
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.byProperty(propertyId) });
+      toast.success("Protokoll in Dokumente gespeichert.");
+    } catch (e) {
+      toast.error("Speichern fehlgeschlagen.");
+      console.error(e);
+    } finally {
+      setPdfSaving(false);
+    }
+  }, [user, propertyId, buildPdfBlob, queryClient]);
 
   return (
     <Dialog>
@@ -202,6 +303,45 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Bereits gespeicherte Protokolle (Objekt ausgewählt) */}
+          {propertyId && savedProtocols.length > 0 && (
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Gespeicherte Protokolle (dieses Objekt)</p>
+              <ul className="space-y-1.5 max-h-32 overflow-y-auto">
+                {savedProtocols.map((hp) => {
+                  const link = hp.confirm_token ? `${typeof window !== "undefined" ? window.location.origin : ""}${ROUTES.HANDOVER_CONFIRM}/${hp.confirm_token}` : null;
+                  return (
+                    <li key={hp.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span>
+                        {hp.type === "auszug" ? "Auszug" : "Einzug"} – {hp.protocol_data?.date ? formatDate(hp.protocol_data.date) : formatDate(hp.created_at)}
+                        {hp.tenant_confirmed_at && (
+                          <span className="ml-1.5 text-profit">✓ bestätigt</span>
+                        )}
+                      </span>
+                      {link && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-1.5 gap-0.5"
+                          onClick={() => {
+                            navigator.clipboard.writeText(link);
+                            setCopiedProtocolId(hp.id);
+                            toast.success("Link kopiert.");
+                            setTimeout(() => setCopiedProtocolId(null), 2000);
+                          }}
+                        >
+                          {copiedProtocolId === hp.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                          Link
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           {/* Link zum Bestätigen (nach Speichern) */}
           {lastConfirmLink && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
@@ -278,11 +418,11 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
           {/* Meter readings */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Zählerstände</h3>
-            <div className="grid grid-cols-4 gap-2">
-              {Object.entries(meterStand).map(([key, val]) => (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {METER_KEYS.map((key) => (
                 <div key={key} className="space-y-1">
-                  <Label className="text-[10px] capitalize">{key}</Label>
-                  <Input value={val} onChange={e => setMeterStand({...meterStand, [key]: e.target.value})} className="h-8 text-xs" placeholder="Stand" />
+                  <Label className="text-[10px]">{METER_LABELS[key]}</Label>
+                  <Input value={meterStand[key]} onChange={e => setMeterStand({ ...meterStand, [key]: e.target.value })} className="h-8 text-xs" placeholder="Stand" />
                 </div>
               ))}
             </div>
@@ -357,9 +497,20 @@ ${generalNotes ? `<h2>Allgemeine Anmerkungen</h2><p>${generalNotes}</p>` : ""}
             >
               {saveMutation.isPending ? "Speichern…" : "Speichern & Link erstellen"}
             </Button>
-            <Button variant="outline" onClick={exportPDF} className="w-full gap-1.5">
-              <Download className="h-4 w-4" /> Protokoll als PDF drucken
-            </Button>
+            <p className="text-[10px] text-muted-foreground text-wrap-safe">
+              Nach dem Speichern: Link kopieren und an den Mieter senden. Der Mieter kann den Inhalt über den Link bestätigen.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={handlePdfDownload} className="gap-1.5">
+                <Download className="h-3.5 w-3.5" /> PDF herunterladen
+              </Button>
+              {propertyId && (
+                <Button variant="outline" size="sm" onClick={handlePdfSaveToDocuments} disabled={pdfSaving} className="gap-1.5">
+                  {pdfSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  In Dokumente speichern
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

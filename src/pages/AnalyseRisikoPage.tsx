@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShieldAlert } from "lucide-react";
 
 const TAB_VALUES = [
   "stress-test",
@@ -22,7 +23,7 @@ const AnalysisCalculator = lazy(() => import("@/pages/AnalysisCalculator"));
 const HockeyStickPage = lazy(() => import("@/pages/HockeyStickPage"));
 
 const TabFallback = () => (
-  <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">Laden…</div>
+  <div className="flex items-center justify-center min-h-[280px] text-muted-foreground" role="status" aria-label="Tab wird geladen">Laden…</div>
 );
 
 export default function AnalyseRisikoPage() {
@@ -39,48 +40,57 @@ export default function AnalyseRisikoPage() {
   };
 
   return (
-    <div className="space-y-4" role="main" aria-label="Analyse und Risiko">
-      <Tabs value={value} onValueChange={onTabChange} className="w-full">
-        <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/80">
-          <TabsTrigger value="stress-test" className="nav-label-wrap">Stress-Test</TabsTrigger>
-          <TabsTrigger value="diversifikation" className="nav-label-wrap">Diversifikation</TabsTrigger>
-          <TabsTrigger value="mietspiegel" className="nav-label-wrap">Mietspiegel</TabsTrigger>
-          <TabsTrigger value="kpi" className="nav-label-wrap">KPIs</TabsTrigger>
-          <TabsTrigger value="berichte" className="nav-label-wrap">Berichte</TabsTrigger>
-          <TabsTrigger value="rechner" className="nav-label-wrap">Rechner</TabsTrigger>
-          <TabsTrigger value="hockey-stick" className="nav-label-wrap">Hockey Stick</TabsTrigger>
+    <div className="space-y-4 min-w-0" role="main" aria-label="Analyse und Risiko">
+      <div className="min-w-0">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+          <ShieldAlert className="h-6 w-6 text-primary shrink-0" />
+          Analyse & Risiko
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Stress-Test, Diversifikation, Mietspiegel, KPIs, Berichte und Rechner an einem Ort
+        </p>
+      </div>
+      <Tabs value={value} onValueChange={onTabChange} className="w-full min-w-0">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/80 w-full sm:w-auto" role="tablist" aria-label="Bereiche">
+          <TabsTrigger value="stress-test" className="nav-label-wrap" role="tab" aria-selected={value === "stress-test"}>Stress-Test</TabsTrigger>
+          <TabsTrigger value="diversifikation" className="nav-label-wrap" role="tab" aria-selected={value === "diversifikation"}>Diversifikation</TabsTrigger>
+          <TabsTrigger value="mietspiegel" className="nav-label-wrap" role="tab" aria-selected={value === "mietspiegel"}>Mietspiegel</TabsTrigger>
+          <TabsTrigger value="kpi" className="nav-label-wrap" role="tab" aria-selected={value === "kpi"}>KPIs</TabsTrigger>
+          <TabsTrigger value="berichte" className="nav-label-wrap" role="tab" aria-selected={value === "berichte"}>Berichte</TabsTrigger>
+          <TabsTrigger value="rechner" className="nav-label-wrap" role="tab" aria-selected={value === "rechner"}>Rechner</TabsTrigger>
+          <TabsTrigger value="hockey-stick" className="nav-label-wrap" role="tab" aria-selected={value === "hockey-stick"}>Hockey Stick</TabsTrigger>
         </TabsList>
-        <TabsContent value="stress-test" className="mt-4 focus:outline-none">
+        <TabsContent value="stress-test" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <StressTestPage />
           </Suspense>
         </TabsContent>
-        <TabsContent value="diversifikation" className="mt-4 focus:outline-none">
+        <TabsContent value="diversifikation" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <DiversifikationPage />
           </Suspense>
         </TabsContent>
-        <TabsContent value="mietspiegel" className="mt-4 focus:outline-none">
+        <TabsContent value="mietspiegel" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <MietspiegelPage />
           </Suspense>
         </TabsContent>
-        <TabsContent value="kpi" className="mt-4 focus:outline-none">
+        <TabsContent value="kpi" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <KpiZeitreisePage />
           </Suspense>
         </TabsContent>
-        <TabsContent value="berichte" className="mt-4 focus:outline-none">
+        <TabsContent value="berichte" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <Berichte />
           </Suspense>
         </TabsContent>
-        <TabsContent value="rechner" className="mt-4 focus:outline-none">
+        <TabsContent value="rechner" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <AnalysisCalculator />
           </Suspense>
         </TabsContent>
-        <TabsContent value="hockey-stick" className="mt-4 focus:outline-none">
+        <TabsContent value="hockey-stick" className="mt-4 focus:outline-none min-w-0">
           <Suspense fallback={<TabFallback />}>
             <HockeyStickPage />
           </Suspense>

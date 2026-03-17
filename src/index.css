@@ -121,6 +121,9 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    /* Web-App / iOS: weniger störender Tap-Flash bei Buttons/Links */
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
   }
 
   /* Custom scrollbar */
@@ -2539,6 +2542,11 @@ button.btn-back-to-top,
   overscroll-behavior: contain;
   scroll-behavior: smooth;
 }
+/* Horizontal tab bar (e.g. Settings): promote layer for smoother finger scroll on iOS */
+.settings-horizontal-scroll {
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
+}
 @media (prefers-reduced-motion: reduce) {
   .touch-scroll-optimized {
     scroll-behavior: auto;
@@ -2680,10 +2688,10 @@ button.btn-back-to-top,
   }
 }
 
-/* ALIGN: Einheitliche Ausrichtung bei allen Viewport-Größen — Container-Padding + Safe-Area */
+/* ALIGN: Einheitliche Ausrichtung — iOS-typischer Abstand (20pt) + Safe-Area, Inhalt nicht am Rand */
 .container {
-  padding-left: max(1rem, env(safe-area-inset-left, 0px));
-  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   width: 100%;
   box-sizing: border-box;
 }

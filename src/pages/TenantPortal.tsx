@@ -5,16 +5,33 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2, MessageCircle, Send, LogOut, Home, FileText, CreditCard,
   Wrench, Bell, Calendar, Euro, ChevronRight, Phone, Mail,
-  ClipboardList, User, Download, AlertTriangle, CheckCircle2, Clock
+  ClipboardList, User, Download, AlertTriangle, CheckCircle2, Clock, Loader2, PenLine
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { TenantTickets } from "@/components/TicketSystem";
 import { TenantPayments } from "@/components/PaymentTracking";
 import { DamageReport } from "@/components/DamageReport";
 import { formatCurrency, formatFileSize } from "@/lib/formatters";
+import { ROUTES } from "@/lib/routes";
+import { Link } from "react-router-dom";
+
+const HANDOVER_METER_LABELS: Record<string, string> = {
+  strom: "Strom (kWh)",
+  gas: "Gas (m³)",
+  wasser: "Wasser (m³)",
+  heizung: "Heizung",
+};
+const HANDOVER_CONDITION_LABELS: Record<number, string> = {
+  1: "Mangelhaft",
+  2: "Ausreichend",
+  3: "Befriedigend",
+  4: "Gut",
+  5: "Sehr gut",
+};
 
 interface TenantInfo {
   id: string;
@@ -30,6 +47,22 @@ interface TenantInfo {
   landlord_id: string;
   properties: { name: string; address: string } | null;
 }
+
+type HandoverProtocolItem = {
+  id: string;
+  type: string;
+  protocol_data: {
+    date?: string;
+    address?: string;
+    tenant?: string;
+    keysCount?: string;
+    meterStand?: Record<string, string>;
+    rooms?: Array<{ name: string; condition: number; notes: string; items: Array<{ name: string; ok: boolean; note: string }> }>;
+    generalNotes?: string;
+  };
+  tenant_confirmed_at: string | null;
+  created_at: string;
+};
 
 interface Message {
   id: string;
@@ -416,10 +449,34 @@ const TenantPortal = () => {
         .select("id, type, protocol_data, tenant_confirmed_at, created_at")
         .eq("tenant_id", tenantInfo.id)
         .order("created_at", { ascending: false });
-      return (data || []) as Array<{ id: string; type: string; protocol_data: { date?: string; address?: string }; tenant_confirmed_at: string | null; created_at: string }>;
+      return (data || []) as Array<HandoverProtocolItem>;
     },
     enabled: !!tenantInfo?.id && activeTab === "handover",
   });
+
+  const [selectedHandoverId, setSelectedHandoverId] = useState<string | null>(null);
+  const selectedHandover = handoverProtocols.find((hp) => hp.id === selectedHandoverId);
+
+  const { data: contractSignRequests = [] } = useQuery({
+    queryKey: ["contract_signature_requests", "tenant", tenantInfo?.id],
+    queryFn: async () => {
+      if (!tenantInfo?.id) return [];
+      const { data } = await supabase
+        .from("contract_signature_requests")
+        .select("id, contract_data, tenant_signed_at, created_at, confirm_token")
+        .eq("tenant_id", tenantInfo.id)
+        .order("created_at", { ascending: false });
+      return (data || []) as Array<{
+        id: string;
+        contract_data: { address?: string; startDate?: string };
+        tenant_signed_at: string | null;
+        created_at: string;
+        confirm_token: string | null;
+      }>;
+    },
+    enabled: !!tenantInfo?.id,
+  });
+  const pendingContracts = contractSignRequests.filter((c) => !c.tenant_signed_at);
 
   const confirmHandover = useMutation({
     mutationFn: async (id: string) => {
@@ -585,7 +642,34 @@ const TenantPortal = () => {
       <main className="flex-1 container py-6 max-w-3xl pb-24 md:pb-6">
         {/* DASHBOARD TAB */}
         {activeTab === "dashboard" && (
-          <TenantDashboard
+          <>
+            {pendingContracts.length > 0 && (
+              <div className="gradient-card rounded-xl border border-primary/20 p-4 mb-4 animate-fade-in">
+                <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <PenLine className="h-4 w-4 text-primary" /> Verträge zur Unterschrift
+                </h2>
+                <p className="text-xs text-muted-foreground mb-3">Ihr Vermieter hat Ihnen einen Mietvertrag zur Unterschrift freigegeben.</p>
+                <ul className="space-y-2">
+                  {pendingContracts.map((c) => (
+                    <li key={c.id} className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm">
+                        Mietvertrag {c.contract_data?.address ? `– ${c.contract_data.address}` : ""}
+                        {c.contract_data?.startDate ? ` (ab ${new Date(c.contract_data.startDate).toLocaleDateString("de-DE")})` : ""}
+                      </span>
+                      {c.confirm_token && (
+                        <Link
+                          to={`${ROUTES.CONTRACT_SIGN}/${c.confirm_token}`}
+                          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                        >
+                          Jetzt unterschreiben <ChevronRight className="h-3.5 w-3.5" />
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <TenantDashboard
             tenantInfo={tenantInfo}
             unreadCount={unreadCount}
             moveInDate={moveInDate}
@@ -593,6 +677,7 @@ const TenantPortal = () => {
             setActiveTab={setActiveTab}
             userId={user?.id}
           />
+          </>
         )}
 
         {/* MESSAGES TAB */}
@@ -700,28 +785,104 @@ const TenantPortal = () => {
                 <ul className="space-y-3">
                   {handoverProtocols.map((hp) => (
                     <li key={hp.id} className="border border-border rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
-                      <div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedHandoverId(hp.id)}
+                        className="text-left flex-1 min-w-0"
+                      >
                         <p className="text-sm font-medium">{hp.type === "auszug" ? "Auszug" : "Einzug"} – {hp.protocol_data?.date ? new Date(hp.protocol_data.date).toLocaleDateString("de-DE") : new Date(hp.created_at).toLocaleDateString("de-DE")}</p>
                         {hp.protocol_data?.address && <p className="text-xs text-muted-foreground">{hp.protocol_data.address}</p>}
-                      </div>
+                        <p className="text-[10px] text-primary mt-0.5">Inhalt anzeigen →</p>
+                      </button>
                       {hp.tenant_confirmed_at ? (
-                        <span className="text-xs text-profit flex items-center gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Bestätigt am {new Date(hp.tenant_confirmed_at).toLocaleDateString("de-DE")}
+                        <span className="text-xs text-profit flex items-center gap-1 shrink-0">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Bestätigt
                         </span>
                       ) : (
                         <Button
                           size="sm"
-                          className="gap-1"
+                          className="gap-1 shrink-0"
                           disabled={confirmHandover.isPending}
-                          onClick={() => confirmHandover.mutate(hp.id)}
+                          onClick={(e) => { e.stopPropagation(); confirmHandover.mutate(hp.id); }}
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Bestätigen
+                          {confirmHandover.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                          Bestätigen
                         </Button>
                       )}
                     </li>
                   ))}
                 </ul>
               )}
+
+              {/* Detail-Dialog: vollständiger Protokoll-Inhalt vor Bestätigung */}
+              <Dialog open={!!selectedHandoverId} onOpenChange={(open) => !open && setSelectedHandoverId(null)}>
+                <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <ClipboardList className="h-5 w-5" />
+                      Übergabeprotokoll – {selectedHandover?.type === "auszug" ? "Auszug" : "Einzug"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  {selectedHandover && (
+                    <div className="space-y-4 text-sm">
+                      <div className="grid grid-cols-2 gap-2">
+                        <p><strong>Mieter:</strong> {selectedHandover.protocol_data?.tenant || "–"}</p>
+                        <p><strong>Datum:</strong> {selectedHandover.protocol_data?.date ? new Date(selectedHandover.protocol_data.date).toLocaleDateString("de-DE") : new Date(selectedHandover.created_at).toLocaleDateString("de-DE")}</p>
+                        <p className="col-span-2"><strong>Objekt:</strong> {selectedHandover.protocol_data?.address || "–"}</p>
+                        <p><strong>Schlüssel:</strong> {selectedHandover.protocol_data?.keysCount ?? "–"} Stück</p>
+                      </div>
+                      {selectedHandover.protocol_data?.meterStand && Object.entries(selectedHandover.protocol_data.meterStand).some(([, v]) => v != null && String(v).trim() !== "") && (
+                        <div>
+                          <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">Zählerstände</h4>
+                          <ul className="space-y-0.5 text-muted-foreground">
+                            {Object.entries(selectedHandover.protocol_data.meterStand)
+                              .filter(([, v]) => v != null && String(v).trim() !== "")
+                              .map(([k, v]) => (
+                                <li key={k}>{HANDOVER_METER_LABELS[k] || k}: {String(v)}</li>
+                              ))}
+                          </ul>
+                        </div>
+                      )}
+                      {selectedHandover.protocol_data?.rooms?.map((room, ri) => (
+                        <div key={ri} className="border border-border rounded-lg p-2">
+                          <p className="font-medium text-xs">{room.name} – {HANDOVER_CONDITION_LABELS[room.condition] || ""}</p>
+                          <ul className="mt-1 text-xs text-muted-foreground space-y-0.5">
+                            {room.items?.map((item, ii) => (
+                              <li key={ii}>{item.name}: {item.ok ? "✓ OK" : "✗ Mangel"} {item.note ? `(${item.note})` : ""}</li>
+                            ))}
+                          </ul>
+                          {room.notes ? <p className="mt-1 text-xs italic">{room.notes}</p> : null}
+                        </div>
+                      ))}
+                      {selectedHandover.protocol_data?.generalNotes && (
+                        <p className="text-xs"><strong>Anmerkungen:</strong> {selectedHandover.protocol_data.generalNotes}</p>
+                      )}
+                      {selectedHandover.tenant_confirmed_at ? (
+                        <div className="flex items-center gap-2 rounded-lg bg-primary/10 text-primary p-3 text-xs">
+                          <CheckCircle2 className="h-4 w-4 shrink-0" />
+                          Bestätigt am {new Date(selectedHandover.tenant_confirmed_at).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-border">
+                          <p className="text-xs text-muted-foreground mb-2 text-wrap-safe">Mit der Bestätigung erkennen Sie den dokumentierten Zustand der Wohnung an.</p>
+                          <Button
+                            size="sm"
+                            className="w-full gap-2"
+                            disabled={confirmHandover.isPending}
+                            onClick={() => {
+                              confirmHandover.mutate(selectedHandover.id);
+                              setSelectedHandoverId(null);
+                            }}
+                          >
+                            {confirmHandover.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                            Inhalt bestätigen
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         )}

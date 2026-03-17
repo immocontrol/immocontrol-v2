@@ -347,8 +347,12 @@ const Settings = () => {
         </div>
         <div
           ref={mobileTabBarRef}
-          className="relative z-[1] w-full h-full max-w-full overscroll-x-contain overscroll-y-none scrollbar-hide scroll-smooth"
-          style={{ overflowX: "auto", overflowY: "hidden" }}
+          className="relative z-[1] w-full h-full max-w-full overscroll-x-contain overscroll-y-none scrollbar-hide scroll-smooth touch-scroll-optimized settings-horizontal-scroll"
+          style={{
+            overflowX: "auto",
+            overflowY: "hidden",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
           <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
           <div className="flex flex-nowrap gap-2 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full min-h-0">
