@@ -139,7 +139,7 @@ Damit teilst du Apple mit, dass die App keine eigene/nicht-standardisierte Versc
 
 #### Face ID / Touch ID (Biometrie-Entsperrung)
 
-Damit die App Face ID bzw. Touch ID für die Biometrie-Entsperrung nutzen kann, muss in der **Info.plist** der Key **`NSFaceIDUsageDescription`** („Privacy - Face ID Usage Description“) gesetzt sein. Ohne diesen Key erlaubt iOS die Nutzung von Face ID nicht.
+Auf der iPhone-App wird **Face ID bzw. Touch ID nativ** über das Capacitor-Plugin genutzt (nicht WebAuthn im WebView). Damit die App Face ID für die Biometrie-Entsperrung nutzen kann, muss in der **Info.plist** der Key **`NSFaceIDUsageDescription`** („Privacy - Face ID Usage Description“) gesetzt sein. Ohne diesen Key erlaubt iOS die Nutzung von Face ID nicht.
 
 - **In der Codemagic-Pipeline** wird das automatisch erledigt (Schritt „Face-ID-Usage-Description setzen“, Script `scripts/ios-face-id-usage.sh`).
 - **Lokaler Build (Xcode):** Nach `npm run cap:sync` oder `npx cap open ios` einmalig ausführen:  

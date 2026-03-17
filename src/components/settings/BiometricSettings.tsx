@@ -8,7 +8,7 @@ import { Fingerprint, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
-import { registerBiometricCredential } from "@/lib/biometric";
+import { registerBiometricCredential, isBiometricSupported } from "@/lib/biometric";
 
 interface BiometricSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -26,21 +26,14 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
   const [isNativeIos, setIsNativeIos] = useState(false);
   useEffect(() => {
     const check = async () => {
-      let nativeIos = false;
       try {
-        const { Capacitor } = await import("@capacitor/core");
-        if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios") nativeIos = true;
-      } catch { /* ignore */ }
-      setIsNativeIos(nativeIos);
-
-      const supported = typeof window !== "undefined" &&
-        !!window.PublicKeyCredential &&
-        typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function";
-      if (supported && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        try {
-          const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          setBiometricSupported(available);
-        } catch { setBiometricSupported(false); }
+        const { isNativeIos: isIos } = await import("@/integrations/nativeBiometric");
+        const nativeIos = await isIos();
+        setIsNativeIos(nativeIos);
+        const supported = await isBiometricSupported();
+        setBiometricSupported(supported);
+      } catch {
+        setBiometricSupported(false);
       }
     };
     check();
@@ -98,7 +91,7 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
           </p>
           {isNativeIos && (
             <p className="text-[11px] text-muted-foreground">
-              iPhone-App: Face ID wird aktiviert, sobald du die neueste App-Version aus dem App Store installierst. Danach hier erneut prüfen.
+              iPhone-App: Stelle sicher, dass Face ID in den Einstellungen aktiviert ist.
             </p>
           )}
         </div>

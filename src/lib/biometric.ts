@@ -1,18 +1,29 @@
 /**
- * Biometric verification via WebAuthn (Face ID / Touch ID).
- * Uses platform authenticator only — not Passkey/QR/Sicherheitsschlüssel.
- * Requires a credential to be registered first (done when enabling Biometrie in settings).
+ * Biometric verification (Face ID / Touch ID).
+ * Auf nativer iOS-App: systemeigene Face-ID-API über Capacitor-Plugin.
+ * Sonst: WebAuthn mit Plattform-Authenticator (keine Passkeys/QR/Sicherheitsschlüssel).
+ * Bei Aktivierung wird je nach Plattform native Biometrie oder eine WebAuthn-Credential genutzt.
  */
+
+import {
+  isNativeIos,
+  isNativeBiometricAvailable,
+  verifyWithNativeBiometric,
+} from "@/integrations/nativeBiometric";
 
 const BIOMETRIC_CREDENTIAL_ID_KEY = "immocontrol_biometric_credential_id";
 
-/** Register a platform-only credential (Face ID / Touch ID). Call when user enables Biometrie. */
+/** Register (Aktivierung). Auf iOS nativ: nur Flag setzen; sonst WebAuthn-Credential anlegen. */
 export async function registerBiometricCredential(
   userId: string,
   userEmail: string,
   displayName: string,
 ): Promise<boolean> {
   try {
+    if (await isNativeIos() && (await isNativeBiometricAvailable())) {
+      localStorage.setItem("immocontrol_biometric_enabled", "true");
+      return true;
+    }
     if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
@@ -30,7 +41,7 @@ export async function registerBiometricCredential(
           { alg: -257, type: "public-key" },
         ],
         authenticatorSelection: {
-          authenticatorAttachment: "platform", // Nur Face ID / Touch ID, keine USB-Sicherheitsschlüssel
+          authenticatorAttachment: "platform",
           userVerification: "required",
           residentKey: "preferred",
         },
@@ -50,6 +61,12 @@ export async function registerBiometricCredential(
 
 export async function requestBiometricVerification(): Promise<boolean> {
   try {
+    if (isBiometricUnlockEnabled() && (await isNativeIos())) {
+      const ok = await verifyWithNativeBiometric(
+        "Zugang zu ImmoControl bestätigen",
+      );
+      if (ok) return true;
+    }
     if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
     const storedId = localStorage.getItem(BIOMETRIC_CREDENTIAL_ID_KEY);
     const challenge = new Uint8Array(32);
@@ -72,6 +89,19 @@ export async function requestBiometricVerification(): Promise<boolean> {
     }
     const credential = await navigator.credentials.get(getOptions);
     return !!credential;
+  } catch {
+    return false;
+  }
+}
+
+/** Ob Biometrie auf diesem Gerät angeboten werden kann (nativ iOS oder WebAuthn). */
+export async function isBiometricSupported(): Promise<boolean> {
+  try {
+    if (await isNativeIos()) return isNativeBiometricAvailable();
+    if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
+    const fn = window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable;
+    if (typeof fn !== "function") return false;
+    return fn.call(window.PublicKeyCredential);
   } catch {
     return false;
   }
