@@ -30,29 +30,24 @@ export function useKeyboardAwareScroll(options?: {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
 
   const scrollToFocused = useCallback((element: HTMLElement) => {
-    // Wait for keyboard to open
     requestAnimationFrame(() => {
       setTimeout(() => {
         const rect = element.getBoundingClientRect();
         const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+        const inDialog = element.closest("[role='dialog']");
 
-        // Check if element is below viewport (hidden by keyboard)
+        if (inDialog) {
+          // In Modal/Dialog: scrollIntoView scrolls the dialog body
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
         if (rect.bottom > viewportHeight - 20) {
           const scrollAmount = rect.bottom - viewportHeight + offset;
-          window.scrollBy({
-            top: scrollAmount,
-            behavior: "smooth",
-          });
+          window.scrollBy({ top: scrollAmount, behavior: "smooth" });
+        } else if (rect.top < 0) {
+          window.scrollBy({ top: rect.top - offset, behavior: "smooth" });
         }
-
-        // Check if element is above viewport
-        if (rect.top < 0) {
-          window.scrollBy({
-            top: rect.top - offset,
-            behavior: "smooth",
-          });
-        }
-      }, 300); // Keyboard animation delay
+      }, 300);
     });
   }, [offset]);
 

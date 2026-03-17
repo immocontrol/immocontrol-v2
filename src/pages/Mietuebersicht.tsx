@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,7 +52,7 @@ const Mietuebersicht = () => {
   }, [tabFromUrl]);
 
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
-    queryKey: ["mietuebersicht_tenants"],
+    queryKey: queryKeys.mietuebersicht.tenants,
     queryFn: async () => {
       const { data } = await supabase.from("tenants").select("*").order("last_name");
       return data || [];
@@ -60,7 +61,7 @@ const Mietuebersicht = () => {
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
-    queryKey: ["mietuebersicht_payments"],
+    queryKey: queryKeys.mietuebersicht.payments,
     queryFn: async () => {
       const { data } = await supabase
         .from("rent_payments")

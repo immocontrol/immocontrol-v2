@@ -312,7 +312,7 @@ export default function FinanzierungsCockpit() {
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Gesamtschuld</div>
             <div className="text-base font-bold tabular-nums">{formatCurrency(stats.totalDebt)}</div>
           </div>
-          <div className="gradient-card rounded-xl border border-border p-3">
+          <div className="gradient-card rounded-xl border border-border p-3" title="Loan-to-Value: Darlehen in % des Objektwerts. Unter 60% gilt als solide.">
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">LTV</div>
             <div className="text-base font-bold tabular-nums">
               {stats.totalValue > 0 ? ((stats.totalDebt / stats.totalValue) * 100).toFixed(0) : "0"}%

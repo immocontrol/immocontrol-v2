@@ -10,7 +10,9 @@ const SNAP_DURATION_MS = 280;
 const SNAP_EASING = "cubic-bezier(0.33, 1, 0.68, 1)"; // smooth ease-out, slight overshoot feel
 const INDICATOR_SMOOTH_MS = 80; // short transition during pull so indicator doesn't stutter
 /** Min downward movement (px) before we treat the gesture as pull — avoids trigger when user scrolls up (finger moves up). */
-const PULL_START_THRESHOLD_PX = 12;
+const PULL_START_THRESHOLD_PX = 26;
+/** Indicator only visible after this pull distance — avoids brief flash when scrolling up past top. */
+const INDICATOR_VISIBLE_AFTER_PX = 32;
 
 /** Rubber-band: more movement at start, then resistance toward max (smooth curve) */
 function pullDistance(diff: number): number {
@@ -100,7 +102,8 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
     const distance = pullDistance(diff);
     setContentTransform(distance, false);
     const progress = Math.min(diff / threshold, 1);
-    setIndicator(Math.min(distance * 0.6, threshold * 0.6), progress, true);
+    const indicatorOpacity = distance >= INDICATOR_VISIBLE_AFTER_PX ? progress : 0;
+    setIndicator(Math.min(distance * 0.6, threshold * 0.6), indicatorOpacity, true);
   }, [threshold, disabled, setContentTransform, setIndicator]);
 
   const handleTouchEnd = useCallback(async (e: TouchEvent) => {

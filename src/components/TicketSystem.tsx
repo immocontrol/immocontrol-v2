@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { isDeepSeekConfigured, suggestTicketDescription } from "@/integrations/ai/extractors";
+import { formatCurrency } from "@/lib/formatters";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ROUTES } from "@/lib/routes";
@@ -165,7 +166,7 @@ const TicketRow = ({
                 <span>·</span>
                 <span className="flex items-center gap-0.5">
                   <Euro className="h-2.5 w-2.5" />
-                  Geschätzt: {Number(ticket.estimated_cost).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
+                  Geschätzt: {formatCurrency(Number(ticket.estimated_cost))}
                 </span>
               </>
             )}
@@ -173,7 +174,7 @@ const TicketRow = ({
               <>
                 <span>·</span>
                 <span className={`flex items-center gap-0.5 font-medium ${ticket.actual_cost > ticket.estimated_cost ? "text-loss" : "text-profit"}`}>
-                  Tatsächlich: {Number(ticket.actual_cost).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
+                  Tatsächlich: {formatCurrency(Number(ticket.actual_cost))}
                 </span>
               </>
             )}
@@ -699,12 +700,12 @@ export const LandlordTickets = ({ propertyId }: LandlordTicketsProps) => {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <span className="text-muted-foreground">Geschätzt:</span>{" "}
-                        <span className="font-medium">{Number(ticket.estimated_cost).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+                        <span className="font-medium">{formatCurrency(Number(ticket.estimated_cost))}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Tatsächlich:</span>{" "}
                         <span className={`font-medium ${ticket.actual_cost > ticket.estimated_cost ? "text-loss" : "text-profit"}`}>
-                          {Number(ticket.actual_cost).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
+                          {formatCurrency(Number(ticket.actual_cost))}
                         </span>
                       </div>
                       {ticket.cost_note && <div className="col-span-2 text-[10px] text-muted-foreground">{ticket.cost_note}</div>}
@@ -899,7 +900,7 @@ export const HandworkerTickets = () => {
                       {/* Synergy 16: Show cost inline */}
                       {(ticket.estimated_cost > 0 || ticket.actual_cost > 0) && (
                         <span className="text-[10px] text-muted-foreground font-medium">
-                          💰 {Number(ticket.actual_cost || ticket.estimated_cost).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
+                          💰 {formatCurrency(Number(ticket.actual_cost || ticket.estimated_cost))}
                         </span>
                       )}
                     </>

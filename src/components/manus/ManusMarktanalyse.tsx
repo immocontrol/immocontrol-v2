@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/formatters";
 import { hasManusApiKey, runTask, buildMarktanalysePrompt, parseManusJson, cacheResult, getCachedResult } from "@/lib/manusAgent";
 import { ManusTaskStatusIndicator } from "./ManusTaskStatus";
 import type { ManusTaskStatus } from "@/lib/manusAgent";
@@ -92,7 +93,7 @@ export const ManusMarktanalyse = ({ defaultCity, defaultDistrict, onResult }: Ma
     }
   };
 
-  const formatEuro = (n?: number) => n != null ? `${n.toLocaleString("de-DE")} €` : "–";
+  const formatEuro = (n?: number) => n != null ? formatCurrency(n) : "–";
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-card/50 p-4">

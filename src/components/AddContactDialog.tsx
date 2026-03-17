@@ -15,11 +15,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
-import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { toastErrorWithRetry, toastError, toastSuccess } from "@/lib/toastMessages";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
-import { contactFormSchema } from "@/lib/schemas";
+import { contactFormSchema, type ContactFormDataUI } from "@/lib/schemas";
 import { StepIndicator } from "@/components/StepIndicator";
 import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
+import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { isDeepSeekConfigured, suggestContactFollowUp } from "@/integrations/ai/extractors";
 
 const STEP_LABELS = ["Kategorie", "Kontaktdaten", "Adresse & Notizen"];
@@ -29,6 +31,10 @@ interface AddContactDialogProps {
   trigger?: React.ReactNode;
 }
 
+const DEFAULT_VALUES: ContactFormDataUI = {
+  name: "", company: "", category: "Handwerker", email: "", phone: "", address: "", notes: "",
+};
+
 const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   const { user } = useAuth();
   const { announce } = useAccessibility();
@@ -36,18 +42,21 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [saving, setSaving] = useState(false);
   const [aiNotesLoading, setAiNotesLoading] = useState(false);
+  const isMobile = useIsMobile();
+  useKeyboardAwareScroll({ enabled: isMobile && open, offset: 80 });
 
-  const [form, setForm] = useState({
-    name: "", company: "", category: "Handwerker",
-    email: "", phone: "", address: "", notes: "",
+  const form = useForm<ContactFormDataUI>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: DEFAULT_VALUES,
   });
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = form;
+  const formValues = watch();
 
   const resetForm = useCallback(() => {
-    setForm({ name: "", company: "", category: "Handwerker", email: "", phone: "", address: "", notes: "" });
+    reset(DEFAULT_VALUES);
     setStep(0);
-  }, []);
+  }, [reset]);
 
   const handleOpenChange = useCallback((v: boolean) => {
     setOpen(v);
@@ -57,33 +66,13 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   useFocusFirstInput(open, contentRef);
 
   const canGoNext = step === 0
-    ? !!form.category
+    ? !!formValues.category
     : step === 1
-    ? !!form.name.trim()
+    ? !!formValues.name?.trim()
     : true;
 
-  const handleSave = async () => {
+  const onValidSubmit = useCallback(async (data: ContactFormDataUI) => {
     if (!user) return;
-    const parsed = contactFormSchema.safeParse(form);
-    if (!parsed.success) {
-      const first = parsed.error.flatten().fieldErrors;
-      const friendly: Record<string, string> = {
-        name: "Bitte Namen eingeben.",
-        email: "Bitte gültige E-Mail-Adresse eingeben.",
-        phone: "Bitte gültige Telefonnummer eingeben.",
-        category: "Bitte Kategorie wählen.",
-      };
-      const msg =
-        first.name?.length ? friendly.name
-        : first.email?.length ? friendly.email
-        : first.phone?.length ? friendly.phone
-        : first.category?.length ? friendly.category
-        : "Bitte Name oder Kontaktdaten (E-Mail/Telefon) eingeben.";
-      toastError(msg);
-      return;
-    }
-    setSaving(true);
-    const data = parsed.data;
     try {
       const { error } = await supabase.from("contacts").insert({
         user_id: user.id,
@@ -103,11 +92,11 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
       onCreated?.();
     } catch (err) {
       handleError(err, { context: "supabase", details: "contacts.insert", showToast: false });
-      toastErrorWithRetry("Kontakt anlegen fehlgeschlagen", handleSave);
-    } finally {
-      setSaving(false);
+      toastErrorWithRetry("Kontakt anlegen fehlgeschlagen", () => form.handleSubmit(onValidSubmit)());
     }
-  };
+  }, [user, announce, qc, onCreated, handleOpenChange, form]);
+
+  const handleSave = handleSubmit(onValidSubmit);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -138,19 +127,19 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
             <div className="grid grid-cols-2 gap-3">
               {CONTACT_CATEGORIES.map(cat => {
                 const Icon = cat.icon;
+                const isSelected = formValues.category === cat.value;
                 return (
                   <button
                     key={cat.value}
-                    onClick={() => setForm(f => ({ ...f, category: cat.value }))}
+                    type="button"
+                    onClick={() => setValue("category", cat.value)}
                     className={cn(
                       "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 text-left",
-                      form.category === cat.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40 hover:bg-secondary/50"
+                      isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-secondary/50"
                     )}
                   >
-                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", form.category === cat.value ? "bg-primary/10" : "bg-secondary")}>
-                      <Icon className={cn("h-5 w-5", form.category === cat.value ? "text-primary" : "text-muted-foreground")} />
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", isSelected ? "bg-primary/10" : "bg-secondary")}>
+                      <Icon className={cn("h-5 w-5", isSelected ? "text-primary" : "text-muted-foreground")} />
                     </div>
                     <div>
                       <p className="text-sm font-medium">{cat.value}</p>
@@ -167,15 +156,16 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 col-span-2">
                   <Label className="text-xs">Name *</Label>
-                  <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="h-9 text-sm" placeholder="Vollständiger Name" autoFocus />
+                  <Input {...register("name")} className="h-9 text-sm" placeholder="Vollständiger Name" autoFocus />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Firma</Label>
-                  <Input value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} className="h-9 text-sm" placeholder="Optional" />
+                  <Input {...register("company")} className="h-9 text-sm" placeholder="Optional" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Kategorie</Label>
-                  <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                  <Select value={formValues.category} onValueChange={v => setValue("category", v as ContactFormDataUI["category"])}>
                     <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CONTACT_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.value}</SelectItem>)}
@@ -184,11 +174,13 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">E-Mail</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="h-9 text-sm" />
+                  <Input type="email" {...register("email")} className="h-9 text-sm" />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Telefon</Label>
-                  <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="h-9 text-sm" />
+                  <Input {...register("phone")} className="h-9 text-sm" />
+                  {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
                 </div>
               </div>
             </div>
@@ -198,12 +190,12 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
             <div className="space-y-3">
               <div className="space-y-1">
                 <Label className="text-xs">Adresse</Label>
-                <AddressAutocomplete value={form.address} onChange={v => setForm(f => ({ ...f, address: v }))} />
+                <AddressAutocomplete value={formValues.address} onChange={v => setValue("address", v)} />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-xs">Notizen</Label>
-                  {isDeepSeekConfigured() && form.name.trim() && (
+                  {isDeepSeekConfigured() && formValues.name?.trim() && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -214,12 +206,12 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
                         setAiNotesLoading(true);
                         try {
                           const text = await suggestContactFollowUp({
-                            name: form.name.trim(),
-                            company: form.company || null,
-                            category: form.category,
-                            notes: form.notes || null,
+                            name: formValues.name?.trim() ?? "",
+                            company: formValues.company || null,
+                            category: formValues.category,
+                            notes: formValues.notes || null,
                           });
-                          if (text) setForm(f => ({ ...f, notes: text }));
+                          if (text) setValue("notes", text);
                         } catch (e) {
                           handleError(e, { context: "ai", details: "suggestContactFollowUp", showToast: true });
                         } finally {
@@ -232,7 +224,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
                     </Button>
                   )}
                 </div>
-                <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="text-sm min-h-[80px]" placeholder="Besonderheiten, Preise, Empfehlung, …" />
+                <Textarea {...register("notes")} className="text-sm min-h-[80px]" placeholder="Besonderheiten, Preise, Empfehlung, …" />
               </div>
             </div>
           )}
@@ -249,8 +241,8 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
               Weiter <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSave} className="flex-1 touch-target min-h-[44px]" disabled={saving || !form.name.trim()}>
-              {saving ? "Anlegen…" : "Kontakt anlegen"}
+            <Button type="button" onClick={handleSave} className="flex-1 touch-target min-h-[44px]" disabled={isSubmitting || !formValues.name?.trim()}>
+              {isSubmitting ? "Anlegen…" : "Kontakt anlegen"}
             </Button>
           )}
         </div>

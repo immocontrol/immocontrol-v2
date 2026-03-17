@@ -1,17 +1,21 @@
 /**
  * UX-10: Einheitliche Erfolgs-Toasts — gleiche Dauer und klare Formulierung.
  * Nutzen: Klares, nicht störendes Feedback auf Handy und Browser.
+ * iOS: Haptic wird bei Erfolg/Fehler ausgelöst (auf Geräten mit Vibration API, z. B. Android).
  */
 import { toast } from "sonner";
+import { triggerHapticSuccess, triggerHapticError } from "./hapticTrigger";
 
 export const TOAST_DURATION_SUCCESS = 4000;
 export const TOAST_DURATION_ERROR = 5000;
 
 export function toastSuccess(message: string, duration = TOAST_DURATION_SUCCESS) {
+  triggerHapticSuccess();
   toast.success(message, { duration });
 }
 
 export function toastError(message: string, duration = TOAST_DURATION_ERROR) {
+  triggerHapticError();
   toast.error(message, { duration });
 }
 
@@ -29,6 +33,7 @@ export function toastErrorWithRetry(
   onRetry: () => void,
   duration = TOAST_DURATION_ERROR,
 ) {
+  triggerHapticError();
   toast.error(message, {
     duration,
     action: {

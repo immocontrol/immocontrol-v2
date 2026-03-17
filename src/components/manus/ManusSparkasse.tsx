@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Bot, Landmark, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/formatters";
 import { hasManusApiKey, runTask, buildSparkassePrompt, parseManusJson, cacheResult, getCachedResult } from "@/lib/manusAgent";
 import { ManusTaskStatusIndicator } from "./ManusTaskStatus";
 import type { ManusTaskStatus } from "@/lib/manusAgent";
@@ -84,7 +85,7 @@ export const ManusSparkasse = ({ data, onResult }: ManusSparkasseProps) => {
     }
   };
 
-  const formatEuro = (n?: number) => n != null ? `${n.toLocaleString("de-DE")} €` : "–";
+  const formatEuro = (n?: number) => n != null ? formatCurrency(n) : "–";
 
   return (
     <div className="space-y-3">

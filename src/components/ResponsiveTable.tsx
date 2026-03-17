@@ -1,7 +1,9 @@
 /**
  * FUND-18: Responsive tables to mobile cards — renders a table on desktop
  * and a stacked card layout on mobile. No external dependencies.
+ * OPT: Single stable click handler per list to avoid per-row function creation and re-renders.
  */
+import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
@@ -47,6 +49,31 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
 }: ResponsiveTableProps<T>) {
   const isMobile = useMediaQuery(`(max-width: ${breakpoint ?? 768}px)`);
 
+  const handleRowClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (!onRowClick) return;
+      const idx = e.currentTarget.getAttribute("data-row-idx");
+      if (idx != null) {
+        const i = Number(idx);
+        if (i >= 0 && i < data.length) onRowClick(data[i]);
+      }
+    },
+    [onRowClick, data]
+  );
+
+  const handleRowKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLElement>) => {
+      if (!onRowClick || (e.key !== "Enter" && e.key !== " ")) return;
+      e.preventDefault();
+      const idx = e.currentTarget.getAttribute("data-row-idx");
+      if (idx != null) {
+        const i = Number(idx);
+        if (i >= 0 && i < data.length) onRowClick(data[i]);
+      }
+    },
+    [onRowClick, data]
+  );
+
   if (data.length === 0) {
     return (
       <div className={cn("flex items-center justify-center py-12 text-sm text-muted-foreground", className)}>
@@ -71,19 +98,15 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
           return (
             <div
               key={key}
+              data-row-idx={idx}
               className={cn(
                 "rounded-lg border bg-card p-4 space-y-2",
                 onRowClick && "cursor-pointer hover:bg-accent/50 active:scale-[0.99] transition-all",
               )}
-              onClick={() => onRowClick?.(row)}
+              onClick={handleRowClick}
               role={onRowClick ? "button" : undefined}
               tabIndex={onRowClick ? 0 : undefined}
-              onKeyDown={(e) => {
-                if (onRowClick && (e.key === "Enter" || e.key === " ")) {
-                  e.preventDefault();
-                  onRowClick(row);
-                }
-              }}
+              onKeyDown={handleRowKeyDown}
             >
               {/* Primary field as card title */}
               <div className="font-medium text-sm">{primaryValue}</div>
@@ -129,18 +152,14 @@ export function ResponsiveTable<T extends Record<string, unknown>>({
           {data.map((row, idx) => (
             <tr
               key={getRowKey(row, idx)}
+              data-row-idx={idx}
               className={cn(
                 "border-b last:border-0 transition-colors",
                 onRowClick && "cursor-pointer hover:bg-accent/50",
               )}
-              onClick={() => onRowClick?.(row)}
+              onClick={handleRowClick}
               tabIndex={onRowClick ? 0 : undefined}
-              onKeyDown={(e) => {
-                if (onRowClick && (e.key === "Enter" || e.key === " ")) {
-                  e.preventDefault();
-                  onRowClick(row);
-                }
-              }}
+              onKeyDown={handleRowKeyDown}
             >
               {columns.map((col) => (
                 <td key={col.key} className={cn("px-4 py-3", col.className)}>

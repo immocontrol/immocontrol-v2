@@ -540,6 +540,12 @@ const PropertyDetail = () => {
           <div className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:450ms]">
             <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
               <Percent className="h-4 w-4 text-muted-foreground" /> AfA & Sanierung
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-help" aria-label="Hilfe zu AfA"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">Abschreibung für Abnutzung: steuerlich absetzbarer Wertverlust des Gebäudes. Grund und Boden wird nicht abgeschrieben. 15%-Regel: Sanierungskosten können über 8 Jahre abgesetzt werden.</TooltipContent>
+              </Tooltip>
             </h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">

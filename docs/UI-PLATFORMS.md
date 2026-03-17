@@ -43,3 +43,32 @@ Kurze Checkliste für ein konsistentes UI auf **Desktop-Browser**, **Web-App auf
 | iOS Build          | `capacitor.config.ts` |
 
 Siehe auch: `.cursor/rules/text-no-clip.mdc`, `docs/MOBILE_BREAKPOINTS.md`, `docs/USABILITY_UND_MOBILE.md`.
+
+---
+
+## Weitere iOS-Verbesserungen (Überblick)
+
+### Bereits umgesetzt
+
+- **Safe Area:** Seitlicher Abstand mind. 1.25rem; oben/unten via `env(safe-area-inset-*)`.
+- **Touch-Targets:** 48px auf Mobile; `.touch-target` für Buttons/Links.
+- **Tap-Highlight:** Deaktiviert (kein grauer Flash).
+- **Pull-to-Refresh:** Nur bei klarem Ziehen (Schwelle 26px), Icon erst ab 32px sichtbar.
+- **Horizontales Scrollen:** `-webkit-overflow-scrolling: touch`, `overscroll-behavior-x: contain` für Tabellen/Leisten.
+- **Tastatur:** Inputs 16px → kein iOS-Zoom beim Fokus; `use-mobile` ignoriert Resize bei fokussiertem Feld; optional `MobileKeyboardAwareScroll` in Formularen.
+- **Dialoge:** Max-Höhe, overflow-y-auto, Breite begrenzt; Toasts oberhalb der Tab-Bar.
+- **Dark Mode / OLED:** Über MobileImprovementsProvider.
+- **Reduced Motion:** `prefers-reduced-motion` in CSS und AccessibilityProvider berücksichtigt.
+
+### Mögliche nächste Schritte (einfachere Nutzung)
+
+| Thema | Idee | Aufwand |
+|-------|------|--------|
+| **Formulare** | `MobileKeyboardAwareScroll` konsequent in langen Formularen (z. B. Objekt anlegen, Mieter) nutzen, damit Felder beim Tippen nicht unter der Tastatur verschwinden. | gering |
+| **Haptik** | `MobileHapticSystem` bei wichtigen Aktionen (z. B. „Speichern“, „Löschen bestätigt“) auslösen für klares Feedback. | gering |
+| **Native Picker** | Wo sinnvoll `input type="date"` / `type="time"` beibehalten, damit iOS den nativen Picker anzeigt (bekannte UX). | bereits teils genutzt |
+| **Fokus in Modals** | Beim Öffnen von Dialogen Fokus ins erste Feld setzen und beim Schließen zurück (hilft auch Screenreader/Tastatur). | mittel |
+| **Swipe-Gesten** | Bestehende Swipe-Actions (z. B. Löschen) in Listen prüfen, ob auf iOS zuverlässig auslösbar. | prüfen |
+| **Zoom / Barrierefreiheit** | `user-scalable=no` im Viewport bei Bedarf lockern (z. B. `user-scalable=yes`), wenn Nutzer explizit Zoomen wollen. | gering, Verhalten testen |
+| **Offline-Feedback** | Offline-Banner/Queue auf iOS in der nativen App prüfen (Netzwerk-Wechsel, Hintergrund). | prüfen |
+| **Große Listen** | `VirtualList` bereits in ObjekteList (ab 25) und Loans (ab 25); Kontakte nutzt Pagination (50). Weitere Seiten bei Bedarf. | umgesetzt |

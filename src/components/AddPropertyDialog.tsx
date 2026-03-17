@@ -28,6 +28,8 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { scrollToFirstError } from "@/lib/scrollToFirstError";
 import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { calcMonthlyCashflow } from "@/lib/calculations";
 import { formatCurrency, DATE_INPUT_PLACEHOLDER } from "@/lib/formatters";
 import { StepIndicator } from "@/components/StepIndicator";
@@ -108,6 +110,8 @@ const AddPropertyDialog = () => {
   const formRef = useRef<HTMLFormElement | null>(null);
   const { addProperty, properties } = useProperties();
   const { announce } = useAccessibility();
+  const isMobile = useIsMobile();
+  useKeyboardAwareScroll({ enabled: isMobile && open, offset: 80 });
 
   /* #9: Form draft auto-recovery via sessionStorage */
   const { values: draftValues, setValues: setDraftValues, clearDraft, hasDraft } = useFormDraft<FormData>("add-property", FORM_DEFAULTS);

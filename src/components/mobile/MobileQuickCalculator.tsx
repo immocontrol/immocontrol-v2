@@ -7,6 +7,7 @@ import { useState, useMemo, useCallback, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TrendingUp, Euro, Home, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCurrency as formatCurrencyLib } from "@/lib/formatters";
 
 type CalcMode = "rendite" | "annuitaet" | "nebenkosten";
 
@@ -37,10 +38,6 @@ const modeIcons: Record<CalcMode, React.ReactNode> = {
   annuitaet: <Euro className="w-4 h-4" />,
   nebenkosten: <Home className="w-4 h-4" />,
 };
-
-function formatEuro(val: number): string {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(val);
-}
 
 function formatPercent(val: number): string {
   return new Intl.NumberFormat("de-DE", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val / 100);
@@ -151,7 +148,7 @@ export const MobileQuickCalculator = memo(function MobileQuickCalculator({
       <div className="flex items-center justify-between">
         <label className="text-[10px] text-muted-foreground">{label}</label>
         <span className="text-[10px] font-medium">
-          {options.suffix === "€" ? formatEuro(value) : options.suffix === "%" ? `${value}%` : value}
+          {options.suffix === "€" ? formatCurrencyLib(value) : options.suffix === "%" ? `${value}%` : value}
         </span>
       </div>
       <input
@@ -227,10 +224,10 @@ export const MobileQuickCalculator = memo(function MobileQuickCalculator({
           </button>
           {showDetails && (
             <div className="space-y-1 text-[10px] bg-muted/30 rounded-lg p-2">
-              <div className="flex justify-between"><span>Jahresmiete (brutto):</span><span className="font-medium">{formatEuro(renditeResult.annualRent)}</span></div>
-              <div className="flex justify-between"><span>Jahresmiete (netto):</span><span className="font-medium">{formatEuro(renditeResult.annualNet)}</span></div>
-              <div className="flex justify-between"><span>Kaufnebenkosten:</span><span className="font-medium">{formatEuro(renditeResult.totalCosts)}</span></div>
-              <div className="flex justify-between font-medium"><span>Gesamtinvestition:</span><span>{formatEuro(renditeResult.totalInvestment)}</span></div>
+              <div className="flex justify-between"><span>Jahresmiete (brutto):</span><span className="font-medium">{formatCurrencyLib(renditeResult.annualRent)}</span></div>
+              <div className="flex justify-between"><span>Jahresmiete (netto):</span><span className="font-medium">{formatCurrencyLib(renditeResult.annualNet)}</span></div>
+              <div className="flex justify-between"><span>Kaufnebenkosten:</span><span className="font-medium">{formatCurrencyLib(renditeResult.totalCosts)}</span></div>
+              <div className="flex justify-between font-medium"><span>Gesamtinvestition:</span><span>{formatCurrencyLib(renditeResult.totalInvestment)}</span></div>
             </div>
           )}
         </div>
@@ -250,20 +247,20 @@ export const MobileQuickCalculator = memo(function MobileQuickCalculator({
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-primary/5 p-3 text-center">
               <p className="text-[10px] text-muted-foreground">Monatsrate</p>
-              <p className="text-base font-bold">{formatEuro(annuitaetResult.monthlyRate)}</p>
+              <p className="text-base font-bold">{formatCurrencyLib(annuitaetResult.monthlyRate)}</p>
             </div>
             <div className="rounded-xl bg-primary/5 p-3 text-center">
               <p className="text-[10px] text-muted-foreground">Restschuld</p>
-              <p className="text-base font-bold">{formatEuro(annuitaetResult.remainingDebt)}</p>
+              <p className="text-base font-bold">{formatCurrencyLib(annuitaetResult.remainingDebt)}</p>
             </div>
           </div>
 
           {showDetails ? (
             <div className="space-y-1 text-[10px] bg-muted/30 rounded-lg p-2">
-              <div className="flex justify-between"><span>davon Zinsen / Monat:</span><span className="font-medium">{formatEuro(annuitaetResult.monthlyInterest)}</span></div>
-              <div className="flex justify-between"><span>davon Tilgung / Monat:</span><span className="font-medium">{formatEuro(annuitaetResult.monthlyRepayment)}</span></div>
-              <div className="flex justify-between"><span>Jahresrate:</span><span className="font-medium">{formatEuro(annuitaetResult.annualRate)}</span></div>
-              <div className="flex justify-between"><span>Zinsen gesamt ({loanTerm} J.):</span><span className="font-medium">{formatEuro(annuitaetResult.totalInterest)}</span></div>
+              <div className="flex justify-between"><span>davon Zinsen / Monat:</span><span className="font-medium">{formatCurrencyLib(annuitaetResult.monthlyInterest)}</span></div>
+              <div className="flex justify-between"><span>davon Tilgung / Monat:</span><span className="font-medium">{formatCurrencyLib(annuitaetResult.monthlyRepayment)}</span></div>
+              <div className="flex justify-between"><span>Jahresrate:</span><span className="font-medium">{formatCurrencyLib(annuitaetResult.annualRate)}</span></div>
+              <div className="flex justify-between"><span>Zinsen gesamt ({loanTerm} J.):</span><span className="font-medium">{formatCurrencyLib(annuitaetResult.totalInterest)}</span></div>
             </div>
           ) : null}
         </div>
@@ -289,18 +286,18 @@ export const MobileQuickCalculator = memo(function MobileQuickCalculator({
                   <span className="text-xs">{item.label}</span>
                   <span className="text-[10px] text-muted-foreground ml-1">({item.rate}%)</span>
                 </div>
-                <span className="text-xs font-medium">{formatEuro(item.value)}</span>
+                <span className="text-xs font-medium">{formatCurrencyLib(item.value)}</span>
               </div>
             ))}
 
             {/* Total */}
             <div className="flex items-center justify-between py-2 border-t-2 font-semibold">
               <span className="text-xs">Kaufnebenkosten gesamt</span>
-              <span className="text-xs text-primary">{formatEuro(nebenkostenResult.total)}</span>
+              <span className="text-xs text-primary">{formatCurrencyLib(nebenkostenResult.total)}</span>
             </div>
             <div className="flex items-center justify-between py-1">
               <span className="text-xs">Gesamtkosten inkl. Kaufpreis</span>
-              <span className="text-sm font-bold">{formatEuro(nebenkostenResult.totalCost)}</span>
+              <span className="text-sm font-bold">{formatCurrencyLib(nebenkostenResult.totalCost)}</span>
             </div>
           </div>
 

@@ -18,7 +18,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 
 /* Error severity levels */
 type ErrorSeverity = "error" | "warning" | "info";
@@ -251,7 +250,8 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
     toast.success("CSV exportiert");
   };
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFontSize(16);
     doc.text("ImmoControl \u2014 Fehlerprotokoll", 14, 15);

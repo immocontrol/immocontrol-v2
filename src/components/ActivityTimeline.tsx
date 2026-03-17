@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { formatCurrency } from "@/lib/formatters";
 
 interface TimelineEvent {
   id: string;
@@ -46,7 +47,7 @@ const ActivityTimeline = ({ propertyId }: ActivityTimelineProps) => {
       const allEvents: TimelineEvent[] = [
         ...(payments.data || []).map(p => ({
           id: `pay-${p.id}`, type: "payment" as const,
-          title: `${Number(p.amount).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}`,
+          title: formatCurrency(Number(p.amount)),
           subtitle: p.status === "confirmed" ? "Bestätigt" : p.status === "overdue" ? "Überfällig" : "Ausstehend",
           date: p.created_at, status: p.status,
         })),

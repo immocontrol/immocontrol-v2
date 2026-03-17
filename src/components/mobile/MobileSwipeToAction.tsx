@@ -108,7 +108,7 @@ export const MobileSwipeToAction = memo(function MobileSwipeToAction({
   }, [haptic, reset]);
 
   return (
-    <div className={cn("relative overflow-hidden", className)} ref={containerRef}>
+    <div className={cn("relative overflow-hidden", className)} ref={containerRef} style={{ touchAction: "pan-x pan-y" }}>
       {/* Left actions (revealed on right swipe) */}
       {leftActions.length > 0 && (
         <div className="absolute inset-y-0 left-0 flex items-stretch">

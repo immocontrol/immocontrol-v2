@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { formatFileSize, formatDate } from "@/lib/formatters";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import FileImportPicker from "@/components/FileImportPicker";
 import DocumentOCR from "@/components/DocumentOCR";
 import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
@@ -91,7 +92,7 @@ const Dokumente = () => {
   const [extracting, setExtracting] = useState(false);
 
   const { data: documents = [], isLoading } = useQuery<DocEntry[]>({
-    queryKey: ["all_documents"],
+    queryKey: queryKeys.documents.all,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("property_documents")
@@ -202,7 +203,7 @@ const Dokumente = () => {
       toastErrorWithRetry("Metadaten konnten nicht gespeichert werden", () => uploadFile(file));
     } else {
       toastSuccess(`„${file.name}" hochgeladen${ocrText ? " (Text extrahiert)" : ""}`);
-      qc.invalidateQueries({ queryKey: ["all_documents"] });
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all });
     }
     setUploading(false);
   };
@@ -239,7 +240,7 @@ const Dokumente = () => {
     },
     onSuccess: () => {
       toastSuccess("Dokument gelöscht");
-      qc.invalidateQueries({ queryKey: ["all_documents"] });
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all });
     },
     onError: (err) => {
       handleError(err, { context: "supabase", showToast: false });

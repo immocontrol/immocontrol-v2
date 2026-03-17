@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -98,7 +99,7 @@ const BankMatching = () => {
 
   // ── Queries ──
   const { data: accounts = [] } = useQuery<BankAccount[]>({
-    queryKey: ["bank_accounts"],
+    queryKey: queryKeys.bankMatching.accounts,
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_accounts").select("*").order("created_at");
       if (error) throw error;
@@ -108,7 +109,7 @@ const BankMatching = () => {
   });
 
   const { data: rules = [] } = useQuery<MatchingRule[]>({
-    queryKey: ["bank_matching_rules"],
+    queryKey: queryKeys.bankMatching.rules,
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_matching_rules").select("*").order("created_at");
       if (error) throw error;
@@ -118,7 +119,7 @@ const BankMatching = () => {
   });
 
   const { data: transactions = [], isLoading } = useQuery<BankTransaction[]>({
-    queryKey: ["bank_transactions"],
+    queryKey: queryKeys.bankMatching.transactions,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bank_transactions")
@@ -132,7 +133,7 @@ const BankMatching = () => {
   });
 
   const { data: payments = [] } = useQuery({
-    queryKey: ["bank_matching_payments"],
+    queryKey: queryKeys.bankMatching.payments,
     queryFn: async () => {
       const { data } = await supabase.from("rent_payments").select("*").order("due_date", { ascending: false });
       return data || [];
@@ -279,8 +280,8 @@ const BankMatching = () => {
 
   // ── Mutations ──
   const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["bank_matching_payments"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.transactions });
+    queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.payments });
     queryClient.invalidateQueries({ queryKey: ["mietuebersicht_payments"] });
   };
 
@@ -331,7 +332,7 @@ const BankMatching = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bank_accounts"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.accounts });
       setAccountOpen(false);
       setAccountForm({ name: "", iban: "", bic: "", bank_name: "" });
       toast.success("Konto hinzugefügt");
@@ -345,7 +346,7 @@ const BankMatching = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bank_accounts"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.accounts });
       toast.success("Konto gelöscht");
     },
   });
@@ -364,7 +365,7 @@ const BankMatching = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bank_matching_rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.rules });
       setRuleOpen(false);
       setRuleForm({ name: "", match_type: "iban", match_value: "", tenant_id: "", property_id: "" });
       toast.success("Regel erstellt");
@@ -378,7 +379,7 @@ const BankMatching = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bank_matching_rules"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.rules });
       toast.success("Regel gelöscht");
     },
     onError: createMutationErrorHandler("Bank-Regel", "Fehler beim Löschen"),
@@ -427,7 +428,7 @@ const BankMatching = () => {
           if (error) throw error;
         }
         toast.success(`${mt940Rows.length} MT940-Transaktionen importiert`);
-        queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.transactions });
         setImportOpen(false);
         return;
       }
@@ -441,7 +442,7 @@ const BankMatching = () => {
           if (error) throw error;
         }
         toast.success(`${camtRows.length} CAMT-Transaktionen importiert`);
-        queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.transactions });
         setImportOpen(false);
         return;
       }
@@ -522,7 +523,7 @@ const BankMatching = () => {
         mapping: csvMapping,
       });
       toast.success(`${count} Transaktionen importiert`);
-      queryClient.invalidateQueries({ queryKey: ["bank_transactions"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bankMatching.transactions });
       setImportOpen(false);
       resetCsvState();
     } catch (e: unknown) {

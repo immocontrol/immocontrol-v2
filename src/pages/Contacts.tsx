@@ -661,7 +661,7 @@ const ContactManagement = () => {
                       <>
                         {/* UI-UPDATE-11: Tooltip on restore action */}
                         <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => restoreMutation.mutate(c.id)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary touch-target min-h-[44px] min-w-[44px]" onClick={() => restoreMutation.mutate(c.id)} aria-label="Kontakt wiederherstellen">
                           <RotateCcw className="h-3 w-3" />
                         </Button>
                         </TooltipTrigger><TooltipContent>Wiederherstellen</TooltipContent></Tooltip>
@@ -670,7 +670,7 @@ const ContactManagement = () => {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive touch-target min-h-[44px] min-w-[44px]" aria-label="Kontakt endgültig löschen">
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
                               </AlertDialogTrigger>
@@ -696,7 +696,7 @@ const ContactManagement = () => {
                             {/* UI-UPDATE-16: Tooltip on WhatsApp action */}
                             <TooltipTrigger asChild>
                               <a href={`https://wa.me/${c.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366]">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-[#25D366] touch-target min-h-[44px] min-w-[44px]" aria-label="WhatsApp öffnen">
                                   <MessageCircle className="h-3 w-3" />
                                 </Button>
                               </a>
@@ -706,7 +706,7 @@ const ContactManagement = () => {
                         )}
                         {/* UI-UPDATE-12: Tooltip on edit action */}
                         <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 touch-target min-h-[44px] min-w-[44px]" onClick={() => openEdit(c)} aria-label="Kontakt bearbeiten">
                           <Edit2 className="h-3 w-3" />
                         </Button>
                         </TooltipTrigger><TooltipContent>Bearbeiten</TooltipContent></Tooltip>
@@ -715,11 +715,12 @@ const ContactManagement = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-primary"
+                            className="h-7 w-7 text-primary touch-target min-h-[44px] min-w-[44px]"
                             onClick={() => {
                               navigate(ROUTES.DEALS, { state: { fromContact: { name: c.name, company: c.company, phone: c.phone, email: c.email, address: c.address, notes: c.notes } } });
                               toastInfo("Deal-Vorlage aus Kontakt übernommen");
                             }}
+                            aria-label="Als Deal anlegen"
                           >
                             <Briefcase className="h-3 w-3" />
                           </Button>
@@ -729,7 +730,7 @@ const ContactManagement = () => {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive touch-target min-h-[44px] min-w-[44px]" aria-label="Kontakt löschen">
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
                               </AlertDialogTrigger>

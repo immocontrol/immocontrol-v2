@@ -443,7 +443,7 @@ export const SelbstauskunftGenerator = () => {
       } as never);
       if (dbError) throw dbError;
       qc.invalidateQueries({ queryKey: queryKeys.documents.byProperty(propertyId) });
-      qc.invalidateQueries({ queryKey: ["all_documents"] });
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all });
       toast.success("Selbstauskunft in Objekt-Dokumente gespeichert.");
     } catch (e) {
       toast.error("Speichern fehlgeschlagen.");

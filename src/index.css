@@ -352,6 +352,13 @@
     scroll-snap-align: start;
   }
 
+  /* Horizontal scroll: flüssiges Touch-Scrollen (z. B. Objektübersicht, Mieten-Tabellen, Leisten) */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+  }
+
   /* Touch-optimized inputs on mobile */
   @media (max-width: 640px) {
     input, select, textarea {

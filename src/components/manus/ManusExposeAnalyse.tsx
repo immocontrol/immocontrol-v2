@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Bot, FileText, Loader2, RefreshCw, Star, ThumbsUp, ThumbsDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/formatters";
 import { hasManusApiKey, runTask, buildExposeAnalysePrompt, parseManusJson, cacheResult, getCachedResult } from "@/lib/manusAgent";
 import { ManusTaskStatusIndicator } from "./ManusTaskStatus";
 import type { ManusTaskStatus } from "@/lib/manusAgent";
@@ -92,7 +93,7 @@ export const ManusExposeAnalyse = ({ data, onResult }: ManusExposeAnalyseProps) 
     }
   };
 
-  const formatEuro = (n?: number) => n != null ? `${n.toLocaleString("de-DE")} €` : "–";
+  const formatEuro = (n?: number) => n != null ? formatCurrency(n) : "–";
 
   return (
     <div className="space-y-3">

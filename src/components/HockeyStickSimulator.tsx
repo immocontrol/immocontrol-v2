@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatCurrency, formatCurrencyCompact } from "@/lib/formatters";
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, BarChart, Bar, CartesianGrid, Line, ComposedChart } from "recharts";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 import {
   type SimParams, type DataPoint, type ChartView, type SavedProfile, type Scenario,
   DEFAULT_PARAMS, EXAMPLE_PARAMS, SCENARIOS, simulate, sensitivityAnalysis,
@@ -230,8 +229,9 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
     toast.success("CSV exportiert");
   }, [data]);
 
-  /* FEAT-30: PDF export */
-  const exportPDF = useCallback(() => {
+  /* FEAT-30: PDF export — jsPDF dynamisch laden, reduziert initialen Bundle */
+  const exportPDF = useCallback(async () => {
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFontSize(18);
     doc.text("Hockey Stick Simulator \u2014 Bericht", 14, 15);

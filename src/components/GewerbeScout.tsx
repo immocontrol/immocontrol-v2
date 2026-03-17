@@ -3,7 +3,7 @@
  * Nutzt Provider-Abstraktion (aktuell OpenStreetMap; erweiterbar um Google Places, Foursquare, etc.).
  * Ort-Autocomplete, Mindestfläche, Deduplizierung.
  */
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { MapPin, Phone, Mail, Loader2, Search, Store, ExternalLink, UserPlus, Building2, Info, Download, Sparkles, Map, Globe, RotateCcw, Handshake, CalendarCheck, Copy, Share2, SlidersHorizontal, Repeat, Users, TriangleAlert, ChevronDown, Lightbulb, Star, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ROUTES, crmWithTab } from "@/lib/routes";
 import * as XLSX from "xlsx";
-import { ScoutMap } from "@/components/ScoutMap";
+
+const ScoutMap = lazy(() => import("@/components/ScoutMap").then(m => ({ default: m.ScoutMap })));
 
 type SearchMode = "ort" | "umkreis";
 
@@ -1254,13 +1255,15 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <ScoutMap
-                    pois={visibleResults}
-                    bbox={lastBbox}
-                    center={lastCenter}
-                    height="280px"
-                    className="mt-2 border rounded-lg overflow-hidden bg-muted/30"
-                  />
+                  <Suspense fallback={<div className="mt-2 h-[280px] rounded-lg bg-muted/30 flex items-center justify-center text-sm text-muted-foreground">Karte wird geladen…</div>}>
+                    <ScoutMap
+                      pois={visibleResults}
+                      bbox={lastBbox}
+                      center={lastCenter}
+                      height="280px"
+                      className="mt-2 border rounded-lg overflow-hidden bg-muted/30"
+                    />
+                  </Suspense>
                 </CollapsibleContent>
               </Collapsible>
             )}

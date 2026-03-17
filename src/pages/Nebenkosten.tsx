@@ -311,7 +311,7 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
       });
       if (insertError) throw insertError;
       qc.invalidateQueries({ queryKey: queryKeys.documents.byProperty(selectedBillingData.property_id) });
-      qc.invalidateQueries({ queryKey: ["all_documents"] });
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all });
       qc.invalidateQueries({ queryKey: queryKeys.timeline.byProperty(selectedBillingData.property_id) });
       toast.success("Nebenkostenabrechnung als Dokument gespeichert");
     } catch (e: unknown) {

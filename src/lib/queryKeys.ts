@@ -16,9 +16,6 @@ export const queryKeys = {
   notes: {
     byProperty: (propertyId: string) => ["notes", propertyId] as const,
   },
-  documents: {
-    byProperty: (propertyId: string) => ["documents", propertyId] as const,
-  },
   payments: {
     byProperty: (propertyId: string) => ["payments", propertyId] as const,
     byTenant: (tenantId: string) => ["payments", "tenant", tenantId] as const,
@@ -109,5 +106,25 @@ export const queryKeys = {
     all: ["contract_signature_requests"] as const,
     byProperty: (propertyId: string) => ["contract_signature_requests", propertyId] as const,
     byTenant: (tenantId: string) => ["contract_signature_requests", "tenant", tenantId] as const,
+  },
+  /* Zentralisierte Keys für Mietübersicht, Verträge, Bank-Matching, Dokumente (OPTIMIERUNGSPOTENZIAL) */
+  mietuebersicht: {
+    tenants: ["mietuebersicht_tenants"] as const,
+    payments: ["mietuebersicht_payments"] as const,
+  },
+  vertraege: {
+    stats: ["vertraege_stats"] as const,
+    noticeDeadlines: ["vertraege_notice_deadlines"] as const,
+  },
+  bankMatching: {
+    accounts: ["bank_accounts"] as const,
+    rules: ["bank_matching_rules"] as const,
+    transactions: ["bank_transactions"] as const,
+    payments: ["bank_matching_payments"] as const,
+    tenants: ["bank_matching_tenants"] as const,
+  },
+  documents: {
+    all: ["all_documents"] as const,
+    byProperty: (propertyId: string) => ["documents", propertyId] as const,
   },
 } as const;

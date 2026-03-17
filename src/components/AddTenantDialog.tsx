@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,6 +16,8 @@ import { useAccessibility } from "@/components/AccessibilityProvider";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry, toastSuccess, toastError } from "@/lib/toastMessages";
 import { StepIndicator } from "@/components/StepIndicator";
+import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const STEP_LABELS = ["Persönliche Daten", "Mietdetails", "Zusammenfassung"];
 
@@ -30,6 +33,8 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
   const { announce } = useAccessibility();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
+  useKeyboardAwareScroll({ enabled: isMobile && open, offset: 80 });
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -169,7 +174,7 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
               </div>
               <div className="bg-secondary/50 rounded-lg p-2.5 text-center">
                 <span className="text-[10px] text-muted-foreground uppercase">Warmmiete (automatisch)</span>
-                <p className="text-sm font-bold text-profit">{(form.kaltmiete + form.nebenkosten).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</p>
+                <p className="text-sm font-bold text-profit">{formatCurrency(form.kaltmiete + form.nebenkosten)}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -177,7 +182,7 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
                   <NumberInput value={form.deposit} onChange={v => setForm(f => ({ ...f, deposit: v }))} className="h-9 text-sm" placeholder="0" />
                   {form.kaltmiete > 0 && form.deposit === 0 && (
                     <button type="button" onClick={() => setForm(f => ({ ...f, deposit: f.kaltmiete * 3 }))} className="text-[10px] text-primary hover:underline">
-                      3x Kaltmiete ({(form.kaltmiete * 3).toLocaleString("de-DE", { style: "currency", currency: "EUR" })})
+                      3x Kaltmiete ({formatCurrency(form.kaltmiete * 3)})
                     </button>
                   )}
                 </div>
@@ -213,12 +218,12 @@ const AddTenantDialog = ({ propertyId, propertyName, onCreated, trigger }: AddTe
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Miete/Monat</span>
-                    <span className="font-medium text-profit">{form.monthly_rent.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+                    <span className="font-medium text-profit">{formatCurrency(form.monthly_rent)}</span>
                   </div>
                   {form.deposit > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Kaution</span>
-                      <span className="font-medium">{form.deposit.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+                      <span className="font-medium">{formatCurrency(form.deposit)}</span>
                     </div>
                   )}
                   {form.move_in_date && (

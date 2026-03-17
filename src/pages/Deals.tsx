@@ -43,7 +43,9 @@ import { useShare } from "@/components/mobile/MobileShareSheet";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ROUTES, dealsWithId } from "@/lib/routes";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { EmptyState } from "@/components/EmptyState";
+import { DealsSkeleton } from "@/components/mobile/MobilePageSkeletons";
 import { DealRecord, STAGES, stageMap, emptyForm } from "./deals/DealTypes";
 import { DealCard } from "./deals/DealCard";
 import { isFormValid, formatDealCurrency as fmt, SORT_OPTIONS, filterAndSortDeals, type SortKey } from "./deals/dealUtils";
@@ -653,27 +655,18 @@ const Deals = () => {
     batchImport.mutate(dealForms);
   }, [batchImport]);
 
-  /* UPD-35: Loading skeleton */
+  /* UPD-35: Loading skeleton — einheitlicher DealsSkeleton */
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 bg-secondary animate-pulse rounded" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 card-stagger-enter">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 bg-secondary animate-pulse rounded-lg" />
-          ))}
-        </div>
-        <div className="flex gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="w-60 h-40 bg-secondary animate-pulse rounded-lg shrink-0" />
-          ))}
-        </div>
+      <div className="space-y-6" role="status" aria-label="Deal Pipeline wird geladen">
+        <DealsSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="main" aria-label="Deal Pipeline">
+      <Breadcrumbs items={[{ label: "Deal Pipeline", href: ROUTES.DEALS }]} className="mb-1" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -693,14 +686,14 @@ const Deals = () => {
           )}
           {/* UPD-37: CSV export button */}
           {deals.length > 0 && (
-            <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5" aria-label="Deals als CSV exportieren">
+            <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5 touch-target min-h-[44px]" aria-label="Deals als CSV exportieren">
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">CSV</span>
             </Button>
           )}
-          <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
-            <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("kanban")}>Kanban</Button>
-            <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="text-xs h-7" onClick={() => setViewMode("list")}>Liste</Button>
+          <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5" role="group" aria-label="Ansicht umschalten">
+            <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="text-xs h-7 touch-target min-h-[44px]" onClick={() => setViewMode("kanban")} aria-label="Kanban-Ansicht">Kanban</Button>
+            <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="text-xs h-7 touch-target min-h-[44px]" onClick={() => setViewMode("list")} aria-label="Listen-Ansicht">Liste</Button>
           </div>
           <Button size="sm" onClick={() => { if (!hasDealDraft) setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen" className="touch-target min-h-[44px]">
             <Plus className="h-4 w-4 mr-1" /> Deal anlegen

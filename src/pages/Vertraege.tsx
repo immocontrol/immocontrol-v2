@@ -17,6 +17,7 @@ import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency, formatDate, formatDaysUntil } from "@/lib/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -26,7 +27,7 @@ const Vertraege = () => {
 
   // Summary stats across all contract types
   const { data: contractStats, isPending: statsPending } = useQuery({
-    queryKey: ["vertraege_stats"],
+    queryKey: queryKeys.vertraege.stats,
     queryFn: async () => {
       const [contracts, invoices, services] = await Promise.all([
         supabase.from("contracts").select("id, status, end_date, is_indefinite").eq("status", "active"),
@@ -71,7 +72,7 @@ const Vertraege = () => {
 
   /* Nächste Kündigungsfristen: next 3 notice deadlines from Mietverträge */
   const { data: noticeDeadlines = [] } = useQuery({
-    queryKey: ["vertraege_notice_deadlines"],
+    queryKey: queryKeys.vertraege.noticeDeadlines,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mietvertraege")

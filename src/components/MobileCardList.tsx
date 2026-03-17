@@ -1,7 +1,9 @@
 /**
  * UX-2: Tables → Card Layout on Mobile
  * Renders data as responsive cards on mobile, table rows on desktop.
+ * OPT: Single stable click handler to avoid per-item function creation.
  */
+import { useCallback } from "react";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
@@ -31,10 +33,35 @@ export function MobileCardList<T>({
 }: MobileCardListProps<T>) {
   const isMobile = useIsMobile();
 
+  const handleItemClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (!onRowClick) return;
+      const idx = e.currentTarget.getAttribute("data-item-idx");
+      if (idx != null) {
+        const i = Number(idx);
+        if (i >= 0 && i < items.length) onRowClick(items[i]);
+      }
+    },
+    [onRowClick, items]
+  );
+
+  const handleItemKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLElement>) => {
+      if (!onRowClick || e.key !== "Enter") return;
+      e.preventDefault();
+      const idx = e.currentTarget.getAttribute("data-item-idx");
+      if (idx != null) {
+        const i = Number(idx);
+        if (i >= 0 && i < items.length) onRowClick(items[i]);
+      }
+    },
+    [onRowClick, items]
+  );
+
   if (isMobile) {
     return (
       <div className={cn("space-y-2", className)}>
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const titleCol = columns.find(c => c.isTitle);
           const subtitleCol = columns.find(c => c.isSubtitle);
           const detailCols = columns.filter(c => !c.isTitle && !c.isSubtitle && !c.desktopOnly);
@@ -42,11 +69,12 @@ export function MobileCardList<T>({
           return (
             <div
               key={keyFn(item)}
+              data-item-idx={idx}
               className="gradient-card rounded-xl border border-border p-3.5 space-y-2 hover-lift cursor-pointer"
-              onClick={() => onRowClick?.(item)}
+              onClick={handleItemClick}
               role={onRowClick ? "button" : undefined}
               tabIndex={onRowClick ? 0 : undefined}
-              onKeyDown={(e) => { if (e.key === "Enter" && onRowClick) onRowClick(item); }}
+              onKeyDown={handleItemKeyDown}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -89,11 +117,12 @@ export function MobileCardList<T>({
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <tr
               key={keyFn(item)}
+              data-item-idx={idx}
               className="border-b border-border/50 table-row-hover cursor-pointer transition-colors"
-              onClick={() => onRowClick?.(item)}
+              onClick={handleItemClick}
             >
               {columns.filter(c => !c.isSubtitle).map(col => (
                 <td key={col.key} className="py-2.5 px-3">{col.render(item)}</td>

@@ -18,10 +18,12 @@ import {
 } from "@/components/ui/dialog";
 import { useProperties } from "@/context/PropertyContext";
 import { Property } from "@/data/mockData";
-import { toast } from "sonner";
+import { toastSuccess } from "@/lib/toastMessages";
 import { editPropertyFormSchema, type EditPropertyFormData, PROPERTY_TYPES } from "@/lib/schemas";
 import { calcMonthlyCashflow } from "@/lib/calculations";
 import { scrollToFirstError } from "@/lib/scrollToFirstError";
+import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type FormData = EditPropertyFormData;
 
@@ -54,6 +56,8 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const { updateProperty } = useProperties();
+  const isMobile = useIsMobile();
+  useKeyboardAwareScroll({ enabled: isMobile && open, offset: 80 });
 
   const {
     register,
@@ -158,7 +162,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
     const restnutzungsdauer = data.restnutzungsdauer !== "" && data.restnutzungsdauer != null ? Number(data.restnutzungsdauer) : undefined;
     const buildingSharePercent = data.buildingSharePercent !== "" && data.buildingSharePercent != null ? Number(data.buildingSharePercent) : 80;
     await updateProperty(property.id, { ...data, monthlyCashflow, restnutzungsdauer, buildingSharePercent } as Partial<Property>);
-    toast.success(`${data.name} wurde aktualisiert!`);
+    toastSuccess(`${data.name} wurde aktualisiert!`);
     setOpen(false);
   }, [property.id, updateProperty]);
 

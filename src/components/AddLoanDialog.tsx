@@ -22,6 +22,8 @@ import { queryKeys } from "@/lib/queryKeys";
 import { GERMAN_BANKS } from "@/data/germanBanks";
 import { StepIndicator } from "@/components/StepIndicator";
 import { useFocusFirstInput } from "@/hooks/useFocusFirstInput";
+import { useKeyboardAwareScroll } from "@/components/mobile/MobileKeyboardAwareScroll";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 
 const LOAN_TYPE_LABELS: Record<string, string> = {
@@ -44,6 +46,8 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   const qc = useQueryClient();
   const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
+  useKeyboardAwareScroll({ enabled: isMobile && open, offset: 80 });
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [aiNotesLoading, setAiNotesLoading] = useState(false);

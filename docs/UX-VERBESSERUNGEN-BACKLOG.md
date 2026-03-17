@@ -8,12 +8,13 @@ Konkrete Vorschläge zum späteren Abarbeiten. Priorität und Reihenfolge frei w
 
 - **1. Kurz-Onboarding:** Dismissibler Hinweis „Willkommen im Portfolio“ auf dem Dashboard (localStorage „Nicht mehr anzeigen“).
 - **2. Empty States:** Vorhandene Empty States mit CTA beibehalten (Kontakte, Dokumente, Deals, Berichte etc.).
-- **4. Formulare Fokus:** AddLoanDialog und AddContactDialog nutzen bereits `useFocusFirstInput`; AddPropertyDialog ebenfalls.
+- **4. Formulare Fokus:** AddLoanDialog und AddContactDialog nutzen bereits `useFocusFirstInput`; AddPropertyDialog ebenfalls. Keyboard-Aware-Scroll in AddPropertyDialog, AddTenantDialog, EditPropertyDialog, AddContactDialog, AddLoanDialog (Mobile).
 - **5. Bestätigung:** Gefahrenzone Konto löschen hat bereits doppelte Bestätigung („LÖSCHEN“ tippen). Copy-Toasts überall ergänzt.
+- **6. Touch-Targets:** Deals (CSV, Kanban/Liste, Deal anlegen), Contacts (Aktions-Buttons), PropertyDetail-Links mit touch-target/min-h-[44px]; aria-label für ikonische Buttons (Contacts).
 - **7. Such-/Filterhilfe:** Platzhalter in Contacts („Name, Firma oder E-Mail …“), Dokumente („z. B. Mietvertrag, Adresse …“) und Filter-Tipp „Nach Kategorie oder Objekt filtern“. Deals hatte bereits guten Platzhalter.
-- **8. Breadcrumbs:** PropertyDetail „Zurück zu Objekte“ (Link zu Objekte-Liste); Not-found-Ansicht ebenfalls.
+- **8. Breadcrumbs:** PropertyDetail „Zurück zu Objekte“ (Link zu Objekte-Liste); Deals-Seite Breadcrumbs; Not-found-Ansicht ebenfalls.
 - **9. Fehlermeldungen:** `handleError.ts` – verständliche Meldungen („Verbindung unterbrochen …“, „Bitte erneut versuchen“ etc.).
-- **10. Tooltips Fachbegriffe:** LTV und EK-Rendite bereits mit (i)-Tooltip; Leerstand-Tooltip ergänzt.
+- **10. Tooltips Fachbegriffe:** LTV und EK-Rendite bereits mit (i)-Tooltip; Leerstand-Tooltip ergänzt. AfA-Tooltip (PropertyDetail); LTV-Title (FinanzierungsCockpit). Lade-Skeletons: Deals nutzt DealsSkeleton; PropertyDetail/CRM bereits Skeleton.
 
 ---
 

@@ -28,6 +28,8 @@
 import { memo, useEffect, type ReactNode } from "react";
 import { MobileOfflineQueue } from "./MobileOfflineQueue";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useHaptic } from "@/hooks/useHaptic";
+import { setHapticTrigger } from "@/lib/hapticTrigger";
 
 interface MobileImprovementsProviderProps {
   children: ReactNode;
@@ -228,6 +230,13 @@ export const MobileImprovementsProvider = memo(function MobileImprovementsProvid
   children,
 }: MobileImprovementsProviderProps) {
   const isMobile = useIsMobile();
+  const haptic = useHaptic();
+
+  // Register haptic for toast-triggered feedback (toastMessages.ts)
+  useEffect(() => {
+    setHapticTrigger(haptic);
+    return () => setHapticTrigger(null);
+  }, [haptic]);
 
   // MOB-IMPROVE-17 + MOB-IMPROVE-18 + MOB-IMPROVE-10: Inject mobile CSS
   useEffect(() => {
