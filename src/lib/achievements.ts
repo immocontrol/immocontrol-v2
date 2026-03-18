@@ -15,6 +15,7 @@ import {
   Handshake,
   Home,
   Building,
+  Flame,
 } from "lucide-react";
 
 export type AchievementCategory = "portfolio" | "deals" | "mieter" | "finanzen" | "nutzung";
@@ -34,6 +35,10 @@ export interface AchievementContext {
   dealsCount: number;
   dealsAbgeschlossenCount: number;
   goalsReachedCount: number;
+  /** Belegung in % (100 = alle Einheiten vermietet). */
+  occupancyPct?: number;
+  /** Login-Streak (Tage in Folge aktiv). */
+  streak?: number;
 }
 
 export interface AchievementDef {
@@ -142,6 +147,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     category: "mieter",
     check: (ctx) => ctx.tenantsCount >= 1,
   },
+  {
+    id: "occupancy_100",
+    title: "100 % Belegung",
+    description: "Alle Einheiten vermietet",
+    icon: Users,
+    category: "mieter",
+    check: (ctx) => (ctx.occupancyPct ?? 0) >= 100,
+  },
   // Finanzen (align with PortfolioMilestones)
   {
     id: "positive_cashflow",
@@ -207,6 +220,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     icon: Target,
     category: "nutzung",
     check: (ctx) => ctx.goalsReachedCount >= 1,
+  },
+  {
+    id: "streak_7",
+    title: "7 Tage in Folge",
+    description: "7 Tage in Folge aktiv eingeloggt",
+    icon: Flame,
+    category: "nutzung",
+    check: (ctx) => (ctx.streak ?? 0) >= 7,
   },
 ];
 

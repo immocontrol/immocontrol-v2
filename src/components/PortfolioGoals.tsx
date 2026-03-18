@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Target, Plus, Trash2, Check, ChevronRight, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { fireConfetti } from "@/lib/confetti";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Input } from "@/components/ui/input";
@@ -133,6 +134,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
       goalReachedToastRef.current.add(id);
       const g = goals.find((x) => x.id === id);
       if (g) {
+        fireConfetti();
         toast.success("Ziel erreicht!", {
           description: g.title,
           duration: 5000,

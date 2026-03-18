@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Trophy, Star, Target, TrendingUp, Building2, Wallet, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
 
@@ -33,11 +34,18 @@ const PortfolioMilestones = () => {
     if (navigator.share) {
       try {
         await navigator.share({ title: "ImmoControl Meilensteine", text });
+        toast.success("Geteilt!");
       } catch {
-        try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+        try {
+          await navigator.clipboard.writeText(text);
+          toast.success("In Zwischenablage kopiert");
+        } catch { /* ignore */ }
       }
     } else {
-      try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.success("In Zwischenablage kopiert");
+      } catch { /* ignore */ }
     }
   };
 

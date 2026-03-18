@@ -2,7 +2,7 @@
  * Gamification: Erfolge – Einheiten, Ziele, Meilensteine, Achievements, Level, Streak, Rückblick.
  */
 import { useMemo } from "react";
-import { Trophy, Flame, Target, Star, Share2 } from "lucide-react";
+import { Trophy, Flame, Target, Star, Share2, Wallet, TrendingUp } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -13,13 +13,24 @@ import { useUserActivity } from "@/hooks/useUserActivity";
 import { useStatsSnapshots } from "@/hooks/useStatsSnapshots";
 import { EinheitenZaehler } from "@/components/EinheitenZaehler";
 import PortfolioGoals from "@/components/PortfolioGoals";
-import PortfolioMilestones from "@/components/PortfolioMilestones";
 import { getCategoryLabel, type AchievementCategory } from "@/lib/achievements";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
+import { toast } from "sonner";
+
+function sparklinePoints(values: number[], w = 120, h = 28): string | null {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const step = w / (values.length - 1);
+  return values
+    .map((v, i) => `${(i * step).toFixed(1)},${(h - ((v - min) / range) * h).toFixed(1)}`)
+    .join(" ");
+}
 
 function unitsAcquiredLast12Months(properties: { units: number; purchaseDate: string }[]): number {
   const cutoff = new Date();
@@ -35,7 +46,7 @@ export default function Erfolge() {
   const { properties, stats } = useProperties();
   const unitsPerYear = useMemo(() => unitsAcquiredLast12Months(properties), [properties]);
 
-  const { data: goals = [] } = useQuery({
+  const { data: goals = [], isLoading: goalsLoading } = useQuery({
     queryKey: ["portfolio_goals"],
     queryFn: async () => {
       const { data } = await fromTable("portfolio_goals").select("id, type, target, title, current_value").order("created_at");
@@ -84,7 +95,7 @@ export default function Erfolge() {
     enabled: !!user && propertyIds.length > 0,
   });
 
-  const { data: dealsData } = useQuery({
+  const { data: dealsData, isLoading: dealsLoading } = useQuery({
     queryKey: ["erfolge_deals", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("deals").select("id, stage");
@@ -97,8 +108,26 @@ export default function Erfolge() {
     enabled: !!user,
   });
 
+  const weekStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
+  const { data: propertiesThisWeek = 0 } = useQuery({
+    queryKey: ["erfolge_properties_this_week", user?.id, weekStart],
+    queryFn: async () => {
+      const { data } = await supabase.from("properties").select("created_at");
+      const list = (data || []) as { created_at: string }[];
+      return list.filter((r) => r.created_at && r.created_at.slice(0, 10) >= weekStart).length;
+    },
+    enabled: !!user,
+  });
+
   const dealsCount = dealsData?.count ?? 0;
   const dealsAbgeschlossenCount = dealsData?.abgeschlossen ?? 0;
+
+  const { streak } = useUserActivity();
 
   const achievementOpts = useMemo(
     () => ({
@@ -109,6 +138,7 @@ export default function Erfolge() {
       documentsCount,
       dealsCount,
       dealsAbgeschlossenCount,
+      streak,
       showToastOnUnlock: true,
     }),
     [
@@ -119,11 +149,11 @@ export default function Erfolge() {
       documentsCount,
       dealsCount,
       dealsAbgeschlossenCount,
+      streak,
     ]
   );
 
   const { reached, all: allAchievements, points, level, progressToNext } = useAchievements(achievementOpts);
-  const { streak } = useUserActivity();
   const { snapshots } = useStatsSnapshots();
 
   const monthRecap = useMemo(() => {
@@ -162,6 +192,41 @@ export default function Erfolge() {
     };
   }, [snapshots]);
 
+  const quarterRecap = useMemo(() => {
+    if (snapshots.length < 2) return null;
+    const now = new Date();
+    const year = now.getFullYear();
+    const q = Math.floor(now.getMonth() / 3) + 1;
+    const firstDay = `${year}-${String((q - 1) * 3 + 1).padStart(2, "0")}-01`;
+    const sorted = [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+    const atStart = sorted.find((s) => s.snapshot_date >= firstDay);
+    const atEnd = sorted[sorted.length - 1];
+    if (!atStart || !atEnd || atStart.snapshot_date > atEnd.snapshot_date) return null;
+    const unitsDiff = atEnd.total_units - atStart.total_units;
+    const cashflowDiff = Number(atEnd.total_cashflow) - Number(atStart.total_cashflow);
+    return {
+      label: `Q${q} ${year}`,
+      unitsDiff,
+      cashflowDiff,
+    };
+  }, [snapshots]);
+
+  const historyForSparkline = useMemo(() => {
+    const list = [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+    return list.slice(-30);
+  }, [snapshots]);
+
+  const cashflowSparkline = useMemo(
+    () => (historyForSparkline.length >= 2 ? sparklinePoints(historyForSparkline.map((s) => Number(s.total_cashflow))) : null),
+    [historyForSparkline]
+  );
+  const equitySparkline = useMemo(
+    () => (historyForSparkline.length >= 2 ? sparklinePoints(historyForSparkline.map((s) => Number(s.equity))) : null),
+    [historyForSparkline]
+  );
+
+  const pageLoading = goalsLoading || dealsLoading;
+
   const reachedIds = useMemo(() => new Set(reached.map((a) => a.id)), [reached]);
   const byCategory = useMemo(() => {
     const map = new Map<AchievementCategory, typeof allAchievements>();
@@ -172,6 +237,24 @@ export default function Erfolge() {
     }
     return map;
   }, [allAchievements]);
+
+  if (pageLoading) {
+    return (
+      <div className="space-y-6 pb-8">
+        <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="gradient-card rounded-xl border border-border p-4 h-24 bg-muted/50 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border border-border p-5 h-48 bg-muted/30 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-8">
@@ -240,8 +323,45 @@ export default function Erfolge() {
         </div>
       </section>
 
-      {/* Monats- / Jahres-Rückblick */}
-      {(monthRecap || yearRecap) && (
+      {/* Wochen-Challenge */}
+      {propertiesThisWeek > 0 && (
+        <section className="gradient-card rounded-xl border border-border p-4">
+          <h2 className="text-sm font-semibold mb-1">Diese Woche</h2>
+          <p className="text-sm text-muted-foreground">
+            {propertiesThisWeek} {propertiesThisWeek === 1 ? "Objekt" : "Objekte"} angelegt
+          </p>
+        </section>
+      )}
+
+      {/* Verlauf: Cashflow & Eigenkapital */}
+      {(cashflowSparkline || equitySparkline) && (
+        <section className="gradient-card rounded-xl border border-border p-4">
+          <h2 className="text-sm font-semibold mb-3">Verlauf</h2>
+          <div className="flex flex-wrap gap-6">
+            {cashflowSparkline && (
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-muted-foreground shrink-0" />
+                <svg viewBox="0 0 120 28" className="w-[120px] h-7 text-primary" aria-hidden>
+                  <polyline fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={cashflowSparkline} />
+                </svg>
+                <span className="text-[10px] text-muted-foreground">Cashflow</span>
+              </div>
+            )}
+            {equitySparkline && (
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                <svg viewBox="0 0 120 28" className="w-[120px] h-7 text-primary" aria-hidden>
+                  <polyline fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={equitySparkline} />
+                </svg>
+                <span className="text-[10px] text-muted-foreground">Eigenkapital</span>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Monats- / Quartals- / Jahres-Rückblick */}
+      {(monthRecap || quarterRecap || yearRecap) && (
         <section className="gradient-card rounded-xl border border-border p-4">
           <h2 className="text-sm font-semibold mb-3">Rückblick</h2>
           <div className="flex flex-wrap gap-4">
@@ -259,6 +379,28 @@ export default function Erfolge() {
                     <span className={cn(monthRecap.cashflowDiff > 0 ? "text-profit" : "text-loss")}>
                       {monthRecap.cashflowDiff > 0 ? "+" : ""}{formatCurrency(monthRecap.cashflowDiff)} Cashflow
                     </span>
+                  )}
+                </p>
+              </div>
+            )}
+            {quarterRecap && (
+              <div className="text-sm">
+                <p className="text-muted-foreground">{quarterRecap.label}</p>
+                <p>
+                  {(quarterRecap.unitsDiff !== 0 || quarterRecap.cashflowDiff !== 0) && (
+                    <>
+                      {quarterRecap.unitsDiff !== 0 && (
+                        <span className={cn(quarterRecap.unitsDiff > 0 ? "text-profit" : "text-loss")}>
+                          {quarterRecap.unitsDiff > 0 ? "+" : ""}{quarterRecap.unitsDiff} Einh.
+                        </span>
+                      )}
+                      {quarterRecap.unitsDiff !== 0 && quarterRecap.cashflowDiff !== 0 && " · "}
+                      {quarterRecap.cashflowDiff !== 0 && (
+                        <span className={cn(quarterRecap.cashflowDiff > 0 ? "text-profit" : "text-loss")}>
+                          {quarterRecap.cashflowDiff > 0 ? "+" : ""}{formatCurrency(quarterRecap.cashflowDiff)} Cashflow
+                        </span>
+                      )}
+                    </>
                   )}
                 </p>
               </div>
@@ -344,11 +486,14 @@ function PortfolioMilestonesWithShare() {
           title: "ImmoControl Meilensteine",
           text,
         });
+        toast.success("Geteilt!");
       } catch {
         await copyToClipboard(text);
+        toast.success("In Zwischenablage kopiert");
       }
     } else {
       await copyToClipboard(text);
+      toast.success("In Zwischenablage kopiert");
     }
   };
 

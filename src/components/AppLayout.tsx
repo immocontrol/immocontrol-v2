@@ -35,6 +35,7 @@ import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
 import { MobileOfflineQueue, MobileSearchOverlay, MobileAppUpdateBanner } from "@/components/mobile";
 import { ActiveCallBar } from "@/components/ActiveCallBar";
+import { GamificationNavChip } from "@/components/GamificationNavChip";
 // NotificationCenter import removed — duplicate bell icon with NotificationBell
 
 import {
@@ -611,6 +612,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             <div className="flex items-center gap-1.5 ml-2 min-w-0">
               <RecentPropertiesNav />
               <GlobalSearch />
+              <GamificationNavChip />
               {/* Quick theme toggle */}
               <Button
                 variant="ghost"

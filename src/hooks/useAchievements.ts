@@ -5,6 +5,7 @@ import { useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { fireConfetti } from "@/lib/confetti";
 import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/queryKeys";
@@ -43,6 +44,7 @@ export function useAchievements(opts: {
   documentsCount?: number;
   dealsCount?: number;
   dealsAbgeschlossenCount?: number;
+  streak?: number;
   showToastOnUnlock?: boolean;
 }) {
   const { user } = useAuth();
@@ -58,6 +60,12 @@ export function useAchievements(opts: {
       return g.target > 0 && current >= g.target;
     }).length;
   }, [opts.goals, opts.unitsPerYear, stats]);
+
+  const occupancyPct = useMemo(() => {
+    const units = stats.totalUnits || 0;
+    const tenants = opts.tenantsCount ?? 0;
+    return units > 0 ? Math.min(100, Math.round((tenants / units) * 100)) : 0;
+  }, [stats.totalUnits, opts.tenantsCount]);
 
   const context: AchievementContext = useMemo(
     () => ({
@@ -75,6 +83,8 @@ export function useAchievements(opts: {
       dealsCount: opts.dealsCount ?? 0,
       dealsAbgeschlossenCount: opts.dealsAbgeschlossenCount ?? 0,
       goalsReachedCount,
+      occupancyPct,
+      streak: opts.streak,
     }),
     [
       stats,
@@ -84,7 +94,9 @@ export function useAchievements(opts: {
       opts.documentsCount,
       opts.dealsCount,
       opts.dealsAbgeschlossenCount,
+      opts.streak,
       goalsReachedCount,
+      occupancyPct,
     ]
   );
 
@@ -135,6 +147,7 @@ export function useAchievements(opts: {
       if (toastedRef.current.has(a.id)) continue;
       toastedRef.current.add(a.id);
       insertAchievement.mutate(a.id);
+      fireConfetti();
       toast.success(`Achievement freigeschaltet: ${a.title}`, {
         description: a.description,
         duration: 5000,
