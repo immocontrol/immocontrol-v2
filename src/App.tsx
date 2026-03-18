@@ -21,6 +21,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { BiometricGate } from "@/components/BiometricGate";
 import { KeyboardShortcutOverlay } from "@/components/KeyboardShortcutOverlay";
 import { useStaleDataWarning } from "@/hooks/useStaleDataWarning";
+import { useUserActivity } from "@/hooks/useUserActivity";
 import { PrivacyProvider } from "@/components/PrivacyMode";
 import { NotificationPreferencesProvider } from "@/context/NotificationPreferencesContext";
 import { MobileImprovementsProvider } from "@/components/mobile/MobileImprovementsProvider";
@@ -78,6 +79,7 @@ const aufgabenDokumenteImport = () => import("@/pages/AufgabenDokumentePage");
 const dealsBewertungImport = () => import("@/pages/DealsBewertungPage");
 const handoverConfirmImport = () => import("@/pages/HandoverConfirmPage");
 const contractSignImport = () => import("@/pages/ContractSignPage");
+const erfolgeImport = () => import("@/pages/Erfolge");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -128,6 +130,7 @@ const AufgabenDokumentePage = lazy(aufgabenDokumenteImport);
 const DealsBewertungPage = lazy(dealsBewertungImport);
 const HandoverConfirmPage = lazy(handoverConfirmImport);
 const ContractSignPage = lazy(contractSignImport);
+const Erfolge = lazy(erfolgeImport);
 
 /* BUG-6: Preload nur häufig genutzte Routen — reduziert Bandbreite auf Mobile, rest lädt on-demand */
 const preloadHighTrafficRoutes = () => {
@@ -274,6 +277,9 @@ const RoleRouter = () => {
     registerNativePush(user.id).catch(() => { /* non-blocking; errors logged in nativePush */ });
   }, [user?.id]);
 
+  /* Gamification: Login-Streak — bei jedem Aufruf Aktivitätstag setzen */
+  useUserActivity();
+
   /* BUG-6: Preload high-traffic routes — delay 3s to prioritise initial paint */
   useEffect(() => {
     const timer = setTimeout(preloadHighTrafficRoutes, 3000);
@@ -327,6 +333,7 @@ const RoleRouter = () => {
           <Route path={`${ROUTES.HANDWORKER_PORTAL}/*`} element={<ErrorBoundary><HandworkerPortal /></ErrorBoundary>} />
           <Route path={ROUTES.HOME} element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
           <Route path={ROUTES.PERSONAL_DASHBOARD} element={<ErrorBoundary><Dashboard mode="personal" /></ErrorBoundary>} />
+          <Route path={ROUTES.ERFOLGE} element={<ErrorBoundary><Erfolge /></ErrorBoundary>} />
           <Route path={ROUTES.OBJEKTE} element={<ErrorBoundary><ObjekteList /></ErrorBoundary>} />
           <Route path={`${ROUTES.PROPERTY}/:id`} element={<ErrorBoundary><PropertyDetail /></ErrorBoundary>} />
           <Route path={ROUTES.FINANZIERUNG} element={<ErrorBoundary><FinanzierungsCockpit /></ErrorBoundary>} />

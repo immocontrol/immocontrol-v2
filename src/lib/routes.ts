@@ -75,6 +75,8 @@ export const ROUTES = {
   HANDOVER_CONFIRM: "/uebergabe",
   /** Öffentlicher Link: Mieter unterschreibt Mietvertrag (Token in URL) */
   CONTRACT_SIGN: "/vertrag",
+  /** Gamification: Erfolge, Einheiten, Achievements, Level, Streak */
+  ERFOLGE: "/erfolge",
 } as const;
 
 /** Helper: Property detail URL */

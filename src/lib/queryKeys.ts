@@ -127,4 +127,16 @@ export const queryKeys = {
     all: ["all_documents"] as const,
     byProperty: (propertyId: string) => ["documents", propertyId] as const,
   },
+  /* Gamification: Verlauf Einheiten/Portfolio */
+  statsSnapshots: {
+    all: (userId: string) => ["user_stats_snapshots", userId] as const,
+  },
+  /* Gamification: Login-Streak */
+  userActivity: {
+    byUser: (userId: string) => ["user_activity", userId] as const,
+  },
+  /* Gamification: Freigeschaltete Achievements */
+  userAchievements: {
+    all: (userId: string) => ["user_achievements", userId] as const,
+  },
 } as const;

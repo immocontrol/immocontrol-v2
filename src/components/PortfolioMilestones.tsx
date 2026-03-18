@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { Trophy, Star, Target, TrendingUp, Building2, Wallet } from "lucide-react";
+import { Trophy, Star, Target, TrendingUp, Building2, Wallet, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
-import { formatCurrency } from "@/lib/formatters";
 
 const PortfolioMilestones = () => {
   const { properties, stats } = useProperties();
@@ -28,12 +28,33 @@ const PortfolioMilestones = () => {
   const reached = milestones.filter(m => m.reached).length;
   const nextMilestone = milestones.find(m => !m.reached);
 
+  const handleShare = async () => {
+    const text = `Ich habe ${reached} von ${milestones.length} Meilensteinen in ImmoControl erreicht!`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "ImmoControl Meilensteine", text });
+      } catch {
+        try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+      }
+    } else {
+      try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+    }
+  };
+
   return (
     <div className="gradient-card rounded-xl border border-border p-5">
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-        <Trophy className="h-4 w-4 text-gold" /> Meilensteine
-        <span className="text-[10px] bg-gold/15 text-gold px-1.5 py-0.5 rounded-full font-bold">{reached}/{milestones.length}</span>
-      </h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <Trophy className="h-4 w-4 text-gold" /> Meilensteine
+          <span className="text-[10px] bg-gold/15 text-gold px-1.5 py-0.5 rounded-full font-bold">{reached}/{milestones.length}</span>
+        </h3>
+        {reached > 0 && (
+          <Button variant="ghost" size="sm" className="gap-1" onClick={handleShare} aria-label="Meilensteine teilen">
+            <Share2 className="h-3.5 w-3.5" />
+            Teilen
+          </Button>
+        )}
+      </div>
       <div className="h-2 bg-secondary rounded-full overflow-hidden mb-3">
         <div className="h-full bg-gold rounded-full transition-all" style={{ width: `${(reached / milestones.length) * 100}%` }} />
       </div>

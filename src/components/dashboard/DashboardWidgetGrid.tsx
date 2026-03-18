@@ -95,6 +95,7 @@ import { AngebotsGenerator } from "@/components/AngebotsGenerator";
 import { InstandhaltungsRuecklagePlaner } from "@/components/InstandhaltungsRuecklagePlaner";
 import { HandwerkerAusschreibung } from "@/components/HandwerkerAusschreibung";
 import FristenZentrale from "@/components/FristenZentrale";
+import { EinheitenZaehler } from "@/components/EinheitenZaehler";
 
 export type WidgetId =
   | "health" | "stats" | "occupancy" | "heatmap" | "typeChart" | "goals"
@@ -118,10 +119,12 @@ export type WidgetId =
   | "szenarioSimulation" | "monatsabschlussWorkflow" | "steuerOptimierung"
   | "dealScorecard" | "dueDiligence" | "angebotsGenerator"
   | "instandhaltungsRuecklage" | "handwerkerAusschreibung"
-  | "fristenZentrale";
+  | "fristenZentrale"
+  | "einheitenZaehler";
 
 export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   "chart_cashflow", "chart_monthly", "chart_portfolio", "chart_map",
+  "einheitenZaehler",
   "health", "actions", "kpiAlerts",
   "stats", "occupancy", "heatmap", "typeChart", "allocation",
   "goals", "rendite", "diversifikation", "wasserfall", "yoy", "forecast",
@@ -180,6 +183,7 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   dueDiligence: "Due Diligence", angebotsGenerator: "Angebots-Generator",
   instandhaltungsRuecklage: "Instandhaltungs-Rücklage", handwerkerAusschreibung: "Handwerker-Ausschreibung",
   fristenZentrale: "Fristen-Zentrale",
+  einheitenZaehler: "Einheiten-Zähler",
 };
 
 const FULL_WIDTH_WIDGETS = new Set<WidgetId>([
@@ -233,6 +237,7 @@ function renderWidgetContent({
     case "cashReserve": return <CashReserveWidget />;
     case "stress": return <MortgageStressTest />;
     case "milestones": return <PortfolioMilestones />;
+    case "einheitenZaehler": return <EinheitenZaehler />;
     case "tax": return <TaxDeadlineReminder />;
     case "geg": return <GEGComplianceChecker />;
     case "mietpreisbremse": return <MietpreisbremseChecker />;

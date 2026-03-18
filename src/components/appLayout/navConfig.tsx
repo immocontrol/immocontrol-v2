@@ -26,6 +26,7 @@ import {
   PieChart,
   Scale,
   Bell,
+  Trophy,
 } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 
@@ -55,6 +56,7 @@ export function getGroupItems(g: NavGroup): NavItem[] {
 export const navEntries: NavEntry[] = [
   { path: ROUTES.HOME, label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
   { path: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard", icon: Sparkles, shortcut: "" },
+  { path: ROUTES.ERFOLGE, label: "Erfolge", icon: Trophy, shortcut: "" },
   {
     label: "Finanzen",
     icon: Landmark,
@@ -131,6 +133,7 @@ export const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Verträge & Kontakte": ROUTES.VERTRAEGE_KONTAKTE,
   "Navigation: Aufgaben & Dokumente": ROUTES.AUFGABEN_DOKUMENTE,
   "Navigation: Deals & Bewertung": ROUTES.DEALS_BEWERTUNG,
+  "Navigation: Erfolge": ROUTES.ERFOLGE,
 };
 
 export function getDefaultShortcutMap(): Record<string, string> {

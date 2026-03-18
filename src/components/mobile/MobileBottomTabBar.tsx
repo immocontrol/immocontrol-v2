@@ -5,7 +5,7 @@
  */
 import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Sparkles, Landmark, FileText, Target, Settings, ChevronUp, X, Camera } from "lucide-react";
+import { LayoutDashboard, Sparkles, Landmark, FileText, Target, Settings, ChevronUp, X, Camera, Trophy } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/routes";
@@ -66,6 +66,7 @@ const TABS: TabItem[] = [
     path: ROUTES.SETTINGS, label: "Mehr", icon: Settings,
     children: [
       { path: ROUTES.SETTINGS, label: "Einstellungen", icon: Settings },
+      { path: ROUTES.ERFOLGE, label: "Erfolge", icon: Trophy },
       { path: ROUTES.ANALYSE, label: "Rechner", icon: Settings },
       { path: ROUTES.REPORTS, label: "Berichte", icon: Settings },
     ],
