@@ -1319,7 +1319,7 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* iOS-26 Switch: Pill-Track (grau/grün), weißer Knob – wie im Browser; auf iPhone native Darstellung abschalten */
+/* Modern Switch (Settings & app): Theme-aware track, soft thumb shadow, smooth transition */
 button.ui-switch-ios26,
 [data-radix-collection-item].ui-switch-ios26,
 .ui-switch-ios26 {
@@ -1331,58 +1331,61 @@ button.ui-switch-ios26,
   width: 2.75rem !important;
   min-width: 2.75rem !important;
   border-radius: 9999px !important;
-  border: none !important;
-  padding: 0 2px !important;
-  background: #e5e5e5 !important;
-  transition: background-color 0.2s ease-out !important;
+  border: 1px solid hsl(var(--border)) !important;
+  padding: 0 3px !important;
+  background: hsl(var(--muted)) !important;
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease !important;
   -webkit-tap-highlight-color: transparent !important;
   overflow: hidden !important;
   box-sizing: border-box !important;
 }
+.ui-switch-ios26:hover:not([data-state="checked"]):not(:disabled) {
+  background: hsl(var(--muted) / 0.9) !important;
+}
 .ui-switch-ios26[data-state="checked"] {
-  background: #34c759 !important;
-}
-.dark .ui-switch-ios26 {
-  background: #525252 !important;
-}
-.dark .ui-switch-ios26[data-state="checked"] {
-  background: #30d158 !important;
+  background: hsl(var(--primary)) !important;
+  border-color: hsl(var(--primary)) !important;
 }
 .ui-switch-ios26-thumb,
 [data-state].ui-switch-ios26-thumb {
   -webkit-appearance: none !important;
   appearance: none !important;
-  width: 1.25rem !important;
-  height: 1.25rem !important;
-  min-width: 1.25rem !important;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  min-width: 1.125rem !important;
   border-radius: 9999px !important;
-  background: #fff !important;
+  background: hsl(var(--background)) !important;
   border: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  transition: transform 0.2s ease-out !important;
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.15), 0 1px 2px hsl(0 0% 0% / 0.08) !important;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important;
   box-sizing: border-box !important;
+}
+.ui-switch-ios26[data-state="checked"] .ui-switch-ios26-thumb {
+  box-shadow: 0 2px 4px hsl(var(--primary) / 0.35), 0 1px 2px hsl(0 0% 0% / 0.1) !important;
 }
 .ui-switch-ios26-thumb[data-state="unchecked"] {
   transform: translateX(0) !important;
 }
 .ui-switch-ios26-thumb[data-state="checked"] {
-  transform: translateX(22px) !important;
+  transform: translateX(20px) !important;
 }
-/* Fallback: Thumb-Position über Root (Radix setzt data-state ggf. nur am Root) */
 .ui-switch-ios26[data-state="unchecked"] {
   --thumb-x: 0;
 }
 .ui-switch-ios26[data-state="checked"] {
-  --thumb-x: 22px;
+  --thumb-x: 20px;
 }
 .ui-switch-ios26[data-state="unchecked"] .ui-switch-ios26-thumb {
   transform: translateX(var(--thumb-x, 0)) !important;
 }
 .ui-switch-ios26[data-state="checked"] .ui-switch-ios26-thumb {
-  transform: translateX(var(--thumb-x, 22px)) !important;
+  transform: translateX(var(--thumb-x, 20px)) !important;
 }
 .dark .ui-switch-ios26-thumb {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 1px 3px hsl(0 0% 0% / 0.4), 0 1px 2px hsl(0 0% 0% / 0.2) !important;
+}
+.dark .ui-switch-ios26[data-state="checked"] .ui-switch-ios26-thumb {
+  box-shadow: 0 2px 4px hsl(var(--primary) / 0.4), 0 1px 2px hsl(0 0% 0% / 0.3) !important;
 }
 
 /* Back-to-top: iOS-26 FAB – feste Werte mit !important */

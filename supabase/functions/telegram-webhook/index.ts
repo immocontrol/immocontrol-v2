@@ -283,7 +283,7 @@ serve(async (req) => {
       manus_api_key?: string | null;
     };
 
-    // Private chat: Manus-Antworten (wenn aktiviert); Key aus Config oder Server-Secret
+    // Private chat: Manus-Antworten (wenn aktiviert); sonst Deal-Import bei Weiterleitungen (z. B. von immometrica_bot)
     const manusKey = (cfg.manus_api_key && cfg.manus_api_key.trim()) || Deno.env.get("MANUS_API_KEY");
     if (chat.type === "private" && cfg.manus_replies_enabled && manusKey && cfg.bot_token) {
       try {
@@ -299,12 +299,14 @@ serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
-    // Channel/group: Deal-Import (Kanal-Filter)
+    // Deal-Import: Channel/Group (Kanal-Filter) oder Private (Weiterleitungen an den Bot, z. B. von immometrica_bot)
     const chatTitleIncludes = cfg.chat_title_includes;
     const allowedChatId = cfg.allowed_chat_id;
-    if (typeof allowedChatId === "number" && chat.id !== allowedChatId) return new Response("OK", { status: 200 });
-    if (chatTitleIncludes && !(chat.title || "").toLowerCase().includes(chatTitleIncludes.toLowerCase())) {
-      return new Response("OK", { status: 200 });
+    if (chat.type !== "private") {
+      if (typeof allowedChatId === "number" && chat.id !== allowedChatId) return new Response("OK", { status: 200 });
+      if (chatTitleIncludes && !(chat.title || "").toLowerCase().includes(chatTitleIncludes.toLowerCase())) {
+        return new Response("OK", { status: 200 });
+      }
     }
 
     const parsed = parseTelegramMessages(text);

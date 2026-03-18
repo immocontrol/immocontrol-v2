@@ -176,7 +176,7 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
         <MessageSquare className="h-4 w-4 text-[#0088cc]" /> Telegram Integration
       </h2>
       <p className="text-xs text-muted-foreground">
-        Bot mit ImmoControl verknüpfen: Deals aus ImmoMetrica oder anderen Kanälen importieren (manuell oder per Webhook/Auto-Import).
+        Bot mit ImmoControl verknüpfen: Deals aus ImmoMetrica oder z. B. von @immometrica_bot importieren. Nachrichten von @immometrica_bot einfach an deinen Bot weiterleiten – sie landen automatisch als Deals in der App.
       </p>
       <div className="space-y-3">
         <div className="space-y-1.5">
@@ -225,12 +225,15 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
         />
 
         <div className="p-3 rounded-lg bg-[#0088cc]/5 border border-[#0088cc]/10 space-y-2">
-          <p className="text-xs font-medium text-[#0088cc]">Einrichtung:</p>
+          <p className="text-xs font-medium text-[#0088cc]">Einrichtung (z. B. ImmoMetrica / immometrica):</p>
           <ol className="text-[11px] text-muted-foreground space-y-1 list-decimal list-inside">
             <li>Bot bei <span className="font-mono text-[10px]">@BotFather</span> erstellen und Token kopieren</li>
-            <li>Bot als Admin in deinen Deal-Kanal (z. B. ImmoMetrica) einladen</li>
-            <li>Webhook aktivieren = Deals auch bei geschlossener App importieren</li>
+            <li>Bot als Admin in deinen Deal-Kanal oder deine Gruppe einladen (Kanal-Filter unten auf den Kanalnamen setzen, z. B. „ImmoMetrica“)</li>
+            <li>Webhook aktivieren = Deals auch bei geschlossener App automatisch in der App sehen</li>
           </ol>
+          <p className="text-[10px] text-muted-foreground pt-0.5">
+            Bei öffentlichen Kanälen wie ImmoMetrica, die du nicht leitest: eigenen Kanal oder Gruppe anlegen, Posts dorthin weiterleiten und deinen Bot dort als Admin hinzufügen — dann landen die Deals trotzdem in der App.
+          </p>
         </div>
 
         <div className="space-y-3 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">

@@ -108,22 +108,6 @@ export default function Erfolge() {
     enabled: !!user,
   });
 
-  const weekStart = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    return d.toISOString().slice(0, 10);
-  }, []);
-
-  const { data: propertiesThisWeek = 0 } = useQuery({
-    queryKey: ["erfolge_properties_this_week", user?.id, weekStart],
-    queryFn: async () => {
-      const { data } = await supabase.from("properties").select("created_at");
-      const list = (data || []) as { created_at: string }[];
-      return list.filter((r) => r.created_at && r.created_at.slice(0, 10) >= weekStart).length;
-    },
-    enabled: !!user,
-  });
-
   const dealsCount = dealsData?.count ?? 0;
   const dealsAbgeschlossenCount = dealsData?.abgeschlossen ?? 0;
 
@@ -155,25 +139,6 @@ export default function Erfolge() {
 
   const { reached, all: allAchievements, points, level, progressToNext } = useAchievements(achievementOpts);
   const { snapshots } = useStatsSnapshots();
-
-  const monthRecap = useMemo(() => {
-    if (snapshots.length < 2) return null;
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const firstDay = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-    const sorted = [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
-    const atStart = sorted.find((s) => s.snapshot_date >= firstDay);
-    const atEnd = sorted[sorted.length - 1];
-    if (!atStart || !atEnd || atStart.snapshot_date > atEnd.snapshot_date) return null;
-    const unitsDiff = atEnd.total_units - atStart.total_units;
-    const cashflowDiff = Number(atEnd.total_cashflow) - Number(atStart.total_cashflow);
-    return {
-      monthName: now.toLocaleDateString("de-DE", { month: "long" }),
-      unitsDiff,
-      cashflowDiff,
-    };
-  }, [snapshots, stats.totalUnits, stats.totalCashflow]);
 
   const yearRecap = useMemo(() => {
     if (snapshots.length < 2) return null;
@@ -323,16 +288,6 @@ export default function Erfolge() {
         </div>
       </section>
 
-      {/* Wochen-Challenge */}
-      {propertiesThisWeek > 0 && (
-        <section className="gradient-card rounded-xl border border-border p-4">
-          <h2 className="text-sm font-semibold mb-1">Diese Woche</h2>
-          <p className="text-sm text-muted-foreground">
-            {propertiesThisWeek} {propertiesThisWeek === 1 ? "Objekt" : "Objekte"} angelegt
-          </p>
-        </section>
-      )}
-
       {/* Verlauf: Cashflow & Eigenkapital */}
       {(cashflowSparkline || equitySparkline) && (
         <section className="gradient-card rounded-xl border border-border p-4">
@@ -360,29 +315,11 @@ export default function Erfolge() {
         </section>
       )}
 
-      {/* Monats- / Quartals- / Jahres-Rückblick */}
-      {(monthRecap || quarterRecap || yearRecap) && (
+      {/* Quartals- & Jahres-Rückblick */}
+      {(quarterRecap || yearRecap) && (
         <section className="gradient-card rounded-xl border border-border p-4">
           <h2 className="text-sm font-semibold mb-3">Rückblick</h2>
           <div className="flex flex-wrap gap-4">
-            {monthRecap && (
-              <div className="text-sm">
-                <p className="text-muted-foreground">Dein {monthRecap.monthName}</p>
-                <p>
-                  {monthRecap.unitsDiff !== 0 && (
-                    <span className={cn(monthRecap.unitsDiff > 0 ? "text-profit" : "text-loss")}>
-                      {monthRecap.unitsDiff > 0 ? "+" : ""}{monthRecap.unitsDiff} Einheiten
-                    </span>
-                  )}
-                  {monthRecap.unitsDiff !== 0 && monthRecap.cashflowDiff !== 0 && " · "}
-                  {monthRecap.cashflowDiff !== 0 && (
-                    <span className={cn(monthRecap.cashflowDiff > 0 ? "text-profit" : "text-loss")}>
-                      {monthRecap.cashflowDiff > 0 ? "+" : ""}{formatCurrency(monthRecap.cashflowDiff)} Cashflow
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
             {quarterRecap && (
               <div className="text-sm">
                 <p className="text-muted-foreground">{quarterRecap.label}</p>

@@ -31,14 +31,15 @@ export function SettingsToggleRow({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-border",
+        "flex items-center justify-between gap-4 p-3.5 rounded-xl bg-muted/40 dark:bg-muted/20 border border-border/80",
+        "transition-colors duration-200",
         className
       )}
     >
       <div className="min-w-0">
-        <p className="text-xs font-medium">{label}</p>
+        <p className="text-sm font-medium text-foreground">{label}</p>
         {description != null && (
-          <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
         )}
       </div>
       <Switch

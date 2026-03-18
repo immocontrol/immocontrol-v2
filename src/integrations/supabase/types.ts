@@ -1000,6 +1000,7 @@ export type Database = {
           current_value: number
           deadline: string | null
           id: string
+          reason: string | null
           target: number
           title: string
           type: string
@@ -1010,6 +1011,7 @@ export type Database = {
           current_value?: number
           deadline?: string | null
           id?: string
+          reason?: string | null
           target?: number
           title?: string
           type?: string
@@ -1020,10 +1022,50 @@ export type Database = {
           current_value?: number
           deadline?: string | null
           id?: string
+          reason?: string | null
           target?: number
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats_snapshots: {
+        Row: {
+          id: string
+          user_id: string
+          snapshot_date: string
+          total_units: number
+          property_count: number
+          equity: number
+          total_cashflow: number
+          total_value: number
+          total_rent: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          snapshot_date: string
+          total_units?: number
+          property_count?: number
+          equity?: number
+          total_cashflow?: number
+          total_value?: number
+          total_rent?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          snapshot_date?: string
+          total_units?: number
+          property_count?: number
+          equity?: number
+          total_cashflow?: number
+          total_value?: number
+          total_rent?: number
+          created_at?: string
         }
         Relationships: []
       }

@@ -21,6 +21,8 @@ interface MobilePagePullToRefreshProps {
 
 const PULL_THRESHOLD = 80;
 const MAX_PULL = 120;
+/** Min. finger movement (px) down before we treat as pull — avoids indicator flash when scrolling up past top. */
+const PULL_START_THRESHOLD_PX = 28;
 
 export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
   onRefresh, children, disabled = false, className,
@@ -31,23 +33,31 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef(0);
   const pulling = useRef(false);
+  const pullStarted = useRef(false);
   const hapticFired = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (disabled || refreshing) return;
-    // Only start if scrolled to top
     const scrollTop = containerRef.current?.scrollTop ?? window.scrollY;
     if (scrollTop > 5) return;
     startY.current = e.touches[0].clientY;
     pulling.current = true;
+    pullStarted.current = false;
     hapticFired.current = false;
   }, [disabled, refreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!pulling.current || disabled || refreshing) return;
     const diff = e.touches[0].clientY - startY.current;
-    if (diff < 0) { pulling.current = false; setPullDistance(0); return; }
+    if (diff < 0) {
+      pulling.current = false;
+      pullStarted.current = false;
+      setPullDistance(0);
+      return;
+    }
+    if (diff < PULL_START_THRESHOLD_PX) return;
+    pullStarted.current = true;
     const distance = Math.min(diff * 0.5, MAX_PULL);
     setPullDistance(distance);
     if (distance >= PULL_THRESHOLD && !hapticFired.current) {
@@ -61,6 +71,7 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
   const handleTouchEnd = useCallback(async () => {
     if (!pulling.current) return;
     pulling.current = false;
+    pullStarted.current = false;
     hapticFired.current = false;
     if (pullDistance >= PULL_THRESHOLD && !refreshing) {
       setRefreshing(true);
@@ -93,21 +104,39 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
   if (!isMobile) return <>{children}</>;
 
   const isReady = pullDistance >= PULL_THRESHOLD;
+  const showHint = isReady && !refreshing;
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
-      {/* Pull indicator */}
+      {/* Pull indicator: circle while pulling, hint strip when ready */}
       {(pullDistance > 0 || refreshing) && (
         <div
-          className="absolute left-0 right-0 top-0 flex items-center justify-center z-10 transition-transform"
+          className="absolute left-0 right-0 top-0 flex items-center justify-center z-10 transition-transform overflow-hidden"
           style={{ height: `${refreshing ? 48 : pullDistance}px` }}
         >
-          <div className={cn(
-            "w-8 h-8 rounded-full bg-background border border-border shadow-sm flex items-center justify-center transition-all",
-            isReady && "bg-primary text-primary-foreground border-primary",
-            refreshing && "bg-primary text-primary-foreground animate-spin",
-          )}>
+          {/* Circle – visible when not yet ready or when refreshing */}
+          <div
+            className={cn(
+              "absolute w-8 h-8 rounded-full bg-background border border-border shadow-sm flex items-center justify-center transition-all duration-200",
+              isReady && !refreshing && "scale-75 opacity-0 pointer-events-none",
+              isReady && "bg-primary text-primary-foreground border-primary",
+              refreshing && "bg-primary text-primary-foreground animate-spin scale-100 opacity-100",
+            )}
+            aria-hidden
+          >
             <RefreshCw className={cn("h-4 w-4", isReady && "rotate-180 transition-transform")} />
+          </div>
+          {/* Hint strip – appears when pulled far enough, replaces circle */}
+          <div
+            className={cn(
+              "absolute flex items-center justify-center gap-2 rounded-full px-4 py-2 transition-all duration-200",
+              "bg-primary text-primary-foreground text-sm font-medium shadow-sm max-w-[min(280px,90vw)]",
+              showHint ? "scale-100 opacity-100" : "scale-90 opacity-0 pointer-events-none",
+            )}
+            aria-hidden
+          >
+            <RefreshCw className="h-4 w-4 shrink-0" />
+            <span className="text-wrap-safe">Loslassen zum Aktualisieren</span>
           </div>
         </div>
       )}

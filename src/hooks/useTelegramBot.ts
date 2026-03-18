@@ -125,10 +125,11 @@ export function useTelegramBot() {
         lastUpdateId.current = nextUpdateId;
         setPersistedLastUpdateId(nextUpdateId);
 
-        /* Filter updates by chat if configured */
+        /* Filter updates by chat: private = immer (Weiterleitungen an den Bot, z. B. von immometrica_bot); sonst Kanal-Filter */
         const filteredUpdates = updates.filter((u) => {
           const chat = u.message?.chat || u.channel_post?.chat;
           if (!chat) return false;
+          if (chat.type === "private") return true;
           if (typeof opts.allowedChatId === "number") return chat.id === opts.allowedChatId;
           if (opts.chatTitleIncludes) {
             const title = (chat.title || "").toLowerCase();

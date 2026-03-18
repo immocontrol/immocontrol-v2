@@ -134,6 +134,33 @@ const Settings = () => {
     return idx / (list.length - 1);
   }, [activeSection, filteredSettingsSections]);
 
+  /* Geglätteter Anzeigewert für den Ladebalken — verhindert Hin-und-Her-Springen beim schnellen Scrollen */
+  const [progressBarDisplay, setProgressBarDisplay] = useState(0);
+  const progressBarDisplayRef = useRef(0);
+  useEffect(() => {
+    const target = settingsProgress;
+    const from = progressBarDisplayRef.current;
+    if (Math.abs(target - from) < 0.002) {
+      progressBarDisplayRef.current = target;
+      setProgressBarDisplay(target);
+      return;
+    }
+    const duration = 450;
+    const start = performance.now();
+    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+    let rafId: number;
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(elapsed / duration, 1);
+      const value = from + (target - from) * easeOutCubic(t);
+      progressBarDisplayRef.current = value;
+      setProgressBarDisplay(value);
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [settingsProgress]);
+
   /* Mobile: Tab-Leiste horizontal mit weicher Easing-Animation zentrieren (smoother als native smooth) */
   useEffect(() => {
     const container = mobileTabBarRef.current;
@@ -147,7 +174,7 @@ const Settings = () => {
     const startScroll = container.scrollLeft;
     const distance = targetScroll - startScroll;
     if (Math.abs(distance) < 2) return;
-    const duration = 380;
+    const duration = 420;
     const start = performance.now();
     const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
     let rafId: number;
@@ -338,11 +365,11 @@ const Settings = () => {
         className="lg:hidden fixed left-0 right-0 z-[140] w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-[0_1px_0_0_hsl(var(--border))]"
         style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))", height: mobileTabBarHeight }}
       >
-        {/* Progress als Schatten/Hintergrund über die volle Höhe der Tab-Leiste */}
+        {/* Progress als Schatten/Hintergrund — geglättet per RAF, kein Springen beim Scrollen */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
           <div
-            className="absolute inset-y-0 left-0 h-full bg-primary/[0.06] transition-[width] duration-500 ease-out"
-            style={{ width: `${settingsProgress * 100}%` }}
+            className="absolute inset-y-0 left-0 h-full bg-primary/[0.06]"
+            style={{ width: `${progressBarDisplay * 100}%` }}
           />
         </div>
         <div
@@ -354,7 +381,7 @@ const Settings = () => {
             WebkitOverflowScrolling: "touch",
           }}
         >
-          <div className="absolute top-0 right-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" aria-hidden />
+          <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-background via-background/80 to-transparent pointer-events-none z-10" aria-hidden />
           <div className="flex flex-nowrap gap-2 min-w-max justify-start pl-1 pr-6 py-2 items-center h-full min-h-0">
             {filteredSettingsSections.map((section) => {
               const SectionIcon = section.icon;
@@ -364,7 +391,7 @@ const Settings = () => {
                   key={section.id}
                   data-settings-tab={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors duration-300 ease-out ${
+                  className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-[color,background-color] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
                     isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
                   }`}
                 >
