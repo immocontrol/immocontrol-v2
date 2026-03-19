@@ -156,6 +156,14 @@ export function EinheitenZaehler() {
         <Target className="h-3 w-3" />
         Einheiten-Ziel setzen
       </button>
+      <button
+        type="button"
+        onClick={() => navigate("/erfolge#badges")}
+        className="mt-1 text-xs text-primary/90 hover:underline flex items-center gap-1"
+      >
+        <Target className="h-3 w-3" />
+        Zu Badges & Erfolgen
+      </button>
 
       {growth30Days && growth30Days.diff !== 0 && (
         <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">

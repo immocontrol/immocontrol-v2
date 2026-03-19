@@ -11,6 +11,17 @@ const defaultOpts = {
 };
 
 export function fireConfetti(): void {
+  // Respect accessibility setting from AccessibilityProvider.
+  try {
+    const raw = localStorage.getItem("immo-a11y-settings");
+    if (raw) {
+      const parsed = JSON.parse(raw) as { reducedMotion?: boolean };
+      if (parsed.reducedMotion) return;
+    }
+  } catch {
+    /* ignore storage/parse errors */
+  }
+
   try {
     confetti({ ...defaultOpts });
     const t = setTimeout(() => {

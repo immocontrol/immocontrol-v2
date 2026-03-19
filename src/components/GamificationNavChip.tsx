@@ -25,6 +25,7 @@ export function GamificationNavChip() {
         "transition-colors"
       )}
       aria-label="Erfolge anzeigen"
+      title="Schnell-Level aus Portfolio-Daten. Vollständige Punkte inkl. Ziele/Achievements auf der Erfolge-Seite."
     >
       <span aria-hidden>{level.emoji}</span>
       <span className="max-w-[72px] truncate">{level.title}</span>

@@ -193,6 +193,40 @@ export default function Erfolge() {
   const pageLoading = goalsLoading || dealsLoading;
 
   const reachedIds = useMemo(() => new Set(reached.map((a) => a.id)), [reached]);
+  const goalsReachedCount = useMemo(() => {
+    return goals.filter((g) => {
+      let current = 0;
+      if (g.type === "value") current = stats.totalValue;
+      else if (g.type === "cashflow") current = stats.totalCashflow;
+      else if (g.type === "units") current = stats.totalUnits;
+      else if (g.type === "equity") current = stats.equity;
+      else if (g.type === "units_per_year") current = unitsPerYear;
+      return g.target > 0 && current >= g.target;
+    }).length;
+  }, [goals, stats.totalValue, stats.totalCashflow, stats.totalUnits, stats.equity, unitsPerYear]);
+
+  const occupancyPct = useMemo(() => {
+    return stats.totalUnits > 0 ? Math.min(100, Math.round((tenantsCount / stats.totalUnits) * 100)) : 0;
+  }, [tenantsCount, stats.totalUnits]);
+
+  const getLockedProgress = (achievementId: string): string | null => {
+    switch (achievementId) {
+      case "5_units": return `${Math.min(stats.totalUnits, 5)} / 5 Einheiten`;
+      case "10_units": return `${Math.min(stats.totalUnits, 10)} / 10 Einheiten`;
+      case "25_units": return `${Math.min(stats.totalUnits, 25)} / 25 Einheiten`;
+      case "50_units": return `${Math.min(stats.totalUnits, 50)} / 50 Einheiten`;
+      case "10_deals_pipeline": return `${Math.min(dealsCount, 10)} / 10 Deals`;
+      case "occupancy_100": return `${occupancyPct} / 100 % Belegung`;
+      case "cashflow_1k": return `${Math.round(Math.min(stats.totalCashflow, 1000))} / 1000 €`;
+      case "equity_100k": return `${Math.round(Math.min(stats.equity, 100000))} / 100000 €`;
+      case "equity_500k": return `${Math.round(Math.min(stats.equity, 500000))} / 500000 €`;
+      case "rendite_5": return `${Math.min(Math.round(stats.avgRendite ?? 0), 5)} / 5 %`;
+      case "streak_7": return `${Math.min(streak, 7)} / 7 Tage`;
+      case "first_goal_reached": return `${Math.min(goalsReachedCount, 1)} / 1 Ziel`;
+      default: return null;
+    }
+  };
+
   const byCategory = useMemo(() => {
     const map = new Map<AchievementCategory, typeof allAchievements>();
     for (const a of allAchievements) {
@@ -316,7 +350,7 @@ export default function Erfolge() {
       )}
 
       {/* Quartals- & Jahres-Rückblick */}
-      {(quarterRecap || yearRecap) && (
+      {(quarterRecap || yearRecap) ? (
         <section className="gradient-card rounded-xl border border-border p-4">
           <h2 className="text-sm font-semibold mb-3">Rückblick</h2>
           <div className="flex flex-wrap gap-4">
@@ -358,10 +392,17 @@ export default function Erfolge() {
             )}
           </div>
         </section>
+      ) : (
+        <section className="gradient-card rounded-xl border border-border p-4">
+          <h2 className="text-sm font-semibold mb-2">Rückblick</h2>
+          <p className="text-xs text-muted-foreground">
+            Quartals- und Jahres-Rückblick erscheinen nach mehreren Snapshot-Tagen.
+          </p>
+        </section>
       )}
 
       {/* Achievement-Badges */}
-      <section>
+      <section id="badges">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">Badges</h2>
         <div className="space-y-4">
           {Array.from(byCategory.entries()).map(([category, list]) => (
@@ -383,6 +424,11 @@ export default function Erfolge() {
                       <Icon className={cn("h-4 w-4 shrink-0", unlocked ? "text-gold" : "text-muted-foreground")} />
                       <div className="min-w-0">
                         <p className={cn("text-xs font-medium truncate", unlocked && "text-foreground")}>{a.title}</p>
+                        {!unlocked && getLockedProgress(a.id) && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {getLockedProgress(a.id)}
+                          </p>
+                        )}
                         {unlocked && <Star className="h-3 w-3 text-gold fill-gold mt-0.5" aria-hidden />}
                       </div>
                     </div>
