@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { ERFOLOGE_KNOWN_HASH_IDS, ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
 import { getAchievementLockedHint } from "@/lib/achievementProgress";
 
@@ -258,10 +258,10 @@ export default function Erfolge() {
 
   useEffect(() => {
     if (pageLoading) return;
-    const raw = location.hash.replace(/^#/, "");
-    if (raw !== "badges") return;
+    const raw = location.hash.replace(/^#/, "").toLowerCase();
+    if (!raw || !ERFOLOGE_KNOWN_HASH_IDS.has(raw)) return;
     requestAnimationFrame(() => {
-      document.getElementById("badges")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById(raw)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }, [pageLoading, location.hash]);
 
@@ -296,7 +296,7 @@ export default function Erfolge() {
       </div>
 
       {/* Level & Punkte & Streak */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <section id="level" className="scroll-mt-24 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="gradient-card rounded-xl border border-border p-4">
           <p className="text-xs text-muted-foreground mb-1">Level</p>
           <p className="text-lg font-bold flex items-center gap-1.5">
@@ -329,30 +329,28 @@ export default function Erfolge() {
           </p>
           <p className="text-[10px] text-muted-foreground mt-1">Badges freigeschaltet</p>
         </div>
-      </div>
+      </section>
 
       {/* Einheiten & Ziele & Meilensteine */}
-      <section>
+      <section id="overview" className="scroll-mt-24">
         <h2 className="text-sm font-semibold text-muted-foreground mb-2">Überblick</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <EinheitenZaehler />
-          <div id="portfolio-goals-widget">
-            <PortfolioGoals
-              currentStats={{
-                totalValue: stats.totalValue,
-                totalCashflow: stats.totalCashflow,
-                totalUnits: stats.totalUnits,
-                equity: stats.equity,
-              }}
-            />
-          </div>
+          <PortfolioGoals
+            currentStats={{
+              totalValue: stats.totalValue,
+              totalCashflow: stats.totalCashflow,
+              totalUnits: stats.totalUnits,
+              equity: stats.equity,
+            }}
+          />
           <PortfolioMilestonesWithShare />
         </div>
       </section>
 
       {/* Verlauf: Cashflow & Eigenkapital */}
       {(cashflowSparkline || equitySparkline) && (
-        <section className="gradient-card rounded-xl border border-border p-4">
+        <section id="verlauf" className="scroll-mt-24 gradient-card rounded-xl border border-border p-4">
           <h2 className="text-sm font-semibold mb-3">Verlauf</h2>
           <div className="flex flex-wrap gap-6">
             {cashflowSparkline && (
@@ -379,7 +377,7 @@ export default function Erfolge() {
 
       {/* Quartals- & Jahres-Rückblick */}
       {(quarterRecap || yearRecap) ? (
-        <section className="gradient-card rounded-xl border border-border p-4">
+        <section id="recap" className="scroll-mt-24 gradient-card rounded-xl border border-border p-4">
           <h2 className="text-sm font-semibold mb-3">Rückblick</h2>
           <div className="flex flex-wrap gap-4">
             {quarterRecap && (
@@ -421,7 +419,7 @@ export default function Erfolge() {
           </div>
         </section>
       ) : (
-        <section className="gradient-card rounded-xl border border-border p-4">
+        <section id="recap" className="scroll-mt-24 gradient-card rounded-xl border border-border p-4">
           <h2 className="text-sm font-semibold mb-2">Rückblick</h2>
           <p className="text-xs text-muted-foreground">
             Quartals- und Jahres-Rückblick erscheinen nach mehreren Snapshot-Tagen.
@@ -430,7 +428,7 @@ export default function Erfolge() {
       )}
 
       {/* Achievement-Badges */}
-      <section id="badges">
+      <section id="badges" className="scroll-mt-24">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">Badges</h2>
         <div className="space-y-4">
           {Array.from(byCategory.entries()).map(([category, list]) => (
@@ -508,7 +506,7 @@ function PortfolioMilestonesWithShare() {
   };
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5">
+    <div id="meilensteine" className="scroll-mt-24 gradient-card rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Trophy className="h-4 w-4 text-gold" />

@@ -90,7 +90,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
       setForm((f) => ({ ...f, type: state.goalPresetType ?? f.type }));
       navigate(location.pathname, { replace: true, state: {} });
       requestAnimationFrame(() => {
-        document.getElementById("portfolio-goals-widget")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        document.getElementById("goals")?.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     }
   }, [location.state, location.pathname, navigate]);
@@ -198,7 +198,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   };
 
   return (
-    <div id="portfolio-goals-widget" className="gradient-card rounded-xl border border-border p-5 scroll-mt-24">
+    <div id="goals" className="gradient-card rounded-xl border border-border p-5 scroll-mt-24">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" /> Portfolio-Ziele

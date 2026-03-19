@@ -5,7 +5,7 @@
 import { useEffect, useMemo } from "react";
 import { Building2, TrendingUp, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { erfolgeWithHash } from "@/lib/routes";
+import { ERFOLOGE_ANCHORS, erfolgeWithHash } from "@/lib/routes";
 import { useProperties } from "@/context/PropertyContext";
 import { useStatsSnapshots } from "@/hooks/useStatsSnapshots";
 import { useQuery } from "@tanstack/react-query";
@@ -116,7 +116,7 @@ export function EinheitenZaehler() {
   }, [historyForSparkline]);
 
   return (
-    <div className="gradient-card rounded-xl border border-border p-5">
+    <div id={ERFOLOGE_ANCHORS.einheiten} className="scroll-mt-24 gradient-card rounded-xl border border-border p-5">
       <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
         <Building2 className="h-4 w-4 text-primary" />
         Meine Einheiten
@@ -159,7 +159,7 @@ export function EinheitenZaehler() {
       </button>
       <button
         type="button"
-        onClick={() => navigate(erfolgeWithHash("badges"))}
+        onClick={() => navigate(erfolgeWithHash(ERFOLOGE_ANCHORS.badges))}
         className="mt-1 text-xs text-primary/90 hover:underline flex items-center gap-1"
       >
         <Target className="h-3 w-3" />

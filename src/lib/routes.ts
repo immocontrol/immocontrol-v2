@@ -79,9 +79,29 @@ export const ROUTES = {
   ERFOLGE: "/erfolge",
 } as const;
 
+/**
+ * DOM-`id`s auf `/erfolge` für Deep-Links (`/erfolge#level` etc.).
+ * Muss mit den Element-IDs in `Erfolge.tsx` übereinstimmen.
+ */
+export const ERFOLOGE_ANCHORS = {
+  level: "level",
+  badges: "badges",
+  overview: "overview",
+  einheiten: "einheiten",
+  verlauf: "verlauf",
+  recap: "recap",
+  goals: "goals",
+  meilensteine: "meilensteine",
+} as const;
+
+export type ErfolgeAnchorId = (typeof ERFOLOGE_ANCHORS)[keyof typeof ERFOLOGE_ANCHORS];
+
+/** Bekannte Hash-Fragmente – nur diese triggern programmatisches Scrollen */
+export const ERFOLOGE_KNOWN_HASH_IDS: ReadonlySet<string> = new Set(Object.values(ERFOLOGE_ANCHORS));
+
 /** Gamification: z. B. `/erfolge#badges` für Deep-Link aus Widgets */
-export function erfolgeWithHash(hash: string): string {
-  return `${ROUTES.ERFOLGE}#${hash.replace(/^#/, "")}`;
+export function erfolgeWithHash(hash: ErfolgeAnchorId | string): string {
+  return `${ROUTES.ERFOLGE}#${String(hash).replace(/^#/, "")}`;
 }
 
 /** Helper: Property detail URL */

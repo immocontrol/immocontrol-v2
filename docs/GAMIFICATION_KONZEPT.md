@@ -115,23 +115,21 @@ Vorschläge für mehr Gamification: Einheiten-Zähler, Achievements und optional
 - Ziele mit „Noch X bis Ziel“, Deadline-Hinweis „In X Tagen“
 - Einheiten-Widget: Fortschritt zu Einheiten-Ziel, Link „Einheiten-Ziel setzen“, Öffnen mit Preset
 - Meilensteine-Widget (PortfolioMilestones)
-- **Seite „Erfolge“ (`/erfolge`):** Achievements/Badges, Level, Streak, Quartals-/Jahres-Rückblick, Sparklines Cashflow/EK; Deep-Link **`/erfolge#badges`** scrollt nach dem Laden zur Badge-Sektion (`id="badges"`); Helper **`erfolgeWithHash`** in `src/lib/routes.ts`
+- **Seite „Erfolge“ (`/erfolge`):** Achievements/Badges, Level, Streak, Quartals-/Jahres-Rückblick, Sparklines Cashflow/EK; Deep-Links scrollen nach Laden zur Sektion (**`ERFOLOGE_ANCHORS`** in `src/lib/routes.ts`): `#level`, `#badges`, `#overview`, `#einheiten`, `#goals`, `#meilensteine`, `#verlauf`, `#recap`; Helper **`erfolgeWithHash`**. Nav-Chip verlinkt auf **`#level`**, Einheiten-Widget auf **`#badges`**. Ziele-Widget: DOM-ID **`goals`** (ersetzt `portfolio-goals-widget`).
 - **Fortschritt bei gesperrten Badges:** zentral `getAchievementLockedHint` in `src/lib/achievementProgress.ts` (inkl. erste Objekte, MFH/ETW, Deal, Mieter, Dokument, Besichtigung, positiver Cashflow)
 - **Confetti:** nur wenn weder `immo-a11y-settings.reducedMotion` noch Klasse `mob4-reduce-motion` am `<html>` aktiv ist (`src/lib/confetti.ts`)
-- **Tests:** `src/test/achievementProgress.test.ts` (Vitest) für die Fortschritts-Hinweise
+- **Tests:** `src/test/achievementProgress.test.ts` (Fortschrittstexte), `src/test/streak.test.ts` (`computeStreakFromDates`)
+- **Einheiten-Widget:** Wachstum ca. 30 Tage aus Snapshots (`growth30Days`) bereits umgesetzt
 
-### Nächste Schritte (priorisiert)
+### Backlog (zurückgestellt / nächste Ausbaustufen)
 
 | Priorität | Maßnahme | Aufwand | Beschreibung |
 |----------|----------|---------|--------------|
-| **1** | Wachstum aus Verlauf sichtbar machen | Niedrig | Im Einheiten-Zähler „+X Einheiten in 30 Tagen“ aus Snapshots anzeigen (bereits Daten da). |
-| **2** | Achievements ausbauen | Mittel | Meilensteine um Einheiten 5/10/25/50, „Erster Mieter“, „Erste Besichtigung“, „Dokument hochgeladen“, „10 Deals“ erweitern; optional Badge-Grid. |
-| **3** | Belohnung beim Ziel erreichen | Niedrig | Beim Erreichen eines Ziels (100 %) einmalig Toast + kurze Animation (z. B. Confetti oder „Ziel erreicht!“-Highlight). |
-| **4** | Level / Punkte (abgeleitet) | Niedrig | Einfache Formel: z. B. Punkte = Einheiten + 2×Objekte + 1×Ziele erreicht; Level 1–5 mit Titeln (Starter → Multi-Unit); im Header oder Erfolge-Widget. |
-| **5** | Eigene Seite „Erfolge“ | Mittel | Route `/erfolge`: Einheiten-Zähler, Ziele-Kurzüberblick, Meilensteine, ggf. Badge-Galerie und „Wachstum 30 Tage“. |
-| **6** | Login-Streak | Mittel | Tabelle `user_activity` (last_active_date), bei jedem Login aktualisieren; Anzeige „X Tage in Folge aktiv“. |
-| **7** | Monats-/Jahres-Rückblick | Mittel | „Dein März: +2 Einheiten, Cashflow +200 €“ aus Snapshots; Jahres-Rückblick-Karte im Dezember. |
-| **8** | Meilenstein teilen | Niedrig | Share-Button bei erreichtem Meilenstein (Web Share API oder Kopier-Text). |
+| **1** | Weitere Achievements / Challenges | Mittel | Z. B. Monats-Challenges, einheitliche DB-Speicherung `user_achievements` mit `unlocked_at`. |
+| **2** | Quartals-/Jahres-Rückblick ausbauen | Niedrig | Monats-Recap ergänzen; leere Zustände feiner (bereits teilweise auf `/erfolge`). |
+| **3** | Benchmark / Vergleich (anonym) | Hoch | Perzentile über aggregierte, anonymisierte Kennzahlen. |
+| **4** | Social Share für Achievements | Niedrig | Share aus Badge-Grid; Meilensteine haben bereits Teilen auf `/erfolge`. |
+| **5** | Confetti / Highlights bei Portfolio-Zielen | Niedrig | Bereits Confetti bei Achievement-Unlock; Ziele ggf. gleiche UX. |
 
 ---
 
