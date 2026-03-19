@@ -1,7 +1,7 @@
 /**
  * Gamification: Erfolge – Einheiten, Ziele, Meilensteine, Achievements, Level, Streak, Rückblick.
  */
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Trophy, Flame, Target, Star, Share2, Wallet, TrendingUp } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,9 +17,10 @@ import { getCategoryLabel, type AchievementCategory } from "@/lib/achievements";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
+import { getAchievementLockedHint } from "@/lib/achievementProgress";
 
 function sparklinePoints(values: number[], w = 120, h = 28): string | null {
   if (values.length < 2) return null;
@@ -43,6 +44,7 @@ function unitsAcquiredLast12Months(properties: { units: number; purchaseDate: st
 
 export default function Erfolge() {
   const { user } = useAuth();
+  const location = useLocation();
   const { properties, stats } = useProperties();
   const unitsPerYear = useMemo(() => unitsAcquiredLast12Months(properties), [properties]);
 
@@ -209,23 +211,40 @@ export default function Erfolge() {
     return stats.totalUnits > 0 ? Math.min(100, Math.round((tenantsCount / stats.totalUnits) * 100)) : 0;
   }, [tenantsCount, stats.totalUnits]);
 
-  const getLockedProgress = (achievementId: string): string | null => {
-    switch (achievementId) {
-      case "5_units": return `${Math.min(stats.totalUnits, 5)} / 5 Einheiten`;
-      case "10_units": return `${Math.min(stats.totalUnits, 10)} / 10 Einheiten`;
-      case "25_units": return `${Math.min(stats.totalUnits, 25)} / 25 Einheiten`;
-      case "50_units": return `${Math.min(stats.totalUnits, 50)} / 50 Einheiten`;
-      case "10_deals_pipeline": return `${Math.min(dealsCount, 10)} / 10 Deals`;
-      case "occupancy_100": return `${occupancyPct} / 100 % Belegung`;
-      case "cashflow_1k": return `${Math.round(Math.min(stats.totalCashflow, 1000))} / 1000 €`;
-      case "equity_100k": return `${Math.round(Math.min(stats.equity, 100000))} / 100000 €`;
-      case "equity_500k": return `${Math.round(Math.min(stats.equity, 500000))} / 500000 €`;
-      case "rendite_5": return `${Math.min(Math.round(stats.avgRendite ?? 0), 5)} / 5 %`;
-      case "streak_7": return `${Math.min(streak, 7)} / 7 Tage`;
-      case "first_goal_reached": return `${Math.min(goalsReachedCount, 1)} / 1 Ziel`;
-      default: return null;
-    }
-  };
+  const progressCtx = useMemo(
+    () => ({
+      totalUnits: stats.totalUnits,
+      propertyCount: stats.propertyCount,
+      properties: properties.map((p) => ({ type: p.type })),
+      dealsCount,
+      dealsAbgeschlossenCount,
+      tenantsCount,
+      viewingsCount,
+      documentsCount,
+      occupancyPct,
+      streak,
+      goalsReachedCount,
+      totalCashflow: stats.totalCashflow,
+      equity: stats.equity,
+      avgRendite: stats.avgRendite ?? 0,
+    }),
+    [
+      stats.totalUnits,
+      stats.propertyCount,
+      stats.totalCashflow,
+      stats.equity,
+      stats.avgRendite,
+      properties,
+      dealsCount,
+      dealsAbgeschlossenCount,
+      tenantsCount,
+      viewingsCount,
+      documentsCount,
+      occupancyPct,
+      streak,
+      goalsReachedCount,
+    ]
+  );
 
   const byCategory = useMemo(() => {
     const map = new Map<AchievementCategory, typeof allAchievements>();
@@ -236,6 +255,15 @@ export default function Erfolge() {
     }
     return map;
   }, [allAchievements]);
+
+  useEffect(() => {
+    if (pageLoading) return;
+    const raw = location.hash.replace(/^#/, "");
+    if (raw !== "badges") return;
+    requestAnimationFrame(() => {
+      document.getElementById("badges")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [pageLoading, location.hash]);
 
   if (pageLoading) {
     return (
@@ -411,6 +439,7 @@ export default function Erfolge() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {list.map((a) => {
                   const unlocked = reachedIds.has(a.id);
+                  const lockedHint = !unlocked ? getAchievementLockedHint(a.id, progressCtx) : null;
                   const Icon = a.icon;
                   return (
                     <div
@@ -424,10 +453,8 @@ export default function Erfolge() {
                       <Icon className={cn("h-4 w-4 shrink-0", unlocked ? "text-gold" : "text-muted-foreground")} />
                       <div className="min-w-0">
                         <p className={cn("text-xs font-medium truncate", unlocked && "text-foreground")}>{a.title}</p>
-                        {!unlocked && getLockedProgress(a.id) && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            {getLockedProgress(a.id)}
-                          </p>
+                        {lockedHint && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5 text-wrap-safe">{lockedHint}</p>
                         )}
                         {unlocked && <Star className="h-3 w-3 text-gold fill-gold mt-0.5" aria-hidden />}
                       </div>

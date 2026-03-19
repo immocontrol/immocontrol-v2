@@ -5,6 +5,7 @@
 import { useEffect, useMemo } from "react";
 import { Building2, TrendingUp, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { erfolgeWithHash } from "@/lib/routes";
 import { useProperties } from "@/context/PropertyContext";
 import { useStatsSnapshots } from "@/hooks/useStatsSnapshots";
 import { useQuery } from "@tanstack/react-query";
@@ -158,7 +159,7 @@ export function EinheitenZaehler() {
       </button>
       <button
         type="button"
-        onClick={() => navigate("/erfolge#badges")}
+        onClick={() => navigate(erfolgeWithHash("badges"))}
         className="mt-1 text-xs text-primary/90 hover:underline flex items-center gap-1"
       >
         <Target className="h-3 w-3" />

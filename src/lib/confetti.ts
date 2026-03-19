@@ -22,6 +22,10 @@ export function fireConfetti(): void {
     /* ignore storage/parse errors */
   }
 
+  if (typeof document !== "undefined" && document.documentElement.classList.contains("mob4-reduce-motion")) {
+    return;
+  }
+
   try {
     confetti({ ...defaultOpts });
     const t = setTimeout(() => {

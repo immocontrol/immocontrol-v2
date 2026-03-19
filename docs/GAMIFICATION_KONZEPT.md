@@ -115,6 +115,10 @@ Vorschläge für mehr Gamification: Einheiten-Zähler, Achievements und optional
 - Ziele mit „Noch X bis Ziel“, Deadline-Hinweis „In X Tagen“
 - Einheiten-Widget: Fortschritt zu Einheiten-Ziel, Link „Einheiten-Ziel setzen“, Öffnen mit Preset
 - Meilensteine-Widget (PortfolioMilestones)
+- **Seite „Erfolge“ (`/erfolge`):** Achievements/Badges, Level, Streak, Quartals-/Jahres-Rückblick, Sparklines Cashflow/EK; Deep-Link **`/erfolge#badges`** scrollt nach dem Laden zur Badge-Sektion (`id="badges"`); Helper **`erfolgeWithHash`** in `src/lib/routes.ts`
+- **Fortschritt bei gesperrten Badges:** zentral `getAchievementLockedHint` in `src/lib/achievementProgress.ts` (inkl. erste Objekte, MFH/ETW, Deal, Mieter, Dokument, Besichtigung, positiver Cashflow)
+- **Confetti:** nur wenn weder `immo-a11y-settings.reducedMotion` noch Klasse `mob4-reduce-motion` am `<html>` aktiv ist (`src/lib/confetti.ts`)
+- **Tests:** `src/test/achievementProgress.test.ts` (Vitest) für die Fortschritts-Hinweise
 
 ### Nächste Schritte (priorisiert)
 

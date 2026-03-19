@@ -79,6 +79,11 @@ export const ROUTES = {
   ERFOLGE: "/erfolge",
 } as const;
 
+/** Gamification: z. B. `/erfolge#badges` für Deep-Link aus Widgets */
+export function erfolgeWithHash(hash: string): string {
+  return `${ROUTES.ERFOLGE}#${hash.replace(/^#/, "")}`;
+}
+
 /** Helper: Property detail URL */
 export function propertyDetail(id: string): string {
   return `${ROUTES.PROPERTY}/${id}`;
