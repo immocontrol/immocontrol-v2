@@ -27,18 +27,24 @@ const DialogPortal = DialogPrimitive.Portal;
 
 const DialogClose = DialogPrimitive.Close;
 
+/** Overlay: Klick/Tap schließt Dialog (Desktop + Mobile) via Close-Komponente */
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className,
-    )}
-    {...props}
-  />
+  <DialogPrimitive.Overlay asChild>
+    <DialogPrimitive.Close asChild>
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
+        aria-hidden
+        className={cn(
+          "fixed inset-0 z-50 bg-black/80 cursor-pointer data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          className,
+        )}
+        {...(props as React.HTMLAttributes<HTMLDivElement>)}
+      />
+    </DialogPrimitive.Close>
+  </DialogPrimitive.Overlay>
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 

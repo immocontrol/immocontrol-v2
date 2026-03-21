@@ -67,6 +67,15 @@ function unitsAcquiredLast12Months(properties: { units: number; purchaseDate: st
     .reduce((sum, p) => sum + (p.units || 0), 0);
 }
 
+function daysUntilDeadline(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((d.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
 const INITIAL_FORM = {
   title: "",
   type: "value" as Goal["type"],
@@ -83,6 +92,8 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [showShortGoalConfirm, setShowShortGoalConfirm] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(INITIAL_FORM);
   const goalReachedToastRef = useRef<Set<string>>(new Set());
@@ -157,15 +168,24 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
         : form.type === "units" ? currentStats.totalUnits
         : form.type === "units_per_year" ? unitsPerYearCurrent
         : currentStats.equity;
-      const { error } = await fromTable("portfolio_goals").insert({
+      const safeCurrent = Number.isFinite(currentValue) ? currentValue : 0;
+      const safeTarget = Number.isFinite(form.target) ? form.target : 0;
+      const payload: Record<string, unknown> = {
         user_id: user.id,
         title: form.title.trim(),
         type: form.type,
-        target: form.target,
-        current_value: currentValue,
+        target: safeTarget,
+        current_value: safeCurrent,
         deadline: form.deadline || null,
         reason: form.reason.trim() || null,
-      });
+      };
+      let { error } = await fromTable("portfolio_goals").insert(payload);
+      /* Retry without reason if column doesn't exist (alte DB-Schemas) */
+      if (error && (error.message?.includes("reason") || error.message?.includes("42703"))) {
+        delete payload.reason;
+        const retry = await fromTable("portfolio_goals").insert(payload);
+        error = retry.error;
+      }
       if (error) throw error;
     },
     onSuccess: () => {
@@ -182,7 +202,13 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   const currentValueForType = getCurrent(form.type);
   const canProceedStep1 = form.title.trim().length > 0 && form.type;
   const canProceedStep2 = form.target > 0;
-  const canSubmit = form.deadline.length > 0;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const deadlineDays = form.deadline ? daysUntilDeadline(form.deadline) : null;
+  const isFormDirty =
+    form.title.trim() !== "" || form.target > 0 || form.reason.trim() !== "" || form.deadline !== "";
+  const deadlineInFuture = deadlineDays !== null && deadlineDays > 0;
+  const isShortGoal = deadlineDays !== null && deadlineDays > 0 && deadlineDays <= 30;
+  const canSubmit = form.deadline.length > 0 && deadlineInFuture;
   const formatCurrent = (val: number) =>
     form.type === "units" || form.type === "units_per_year"
       ? `${Math.round(val)}`
@@ -193,15 +219,6 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["portfolio_goals"] }),
   });
 
-  const daysUntil = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    const d = new Date(dateStr);
-    d.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return Math.ceil((d.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-  };
-
   return (
     <div id="goals" className="gradient-card rounded-xl border border-border p-5 scroll-mt-24">
       <div className="flex items-center justify-between mb-4">
@@ -211,10 +228,16 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
         <Dialog
           open={open}
           onOpenChange={(isOpen) => {
-            setOpen(isOpen);
             if (isOpen) {
+              setOpen(true);
               setStep(1);
               setForm(INITIAL_FORM);
+              setShowShortGoalConfirm(false);
+              setShowCloseConfirm(false);
+            } else if (isFormDirty) {
+              setShowCloseConfirm(true);
+            } else {
+              setOpen(false);
             }
           }}
         >
@@ -231,20 +254,25 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
               </DialogTitle>
             </DialogHeader>
 
-            {/* Step indicator */}
+            {/* Step indicator – klickbare Buchstaben für direkten Sprung */}
             <div className="flex justify-between gap-1">
-              {SMART_STEPS.map((s, i) => (
-                <div
-                  key={s.key}
-                  className={cn(
-                    "flex-1 rounded py-1 text-center text-[10px] font-medium",
-                    i + 1 === step ? "bg-primary text-primary-foreground" : i + 1 < step ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground",
-                  )}
-                  title={s.label}
-                >
-                  {s.short}
-                </div>
-              ))}
+              {SMART_STEPS.map((s, i) => {
+                const stepNum = i + 1;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setStep(stepNum)}
+                    className={cn(
+                      "flex-1 rounded py-1 text-center text-[10px] font-medium transition-colors cursor-pointer hover:opacity-90",
+                      stepNum === step ? "bg-primary text-primary-foreground" : stepNum < step ? "bg-primary/20 text-primary hover:bg-primary/30" : "bg-secondary text-muted-foreground hover:bg-secondary/80",
+                    )}
+                    title={`${s.label} – zu Schritt ${stepNum} springen`}
+                  >
+                    {s.short}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="min-h-[140px] space-y-4">
@@ -314,13 +342,20 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
                 <>
                   <p className="text-xs font-medium text-muted-foreground">T – Terminiert: Bis wann möchtest du es erreichen?</p>
                   <div className="space-y-1">
-                    <Label className="text-xs">Deadline *</Label>
+                    <Label className="text-xs">Deadline * (muss in der Zukunft liegen)</Label>
                     <input
                       type="date"
+                      min={todayStr}
                       value={form.deadline}
                       onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
                       className="h-9 text-sm w-full rounded-md border border-input bg-background px-3 py-1"
                     />
+                    {form.deadline && deadlineDays !== null && !deadlineInFuture && (
+                      <p className="text-xs text-destructive">Die Deadline muss in der Zukunft liegen.</p>
+                    )}
+                    {form.deadline && isShortGoal && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">Nur {deadlineDays} Tage – beim Speichern erfolgt eine Bestätigungsabfrage.</p>
+                    )}
                   </div>
                 </>
               )}
@@ -344,7 +379,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
                 </Button>
               ) : (
                 <LoadingButton
-                  onClick={() => addMutation.mutate()}
+                  onClick={() => (isShortGoal ? setShowShortGoalConfirm(true) : addMutation.mutate())}
                   loading={addMutation.isPending}
                   disabled={addMutation.isPending || !canSubmit}
                   className="gap-1"
@@ -367,7 +402,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
             const done = pct >= 100;
             const remaining = Math.max(0, g.target - current);
             const typeConfig = GOAL_TYPES.find(t => t.value === g.type);
-            const days = daysUntil(g.deadline);
+            const days = daysUntilDeadline(g.deadline);
             const deadlineSoon = days !== null && days >= 0 && days <= 30;
             return (
               <div key={g.id} className="space-y-1.5 group">
@@ -433,6 +468,47 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
               onClick={() => { if (deleteTargetId) { deleteMutation.mutate(deleteTargetId); setDeleteTargetId(null); } }}
             >
               Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showShortGoalConfirm} onOpenChange={setShowShortGoalConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kurze Deadline bestätigen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Deadline liegt in nur {deadlineDays} Tagen. Bist du sicher, dass du dieses Ziel so setzen möchtest?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { addMutation.mutate(); setShowShortGoalConfirm(false); }}>
+              Ja, Ziel speichern
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Formular schließen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Es sind noch Eingaben im Formular. Beim Schließen gehen diese verloren. Wirklich schließen?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setOpen(false);
+                setForm(INITIAL_FORM);
+                setStep(1);
+                setShowCloseConfirm(false);
+              }}
+            >
+              Ja, schließen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

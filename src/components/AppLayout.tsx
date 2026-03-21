@@ -533,17 +533,18 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         className="sticky top-0 z-[150] border-b border-border/70 bg-background/85 backdrop-blur-xl glass-header page-header overflow-visible md:pt-0 shadow-[0_1px_0_hsl(var(--border)/0.5)]"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        <div className="container flex h-14 items-center justify-between overflow-visible">
-          <div className="flex items-center gap-3">
-            <Link to={ROUTES.HOME} className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="ImmoControl Home">
+        <div className="container flex h-14 items-center justify-between gap-2 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-3 min-w-0 shrink-0">
+            <Link to={ROUTES.HOME} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0" aria-label="ImmoControl Home">
               <Building2 className="h-6 w-6 text-primary" />
               <span className="text-lg font-bold tracking-tight hidden sm:inline">ImmoControl</span>
               <span className="text-lg font-bold tracking-tight sm:hidden">IC</span>
             </Link>
             {breadcrumb}
           </div>
-          <div className="flex items-center gap-1 overflow-visible">
-            <nav ref={desktopNavRef} data-testid="sidebar" className="hidden md:flex items-center gap-0.5 relative overflow-visible" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
+          <div className="flex items-center gap-1 min-w-0 flex-1 justify-end overflow-hidden">
+            <div className="hidden md:block min-w-0 flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin" aria-label="Navigation scrollbar">
+              <nav ref={desktopNavRef} data-testid="sidebar" className="flex items-center gap-0.5 relative flex-nowrap py-1" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navEntries.map((entry) => {
                 if (isGroup(entry)) {
                   const items = getGroupItems(entry);
@@ -554,13 +555,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         ref={openDropdown === entry.label ? openDropdownTriggerRef : undefined}
                         data-nav-top
                         onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === entry.label ? null : entry.label); }}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all touch-target ${
+                        className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all touch-target whitespace-nowrap shrink-0 ${
                           groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         }`}
                       >
-                        <entry.icon className="h-4 w-4" />
+                        <entry.icon className="h-4 w-4 shrink-0" />
                         {entry.label}
-                        <ChevronDown className={`h-3 w-3 transition-transform duration-base ease-out-modern ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
+                        <ChevronDown className={`h-3 w-3 shrink-0 transition-transform duration-base ease-out-modern ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
                       <div
                         ref={openDropdown === entry.label ? openDropdownPanelRef : undefined}
@@ -604,7 +605,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         data-nav-top
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                        className={`flex items-center gap-2 px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 whitespace-nowrap shrink-0 ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -626,7 +627,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 style={dotStyle}
               />
             </nav>
-            <div className="flex items-center gap-1.5 ml-2 min-w-0">
+            </div>
+            <div className="flex items-center gap-1.5 ml-2 min-w-0 shrink-0">
               <RecentPropertiesNav />
               <Tooltip>
                 <TooltipTrigger asChild>

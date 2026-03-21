@@ -223,12 +223,14 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
     const monthlyCashflow = typeof data.monthlyCashflow === "number" ? data.monthlyCashflow : calcMonthlyCashflow(data.monthlyRent, data.monthlyExpenses, data.monthlyCreditRate);
     const restnutzungsdauer = data.restnutzungsdauer !== "" && data.restnutzungsdauer != null ? Number(data.restnutzungsdauer) : undefined;
     const buildingSharePercent = data.buildingSharePercent !== "" && data.buildingSharePercent != null ? Number(data.buildingSharePercent) : 80;
+    const warmRent = data.warmRent != null && data.warmRent !== "" ? Number(data.warmRent) : undefined;
     const payload = {
       ...data,
       purchaseDate,
       currentValue: currentValue || Number(data.purchasePrice),
       monthlyCashflow,
-      location: "",
+      warmRent: Number.isFinite(warmRent) ? warmRent : undefined,
+      location: (data.address || "").split(",").pop()?.trim() || "",
       restnutzungsdauer,
       buildingSharePercent,
     } as Omit<import("@/data/mockData").Property, "id">;

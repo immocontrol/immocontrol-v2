@@ -181,6 +181,14 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
 
   const invalidate = useCallback(() => qc.invalidateQueries({ queryKey: queryKeys.properties.all }), [qc]);
 
+  const toNum = (v: unknown): number | null => {
+    if (v == null || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const toNumOr = (v: unknown, fallback: number): number =>
+    toNum(v) ?? fallback;
+
   /* #6: Optimistic update for addProperty — shows new property instantly */
   const addMutation = useMutation({
     mutationFn: async (property: Omit<Property, "id">) => {
@@ -188,30 +196,30 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
       const dbFields = mapPropertyToDb(property);
       const { error } = await supabase.from("properties").insert({
         user_id: user.id,
-        name: dbFields.name || property.name,
-        location: dbFields.location || property.location,
-        address: dbFields.address || property.address,
-        type: dbFields.type || property.type,
-        units: dbFields.units ?? property.units,
-        purchase_price: dbFields.purchase_price ?? property.purchasePrice,
+        name: (dbFields.name || property.name) || "Neues Objekt",
+        location: (dbFields.location || property.location) || "",
+        address: (dbFields.address || property.address) || "",
+        type: dbFields.type || property.type || "ETW",
+        units: toNumOr(dbFields.units ?? property.units, 1),
+        purchase_price: toNumOr(dbFields.purchase_price ?? property.purchasePrice, 0),
         purchase_date: dbFields.purchase_date || property.purchaseDate,
-        current_value: dbFields.current_value ?? property.currentValue,
-        monthly_rent: dbFields.monthly_rent ?? property.monthlyRent,
-        warm_rent: dbFields.warm_rent ?? property.warmRent ?? null,
-        monthly_expenses: dbFields.monthly_expenses ?? property.monthlyExpenses,
-        monthly_credit_rate: dbFields.monthly_credit_rate ?? property.monthlyCreditRate,
-        monthly_cashflow: dbFields.monthly_cashflow ?? property.monthlyCashflow,
-        remaining_debt: dbFields.remaining_debt ?? property.remainingDebt,
-        interest_rate: dbFields.interest_rate ?? property.interestRate,
-        sqm: dbFields.sqm ?? property.sqm,
-        commercial_sqm: dbFields.commercial_sqm ?? property.commercialSqm ?? 0,
-        year_built: dbFields.year_built ?? property.yearBuilt,
-        ownership: dbFields.ownership || property.ownership,
-        parking_underground: dbFields.parking_underground ?? property.parkingUnderground ?? 0,
-        parking_stellplatz: dbFields.parking_stellplatz ?? property.parkingStellplatz ?? 0,
-        parking_garage: dbFields.parking_garage ?? property.parkingGarage ?? 0,
-        garden_sqm: dbFields.garden_sqm ?? property.gardenSqm ?? null,
-        other_rentable_notes: dbFields.other_rentable_notes ?? property.otherRentableNotes ?? null,
+        current_value: toNumOr(dbFields.current_value ?? property.currentValue, 0),
+        monthly_rent: toNumOr(dbFields.monthly_rent ?? property.monthlyRent, 0),
+        warm_rent: toNum(dbFields.warm_rent ?? property.warmRent),
+        monthly_expenses: toNumOr(dbFields.monthly_expenses ?? property.monthlyExpenses, 0),
+        monthly_credit_rate: toNumOr(dbFields.monthly_credit_rate ?? property.monthlyCreditRate, 0),
+        monthly_cashflow: toNumOr(dbFields.monthly_cashflow ?? property.monthlyCashflow, 0),
+        remaining_debt: toNumOr(dbFields.remaining_debt ?? property.remainingDebt, 0),
+        interest_rate: toNumOr(dbFields.interest_rate ?? property.interestRate, 0),
+        sqm: toNumOr(dbFields.sqm ?? property.sqm, 0),
+        commercial_sqm: toNumOr(dbFields.commercial_sqm ?? property.commercialSqm, 0),
+        year_built: toNumOr(dbFields.year_built ?? property.yearBuilt, new Date().getFullYear()),
+        ownership: (dbFields.ownership || property.ownership) || "privat",
+        parking_underground: toNumOr(dbFields.parking_underground ?? property.parkingUnderground, 0),
+        parking_stellplatz: toNumOr(dbFields.parking_stellplatz ?? property.parkingStellplatz, 0),
+        parking_garage: toNumOr(dbFields.parking_garage ?? property.parkingGarage, 0),
+        garden_sqm: toNum(dbFields.garden_sqm ?? property.gardenSqm),
+        other_rentable_notes: (dbFields.other_rentable_notes ?? property.otherRentableNotes) ?? null,
       });
       if (error) throw error;
     },
