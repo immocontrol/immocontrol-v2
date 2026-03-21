@@ -1,7 +1,7 @@
 /**
  * Settings Page-Splitting — 2FA/TOTP section extracted from Settings.tsx
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Shield, Smartphone, Copy, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,20 @@ import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const TOTP_FRIENDLY_NAME = "ImmoControl Authenticator";
+
+/** Entfernt alle TOTP-Faktoren, die noch nicht verifiziert sind (inkl. abgebrochener Einrichtung). */
+async function unenrollNonVerifiedTotpFactors(): Promise<void> {
+  const { data: existingFactors, error: listErr } = await supabase.auth.mfa.listFactors();
+  if (listErr) throw listErr;
+  if (!existingFactors?.totp?.length) return;
+  for (const factor of existingFactors.totp) {
+    if (factor.status === "verified") continue;
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    if (error) throw error;
+  }
+}
 
 interface TwoFactorSettingsProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -29,6 +43,8 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
   const [showBackupCodes, setShowBackupCodes] = useState(false);
   const [backupConfirmText, setBackupConfirmText] = useState("");
   const [backupCodesAcknowledged, setBackupCodesAcknowledged] = useState(false);
+  /** Verhindert Cleanup direkt nach erfolgreicher Verifizierung (Dialog schließt, Faktor ist aber schon verified). */
+  const justVerifiedRef = useRef(false);
 
   useEffect(() => {
     const checkTotp = async () => {
@@ -43,6 +59,34 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
     checkTotp();
   }, []);
 
+  /** Dialog geschlossen ohne Abschluss → angelegten, unverifizierten Faktor serverseitig entfernen. */
+  useEffect(() => {
+    if (totpSetupOpen || totpEnabled || !totpFactorId || justVerifiedRef.current) return;
+    let cancelled = false;
+    const factorId = totpFactorId;
+    void (async () => {
+      try {
+        const { error } = await supabase.auth.mfa.unenroll({ factorId });
+        if (error) throw error;
+        if (!cancelled) {
+          setTotpFactorId(null);
+          setTotpSecret("");
+          setTotpQrUri("");
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          console.warn("2FA: Abbruch-Cleanup fehlgeschlagen", err);
+          toast.error(
+            err instanceof Error ? err.message : "2FA konnte nicht zurückgesetzt werden. Bitte Seite neu laden und erneut versuchen.",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [totpSetupOpen, totpEnabled, totpFactorId]);
+
   const generateBackupCodes = (): string[] => {
     const codes: string[] = [];
     for (let i = 0; i < 10; i++) {
@@ -55,15 +99,18 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
   };
 
   const startTotpSetup = async () => {
+    justVerifiedRef.current = false;
     setTotpLoading(true);
     try {
-      const { data: existingFactors } = await supabase.auth.mfa.listFactors();
-      if (existingFactors?.totp) {
-        for (const factor of existingFactors.totp) {
-          if (factor.status === "unverified") await supabase.auth.mfa.unenroll({ factorId: factor.id });
-        }
+      await unenrollNonVerifiedTotpFactors();
+      let { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: TOTP_FRIENDLY_NAME });
+      /* Doppelter friendly name (z. B. nach Race oder API-Abweichung): nochmal bereinigen und einmal wiederholen. */
+      if (error?.message?.includes("already exists") || error?.message?.includes("friendly name")) {
+        await unenrollNonVerifiedTotpFactors();
+        const retry = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: TOTP_FRIENDLY_NAME });
+        data = retry.data;
+        error = retry.error;
       }
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "ImmoControl Authenticator" });
       if (error) throw error;
       if (data) { setTotpSecret(data.totp.secret); setTotpQrUri(data.totp.uri); setTotpFactorId(data.id); setTotpSetupOpen(true); }
     } catch (err: unknown) {
@@ -79,6 +126,7 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
       if (challenge.error) throw challenge.error;
       const verify = await supabase.auth.mfa.verify({ factorId: totpFactorId, challengeId: challenge.data.id, code: totpVerifyCode });
       if (verify.error) throw verify.error;
+      justVerifiedRef.current = true;
       setTotpEnabled(true); setTotpSetupOpen(false); setTotpVerifyCode("");
       const codes = generateBackupCodes();
       setBackupCodes(codes); setShowBackupCodes(true); setBackupCodesAcknowledged(false); setBackupConfirmText("");
@@ -93,6 +141,7 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
 
   const disableTotp = async () => {
     if (!totpFactorId) return;
+    justVerifiedRef.current = false;
     setTotpLoading(true);
     try {
       const { error } = await supabase.auth.mfa.unenroll({ factorId: totpFactorId });
@@ -138,7 +187,13 @@ export function TwoFactorSettings({ sectionRef }: TwoFactorSettingsProps) {
       </div>
 
       {/* TOTP Setup Dialog */}
-      <Dialog open={totpSetupOpen} onOpenChange={setTotpSetupOpen}>
+      <Dialog
+        open={totpSetupOpen}
+        onOpenChange={(open) => {
+          setTotpSetupOpen(open);
+          if (!open) setTotpVerifyCode("");
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
