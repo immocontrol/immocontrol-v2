@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Settings as SettingsIcon, User, Lock, LogOut, Sun, Moon, Monitor, Trash2, AlertTriangle, Users, Database, Keyboard, Shield, Fingerprint, MessageSquare, MonitorSmartphone, Bot, Home, Mail, Bell, Type, Eye, EyeOff, Check, Bug } from "lucide-react";
+import { PageHeader, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -489,12 +490,14 @@ const Settings = () => {
 
       {/* Main settings content — mittig zentriert; auf Desktop neben fixierter Sidebar (lg:ml-48) */}
       <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 lg:ml-48 overflow-x-hidden">
-        <div className="w-full flex justify-center">
-          <div className="flex items-center gap-2">
-            <SettingsIcon className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Einstellungen</h1>
-          </div>
-        </div>
+        <PageHeader className="flex-col items-center text-center !mb-6 md:!mb-8">
+          <PageHeaderMain className="text-center">
+            <PageHeaderTitle className="justify-center">
+              <SettingsIcon className="h-7 w-7 text-primary shrink-0" aria-hidden />
+              Einstellungen
+            </PageHeaderTitle>
+          </PageHeaderMain>
+        </PageHeader>
 
         {/* Theme */}
         <div id="erscheinungsbild" ref={refFor("erscheinungsbild")} className="gradient-card rounded-xl border border-border p-5 space-y-4 animate-fade-in scroll-mt-20">

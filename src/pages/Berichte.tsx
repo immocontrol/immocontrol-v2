@@ -20,6 +20,7 @@ import { ErtragswertRechner } from "@/components/ErtragswertRechner";
 import { EmptyState } from "@/components/EmptyState";
 import { BerichteInProsa } from "@/components/BerichteInProsa";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const Berichte = () => {
   const { properties, stats } = useProperties();
@@ -487,13 +488,12 @@ ${rows}
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto" role="main" aria-label="Berichte-Center">
-      {/* Improvement 10: Mobile responsive heading */}
-      <div>
-        {/* UPD-36: Smooth page header fade-in */}
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 page-header-enter">
-          <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Berichte-Center
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <PageHeader className="!mb-6">
+        <PageHeaderMain>
+          <PageHeaderTitle className="page-header-enter">
+            <FileBarChart className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" aria-hidden /> Berichte-Center
+          </PageHeaderTitle>
+          <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-wrap-safe">
           Miet-, Objekt- und Steuerberichte auf Knopfdruck
           {lastReportGenerated && <span className="text-[10px]">· Letzter Bericht: {lastReportGenerated}</span>}
           {reportCount > 0 && <span className="text-[10px]">({reportCount} erstellt)</span>}
@@ -510,7 +510,8 @@ ${rows}
             <ShieldAlert className="h-3.5 w-3.5" /> Stress-Test
           </Button>
         </p>
-      </div>
+        </PageHeaderMain>
+      </PageHeader>
 
       {/* Quick Summary */}
       {/* IMP-38: Make KPI cards responsive on mobile */}

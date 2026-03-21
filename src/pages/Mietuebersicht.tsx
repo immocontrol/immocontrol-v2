@@ -27,6 +27,7 @@ import { VacancyScenarios } from "@/components/VacancyScenarios";
 import { InflationMietrechner } from "@/components/InflationMietrechner";
 import { IndexMietanpassung } from "@/components/IndexMietanpassung";
 import { TablePageSkeleton } from "@/components/PageSkeleton";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const Mietuebersicht = () => {
   const { user } = useAuth();
@@ -258,10 +259,15 @@ const Mietuebersicht = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 min-w-0" role="main" aria-label="Mietübersicht">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">Mietübersicht</h1>
-          <p className="text-sm text-muted-foreground mt-1">Zahlungen, Mahnwesen und Bank-Abgleich</p>
-        </div>
+        <PageHeader className="!mb-6">
+          <PageHeaderMain>
+            <PageHeaderTitle>
+              <Receipt className="h-6 w-6 text-primary shrink-0" aria-hidden />
+              Mietübersicht
+            </PageHeaderTitle>
+            <PageHeaderDescription>Zahlungen, Mahnwesen und Bank-Abgleich</PageHeaderDescription>
+          </PageHeaderMain>
+        </PageHeader>
         <TablePageSkeleton rows={6} />
       </div>
     );
@@ -269,10 +275,14 @@ const Mietuebersicht = () => {
 
   return (
     <div className="space-y-6 min-w-0" role="main" aria-label="Mietübersicht">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Mietübersicht</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Zahlungen, Mahnwesen und Bank-Abgleich</p>
-        <div className="flex items-center gap-x-2 gap-y-2 mt-1 flex-wrap min-w-0">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Receipt className="h-6 w-6 text-primary shrink-0" aria-hidden />
+            Mietübersicht
+          </PageHeaderTitle>
+          <PageHeaderDescription>Zahlungen, Mahnwesen und Bank-Abgleich</PageHeaderDescription>
+          <div className="flex items-center gap-x-2 gap-y-2 mt-1 flex-wrap min-w-0">
           <p className="text-sm text-muted-foreground">
             {activeTenants.length} aktive Mieter · {formatCurrency(totalMonthlyRent)} Soll-Miete/Monat
             {stats.totalDue > 0 && (
@@ -306,7 +316,8 @@ const Mietuebersicht = () => {
             <Wallet className="h-3.5 w-3.5" /> Finanzierung
           </Link>
         </div>
-      </div>
+        </PageHeaderMain>
+      </PageHeader>
 
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchParams((p) => { const next = new URLSearchParams(p); if (v === "zahlungen") next.delete("tab"); else next.set("tab", v); return next; }); }} className="w-full">
         <TabsList>

@@ -20,6 +20,7 @@ import { MobileDocumentCamera, TableSkeleton } from "@/components/mobile";
 import { isDeepSeekConfigured, suggestDocumentCategory } from "@/integrations/ai/extractors";
 import { extractPdfText } from "@/lib/exposeParser";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/routes";
 import { Link } from "react-router-dom";
 import { handleError } from "@/lib/handleError";
@@ -271,23 +272,26 @@ const Dokumente = () => {
   return (
     /* IMP-14: ARIA landmark for Dokumente page */
     <div className="space-y-6 animate-fade-in min-w-0" role="main" aria-label="Dokumenten-Management">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold break-words">Dokumenten-Management</h1>
-          <p className="text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <FolderOpen className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            Dokumenten-Management
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             {documents.length} Dokumente · {formatFileSize(totalSize)} gesamt
             {extracting && <span className="ml-2 text-primary animate-pulse">Text wird extrahiert...</span>}
-          </p>
-        </div>
-        <div className="flex gap-2 shrink-0">
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions className="flex gap-2">
           <Link to={ROUTES.CONTRACTS} className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors touch-target min-h-[44px]" aria-label="Fristen und Verträge">
             <CalendarCheck className="h-3.5 w-3.5" /> Dokumentfristen & Verträge
           </Link>
           <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.FINANZIERUNG)} className="touch-target min-h-[44px] gap-2" aria-label="Finanzierungs-Cockpit">
             <Wallet className="h-4 w-4" /> Finanzierung
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Stats */}
       {/* UPD-5: Add stagger animation to document stats */}

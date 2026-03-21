@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/routes";
 import { calcBruttoRendite, calcNettoRendite } from "@/lib/calculations";
@@ -24,6 +25,15 @@ const PROPERTY_CARD_HEIGHT = 220;
 const LIST_STATE_KEY = "immocontrol_objekte_list";
 
 type SortType = "name" | "value" | "rent" | "cashflow" | "rendite" | "netto";
+
+const SORT_OPTIONS: { value: SortType; label: string }[] = [
+  { value: "name", label: "Name" },
+  { value: "value", label: "Wert" },
+  { value: "rent", label: "Miete" },
+  { value: "cashflow", label: "Cashflow" },
+  { value: "rendite", label: "Brutto-Rendite" },
+  { value: "netto", label: "Netto-Rendite" },
+];
 
 function loadListState(): { search: string; sort: SortType } {
   try {
@@ -173,19 +183,16 @@ const ObjekteList = () => {
               {filtered.length} {filtered.length === 1 ? "Treffer" : "Treffer"}
             </span>
           )}
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortType)}
-            className="h-9 rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-[border-color,box-shadow] duration-150 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary/35 min-w-[9.5rem]"
-            aria-label="Sortierung"
-          >
-            <option value="name">Name</option>
-            <option value="value">Wert</option>
-            <option value="rent">Miete</option>
-            <option value="cashflow">Cashflow</option>
-            <option value="rendite">Brutto-Rendite</option>
-            <option value="netto">Netto-Rendite</option>
-          </select>
+          <Select value={sort} onValueChange={(v) => setSort(v as SortType)}>
+            <SelectTrigger className="h-9 w-[min(100%,11rem)] min-w-[9.5rem] text-sm shadow-sm" aria-label="Sortierung">
+              <SelectValue placeholder="Sortierung" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <PropertyComparison />
           <AddPropertyDialog />
         </PageHeaderActions>

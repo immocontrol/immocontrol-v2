@@ -42,6 +42,7 @@ import { TilgungsplanSchnellrechner } from "@/components/TilgungsplanSchnellrech
 import { VirtualList } from "@/components/VirtualList";
 import { EmptyState } from "@/components/EmptyState";
 import { TablePageSkeleton } from "@/components/PageSkeleton";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const VIRTUAL_LIST_THRESHOLD = 25;
 const LOAN_ITEM_HEIGHT = 145;
@@ -511,12 +512,14 @@ const Loans = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 min-w-0" role="main" aria-label="Darlehensverwaltung">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Landmark className="h-6 w-6 text-primary shrink-0" /> Darlehen
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Kredite, Zinsbindung und Tilgung im Überblick</p>
-        </div>
+        <PageHeader className="!mb-6">
+          <PageHeaderMain>
+            <PageHeaderTitle className="heading-gradient">
+              <Landmark className="h-6 w-6 text-primary shrink-0" aria-hidden /> Darlehen
+            </PageHeaderTitle>
+            <PageHeaderDescription>Kredite, Zinsbindung und Tilgung im Überblick</PageHeaderDescription>
+          </PageHeaderMain>
+        </PageHeader>
         <TablePageSkeleton rows={5} />
       </div>
     );
@@ -524,12 +527,12 @@ const Loans = () => {
 
   return (
     <div className="space-y-6 min-w-0" role="main" aria-label="Darlehensverwaltung">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2 heading-gradient">
-            <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Darlehen
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Kredite, Zinsbindung und Tilgung im Überblick</p>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle className="heading-gradient">
+            <Landmark className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" aria-hidden /> Darlehen
+          </PageHeaderTitle>
+          <PageHeaderDescription>Kredite, Zinsbindung und Tilgung im Überblick</PageHeaderDescription>
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
             {/* OPT-10: pluralDE for correct pluralization */}
             {pluralDE(loans.length, "Darlehen", "Darlehen")} · {formatCurrency(totalBalance)} Restschuld
@@ -551,8 +554,8 @@ const Loans = () => {
               <AlertTriangle className="h-3.5 w-3.5 mr-1" /> Stress-Test
             </Button>
           </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap min-w-0 shrink-0">
+        </PageHeaderMain>
+        <PageHeaderActions className="min-w-0">
           {/* Ownership filter */}
           {["alle", "privat", "egbr"].map(f => (
             <button key={f} onClick={() => setFilterOwnership(f)}
@@ -891,8 +894,8 @@ const Loans = () => {
               </LoadingButton>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Zinsalarm: Hinweis bei hohen Zinsen oder bald endender Zinsbindung */}
       {(highRateLoans.length > 0 || maturingLoans.length > 0) && (

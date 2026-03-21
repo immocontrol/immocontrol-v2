@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -500,30 +501,33 @@ const Besichtigungen = () => {
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm min-w-0"
-            aria-label="Sortieren nach"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.key} value={o.key}>{o.label}</option>
-            ))}
-          </select>
+          <Select value={sortKey} onValueChange={(v) => setSortKey(v as typeof sortKey)}>
+            <SelectTrigger className="h-9 min-w-[8.5rem] text-sm" aria-label="Sortieren nach">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((o) => (
+                <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="ghost" size="sm" onClick={() => setSortAsc((a) => !a)} aria-label={sortAsc ? "Aufsteigend" : "Absteigend"} className="shrink-0">
             {sortAsc ? "↑" : "↓"}
           </Button>
-          <select
-            value={ratingFilter ?? "all"}
-            onChange={(e) => setRatingFilter(e.target.value === "all" ? null : Number(e.target.value))}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm min-w-0"
-            aria-label="Filter Bewertung"
+          <Select
+            value={ratingFilter === null ? "all" : String(ratingFilter)}
+            onValueChange={(v) => setRatingFilter(v === "all" ? null : Number(v))}
           >
-            <option value="all">Alle Bewertungen</option>
-            {[5, 4, 3, 2, 1].map((r) => (
-              <option key={r} value={r}>★ {r}+</option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 min-w-[10rem] text-sm" aria-label="Filter Bewertung">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Bewertungen</SelectItem>
+              {[5, 4, 3, 2, 1].map((r) => (
+                <SelectItem key={r} value={String(r)}>★ {r}+</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {(debouncedSearch.trim() || ratingFilter != null) && (
             <span className="text-xs text-muted-foreground whitespace-nowrap" aria-live="polite">
               {filteredViewings.length} {filteredViewings.length === 1 ? "Treffer" : "Treffer"}

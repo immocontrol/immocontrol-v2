@@ -43,6 +43,7 @@ import { useShare } from "@/components/mobile/MobileShareSheet";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ROUTES, dealsWithId } from "@/lib/routes";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { EmptyState } from "@/components/EmptyState";
 import { DealsSkeleton } from "@/components/mobile/MobilePageSkeletons";
@@ -667,15 +668,14 @@ const Deals = () => {
   return (
     <div className="space-y-6" role="main" aria-label="Deal Pipeline">
       <Breadcrumbs items={[{ label: "Deal Pipeline", href: ROUTES.DEALS }]} className="mb-1" />
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Deal Pipeline</h1>
-          <p className="text-muted-foreground text-sm">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>Deal Pipeline</PageHeaderTitle>
+          <PageHeaderDescription>
             {stats.active.length} aktive Deals · {fmt(stats.totalVol)} Volumen
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
           {/* UPD-36: Telegram Import button */}
           <TelegramDealImport onImportDeals={handleTelegramImport} />
           {telegramAutoImportEnabled && telegram.token && (
@@ -698,8 +698,8 @@ const Deals = () => {
           <Button size="sm" onClick={() => { if (!hasDealDraft) setForm({ ...emptyForm }); setEditDeal(null); setAddOpen(true); }} aria-label="Neuen Deal anlegen" className="touch-target min-h-[44px]">
             <Plus className="h-4 w-4 mr-1" /> Deal anlegen
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* UPD-38: Search bar */}
       <div className="relative flex items-center gap-2 flex-wrap">
@@ -730,7 +730,7 @@ const Deals = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 card-stagger-enter">
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Aktive Deals</p><p className="text-xl font-bold">{stats.active.length}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Pipeline-Volumen</p><p className="text-xl font-bold">{fmt(stats.totalVol)}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Gewonnen</p><p className="text-xl font-bold text-green-600">{stats.won.length}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Gewonnen</p><p className="text-xl font-bold tabular-nums text-profit">{stats.won.length}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Conversion</p><p className="text-xl font-bold">{stats.conversion}%</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">{"\u00d8"} Alter (Tage)</p><p className="text-xl font-bold flex items-center gap-1">{stats.avgAge}{stats.avgAge > 30 && <AlertTriangle className="h-4 w-4 text-yellow-500" />}</p></CardContent></Card>
         {stats.avgVal > 0 && <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">{"\u00d8"} Dealwert</p><p className="text-xl font-bold">{fmt(stats.avgVal)}</p></CardContent></Card>}

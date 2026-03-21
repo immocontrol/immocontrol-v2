@@ -28,6 +28,7 @@ import { DashboardWidgetGrid, DEFAULT_WIDGET_ORDER, WIDGET_LABELS, type WidgetId
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { LoadingBlock } from "@/components/ui/loading-block";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -942,7 +943,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* FUNC-11: Month-over-Month Comparison */}
       {mode === "portfolio" && properties.length > 0 && (
-        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl min-w-0" role="status" aria-label="Vergleich wird geladen" />}>
+        <Suspense fallback={<LoadingBlock className="h-32 min-h-[8rem]" aria-label="Vergleich wird geladen" />}>
           <MonthOverMonthComparison
             currentRent={stats.totalRent}
             currentCashflow={stats.totalCashflow}
@@ -955,14 +956,14 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
 
       {/* NEW-16: Mieteingangs-Tracker */}
       {mode === "portfolio" && properties.length > 0 && (
-        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl min-w-0" role="status" aria-label="Mieteingang wird geladen" />}>
+        <Suspense fallback={<LoadingBlock className="h-32 min-h-[8rem]" aria-label="Mieteingang wird geladen" />}>
           <MieteingangsTracker />
         </Suspense>
       )}
 
       {/* NEW-18: Vermögensaufbau-Timeline */}
       {mode === "portfolio" && properties.length > 0 && (
-        <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded-xl min-w-0" role="status" aria-label="Timeline wird geladen" />}>
+        <Suspense fallback={<LoadingBlock className="h-32 min-h-[8rem]" aria-label="Timeline wird geladen" />}>
           <VermoegenTimeline
             totalEquity={stats.equity}
             totalValue={stats.totalValue}

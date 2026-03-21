@@ -33,6 +33,7 @@ import GewerbeScout from "@/components/GewerbeScout";
 import { ColdOutreachTemplates } from "@/components/ColdOutreachTemplates";
 import { WidgetErrorBoundary } from "@/components/WidgetErrorBoundary";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { summarizeCallTranscript, isDeepSeekConfigured, suggestLeadNextStep } from "@/integrations/ai/extractors";
 import { CRMSkeleton } from "@/components/mobile/MobileAllPageSkeletons";
 
@@ -516,20 +517,23 @@ const CRM = () => {
 
   return (
     <div className="space-y-6 min-w-0">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight break-words">CRM & Akquise</h1>
-          <p className="text-muted-foreground text-sm">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Store className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            CRM & Akquise
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             Leads finden, kontaktieren & nachverfolgen
             {leadStats.total > 0 && (
               <span className="ml-2">
                 · {leadStats.neu} neu · {leadStats.kontaktiert} kontaktiert · {leadStats.interessiert} interessiert
               </span>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline">{leads.length} Leads</Badge>
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
+          <Badge variant="secondary" className="tabular-nums">{leads.length} Leads</Badge>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Lead anlegen</Button>
@@ -549,8 +553,8 @@ const CRM = () => {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       <Tabs value={crmTab} onValueChange={setCrmTab} className="space-y-4">
         <TabsList className="w-full sm:w-auto">

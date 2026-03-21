@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ROUTES, propertyDetail } from "@/lib/routes";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -243,17 +244,17 @@ export default function FinanzierungsCockpit() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto min-w-0 overflow-x-hidden" aria-label="Finanzierungs-Cockpit">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Wallet className="h-6 w-6 text-primary shrink-0" />
-          Finanzierungs-Cockpit
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Alle Daten an einem Ort für neue Finanzierungen. Objektübersicht, Kredite und Vermögen werden aus der App übernommen; Kontostände und Unterlagen-Checkliste kannst du hier pflegen.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 min-w-0">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Wallet className="h-6 w-6 text-primary shrink-0" aria-hidden />
+            Finanzierungs-Cockpit
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            Alle Daten an einem Ort für neue Finanzierungen. Objektübersicht, Kredite und Vermögen werden aus der App übernommen; Kontostände und Unterlagen-Checkliste kannst du hier pflegen.
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions className="flex flex-wrap gap-2 min-w-0 w-full sm:w-auto justify-end">
         <SelbstauskunftGenerator />
         <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
           <Link to={ROUTES.LOANS} className="gap-1.5">
@@ -295,7 +296,8 @@ export default function FinanzierungsCockpit() {
             <Wallet className="h-3.5 w-3.5 shrink-0" /> Bank-Abgleich
           </Link>
         </Button>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Quick-Stats: Portfolio auf einen Blick */}
       {properties.length > 0 && (

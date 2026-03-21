@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/routes";
 import { PasswordStrength } from "@/components/PasswordStrength";
+import { LoadingLine } from "@/components/ui/loading-block";
 
 const PasswordReset = () => {
   const { user, loading: authLoading, isRecoverySession, clearRecoverySession } = useAuth();
@@ -69,7 +70,12 @@ const PasswordReset = () => {
   if (authLoading || !user || !isRecoverySession) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4" role="main" aria-label="Laden">
-        <div className="animate-pulse text-muted-foreground">Laden...</div>
+        <div className="w-full max-w-xs space-y-3" role="status" aria-live="polite">
+          <LoadingLine className="h-9 w-40 mx-auto" />
+          <LoadingLine className="h-4 w-full" />
+          <LoadingLine className="h-4 w-[80%] mx-auto" />
+          <p className="text-center text-sm text-muted-foreground pt-2">Laden…</p>
+        </div>
       </div>
     );
   }

@@ -43,6 +43,7 @@ import { useSuccessAnimation, SuccessAnimation } from "@/components/SuccessAnima
 import { useHaptic } from "@/hooks/useHaptic";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { CONTACT_CATEGORIES } from "@/lib/contactCategories";
 import { ROUTES } from "@/lib/routes";
 import { isDeepSeekConfigured, suggestContactFollowUp } from "@/integrations/ai/extractors";
@@ -354,18 +355,17 @@ const ContactManagement = () => {
         contacts={contacts.map(c => ({ id: c.id, name: c.name, email: c.email, phone: c.phone, company: c.company }))}
       />
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kontakte</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>Kontakte</PageHeaderTitle>
+          <PageHeaderDescription>
             {contacts.length} Kontakte · {handworkerCount} Handwerker
             {activeAssignments > 0 && <span> · {activeAssignments} aktive Aufträge</span>}
             {totalSpent > 0 && <span> · {formatCurrency(totalSpent)} Gesamtkosten</span>}
-            {/* BUGFIX: Correct duplicate count — count groups, not flat array */}
-            {duplicateGroups.length > 0 && <span className="text-gold"> · ⚠ {duplicateGroups.length} mögliche Duplikate</span>}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+            {duplicateGroups.length > 0 && <span className="text-gold"> · mögliche Duplikate: {duplicateGroups.length}</span>}
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
           {/* vCard Export */}
           {contacts.length > 0 && (
             <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex" onClick={() => {
@@ -483,8 +483,8 @@ const ContactManagement = () => {
               </LoadingButton>
             </div>
         </ResponsiveDialog>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       <ContactCsvImport
         open={csvImportOpen}
