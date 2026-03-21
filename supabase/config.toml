@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.telegram-set-webhook]
 verify_jwt = true
+
+[functions.rss-fetch]
+verify_jwt = true

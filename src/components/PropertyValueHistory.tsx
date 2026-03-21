@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { TrendingUp, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +37,7 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({ value: 0, date: new Date().toISOString().split("T")[0], note: "" });
 
   const { data: entries = [] } = useQuery({
@@ -157,13 +162,31 @@ const PropertyValueHistory = ({ propertyId, currentValue, purchasePrice }: Prope
               <span className="text-muted-foreground">{new Date(e.date).toLocaleDateString("de-DE")}</span>
               <span className="font-medium">{formatCurrency(e.value)}</span>
               {e.note && <span className="text-muted-foreground italic truncate max-w-[120px]">{e.note}</span>}
-              <button onClick={() => deleteMutation.mutate(e.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+              <button onClick={() => setDeleteTargetId(e.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all" aria-label="Eintrag löschen">
                 <Trash2 className="h-3 w-3" />
               </button>
             </div>
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wert-Eintrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Der Eintrag in der Wertentwicklung wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); setDeleteTargetId(null); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

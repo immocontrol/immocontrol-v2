@@ -13,6 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry, toastSuccess } from "@/lib/toastMessages";
@@ -42,6 +46,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [editTenant, setEditTenant] = useState<Tenant | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     first_name: "", last_name: "", email: "", phone: "",
     unit_label: "", move_in_date: "", monthly_rent: 0, deposit: 0,
@@ -458,7 +463,7 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => { lastDeletedTenantIdRef.current = t.id; deleteMutation.mutate(t.id); }}
+                      onClick={() => setDeleteTargetId(t.id)}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -470,6 +475,30 @@ const TenantManagement = ({ propertyId, propertyName, propertyAddress, onTenants
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mieter entfernen?</AlertDialogTitle>
+            <AlertDialogDescription>Der Mieter wird unwiderruflich gelöscht. Alle zugehörigen Daten (Zahlungen, Nachrichten, etc.) bleiben erhalten, sind aber nicht mehr zugeordnet.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) {
+                  lastDeletedTenantIdRef.current = deleteTargetId;
+                  deleteMutation.mutate(deleteTargetId);
+                  setDeleteTargetId(null);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Invitation Link Dialog */}
       <Dialog open={!!inviteDialog} onOpenChange={(v) => { if (!v) setInviteDialog(null); }}>

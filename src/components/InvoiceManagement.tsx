@@ -15,6 +15,10 @@ import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toastSuccess } from "@/lib/toastMessages";
 import { useProperties } from "@/context/PropertyContext";
 import { EmptyState } from "@/components/EmptyState";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
 
 interface InvoiceRow {
@@ -49,6 +53,7 @@ const InvoiceManagement = () => {
   const { properties } = useProperties();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("alle");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     property_id: "",
     vendor_name: "",
@@ -216,7 +221,16 @@ const InvoiceManagement = () => {
       {isLoading ? (
         <div className="text-sm text-muted-foreground animate-pulse" role="status" aria-live="polite">Laden...</div>
       ) : invoices.length === 0 ? (
-        <EmptyState icon={Receipt} title="Keine Rechnungen" description="Rechnungen erfassen für bessere Übersicht" />
+        <EmptyState
+          icon={Receipt}
+          title="Keine Rechnungen"
+          description="Rechnungen erfassen für bessere Übersicht"
+          action={
+            <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Erste Rechnung erfassen
+            </Button>
+          }
+        />
       ) : (
         <div className="overflow-auto">
           <Table>
@@ -249,7 +263,7 @@ const InvoiceManagement = () => {
                           <Check className="h-3 w-3 mr-1" /> Bezahlt
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMutation.mutate(inv.id)} aria-label="Rechnung löschen">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTargetId(inv.id)} aria-label="Rechnung löschen">
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>
@@ -260,6 +274,26 @@ const InvoiceManagement = () => {
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rechnung löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Rechnung wird unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) { deleteMutation.mutate(deleteTargetId); setDeleteTargetId(null); } }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

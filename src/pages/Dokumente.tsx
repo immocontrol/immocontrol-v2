@@ -6,6 +6,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +94,7 @@ const Dokumente = () => {
   const [dragActive, setDragActive] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocEntry | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [deleteTargetDoc, setDeleteTargetDoc] = useState<DocEntry | null>(null);
   const [extracting, setExtracting] = useState(false);
 
   const { data: documents = [], isLoading } = useQuery<DocEntry[]>({
@@ -549,7 +554,7 @@ const Dokumente = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-loss"
-                      onClick={() => deleteMutation.mutate(doc)}
+                      onClick={() => setDeleteTargetDoc(doc)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -561,6 +566,26 @@ const Dokumente = () => {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetDoc} onOpenChange={(open) => { if (!open) setDeleteTargetDoc(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dokument löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetDoc ? `„${deleteTargetDoc.file_name}" wird unwiderruflich gelöscht.` : "Das Dokument wird unwiderruflich gelöscht."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetDoc) { deleteMutation.mutate(deleteTargetDoc); setDeleteTargetDoc(null); } }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* PDF Preview + OCR Text Preview Dialog */}
       <Dialog open={!!previewDoc} onOpenChange={() => { setPreviewDoc(null); if (pdfPreviewUrl) { URL.revokeObjectURL(pdfPreviewUrl); setPdfPreviewUrl(null); } }}>

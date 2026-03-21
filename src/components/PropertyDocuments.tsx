@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { FileText, Upload, Trash2, Download, FolderOpen, Image, FileSpreadsheet, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,10 @@ import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import FileImportPicker from "@/components/FileImportPicker";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/EmptyState";
 import { extractPdfText } from "@/lib/exposeParser";
 import { suggestDocumentCategory, isDeepSeekConfigured } from "@/integrations/ai/extractors";
@@ -39,6 +43,8 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState("Sonstiges");
   const [dragActive, setDragActive] = useState(false);
+  const uploadAreaRef = useRef<HTMLDivElement>(null);
+  const [deleteTargetDoc, setDeleteTargetDoc] = useState<Document | null>(null);
   const qc = useQueryClient();
 
   const { data: documents = [], isLoading: loading } = useQuery({
@@ -185,6 +191,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
       {/* Upload area with drag & drop */}
       {/* IMPROVE-18: Use FileImportPicker so mobile users can import from iCloud/Drive/etc. */}
       <div
+        ref={uploadAreaRef}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -231,6 +238,15 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
           icon={FolderOpen}
           title="Noch keine Dokumente"
           description="Lade Verträge, Abrechnungen oder Fotos hoch"
+          action={
+            <Button
+              size="sm"
+              className="gap-1.5 touch-target min-h-[44px]"
+              onClick={() => uploadAreaRef.current?.scrollIntoView({ behavior: "smooth" })}
+            >
+              <Upload className="h-3.5 w-3.5" /> Zum Upload scrollen
+            </Button>
+          }
         />
       ) : (
         <div className="space-y-2">
@@ -252,7 +268,7 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(doc)} aria-label="Dokument herunterladen">
                   <Download className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-loss" onClick={() => deleteMutation.mutate(doc)} aria-label="Dokument löschen">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-loss" onClick={() => setDeleteTargetDoc(doc)} aria-label="Dokument löschen">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -260,6 +276,28 @@ const PropertyDocuments = ({ propertyId }: { propertyId: string }) => {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetDoc} onOpenChange={(open) => { if (!open) setDeleteTargetDoc(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dokument löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetDoc
+                ? `„${deleteTargetDoc.file_name}" wird unwiderruflich gelöscht.`
+                : "Das Dokument wird unwiderruflich gelöscht."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetDoc) { deleteMutation.mutate(deleteTargetDoc); setDeleteTargetDoc(null); } }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

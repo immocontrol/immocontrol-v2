@@ -100,8 +100,8 @@ export default defineConfig(async ({ mode }) => {
       compress: { dead_code: true, drop_console: false },
       format: { comments: false },
     },
-    /* Large vendor + app bundle; splitting is manual-chunk risky (TDZ). */
-    chunkSizeWarningLimit: 900,
+    /* Large vendor + app bundle; manualChunks caused TDZ — auto chunking only. Limit raised to reduce noise. */
+    chunkSizeWarningLimit: 2500,
     rollupOptions: {
       output: {
         /* manualChunks disabled — caused "Cannot access 'd' before initialization" on Settings

@@ -55,8 +55,29 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
   const pullStarted = useRef(false);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
   const refreshingRef = useRef(false);
+  const pendingIndicatorRef = useRef<PullToRefreshIndicatorState | null>(null);
+  const indicatorRafRef = useRef<number | null>(null);
 
   const [indicator, setIndicator] = useState<PullToRefreshIndicatorState>(IDLE_INDICATOR);
+
+  const cancelIndicatorRaf = useCallback(() => {
+    if (indicatorRafRef.current !== null) {
+      cancelAnimationFrame(indicatorRafRef.current);
+      indicatorRafRef.current = null;
+    }
+    pendingIndicatorRef.current = null;
+  }, []);
+
+  const scheduleIndicatorUpdate = useCallback((next: PullToRefreshIndicatorState) => {
+    pendingIndicatorRef.current = next;
+    if (indicatorRafRef.current === null) {
+      indicatorRafRef.current = requestAnimationFrame(() => {
+        indicatorRafRef.current = null;
+        const p = pendingIndicatorRef.current;
+        if (p) setIndicator(p);
+      });
+    }
+  }, []);
 
   const getScrollTop = useCallback(() => {
     if (contentRef?.current) return contentRef.current.scrollTop;
@@ -107,6 +128,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
       pullStarted.current = false;
       atTopTouch.current = false;
       setContentTransform(0, true);
+      cancelIndicatorRaf();
       setIndicator(IDLE_INDICATOR);
       return;
     }
@@ -116,22 +138,23 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
     const opacity = distance >= INDICATOR_VISIBLE_AFTER_PX ? progress : 0;
     const translateY = Math.min(distance * 0.6, threshold * 0.6);
     const ready = diff >= threshold;
-    setIndicator({
+    scheduleIndicatorUpdate({
       opacity,
       translateY,
       progress,
       ready,
       refreshing: false,
     });
-  }, [threshold, disabled, setContentTransform]);
+  }, [threshold, disabled, setContentTransform, cancelIndicatorRaf, scheduleIndicatorUpdate]);
 
   const resetPullGesture = useCallback(() => {
     pulling.current = false;
     pullStarted.current = false;
     atTopTouch.current = false;
     setContentTransform(0, true);
+    cancelIndicatorRaf();
     setIndicator(IDLE_INDICATOR);
-  }, [setContentTransform]);
+  }, [setContentTransform, cancelIndicatorRaf]);
 
   const handleTouchEnd = useCallback(
     async (e: TouchEvent) => {
@@ -145,6 +168,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
       const diff = endY - startY.current;
 
       setContentTransform(0, true);
+      cancelIndicatorRaf();
 
       if (diff >= threshold) {
         refreshingRef.current = true;
@@ -165,7 +189,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
         setIndicator(IDLE_INDICATOR);
       }
     },
-    [onRefresh, threshold, disabled, setContentTransform],
+    [onRefresh, threshold, disabled, setContentTransform, cancelIndicatorRaf],
   );
 
   /** System cancelled gesture (call, gesture conflict) — same as abort without refresh */
@@ -187,9 +211,10 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
       document.removeEventListener("touchcancel", handleTouchCancel);
       setContentTransform(0, false);
       refreshingRef.current = false;
+      cancelIndicatorRaf();
       setIndicator(IDLE_INDICATOR);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, disabled, setContentTransform]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, disabled, setContentTransform, cancelIndicatorRaf]);
 
   return { indicatorRef, indicator };
 }

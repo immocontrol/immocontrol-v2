@@ -126,7 +126,16 @@ const DocumentExpiryTracker = ({ propertyId }: DocumentExpiryTrackerProps) => {
       </div>
 
       {docs.length === 0 ? (
-        <EmptyState icon={FileWarning} title="Keine Dokumentenfristen" description="Fristen für Ausweise, Versicherungen usw. anlegen" />
+        <EmptyState
+          icon={FileWarning}
+          title="Keine Dokumentenfristen"
+          description="Fristen für Ausweise, Versicherungen usw. anlegen"
+          action={
+            <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Erste Frist anlegen
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-2">
           {docs.map(doc => {

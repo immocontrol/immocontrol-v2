@@ -149,6 +149,59 @@ export function detectRegion(title: string, description: string): "berlin" | "br
   return "berlin";
 }
 
+/** Domains typically requiring subscription/paywall for full articles */
+const PAYWALL_DOMAINS = new Set([
+  "sueddeutsche.de", "sz.de",
+  "faz.net", "faz.com",
+  "welt.de",
+  "handelsblatt.com",
+  "manager-magazin.de",
+  "zeit.de",
+  "capital.de",
+  "spiegel.de",
+  "tagesspiegel.de",
+  "berliner-zeitung.de",
+  "morgenpost.de",
+  "wiwo.de",
+  "t-online.de",
+  "focus.de",
+  "haufe.de",
+]);
+
+/** Source names (partial match) that typically have paywall — for Google News etc. where URL is redirect */
+const PAYWALL_SOURCES = [
+  "Süddeutsche", "FAZ", "Welt", "Handelsblatt", "Manager Magazin", "Zeit",
+  "Capital", "Spiegel", "Tagesspiegel", "Berliner Zeitung", "Morgenpost",
+  "WirtschaftsWoche", "WiWo", "Focus", "Haufe",
+];
+
+/** Estimate reading time in minutes (German: ~200 words/min) */
+export function estimateReadingTime(item: { title: string; description?: string }, fullContent?: string): number {
+  const text = [item.title, item.description || "", fullContent || ""].join(" ");
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+/** Check if article URL/source typically has a paywall */
+export function hasLikelyPaywall(item: { url: string; source?: string }): boolean {
+  try {
+    const host = new URL(item.url).hostname.replace(/^www\./, "").toLowerCase();
+    const isGoogleRedirect = host.includes("google.");
+    if (!isGoogleRedirect) {
+      if (PAYWALL_DOMAINS.has(host)) return true;
+      for (const d of PAYWALL_DOMAINS) {
+        if (host === d || host.endsWith(`.${d}`)) return true;
+      }
+    }
+    if (item.source && PAYWALL_SOURCES.some((s) => item.source!.toLowerCase().includes(s.toLowerCase()))) {
+      return true;
+    }
+  } catch {
+    /* invalid URL */
+  }
+  return false;
+}
+
 /** Reject proxies that return HTML error pages */
 export function looksLikeXmlFeed(text: string): boolean {
   const head = text.trimStart().slice(0, 1200).toLowerCase();

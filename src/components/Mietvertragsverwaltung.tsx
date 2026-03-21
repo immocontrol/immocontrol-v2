@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Plus, AlertTriangle, Clock, Calendar, Bell, Trash2, TrendingUp, CheckCircle, Info } from "lucide-react";
 import { toast } from "sonner";
@@ -126,6 +130,7 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
   const { properties } = useProperties();
   const [open, setOpen] = useState(false);
   const [isAngespannt, setIsAngespannt] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     property_id: propertyId || "",
     tenant_name: "",
@@ -452,7 +457,7 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => { lastDeletedIdRef.current = c.id; deleteMutation.mutate(c.id); }}>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteTargetId(c.id)}>
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </TableCell>
@@ -463,6 +468,32 @@ export const Mietvertragsverwaltung = ({ propertyId }: MietvertragsverwaltungPro
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mietvertrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Mietvertrag wird unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) {
+                  lastDeletedIdRef.current = deleteTargetId;
+                  deleteMutation.mutate(deleteTargetId);
+                  setDeleteTargetId(null);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* MIETVERTRAG-10: §558 BGB info footer */}
       <div className="mt-4 p-3 bg-secondary/50 rounded-lg">

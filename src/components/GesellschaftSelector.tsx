@@ -12,6 +12,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 
 const DEFAULT_OPTIONS = ["Privat", "eGbR"];
@@ -31,6 +35,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<CustomCompany | null>(null);
   const [newName, setNewName] = useState("");
   const addInputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -109,15 +114,21 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
     addMutation.mutate(trimmed);
   }, [newName, allOptions, addMutation]);
 
-  const handleDelete = useCallback(
+  const handleDeleteClick = useCallback(
     (e: React.MouseEvent, company: CustomCompany) => {
       e.stopPropagation();
-      if (value === company.name) onChange("");
-      lastDeletedIdRef.current = company.id;
-      deleteMutation.mutate(company.id);
+      setDeleteTarget(company);
     },
-    [value, onChange, deleteMutation]
+    []
   );
+
+  const confirmDelete = useCallback(() => {
+    if (!deleteTarget) return;
+    if (value === deleteTarget.name) onChange("");
+    lastDeletedIdRef.current = deleteTarget.id;
+    deleteMutation.mutate(deleteTarget.id);
+    setDeleteTarget(null);
+  }, [deleteTarget, value, onChange, deleteMutation]);
 
   useEffect(() => {
     if (adding && addInputRef.current) addInputRef.current.focus();
@@ -173,7 +184,7 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
                   <button
                     type="button"
                     className="ml-2 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                    onClick={(e) => handleDelete(e, option)}
+                    onClick={(e) => handleDeleteClick(e, option)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -207,6 +218,26 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
           </div>
         </PopoverContent>
       </Popover>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gesellschaft löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget ? `„${deleteTarget.name}" wird unwiderruflich gelöscht.` : "Die Gesellschaft wird unwiderruflich gelöscht."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDelete}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );

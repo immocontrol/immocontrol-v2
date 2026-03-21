@@ -6,10 +6,11 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Newspaper, ExternalLink, RefreshCw, Filter, Search, Clock, MapPin, Tag,
   ChevronDown, AlertCircle, Globe, Bookmark, BookmarkCheck,
-  Share2, TrendingUp, LayoutGrid, List, BarChart3, Flame,
+  Share2, TrendingUp, LayoutGrid, List, BarChart3,   Flame, Archive, Loader2, Lock, LockOpen, Download, WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import { handleError } from "@/lib/handleError";
@@ -30,8 +31,26 @@ import {
   SENTIMENT_CONFIG,
   detectCity,
   relativeTimeDE,
+  hasLikelyPaywall,
+  estimateReadingTime,
 } from "./newsticker/newsUtils";
 import { fetchAllRssNews, RSS_FEEDS } from "./newsticker/newsFetch";
+import {
+  getNewsNotificationKeywords,
+  setNewsNotificationKeywords,
+  checkAndNotifyNewsKeywords,
+} from "./newsticker/newsNotificationKeywords";
+import {
+  loadArchived,
+  loadArchivedAsync,
+  archiveItem,
+  archiveWithFullText,
+  downloadBlob,
+  removeFromArchive,
+  exportArchiveAsJson,
+  exportArchiveAsCsv,
+  type ArchivedNewsItem,
+} from "./newsticker/newsArchive";
 
 /* ─── Bookmarks persistence ─── */
 const BOOKMARKS_KEY = "immocontrol_news_bookmarks";
@@ -79,6 +98,9 @@ const Newsticker = () => {
   const fetchAllNews = useCallback(async (isRefresh = false) => {
     try {
       const result = await refetch();
+      if (result.data && result.data.length > 0) {
+        checkAndNotifyNewsKeywords(result.data);
+      }
       if (isRefresh && result.data) {
         toast.success(`${result.data.length} Nachrichten aus ${RSS_FEEDS.length} Quellen aktualisiert`);
       }
@@ -94,15 +116,37 @@ const Newsticker = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedSentiment, setSelectedSentiment] = useState<string>("all");
+  const [selectedPaywall, setSelectedPaywall] = useState<"all" | "free" | "paywall">("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [isOffline, setIsOffline] = useState(() => !navigator.onLine);
+  const [notifyKeywords, setNotifyKeywords] = useState<string[]>(getNewsNotificationKeywords);
+  const [newKeyword, setNewKeyword] = useState("");
   const [displayCount, setDisplayCount] = useState(20);
   const [bookmarks, setBookmarks] = useState<Set<string>>(loadBookmarks);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [archived, setArchived] = useState<ArchivedNewsItem[]>(loadArchived);
+
+  useEffect(() => {
+    loadArchivedAsync().then(setArchived);
+  }, []);
+  const [showArchivedOnly, setShowArchivedOnly] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "compact">(
     () => (localStorage.getItem(VIEW_MODE_KEY) as "cards" | "compact") || "cards"
   );
 
   useEffect(() => { document.title = "Newsticker – ImmoControl"; }, []);
+
+  useEffect(() => {
+    const onOffline = () => setIsOffline(true);
+    const onOnline = () => setIsOffline(false);
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
 
   /* Auto-refresh every 10 minutes */
   useEffect(() => {
@@ -128,6 +172,45 @@ const Newsticker = () => {
     });
   }, []);
 
+  /* Archive article (with optional full-text fetch + PDF/HTML download) */
+  const handleArchive = useCallback(async (item: NewsItem) => {
+    setArchivingId(item.id);
+    try {
+      const { archived: entry, pdfBlob, htmlContent } = await archiveWithFullText(item);
+      setArchived(loadArchived());
+
+      const safeTitle = item.title.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, "").slice(0, 50).trim();
+      const dateStr = new Date().toISOString().split("T")[0];
+
+      if (pdfBlob) {
+        downloadBlob(pdfBlob, `Artikel_${safeTitle}_${dateStr}.pdf`);
+        toast.success("Archiviert inkl. Volltext als PDF gespeichert");
+      }
+      if (htmlContent) {
+        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+        downloadBlob(blob, `Artikel_${safeTitle}_${dateStr}.html`);
+        if (!pdfBlob) toast.success("Archiviert inkl. Volltext als HTML gespeichert");
+      }
+      if (!pdfBlob && !htmlContent) {
+        toast.success("Artikel archiviert (Volltext nicht verfügbar, z. B. Paywall)");
+      }
+    } catch (e) {
+      handleError(e, { context: "archive", showToast: false });
+      archiveItem(item);
+      setArchived(loadArchived());
+      toast.success("Artikel archiviert");
+    } finally {
+      setArchivingId(null);
+    }
+  }, []);
+
+  /* Remove from archive */
+  const handleUnarchive = useCallback((id: string) => {
+    removeFromArchive(id);
+    setArchived(loadArchived());
+    toast("Aus Archiv entfernt");
+  }, []);
+
   /* Share article */
   const shareArticle = useCallback(async (item: NewsItem) => {
     const text = `${item.title}\n${item.url}`;
@@ -149,6 +232,24 @@ const Newsticker = () => {
 
   /* Filter and search */
   const filteredNews = useMemo(() => {
+    if (showArchivedOnly) {
+      let result = [...archived]
+        .sort((a, b) => new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime())
+        .map((a) => a.item);
+      if (debouncedSearch) {
+        const q = debouncedSearch.toLowerCase();
+        result = archived
+          .filter(
+            (a) =>
+              a.item.title.toLowerCase().includes(q) ||
+              a.item.description.toLowerCase().includes(q) ||
+              a.item.source.toLowerCase().includes(q) ||
+              (a.fullContent && a.fullContent.toLowerCase().includes(q))
+          )
+          .map((a) => a.item);
+      }
+      return result;
+    }
     let result = [...news];
     if (showBookmarksOnly) result = result.filter(n => bookmarks.has(n.id));
     if (debouncedSearch) {
@@ -168,8 +269,11 @@ const Newsticker = () => {
       });
     }
     if (selectedSentiment !== "all") result = result.filter(n => n.sentiment === selectedSentiment);
+    if (selectedPaywall !== "all") {
+      result = result.filter(n => (selectedPaywall === "free" && !hasLikelyPaywall(n)) || (selectedPaywall === "paywall" && hasLikelyPaywall(n)));
+    }
     return result;
-  }, [news, debouncedSearch, selectedCategories, selectedRegion, selectedCity, selectedSentiment, showBookmarksOnly, bookmarks]);
+  }, [news, debouncedSearch, selectedCategories, selectedRegion, selectedCity, selectedSentiment, selectedPaywall, showBookmarksOnly, bookmarks, showArchivedOnly, archived]);
 
   const displayedNews = useMemo(() => filteredNews.slice(0, displayCount), [filteredNews, displayCount]);
 
@@ -219,6 +323,21 @@ const Newsticker = () => {
       .slice(0, 8)
       .map(([word, count]) => ({ word, count }));
   }, [news]);
+
+  const trendingWords = useMemo(() => {
+    return new Set(trendingTopics.filter((x) => x.count >= 2).map((x) => x.word.toLowerCase()));
+  }, [trendingTopics]);
+
+  const archivedFullContentMap = useMemo(() => {
+    const m = new Map<string, string>();
+    archived.forEach((a) => { if (a.fullContent) m.set(a.id, a.fullContent); });
+    return m;
+  }, [archived]);
+
+  const isTrending = useCallback((item: NewsItem) => {
+    const text = `${item.title} ${item.description}`.toLowerCase();
+    return [...trendingWords].some((w) => text.includes(w));
+  }, [trendingWords]);
 
   /* Today's activity */
   const todayStats = useMemo(() => {
@@ -308,13 +427,27 @@ const Newsticker = () => {
             variant={showBookmarksOnly ? "default" : "outline"}
             size="sm"
             className="gap-1.5"
-            onClick={() => { setShowBookmarksOnly(!showBookmarksOnly); setDisplayCount(20); }}
+            onClick={() => { setShowBookmarksOnly(!showBookmarksOnly); setShowArchivedOnly(false); setDisplayCount(20); }}
           >
             <BookmarkCheck className="h-3.5 w-3.5" />
             Merkliste
             {bookmarks.size > 0 && (
               <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px]">
                 {bookmarks.size}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant={showArchivedOnly ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => { setShowArchivedOnly(!showArchivedOnly); setShowBookmarksOnly(false); setDisplayCount(20); }}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archiv
+            {archived.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px]">
+                {archived.length}
               </span>
             )}
           </Button>
@@ -330,9 +463,9 @@ const Newsticker = () => {
           >
             <Filter className="h-3.5 w-3.5" />
             Filter
-            {(selectedCategories.size > 0 || selectedSentiment !== "all") && (
+            {(selectedCategories.size > 0 || selectedSentiment !== "all" || selectedPaywall !== "all") && (
               <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px]">
-                {selectedCategories.size + (selectedSentiment !== "all" ? 1 : 0)}
+                {selectedCategories.size + (selectedSentiment !== "all" ? 1 : 0) + (selectedPaywall !== "all" ? 1 : 0)}
               </span>
             )}
           </Button>
@@ -349,8 +482,28 @@ const Newsticker = () => {
         </PageHeaderActions>
       </PageHeader>
 
+      {/* Offline hint */}
+      {isOffline && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400">
+          <WifiOff className="h-5 w-5 shrink-0" />
+          <p className="text-sm">Du bist offline. Nachrichten können erst geladen werden, wenn die Verbindung steht.</p>
+        </div>
+      )}
+
+      {/* Archiv export when viewing archive */}
+      {showArchivedOnly && archived.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportArchiveAsJson}>
+            <Download className="h-3.5 w-3.5" /> Als JSON exportieren
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportArchiveAsCsv}>
+            <Download className="h-3.5 w-3.5" /> Als CSV exportieren
+          </Button>
+        </div>
+      )}
+
       {/* Dashboard cards */}
-      {news.length > 0 && !showBookmarksOnly && (
+      {news.length > 0 && !showBookmarksOnly && !showArchivedOnly && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Sentiment card */}
           <div className="gradient-card rounded-xl border border-border p-4">
@@ -543,6 +696,28 @@ const Newsticker = () => {
             </div>
           </div>
 
+          {/* Paywall filter */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5" /> Zugang
+            </p>
+            <div className="flex gap-1.5">
+              {(["all", "free", "paywall"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => { setSelectedPaywall(p); setDisplayCount(20); }}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium flex items-center gap-1 transition-all ${
+                    selectedPaywall === p ? "bg-primary/10 text-primary ring-1 ring-primary/30" : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {p === "all" && "Alle"}
+                  {p === "free" && <><LockOpen className="h-3 w-3" /> Nur frei</>}
+                  {p === "paywall" && <><Lock className="h-3 w-3" /> Nur Paywall</>}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Sentiment filter */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
@@ -584,13 +759,76 @@ const Newsticker = () => {
             </div>
           </div>
 
+          {/* Notification keywords */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Flame className="h-3.5 w-3.5" /> Benachrichtigungen für Schlagwörter
+            </p>
+            <p className="text-[10px] text-muted-foreground mb-1.5">
+              Bei neuen Artikeln mit diesen Begriffen erhältst du eine Benachrichtigung (max. 1/Tag).
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-1.5">
+              {notifyKeywords.map((kw) => (
+                <span
+                  key={kw}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px]"
+                >
+                  {kw}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = notifyKeywords.filter((k) => k !== kw);
+                      setNotifyKeywords(next);
+                      setNewsNotificationKeywords(next);
+                    }}
+                    className="hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-1.5">
+              <Input
+                placeholder="z. B. Mietendeckel, Zins"
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newKeyword.trim()) {
+                    const next = [...notifyKeywords, newKeyword.trim()].filter((k, i, a) => a.indexOf(k) === i);
+                    setNotifyKeywords(next);
+                    setNewsNotificationKeywords(next);
+                    setNewKeyword("");
+                  }
+                }}
+                className="h-8 text-sm flex-1"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8"
+                onClick={() => {
+                  if (newKeyword.trim()) {
+                    const next = [...notifyKeywords, newKeyword.trim()].filter((k, i, a) => a.indexOf(k) === i);
+                    setNotifyKeywords(next);
+                    setNewsNotificationKeywords(next);
+                    setNewKeyword("");
+                  }
+                }}
+              >
+                Hinzufügen
+              </Button>
+            </div>
+          </div>
+
           {/* Reset filters */}
-          {(selectedCategories.size > 0 || selectedSentiment !== "all" || selectedRegion !== "all" || selectedCity !== "all") && (
+          {(selectedCategories.size > 0 || selectedSentiment !== "all" || selectedPaywall !== "all" || selectedRegion !== "all" || selectedCity !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               className="text-xs"
-              onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedRegion("all"); setSelectedCity("all"); }}
+              onClick={() => { setSelectedCategories(new Set()); setSelectedSentiment("all"); setSelectedPaywall("all"); setSelectedRegion("all"); setSelectedCity("all"); }}
             >
               Alle Filter zurücksetzen
             </Button>
@@ -599,10 +837,11 @@ const Newsticker = () => {
       )}
 
       {/* Results count */}
-      {(debouncedSearch || selectedCategories.size > 0 || selectedRegion !== "all" || selectedCity !== "all" || selectedSentiment !== "all" || showBookmarksOnly) && (
+      {(debouncedSearch || selectedCategories.size > 0 || selectedRegion !== "all" || selectedCity !== "all" || selectedSentiment !== "all" || selectedPaywall !== "all" || showBookmarksOnly || showArchivedOnly) && (
         <p className="text-xs text-muted-foreground">
-          {filteredNews.length} von {news.length} Nachrichten
+          {filteredNews.length} von {showArchivedOnly ? archived.length : news.length} Nachrichten
           {showBookmarksOnly && " (nur Lesezeichen)"}
+          {showArchivedOnly && " (Archiv)"}
         </p>
       )}
 
@@ -611,18 +850,22 @@ const Newsticker = () => {
         <div className="text-center py-16 px-4 rounded-xl border border-dashed border-border bg-muted/20">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" aria-hidden />
           <p className="text-sm font-medium text-foreground mb-1">
-            {showBookmarksOnly
-              ? "Keine Lesezeichen vorhanden"
-              : news.length === 0
-                ? "Nachrichten konnten nicht geladen werden"
-                : "Keine Treffer für die gewählten Filter"}
+            {showArchivedOnly
+              ? "Keine archivierten Artikel"
+              : showBookmarksOnly
+                ? "Keine Lesezeichen vorhanden"
+                : news.length === 0
+                  ? "Nachrichten konnten nicht geladen werden"
+                  : "Keine Treffer für die gewählten Filter"}
           </p>
           <p className="text-xs text-muted-foreground mb-4 max-w-sm mx-auto text-pretty">
-            {showBookmarksOnly
-              ? "Speichere Artikel über das Lesezeichen-Symbol, um sie hier wiederzufinden."
-              : news.length === 0
-                ? "Die Quellen werden über CORS-Proxies geladen. Bitte erneut versuchen oder die Seite später aktualisieren."
-                : "Kategorien, Region oder Stimmung anpassen oder Suchbegriff ändern."}
+            {showArchivedOnly
+              ? "Archiviere Artikel über das Archiv-Symbol. Bei paywall-freien Artikeln wird automatisch Volltext als PDF und HTML gespeichert."
+              : showBookmarksOnly
+                ? "Speichere Artikel über das Lesezeichen-Symbol, um sie hier wiederzufinden."
+                : news.length === 0
+                  ? "Die Quellen werden über CORS-Proxies geladen. Bitte erneut versuchen oder die Seite später aktualisieren."
+                  : "Kategorien, Region oder Stimmung anpassen oder Suchbegriff ändern."}
           </p>
           {news.length === 0 && !showBookmarksOnly && (
             <Button variant="default" size="sm" className="gap-2" onClick={() => fetchAllNews(true)} disabled={refreshing}>
@@ -649,6 +892,18 @@ const Newsticker = () => {
                 <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium ${CATEGORY_COLORS[item.category]}`}>
                   {CATEGORY_LABELS[item.category]}
                 </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="shrink-0 flex items-center" aria-hidden>
+                      {hasLikelyPaywall(item)
+                        ? <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" aria-label="Wahrscheinlich Paywall" />
+                        : <LockOpen className="h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-label="Wahrscheinlich frei" />}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    {hasLikelyPaywall(item) ? "Wahrscheinlich Paywall (Abo nötig)" : "Wahrscheinlich frei zugänglich"}
+                  </TooltipContent>
+                </Tooltip>
                 <a
                   href={item.url}
                   target="_blank"
@@ -664,6 +919,14 @@ const Newsticker = () => {
                 <span className="text-[10px] text-muted-foreground shrink-0 hidden sm:inline">
                   {relativeTimeDE(item.publishedAt)}
                 </span>
+                <span className="text-[10px] text-muted-foreground shrink-0 hidden md:inline">
+                  ca. {estimateReadingTime(item, archivedFullContentMap.get(item.id))} Min.
+                </span>
+                {isTrending(item) && (
+                  <span className="shrink-0 px-1 py-0.5 rounded text-[9px] font-medium bg-orange-500/15 text-orange-600 dark:text-orange-400">
+                    <Flame className="h-2.5 w-2.5 inline" /> Trend
+                  </span>
+                )}
                 <button
                   onClick={() => toggleBookmark(item.id)}
                   className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -680,6 +943,28 @@ const Newsticker = () => {
                 >
                   <Share2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
                 </button>
+                {!showArchivedOnly && (
+                  <button
+                    onClick={() => handleArchive(item)}
+                    disabled={archivingId === item.id}
+                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 mobile-action-row"
+                    aria-label="Archivieren"
+                    title="Artikel archivieren (Volltext als PDF/HTML wenn verfügbar)"
+                  >
+                    {archivingId === item.id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      : <Archive className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />}
+                  </button>
+                )}
+                {showArchivedOnly && (
+                  <button
+                    onClick={() => handleUnarchive(item.id)}
+                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mobile-action-row"
+                    aria-label="Aus Archiv entfernen"
+                  >
+                    <Archive className="h-3.5 w-3.5 text-primary" />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -711,6 +996,26 @@ const Newsticker = () => {
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                         <MapPin className="h-2.5 w-2.5" />
                         {REGION_LABELS[item.region]}
+                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-secondary/80">
+                            {hasLikelyPaywall(item)
+                              ? <><Lock className="h-2.5 w-2.5 text-amber-600 dark:text-amber-400" /> Paywall</>
+                              : <><LockOpen className="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" /> Frei</>}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {hasLikelyPaywall(item) ? "Wahrscheinlich Paywall (Abo nötig)" : "Wahrscheinlich frei zugänglich"}
+                        </TooltipContent>
+                      </Tooltip>
+                      {isTrending(item) && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/15 text-orange-600 dark:text-orange-400 flex items-center gap-0.5">
+                          <Flame className="h-2.5 w-2.5" /> Trend
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground">
+                        ca. {estimateReadingTime(item, archivedFullContentMap.get(item.id))} Min.
                       </span>
                     </div>
                     {/* Title */}
@@ -751,6 +1056,28 @@ const Newsticker = () => {
                       >
                         <Share2 className="h-3 w-3 hover:text-primary" />
                       </button>
+                      {!showArchivedOnly && (
+                        <button
+                          onClick={() => handleArchive(item)}
+                          disabled={archivingId === item.id}
+                          className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 mobile-action-row"
+                          aria-label="Archivieren"
+                          title="Archivieren (Volltext als PDF/HTML wenn verfügbar)"
+                        >
+                          {archivingId === item.id
+                            ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            : <Archive className="h-3 w-3 hover:text-primary" />}
+                        </button>
+                      )}
+                      {showArchivedOnly && (
+                        <button
+                          onClick={() => handleUnarchive(item.id)}
+                          className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mobile-action-row"
+                          aria-label="Aus Archiv entfernen"
+                        >
+                          <Archive className="h-3 w-3 text-primary" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   {/* Image */}

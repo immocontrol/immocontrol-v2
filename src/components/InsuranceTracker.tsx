@@ -6,6 +6,10 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
@@ -40,6 +44,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     type: "Gebäudeversicherung", provider: "", annual_premium: 0,
     renewal_date: "", policy_number: "", notes: "",
@@ -197,7 +202,7 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
                     {ins.policy_number && <span>Nr: {ins.policy_number}</span>}
                   </div>
                 </div>
-                <button onClick={() => { lastDeletedInsuranceIdRef.current = ins.id; deleteMutation.mutate(ins.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 touch-target min-h-[44px] sm:min-h-0" aria-label="Versicherung löschen">
+                <button onClick={() => setDeleteTargetId(ins.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0 touch-target min-h-[44px] sm:min-h-0" aria-label="Versicherung löschen">
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
@@ -205,6 +210,30 @@ const InsuranceTracker = ({ propertyId }: InsuranceTrackerProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Versicherung löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Die Versicherung wird unwiderruflich entfernt.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) {
+                  lastDeletedInsuranceIdRef.current = deleteTargetId;
+                  deleteMutation.mutate(deleteTargetId);
+                  setDeleteTargetId(null);
+                }
+              }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

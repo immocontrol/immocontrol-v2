@@ -201,7 +201,16 @@ const ServiceContracts = ({ propertyId }: ServiceContractsProps) => {
       {isLoading ? (
         <div className="text-sm text-muted-foreground animate-pulse" role="status" aria-live="polite">Laden...</div>
       ) : contracts.length === 0 ? (
-        <EmptyState icon={Wrench} title="Keine Dienstleisterverträge" description="Verträge für Wartung, Reinigung oder Hausverwaltung anlegen" />
+        <EmptyState
+          icon={Wrench}
+          title="Keine Dienstleisterverträge"
+          description="Verträge für Wartung, Reinigung oder Hausverwaltung anlegen"
+          action={
+            <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Ersten Vertrag anlegen
+            </Button>
+          }
+        />
       ) : (
         <div className="overflow-auto">
           <Table>

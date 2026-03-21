@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { fromTable } from "@/lib/typedSupabase";
@@ -78,6 +82,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(INITIAL_FORM);
   const goalReachedToastRef = useRef<Set<string>>(new Set());
@@ -374,7 +379,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground">{pct.toFixed(0)}%</span>
-                    <button onClick={() => deleteMutation.mutate(g.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                    <button onClick={() => setDeleteTargetId(g.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
@@ -412,6 +417,26 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ziel löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Das Portfolio-Ziel wird unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) { deleteMutation.mutate(deleteTargetId); setDeleteTargetId(null); } }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
