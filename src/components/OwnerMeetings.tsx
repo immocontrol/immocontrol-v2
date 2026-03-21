@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SettingsToggleRow } from "@/components/ui/settings-toggle-row";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -54,6 +55,7 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
   const { properties } = useProperties();
   const [open, setOpen] = useState(false);
   const [resOpen, setResOpen] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState({
     property_id: propertyId || "",
     title: "",
@@ -245,7 +247,7 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
                           Absagen
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" className="text-loss" onClick={() => deleteMeeting.mutate(m.id)}>
+                      <Button size="sm" variant="ghost" className="text-loss" onClick={() => setDeleteTargetId(m.id)}>
                         <Trash2 className="h-3.5 w-3.5 mr-1" /> Löschen
                       </Button>
                     </div>
@@ -317,6 +319,28 @@ const OwnerMeetings = ({ propertyId }: OwnerMeetingsProps) => {
           })}
         </Accordion>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Versammlung löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetId && meetings.find((m: MeetingRow) => m.id === deleteTargetId)
+                ? `„${(meetings.find((m: MeetingRow) => m.id === deleteTargetId) as MeetingRow)?.title}" und alle zugehörigen Beschlüsse werden unwiderruflich gelöscht.`
+                : "Die Versammlung und alle zugehörigen Beschlüsse werden unwiderruflich gelöscht."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) { deleteMeeting.mutate(deleteTargetId); setDeleteTargetId(null); } }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

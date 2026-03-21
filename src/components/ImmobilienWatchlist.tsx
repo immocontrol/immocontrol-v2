@@ -10,6 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
 import { toast } from "sonner";
@@ -33,6 +37,7 @@ const ImmobilienWatchlist = memo(() => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const { data: items = [], isLoading } = useQuery({
@@ -147,7 +152,7 @@ const ImmobilienWatchlist = memo(() => {
                     <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                   </a>
                 )}
-                <button onClick={() => removeItem.mutate(item.id)} className="p-1 rounded hover:bg-destructive/10 transition-colors">
+                <button onClick={() => setDeleteTargetId(item.id)} className="p-1 rounded hover:bg-destructive/10 transition-colors" aria-label={`${item.title} von Watchlist entfernen`}>
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-loss" />
                 </button>
               </div>
@@ -168,6 +173,28 @@ const ImmobilienWatchlist = memo(() => {
           </div>
         ))}
       </div>
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Von Watchlist entfernen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetId && items.find(i => i.id === deleteTargetId)
+                ? `„${items.find(i => i.id === deleteTargetId)?.title}" wird von der Watchlist entfernt.`
+                : "Dieser Eintrag wird von der Watchlist entfernt."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteTargetId) { removeItem.mutate(deleteTargetId); setDeleteTargetId(null); } }}
+            >
+              Entfernen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 });
