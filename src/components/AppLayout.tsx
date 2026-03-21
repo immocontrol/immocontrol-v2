@@ -533,7 +533,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         className="sticky top-0 z-[150] border-b border-border/70 bg-background/85 backdrop-blur-xl glass-header page-header overflow-visible md:pt-0 shadow-[0_1px_0_hsl(var(--border)/0.5)]"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        <div className="container flex h-14 items-center justify-between gap-2 min-w-0 overflow-hidden">
+        <div className="container flex h-14 items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-3 min-w-0 shrink-0">
             <Link to={ROUTES.HOME} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0" aria-label="ImmoControl Home">
               <Building2 className="h-6 w-6 text-primary" />
@@ -542,8 +542,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             </Link>
             {breadcrumb}
           </div>
-          <div className="flex items-center gap-1 min-w-0 flex-1 justify-end overflow-hidden">
-            <div className="hidden md:block min-w-0 flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin" aria-label="Navigation scrollbar">
+          <div className="flex items-center gap-1 min-w-0 flex-1 justify-end">
+            <div className="hidden md:block min-w-0 flex-1 overflow-x-auto scrollbar-thin" aria-label="Navigation scrollbar">
               <nav ref={desktopNavRef} data-testid="sidebar" className="flex items-center gap-0.5 relative flex-nowrap py-1" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navEntries.map((entry) => {
                 if (isGroup(entry)) {
@@ -634,15 +634,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2 xl:px-2.5 text-muted-foreground hover:text-foreground shrink-0"
                     onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
                     aria-label="Schnellsuche öffnen (Strg+K)"
                   >
                     <Command className="h-4 w-4" />
+                    <span className="hidden xl:inline text-xs font-medium">Strg+K</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Schnellsuche (Strg+K)</TooltipContent>
+                <TooltipContent side="bottom" className="text-xs">Schnellsuche öffnen (Strg+K / ⌘K)</TooltipContent>
               </Tooltip>
               <GlobalSearch />
               <GamificationNavChip />

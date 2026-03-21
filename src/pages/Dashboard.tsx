@@ -615,11 +615,27 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           <p className={`text-lg font-bold ${portfolioMetrics.cashOnCashReturn >= 5 ? "text-profit" : portfolioMetrics.cashOnCashReturn >= 3 ? "text-gold" : "text-muted-foreground"}`}>{portfolioMetrics.cashOnCashReturn.toFixed(1)}%</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahresmiete</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
+            Jahresmiete
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help" aria-label="Hilfe zu Jahresmiete"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">Kaltmieten aller Objekte × 12 Monate. Brutto-Einnahmen ohne Nebenkosten.</TooltipContent>
+            </Tooltip>
+          </p>
           <p className="text-lg font-bold currency-display">{formatCurrency(annualIncome)}</p>
         </div>
         <div className="gradient-card rounded-xl border border-border p-3 text-center card-accent-shadow">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Jahres-Cashflow</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-1">
+            Jahres-Cashflow
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help" aria-label="Hilfe zu Jahres-Cashflow"><Info className="h-3 w-3 text-muted-foreground/70" /></span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">Monatlicher Cashflow × 12. Frei verfügbare Liquidität nach Miete, Kosten und Kreditrate.</TooltipContent>
+            </Tooltip>
+          </p>
           <p className={`text-lg font-bold currency-display ${annualCashflow >= 0 ? "text-profit" : "text-loss"}`}>{formatCurrency(annualCashflow)}</p>
         </div>
       </div>

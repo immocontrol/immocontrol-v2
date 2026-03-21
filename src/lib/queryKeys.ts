@@ -131,6 +131,10 @@ export const queryKeys = {
   statsSnapshots: {
     all: (userId: string) => ["user_stats_snapshots", userId] as const,
   },
+  /* Gamification: Portfolio-Ziele */
+  portfolioGoals: {
+    all: ["portfolio_goals"] as const,
+  },
   /* Gamification: Login-Streak */
   userActivity: {
     byUser: (userId: string) => ["user_activity", userId] as const,

@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { cn } from "@/lib/utils";
@@ -46,6 +50,7 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
   const qc = useQueryClient();
   const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const isMobile = useIsMobile();
   useKeyboardAwareScroll({ enabled: isMobile && open, offset: 80 });
   const [step, setStep] = useState(0);
@@ -118,9 +123,27 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
     setHighlightFields([]);
   }, []);
 
+  const isFormDirty =
+    !!form.property_id || !!form.bank_name || form.loan_amount > 0 || !!form.notes?.trim() ||
+    !!form.start_date || !!form.end_date || !!form.fixed_interest_until || form.tilgungsfreie_monate > 0 ||
+    form.remaining_balance > 0 || form.interest_rate > 0 || form.repayment_rate > 0 || form.monthly_payment > 0;
+
   const handleOpenChange = useCallback((v: boolean) => {
-    setOpen(v);
-    if (!v) resetForm();
+    if (v) {
+      setOpen(true);
+      setShowCloseConfirm(false);
+    } else if (isFormDirty) {
+      setShowCloseConfirm(true);
+    } else {
+      setOpen(false);
+      resetForm();
+    }
+  }, [resetForm, isFormDirty]);
+
+  const handleConfirmClose = useCallback(() => {
+    setOpen(false);
+    resetForm();
+    setShowCloseConfirm(false);
   }, [resetForm]);
 
   useFocusFirstInput(open, contentRef);
@@ -424,6 +447,20 @@ const AddLoanDialog = ({ onCreated }: AddLoanDialogProps) => {
           )}
         </div>
       </DialogContent>
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Formular schließen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Es sind noch Eingaben im Formular. Beim Schließen gehen diese verloren. Wirklich schließen?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose}>Ja, schließen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

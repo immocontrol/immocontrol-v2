@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { Target, Plus, Trash2, Check, ChevronRight, ChevronLeft } from "lucide-react";
+import { Target, Plus, Trash2, Check, ChevronRight, ChevronLeft, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { fireConfetti } from "@/lib/confetti";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,14 @@ import {
 import { toastSuccess } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { fromTable } from "@/lib/typedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 
 const SMART_STEPS = [
   { key: "s", label: "Spezifisch", short: "S" },
@@ -92,6 +94,8 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<Goal | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", target: 0, deadline: "", reason: "" });
   const [showShortGoalConfirm, setShowShortGoalConfirm] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [step, setStep] = useState(1);
@@ -117,7 +121,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
   );
 
   const { data: goals = [] } = useQuery({
-    queryKey: ["portfolio_goals"],
+    queryKey: queryKeys.portfolioGoals.all,
     queryFn: async () => {
       const { data } = await fromTable("portfolio_goals").select("*").order("created_at");
       return (data || []) as unknown as Goal[];
@@ -193,7 +197,7 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
       setForm(INITIAL_FORM);
       setStep(1);
       setOpen(false);
-      qc.invalidateQueries({ queryKey: ["portfolio_goals"] });
+      qc.invalidateQueries({ queryKey: queryKeys.portfolioGoals.all });
     },
     onError: (err) => handleError(err, { context: "supabase", toastMessage: "Fehler beim Speichern" }),
   });
@@ -216,7 +220,20 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => { await fromTable("portfolio_goals").delete().eq("id", id); },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["portfolio_goals"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.portfolioGoals.all }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { title?: string; target?: number; deadline?: string | null; reason?: string | null } }) => {
+      const { error } = await fromTable("portfolio_goals").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toastSuccess("Ziel aktualisiert");
+      setEditTarget(null);
+      qc.invalidateQueries({ queryKey: queryKeys.portfolioGoals.all });
+    },
+    onError: (err) => handleError(err, { context: "supabase", toastMessage: "Fehler beim Speichern" }),
   });
 
   return (
@@ -393,7 +410,18 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
       </div>
 
       {goals.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-4">Noch keine Ziele gesetzt</p>
+        <div className="py-6">
+          <EmptyState
+            icon={Target}
+            title="Noch keine Ziele gesetzt"
+            description="Setze dir SMART-Ziele für Portfoliowert, Cashflow oder Einheiten – mit Deadline und Fortschrittsanzeige."
+            action={
+              <Button size="sm" className="gap-1.5 touch-target min-h-[44px]" onClick={() => setOpen(true)}>
+                <Plus className="h-3.5 w-3.5" /> Erstes Ziel anlegen
+              </Button>
+            }
+          />
+        </div>
       ) : (
         <div className="space-y-3">
           {goals.map(g => {
@@ -414,7 +442,10 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground">{pct.toFixed(0)}%</span>
-                    <button onClick={() => setDeleteTargetId(g.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                    <button onClick={() => { setEditTarget(g); setEditForm({ title: g.title, target: g.target, deadline: g.deadline || "", reason: g.reason || "" }); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-all" aria-label="Ziel bearbeiten">
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button onClick={() => setDeleteTargetId(g.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all" aria-label="Ziel löschen">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
@@ -452,6 +483,56 @@ const PortfolioGoals = ({ currentStats }: PortfolioGoalsProps) => {
           })}
         </div>
       )}
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) { setEditTarget(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Ziel bearbeiten</DialogTitle>
+          </DialogHeader>
+          {editTarget && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Bezeichnung</Label>
+                <Input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Zielwert</Label>
+                <NumberInput value={editForm.target} onChange={v => setEditForm(f => ({ ...f, target: v }))} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Deadline</Label>
+                <input type="date" min={todayStr} value={editForm.deadline} onChange={e => setEditForm(f => ({ ...f, deadline: e.target.value }))} className="h-9 text-sm w-full rounded-md border border-input bg-background px-3 py-1" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Grund (optional)</Label>
+                <textarea value={editForm.reason} onChange={e => setEditForm(f => ({ ...f, reason: e.target.value }))} className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y" placeholder="Warum ist dir das Ziel wichtig?" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setEditTarget(null)}>Abbrechen</Button>
+                <LoadingButton
+                  size="sm"
+                  loading={updateMutation.isPending}
+                  disabled={!editForm.title.trim() || editForm.target <= 0}
+                  onClick={() => {
+                    if (!editTarget) return;
+                    updateMutation.mutate({
+                      id: editTarget.id,
+                      data: {
+                        title: editForm.title.trim(),
+                        target: editForm.target,
+                        deadline: editForm.deadline || null,
+                        reason: editForm.reason.trim() || null,
+                      },
+                    });
+                  }}
+                >
+                  Speichern
+                </LoadingButton>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
         <AlertDialogContent>

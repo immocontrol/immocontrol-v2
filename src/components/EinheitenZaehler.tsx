@@ -10,6 +10,7 @@ import { useProperties } from "@/context/PropertyContext";
 import { useStatsSnapshots } from "@/hooks/useStatsSnapshots";
 import { useQuery } from "@tanstack/react-query";
 import { fromTable } from "@/lib/typedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +42,7 @@ export function EinheitenZaehler() {
   const unitsPerYearCurrent = useMemo(() => unitsAcquiredLast12Months(properties), [properties]);
 
   const { data: goals = [] } = useQuery({
-    queryKey: ["portfolio_goals"],
+    queryKey: queryKeys.portfolioGoals.all,
     queryFn: async () => {
       const { data } = await fromTable("portfolio_goals").select("id, type, target, title").order("created_at");
       return (data || []) as { id: string; type: string; target: number; title: string }[];

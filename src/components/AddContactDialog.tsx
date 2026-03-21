@@ -1,4 +1,6 @@
 import { useState, useCallback, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, ChevronRight, ChevronLeft, Contact2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { cn } from "@/lib/utils";
@@ -41,6 +47,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   const qc = useQueryClient();
   const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [step, setStep] = useState(0);
   const [aiNotesLoading, setAiNotesLoading] = useState(false);
   const isMobile = useIsMobile();
@@ -50,7 +57,7 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
     resolver: zodResolver(contactFormSchema),
     defaultValues: DEFAULT_VALUES,
   });
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = form;
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting, isDirty } } = form;
   const formValues = watch();
 
   const resetForm = useCallback(() => {
@@ -59,8 +66,21 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
   }, [reset]);
 
   const handleOpenChange = useCallback((v: boolean) => {
-    setOpen(v);
-    if (!v) resetForm();
+    if (v) {
+      setOpen(true);
+      setShowCloseConfirm(false);
+    } else if (isDirty) {
+      setShowCloseConfirm(true);
+    } else {
+      setOpen(false);
+      resetForm();
+    }
+  }, [resetForm, isDirty]);
+
+  const handleConfirmClose = useCallback(() => {
+    setOpen(false);
+    resetForm();
+    setShowCloseConfirm(false);
   }, [resetForm]);
 
   useFocusFirstInput(open, contentRef);
@@ -247,6 +267,20 @@ const AddContactDialog = ({ onCreated, trigger }: AddContactDialogProps) => {
           )}
         </div>
       </DialogContent>
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Formular schließen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Es sind noch Eingaben im Formular. Beim Schließen gehen diese verloren. Wirklich schließen?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose}>Ja, schließen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

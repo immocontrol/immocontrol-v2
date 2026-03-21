@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fromTable } from "@/lib/typedSupabase";
+import { queryKeys } from "@/lib/queryKeys";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { useStatsSnapshots } from "@/hooks/useStatsSnapshots";
@@ -50,7 +51,7 @@ export default function Erfolge() {
   const unitsPerYear = useMemo(() => unitsAcquiredLast12Months(properties), [properties]);
 
   const { data: goals = [], isLoading: goalsLoading } = useQuery({
-    queryKey: ["portfolio_goals"],
+    queryKey: queryKeys.portfolioGoals.all,
     queryFn: async () => {
       const { data } = await fromTable("portfolio_goals").select("id, type, target, title, current_value").order("created_at");
       return (data || []) as { id: string; type: string; target: number; title: string; current_value?: number }[];

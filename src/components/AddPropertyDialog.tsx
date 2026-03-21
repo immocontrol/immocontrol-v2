@@ -19,6 +19,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useProperties } from "@/context/PropertyContext";
 import { useAccessibility } from "@/components/AccessibilityProvider";
 import { toastSuccess, toastError } from "@/lib/toastMessages";
@@ -116,6 +120,7 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const [step, setStep] = useState(0);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const { addProperty, properties } = useProperties();
   const { announce } = useAccessibility();
@@ -181,11 +186,28 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
-      setOpen(isOpen);
-      if (!isOpen) { setStep(0); reset(FORM_DEFAULTS); clearDraft(); }
+      if (isOpen) {
+        setOpen(true);
+        setShowCloseConfirm(false);
+      } else if (isDirty) {
+        setShowCloseConfirm(true);
+      } else {
+        setOpen(false);
+        setStep(0);
+        reset(FORM_DEFAULTS);
+        clearDraft();
+      }
     },
-    [reset, clearDraft]
+    [reset, clearDraft, isDirty]
   );
+
+  const handleConfirmClose = useCallback(() => {
+    setOpen(false);
+    setStep(0);
+    reset(FORM_DEFAULTS);
+    clearDraft();
+    setShowCloseConfirm(false);
+  }, [setOpen, reset, clearDraft]);
 
   useFocusFirstInput(open, formRef);
 
@@ -487,6 +509,20 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
           </div>
         </form>
       </DialogContent>
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Formular schließen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Es sind noch Eingaben im Formular. Beim Schließen gehen diese verloren. Wirklich schließen?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose}>Ja, schließen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
