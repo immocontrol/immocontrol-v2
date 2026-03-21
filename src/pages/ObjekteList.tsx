@@ -5,7 +5,7 @@
  * UX: Filter/Sort in sessionStorage, damit Zurück-Kontext erhalten bleibt.
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Building2, Search, Briefcase, Camera, Store, FileText, PieChart, ShieldAlert } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
@@ -50,8 +50,22 @@ function loadListState(): { search: string; sort: SortType } {
 const ObjekteList = () => {
   const { properties, loading } = useProperties();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => loadListState().search);
   const [sort, setSort] = useState<SortType>(() => loadListState().sort);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+
+  /* Open Add Property dialog when ?add=1 (e.g. from Command Palette or Ctrl+N) */
+  useEffect(() => {
+    if (searchParams.get("add") === "1") {
+      setAddDialogOpen(true);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("add");
+        return next;
+      }, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     document.title = `Objekte (${properties.length}) – ImmoControl`;
@@ -194,7 +208,7 @@ const ObjekteList = () => {
             </SelectContent>
           </Select>
           <PropertyComparison />
-          <AddPropertyDialog />
+          <AddPropertyDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
         </PageHeaderActions>
       </PageHeader>
 
@@ -235,7 +249,7 @@ const ObjekteList = () => {
                   Suche zurücksetzen
                 </Button>
               )}
-              <AddPropertyDialog />
+              <AddPropertyDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
               <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.DEALS)} className="touch-target min-h-[44px] gap-2" aria-label="Zu Deals">
                 <Briefcase className="h-4 w-4" /> Deals
               </Button>

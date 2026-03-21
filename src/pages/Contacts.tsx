@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2, Briefcase } from "lucide-react";
+import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2, Briefcase, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -13,6 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -83,6 +84,7 @@ const ContactManagement = () => {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editContact, setEditContact] = useState<ContactItem | null>(null);
   const [showTrash, setShowTrash] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [aiNotesLoading, setAiNotesLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(CONTACTS_PAGE_SIZE);
   const [form, setForm] = useState({
@@ -93,6 +95,10 @@ const ContactManagement = () => {
   useEffect(() => {
     setVisibleCount(CONTACTS_PAGE_SIZE);
   }, [search, catFilter]);
+
+  useEffect(() => {
+    if (showTrash) setSelectedIds(new Set());
+  }, [showTrash]);
 
   // Improvement 5: React Query for contacts
   const { data: contacts = [] } = useQuery({
@@ -263,6 +269,39 @@ const ContactManagement = () => {
     },
     onError: createMutationErrorHandler("Kontakt löschen", "Fehler beim Löschen"),
   });
+
+  // Bulk delete (soft delete)
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("contacts").update({ deleted_at: new Date().toISOString() }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_data, ids) => {
+      setSelectedIds(new Set());
+      invalidate();
+      toastSuccess(`${ids.length} Kontakt${ids.length > 1 ? "e" : ""} in den Papierkorb verschoben`);
+    },
+    onError: createMutationErrorHandler("Kontakte löschen", "Fehler beim Löschen"),
+  });
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllFiltered = () => {
+    const visible = filtered.slice(0, visibleCount).map(c => c.id);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected = visible.every(id => next.has(id));
+      if (allSelected) visible.forEach(id => next.delete(id));
+      else visible.forEach(id => next.add(id));
+      return next;
+    });
+  };
 
   // Restore from trash
   const restoreMutation = useMutation({
@@ -537,6 +576,35 @@ const ContactManagement = () => {
         </p>
       )}
 
+      {/* Bulk actions bar */}
+      {!showTrash && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-primary/20 bg-primary/5">
+          <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Auswahl aufheben</Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-1.5">
+                  <Trash2 className="h-3.5 w-3.5" /> In Papierkorb
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{selectedIds.size} Kontakt{selectedIds.size > 1 ? "e" : ""} löschen?</AlertDialogTitle>
+                  <AlertDialogDescription>Die Kontakte werden in den Papierkorb verschoben und können dort wiederhergestellt werden.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}>
+                    Löschen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      )}
+
       {/* Contact list */}
       {/* UPD-24: Better empty state animation for contacts */}
       {filtered.length === 0 ? (
@@ -577,6 +645,18 @@ const ContactManagement = () => {
       ) : (
         <>
           <ContactStats contacts={contacts} />
+          {/* Bulk select header */}
+          {!showTrash && filtered.length > 0 && (
+            <div className="flex items-center gap-2 mb-2">
+              <Checkbox
+                id="select-all-contacts"
+                checked={filtered.slice(0, visibleCount).length > 0 && filtered.slice(0, visibleCount).every(c => selectedIds.has(c.id))}
+                onCheckedChange={selectAllFiltered}
+                aria-label="Alle sichtbaren auswählen"
+              />
+              <label htmlFor="select-all-contacts" className="text-xs text-muted-foreground cursor-pointer">Alle sichtbaren auswählen</label>
+            </div>
+          )}
           {/* Improvement 14: Contact list with stagger animation */}
           {/* Performance: show first CONTACTS_PAGE_SIZE, then "Mehr anzeigen" */}
           <div className="grid gap-3 md:grid-cols-2 list-stagger">
@@ -591,6 +671,15 @@ const ContactManagement = () => {
                 className={`gradient-card rounded-xl border p-4 group hover:border-primary/20 transition-all duration-200 hover:shadow-sm hover-lift ${possibleDuplicates.includes(c.id) ? "border-gold/30" : "border-border"} ${isHighlighted ? "ring-2 ring-primary ring-offset-2" : ""}`}
               >
                 <div className="flex items-start gap-3">
+                  {!showTrash && (
+                    <Checkbox
+                      checked={selectedIds.has(c.id)}
+                      onCheckedChange={() => toggleSelect(c.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`${c.name} auswählen`}
+                      className="mt-1 shrink-0"
+                    />
+                  )}
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <CatIcon className="h-4 w-4 text-primary" />
                   </div>

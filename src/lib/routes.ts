@@ -153,3 +153,25 @@ export function crmWithLeadId(id: string): string {
 export function crmWithTab(tab: string): string {
   return `${ROUTES.CRM}?tab=${encodeURIComponent(tab)}`;
 }
+
+/** Helper: Verträge page with Rechnungen tab and optional add-dialog + property pre-select */
+export function contractsWithAddInvoice(propertyId?: string): string {
+  const params = new URLSearchParams();
+  params.set("tab", "rechnungen");
+  params.set("add", "1");
+  if (propertyId) params.set("property", propertyId);
+  return `${ROUTES.CONTRACTS}?${params.toString()}`;
+}
+
+/** Helper: Verträge page with Mietverträge tab and optional property pre-select */
+export function contractsWithAddContract(propertyId?: string): string {
+  const params = new URLSearchParams();
+  params.set("tab", "mietvertraege");
+  if (propertyId) params.set("property", propertyId);
+  return `${ROUTES.CONTRACTS}?${params.toString()}`;
+}
+
+/** Helper: Objekte page with add-dialog open */
+export function objekteWithAdd(): string {
+  return `${ROUTES.OBJEKTE}?add=1`;
+}

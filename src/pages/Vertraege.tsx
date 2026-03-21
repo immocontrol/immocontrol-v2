@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ContractManagement from "@/components/ContractManagement";
 import InvoiceManagement from "@/components/InvoiceManagement";
@@ -25,6 +25,10 @@ import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } fr
 const Vertraege = () => {
   const { user } = useAuth();
   const tabsRef = useRef<HTMLDivElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const addInvoiceFromUrl = searchParams.get("add") === "1";
+  const propertyFromUrl = searchParams.get("property") || undefined;
 
   // Summary stats across all contract types
   const { data: contractStats, isPending: statsPending } = useQuery({
@@ -245,7 +249,7 @@ const Vertraege = () => {
       <AfASchnellrechner />
 
       <div ref={tabsRef} className="scroll-mt-20">
-      <Tabs defaultValue="mietvertraege" className="w-full">
+      <Tabs defaultValue={tabFromUrl && ["mietvertraege", "vertraege", "rechnungen", "dienstleister", "lifecycle"].includes(tabFromUrl) ? tabFromUrl : "mietvertraege"} className="w-full">
         <TabsList className="flex w-full overflow-x-auto scrollbar-hide md:grid md:grid-cols-5 md:overflow-visible overscroll-x-contain">
           <TabsTrigger value="mietvertraege" className="flex items-center gap-1.5 text-xs">
             <FileText className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Miet</span>verträge
@@ -265,7 +269,7 @@ const Vertraege = () => {
         </TabsList>
         <TabsContent value="mietvertraege"><Mietvertragsverwaltung /></TabsContent>
         <TabsContent value="vertraege"><ContractManagement /></TabsContent>
-        <TabsContent value="rechnungen"><InvoiceManagement /></TabsContent>
+        <TabsContent value="rechnungen"><InvoiceManagement initialOpen={addInvoiceFromUrl} initialPropertyId={propertyFromUrl} onAddOpened={() => setSearchParams((p) => { const n = new URLSearchParams(p); n.delete("add"); return n; }, { replace: true })} /></TabsContent>
         <TabsContent value="dienstleister"><ServiceContracts /></TabsContent>
         <TabsContent value="lifecycle"><ContractLifecycleManager /></TabsContent>
       </Tabs>

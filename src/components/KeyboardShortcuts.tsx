@@ -3,13 +3,17 @@ import { Keyboard, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const shortcuts = [
-  { keys: ["Alt", "1"], description: "Portfolio" },
-  { keys: ["Alt", "2"], description: "Kontakte" },
-  { keys: ["Alt", "3"], description: "Analyse" },
-  { keys: ["Alt", "4"], description: "Einstellungen" },
-  { keys: ["⌘/Ctrl", "K"], description: "Suche fokussieren" },
-  { keys: ["⌘/Ctrl", "N"], description: "Neues Objekt" },
+  { keys: ["⌘/Ctrl", "K"], description: "Befehlspalette / Schnellsuche" },
+  { keys: ["⌘/Ctrl", "N"], description: "Neues Objekt anlegen" },
   { keys: ["?"], description: "Tastaturkürzel anzeigen" },
+  { keys: ["Alt", "1"], description: "Portfolio" },
+  { keys: ["Alt", "2"], description: "Darlehen" },
+  { keys: ["Alt", "3"], description: "Mieten & Betrieb" },
+  { keys: ["Alt", "4"], description: "Verträge & Kontakte" },
+  { keys: ["Alt", "6"], description: "Aufgaben & Dokumente" },
+  { keys: ["Alt", "7"], description: "Analyse & Risiko" },
+  { keys: ["Alt", "8"], description: "Deals & Bewertung" },
+  { keys: ["Alt", "O"], description: "Objekte" },
 ];
 
 const KeyboardShortcuts = () => {
@@ -27,6 +31,12 @@ const KeyboardShortcuts = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-keyboard-shortcuts", handler);
+    return () => window.removeEventListener("open-keyboard-shortcuts", handler);
   }, []);
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Building2, Users, Calculator, CreditCard, CheckCircle2, ArrowRight, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Building2, Users, Calculator, CreditCard, CheckCircle2, ArrowRight, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
 import { ROUTES } from "@/lib/routes";
@@ -127,6 +128,12 @@ export const OnboardingBanner = () => {
         })}
       </div>
 
+      {properties.length === 0 && (
+        <Link to={ROUTES.ONBOARDING} className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary font-medium hover:underline">
+          <Sparkles className="h-3.5 w-3.5" /> Geführtes Onboarding starten
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+      )}
       {allDone && (
         <Button size="sm" variant="outline" className="mt-3 text-xs" onClick={dismiss}>
           Onboarding schließen

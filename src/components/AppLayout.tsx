@@ -283,6 +283,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
+      /* Ctrl+N / Cmd+N: Neues Objekt → Objekte mit Add-Dialog (nicht auf Kontakte-Seite, dort = neuer Kontakt) */
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
+        if (!location.pathname.startsWith(ROUTES.CONTACTS)) {
+          e.preventDefault();
+          navigateTo(ROUTES.OBJEKTE + "?add=1");
+          return;
+        }
+      }
+
       /* Build normalised combo string from the event */
       const parts: string[] = [];
       if (e.ctrlKey || e.metaKey) parts.push("ctrl");

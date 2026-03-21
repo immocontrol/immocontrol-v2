@@ -104,8 +104,17 @@ const FORM_DEFAULTS: FormData = {
   otherRentableNotes: "",
 };
 
-const AddPropertyDialog = () => {
-  const [open, setOpen] = useState(false);
+interface AddPropertyDialogProps {
+  /** Controlled mode: open state from parent (e.g. ?add=1 on Objekte) */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpenChange }: AddPropertyDialogProps = {}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined && controlledOnOpenChange !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const [step, setStep] = useState(0);
   const formRef = useRef<HTMLFormElement | null>(null);
   const { addProperty, properties } = useProperties();
@@ -243,18 +252,29 @@ const AddPropertyDialog = () => {
     setOpen(false);
   };
 
+  const triggerContent = (
+    <>
+      <Plus className="h-4 w-4" />
+      <span className="hidden sm:inline">Objekt hinzufügen</span>
+      <span className="sm:hidden">Hinzufügen</span>
+    </>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {/* UI-UPDATE-50: Tooltip on add property trigger — avoid double-asChild nesting */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5" data-add-property data-testid="add-property">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Objekt hinzufügen</span>
-              <span className="sm:hidden">Hinzufügen</span>
+          {isControlled ? (
+            <Button size="sm" className="gap-1.5" data-add-property data-testid="add-property" onClick={() => setOpen(true)}>
+              {triggerContent}
             </Button>
-          </DialogTrigger>
+          ) : (
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-1.5" data-add-property data-testid="add-property">
+                {triggerContent}
+              </Button>
+            </DialogTrigger>
+          )}
         </TooltipTrigger>
         <TooltipContent>Neues Objekt anlegen (Ctrl+N)</TooltipContent>
       </Tooltip>

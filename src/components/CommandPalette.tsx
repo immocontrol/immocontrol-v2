@@ -4,13 +4,14 @@ import { useProperties } from "@/context/PropertyContext";
 import {
   LayoutDashboard, Calculator, Users, Landmark, CalendarDays, CheckSquare,
   Settings, Building2, Search, Command, Handshake, Camera, FileText, Store,
+  Plus, Receipt, Keyboard,
 } from "lucide-react";
 import {
   Dialog, DialogContent,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { ROUTES, propertyDetail } from "@/lib/routes";
+import { ROUTES, propertyDetail, objekteWithAdd, contractsWithAddInvoice } from "@/lib/routes";
 
 interface PaletteItem {
   id: string;
@@ -60,6 +61,11 @@ export const CommandPalette = () => {
   }, [navigate]);
 
   const items = useMemo<PaletteItem[]>(() => {
+    const actionItems: PaletteItem[] = [
+      { id: "action-new-property", label: "Neues Objekt", sublabel: "Objekt anlegen (Ctrl+N)", icon: <Plus className="h-4 w-4" />, action: () => go(objekteWithAdd()), category: "Aktionen" },
+      { id: "action-new-invoice", label: "Rechnung erfassen", sublabel: "Rechnung hinzufügen", icon: <Receipt className="h-4 w-4" />, action: () => go(contractsWithAddInvoice()), category: "Aktionen" },
+      { id: "action-shortcuts", label: "Kurzbefehle anzeigen", sublabel: "Tastaturkürzel (?)", icon: <Keyboard className="h-4 w-4" />, action: () => { window.dispatchEvent(new CustomEvent("open-keyboard-shortcuts")); setOpen(false); }, category: "Aktionen" },
+    ];
     const navItems: PaletteItem[] = [
       { id: "nav-dashboard", label: "Portfolio", sublabel: "Dashboard & Übersicht", icon: <LayoutDashboard className="h-4 w-4" />, action: () => go(ROUTES.HOME), category: "Navigation" },
       { id: "nav-objekte", label: "Objekte", sublabel: "Objektliste & Immobilien", icon: <Building2 className="h-4 w-4" />, action: () => go(ROUTES.OBJEKTE), category: "Navigation" },
@@ -93,7 +99,7 @@ export const CommandPalette = () => {
       category: "Objekte",
     }));
 
-    return [...navItems, ...propertyItems];
+    return [...actionItems, ...navItems, ...propertyItems];
   }, [properties, go]);
 
   const filtered = useMemo(() => {
@@ -192,10 +198,13 @@ export const CommandPalette = () => {
             ))
           )}
         </div>
-        <div className="border-t border-border px-3 py-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span>↑↓ Navigieren</span>
-          <span>↵ Öffnen</span>
-          <span>ESC Schließen</span>
+        <div className="border-t border-border px-3 py-2 flex items-center justify-between gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-3">
+            <span>↑↓ Navigieren</span>
+            <span>↵ Öffnen</span>
+            <span>ESC Schließen</span>
+          </span>
+          <kbd className="px-1.5 py-0.5 rounded bg-secondary">Ctrl+K</kbd>
         </div>
       </DialogContent>
     </Dialog>

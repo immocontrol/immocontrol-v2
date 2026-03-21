@@ -267,7 +267,7 @@ const PropertyDetail = () => {
             )}
           </div>
           <div className="flex items-center gap-1">
-            <QuickActions onScrollTo={scrollToSection} onNavigate={(p) => navigate(p)} />
+            <QuickActions onScrollTo={scrollToSection} onNavigate={(p) => navigate(p)} propertyId={property.id} />
             <EditPropertyDialog property={property} />
             {/* Share/Copy property summary */}
             {/* UI-UPDATE-44: Tooltip on share property action */}

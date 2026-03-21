@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera, Landmark, BarChart3, Receipt, Sparkles, Store, ShieldAlert, Calculator } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, contractsWithAddInvoice, contractsWithAddContract } from "@/lib/routes";
 
 interface QuickActionsProps {
   onScrollTo: (section: string) => void;
   onNavigate?: (path: string) => void;
+  /** Property ID for context-aware actions (Rechnung/Vertrag mit Objekt) */
+  propertyId?: string;
 }
 
-const QuickActions = ({ onScrollTo, onNavigate }: QuickActionsProps) => {
+const QuickActions = ({ onScrollTo, onNavigate, propertyId }: QuickActionsProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -40,6 +42,8 @@ const QuickActions = ({ onScrollTo, onNavigate }: QuickActionsProps) => {
     { id: "payments", label: "Zahlung erfassen", icon: CreditCard, color: "text-profit", shortcut: "3", navigate: false },
     { id: "notes", label: "Notiz hinzufügen", icon: StickyNote, color: "text-muted-foreground", shortcut: "4", navigate: false },
     { id: "documents", label: "Dokument hochladen", icon: FileText, color: "text-accent-foreground", shortcut: "5", navigate: false },
+    { id: "invoice", label: "Rechnung erfassen", icon: Receipt, color: "text-gold", shortcut: "R", navigate: true, path: contractsWithAddInvoice(propertyId) },
+    { id: "contract", label: "Vertrag anlegen", icon: FileText, color: "text-blue-500", shortcut: "V", navigate: true, path: contractsWithAddContract(propertyId) },
     { id: "viewings", label: "Besichtigung erfassen", icon: Camera, color: "text-accent", shortcut: "6", navigate: true, path: ROUTES.BESICHTIGUNGEN },
     { id: "deals", label: "Deal erstellen", icon: Landmark, color: "text-blue-500", shortcut: "7", navigate: true, path: ROUTES.DEALS },
     { id: "scout", label: "WGH-Scout", icon: Store, color: "text-emerald-600", shortcut: "S", navigate: true, path: ROUTES.CRM_SCOUT },

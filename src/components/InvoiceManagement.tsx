@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,24 +47,41 @@ const CATEGORIES = [
   { value: "sonstiges", label: "Sonstiges" },
 ];
 
-const InvoiceManagement = () => {
+interface InvoiceManagementProps {
+  initialOpen?: boolean;
+  initialPropertyId?: string;
+  onAddOpened?: () => void;
+}
+
+const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: InvoiceManagementProps = {}) => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { properties } = useProperties();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!initialOpen);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [filter, setFilter] = useState("alle");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const today = new Date().toISOString().split("T")[0];
   const [form, setForm] = useState({
-    property_id: "",
+    property_id: initialPropertyId || "",
     vendor_name: "",
     invoice_number: "",
-    invoice_date: new Date().toISOString().split("T")[0],
+    invoice_date: today,
     due_date: "",
     amount: 0,
     tax_amount: 0,
     category: "sonstiges",
     notes: "",
   });
+  const [quickForm, setQuickForm] = useState({ vendor_name: "", amount: 0, category: "sonstiges" });
+
+  useEffect(() => {
+    if (initialOpen) {
+      setOpen(true);
+      if (initialPropertyId) setForm(f => ({ ...f, property_id: initialPropertyId }));
+      onAddOpened?.();
+    }
+  }, [initialOpen, initialPropertyId, onAddOpened]);
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["invoices", filter],
@@ -78,25 +95,32 @@ const InvoiceManagement = () => {
     enabled: !!user,
   });
 
+  const buildInsertPayload = (data: { vendor_name: string; amount: number; tax_amount?: number; category: string; property_id?: string; invoice_number?: string; invoice_date?: string; due_date?: string; notes?: string }) => ({
+    user_id: user!.id,
+    property_id: data.property_id || null,
+    vendor_name: data.vendor_name,
+    invoice_number: data.invoice_number || null,
+    invoice_date: data.invoice_date || today,
+    due_date: data.due_date || null,
+    amount: data.amount,
+    tax_amount: data.tax_amount ?? 0,
+    category: data.category,
+    notes: data.notes || null,
+  });
+
   const addMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("invoices").insert({
-        user_id: user!.id,
-        property_id: form.property_id || null,
-        vendor_name: form.vendor_name,
-        invoice_number: form.invoice_number || null,
-        invoice_date: form.invoice_date,
-        due_date: form.due_date || null,
-        amount: form.amount,
-        tax_amount: form.tax_amount,
-        category: form.category,
-        notes: form.notes || null,
-      });
+    mutationFn: async (payload?: { vendor_name: string; amount: number; category: string }) => {
+      const data = payload
+        ? { ...form, vendor_name: payload.vendor_name, amount: payload.amount, category: payload.category }
+        : form;
+      const { error } = await supabase.from("invoices").insert(buildInsertPayload(data));
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, payload) => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       setOpen(false);
+      setQuickOpen(false);
+      if (payload) setQuickForm({ vendor_name: "", amount: 0, category: "sonstiges" });
       toast.success("Rechnung erfasst");
     },
     onError: createMutationErrorHandler("Rechnung erfassen", "Fehler beim Erfassen"),
@@ -159,6 +183,26 @@ const InvoiceManagement = () => {
               <SelectItem value="storniert">Storniert</SelectItem>
             </SelectContent>
           </Select>
+          <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="ghost" className="text-xs"><Plus className="h-3 w-3 mr-1" /> Schnell</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xs">
+              <DialogHeader><DialogTitle>Schnell erfassen</DialogTitle></DialogHeader>
+              <div className="grid gap-3 mt-2">
+                <div><Label>Lieferant</Label><Input value={quickForm.vendor_name} onChange={e => setQuickForm(f => ({ ...f, vendor_name: e.target.value }))} placeholder="z.B. Stadtwerke" /></div>
+                <div><Label>Betrag (€)</Label><Input type="number" value={quickForm.amount || ""} onChange={e => setQuickForm(f => ({ ...f, amount: +e.target.value || 0 }))} placeholder="0" /></div>
+                <div>
+                  <Label>Kategorie</Label>
+                  <Select value={quickForm.category} onValueChange={v => setQuickForm(f => ({ ...f, category: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={() => addMutation.mutate(quickForm)} disabled={!quickForm.vendor_name || addMutation.isPending}>Erfassen</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline"><Plus className="h-3.5 w-3.5 mr-1" /> Rechnung</Button>
