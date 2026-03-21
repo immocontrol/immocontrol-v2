@@ -258,6 +258,14 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
 }
 
 /* ─── Fetch RSS via CORS proxy (browser cannot call RSS URLs directly) ─── */
+/** Reject proxies that return HTML error pages (saves bogus parses and retries fallback). */
+function looksLikeXmlFeed(text: string): boolean {
+  const head = text.trimStart().slice(0, 1200).toLowerCase();
+  if (!head) return false;
+  if (/<!doctype\s+html|<html[\s>]/.test(head)) return false;
+  return /<rss[\s>]/.test(head) || /<feed[\s>]/.test(head) || (/\?xml/.test(head) && /<(?:rss|feed)[\s>]/.test(head));
+}
+
 /** AllOrigins `/get` returns JSON `{ contents }` — more reliable than `/raw` (often 500). */
 async function fetchRSSViaAllOriginsJson(feedUrl: string): Promise<string | null> {
   try {
@@ -265,7 +273,9 @@ async function fetchRSSViaAllOriginsJson(feedUrl: string): Promise<string | null
     const resp = await fetch(u, { signal: AbortSignal.timeout(15000) });
     if (!resp.ok) return null;
     const data = (await resp.json()) as { contents?: string };
-    if (typeof data.contents === "string" && data.contents.length > 80) return data.contents;
+    if (typeof data.contents !== "string" || data.contents.length < 80) return null;
+    if (!looksLikeXmlFeed(data.contents)) return null;
+    return data.contents;
   } catch {
     /* network / JSON */
   }
@@ -292,6 +302,7 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
       if (!resp.ok) continue;
       const text = await resp.text();
       if (!text || text.length < 100) continue;
+      if (!looksLikeXmlFeed(text)) continue;
       const items = parseRSSItems(text, source, icon);
       if (items.length > 0) return items;
     } catch {

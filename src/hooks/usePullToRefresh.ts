@@ -125,6 +125,14 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
     });
   }, [threshold, disabled, setContentTransform]);
 
+  const resetPullGesture = useCallback(() => {
+    pulling.current = false;
+    pullStarted.current = false;
+    atTopTouch.current = false;
+    setContentTransform(0, true);
+    setIndicator(IDLE_INDICATOR);
+  }, [setContentTransform]);
+
   const handleTouchEnd = useCallback(
     async (e: TouchEvent) => {
       const wasPulling = pulling.current;
@@ -160,20 +168,28 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
     [onRefresh, threshold, disabled, setContentTransform],
   );
 
+  /** System cancelled gesture (call, gesture conflict) — same as abort without refresh */
+  const handleTouchCancel = useCallback(() => {
+    if (!pulling.current || refreshingRef.current) return;
+    resetPullGesture();
+  }, [resetPullGesture]);
+
   useEffect(() => {
     if (disabled) return;
     document.addEventListener("touchstart", handleTouchStart, { passive: true });
     document.addEventListener("touchmove", handleTouchMove, { passive: true });
     document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
     return () => {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("touchcancel", handleTouchCancel);
       setContentTransform(0, false);
       refreshingRef.current = false;
       setIndicator(IDLE_INDICATOR);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd, disabled, setContentTransform]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel, disabled, setContentTransform]);
 
   return { indicatorRef, indicator };
 }

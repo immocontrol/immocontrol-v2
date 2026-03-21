@@ -24,16 +24,24 @@ export function PullToRefreshIndicator({
   ready,
   refreshing,
 }: PullToRefreshIndicatorProps) {
+  /** Während des Zugs nur visuell — keine aria-live-Flut; bei „loslassen“ und beim Laden kurz ansagen */
+  const announce = ready || refreshing;
+  const statusLabel = refreshing ? "Aktualisiere Daten …" : ready ? "Loslassen zum Aktualisieren" : undefined;
+
   return (
     <div
       ref={rootRef}
       className="pointer-events-none fixed left-1/2 top-0 z-[300] flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-primary shadow-xl"
       style={{
         opacity,
+        paddingTop: "max(0px, env(safe-area-inset-top))",
         transform: `translateX(-50%) translateY(${translateY}px)`,
         transition: opacity === 0 ? "opacity 220ms ease-out, transform 220ms ease-out" : undefined,
       }}
-      aria-hidden
+      role={announce ? "status" : undefined}
+      aria-live={announce ? "polite" : undefined}
+      aria-hidden={!announce}
+      aria-label={statusLabel}
     >
       {refreshing ? (
         <RefreshCw className="h-5 w-5 animate-spin text-primary" />
