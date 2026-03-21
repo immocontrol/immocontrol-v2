@@ -79,6 +79,21 @@ const ObjekteList = () => {
     sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({ search, sort }));
   }, [search, sort]);
 
+  /* Ctrl+A: Alle sichtbaren Objekte auswählen */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+        e.preventDefault();
+        if (sorted.length === 0) return;
+        setSelectedIds(prev => prev.size === sorted.length ? new Set() : new Set(sorted.map(p => p.id)));
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [sorted]);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (typeof window === "undefined" || window.innerWidth < 768) return;

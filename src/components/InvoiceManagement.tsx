@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2 } from "lucide-react";
+import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2, Download, Mail, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-import { toastSuccess } from "@/lib/toastMessages";
+import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { useProperties } from "@/context/PropertyContext";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -21,6 +21,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { createMutationErrorHandler } from "@/lib/mutationErrorHandler";
+import { loadJsPDF } from "@/lib/lazyImports";
 
 interface InvoiceRow {
   id: string;
@@ -61,8 +62,12 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
   const [open, setOpen] = useState(!!initialOpen);
   const [quickOpen, setQuickOpen] = useState(false);
   const [filter, setFilter] = useState("alle");
+  const [vendorFilter, setVendorFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const today = new Date().toISOString().split("T")[0];
   const [form, setForm] = useState({
     property_id: initialPropertyId || "",
@@ -189,7 +194,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
     return <Badge className="bg-gold/15 text-gold border-gold/30"><Clock className="h-3 w-3 mr-1" />Offen</Badge>;
   };
 
-  const totals = invoices.reduce((acc: { total: number; open: number; paid: number }, inv: InvoiceRow) => {
+  const totals = filteredInvoices.reduce((acc: { total: number; open: number; paid: number }, inv: InvoiceRow) => {
     acc.total += Number(inv.amount);
     if (inv.status === "offen") acc.open += Number(inv.amount);
     if (inv.status === "bezahlt") acc.paid += Number(inv.amount);
@@ -198,13 +203,90 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
 
   const getPropertyName = (pid: string | null) => pid ? properties.find(p => p.id === pid)?.name || "–" : "Allgemein";
 
+  const filteredInvoices = useMemo(() => {
+    let list = invoices;
+    if (vendorFilter.trim()) {
+      const q = vendorFilter.toLowerCase().trim();
+      list = list.filter(inv => (inv.vendor_name || "").toLowerCase().includes(q));
+    }
+    if (dateFrom) {
+      list = list.filter(inv => inv.invoice_date >= dateFrom);
+    }
+    if (dateTo) {
+      list = list.filter(inv => inv.invoice_date <= dateTo);
+    }
+    return list;
+  }, [invoices, vendorFilter, dateFrom, dateTo]);
+
+  const exportPDF = useCallback(async () => {
+    if (filteredInvoices.length === 0) return;
+    try {
+      const JsPDF = await loadJsPDF();
+      const doc = new JsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      let y = 18;
+      const colW = [22, 45, 35, 35, 22, 20, 25];
+      const checkPage = (need: number) => { if (y + need > pageH - 20) { doc.addPage("a4", "landscape"); y = 18; } };
+      doc.setFontSize(14);
+      doc.setTextColor(42, 157, 110);
+      doc.text("Rechnungsübersicht", 14, y);
+      y += 6;
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Export: ${new Date().toLocaleDateString("de-DE")} · ${filteredInvoices.length} Rechnungen`, 14, y);
+      y += 8;
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      const headers = ["Datum", "Lieferant", "Objekt", "Kategorie", "Betrag", "Status", "Fällig"];
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(34, 34, 34);
+      let x = 14;
+      headers.forEach((h, i) => { doc.text(h, x, y); x += colW[i]; });
+      y += 5;
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, y, pageW - 14, y);
+      y += 4;
+      doc.setFont("helvetica", "normal");
+      for (const inv of filteredInvoices) {
+        checkPage(6);
+        const catLabel = CATEGORIES.find(c => c.value === inv.category)?.label || inv.category;
+        const row = [inv.invoice_date, inv.vendor_name.substring(0, 22), getPropertyName(inv.property_id).substring(0, 18), catLabel.substring(0, 18), formatCurrency(inv.amount), inv.status, inv.due_date || "–"];
+        x = 14;
+        row.forEach((cell, i) => { doc.text(String(cell), x, y); x += colW[i]; });
+        y += 5;
+      }
+      doc.save(`rechnungen-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toastSuccess("Rechnungen als PDF exportiert");
+    } catch (e) {
+      console.error(e);
+      toastError("PDF-Export fehlgeschlagen. CSV als Alternative nutzen.");
+    }
+  }, [filteredInvoices]);
+
+  /* Ctrl+A: Alle gefilterten Rechnungen auswählen */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+        e.preventDefault();
+        if (filteredInvoices.length === 0) return;
+        setSelectedIds(prev => prev.size === filteredInvoices.length ? new Set() : new Set(filteredInvoices.map(i => i.id)));
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [filteredInvoices]);
+
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Receipt className="h-4 w-4 text-muted-foreground" /> Rechnungseingang
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -214,6 +296,48 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
               <SelectItem value="storniert">Storniert</SelectItem>
             </SelectContent>
           </Select>
+          <Input
+            placeholder="Lieferant suchen"
+            value={vendorFilter}
+            onChange={e => setVendorFilter(e.target.value)}
+            className="h-8 w-32 text-xs"
+          />
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-8 w-32 text-xs" placeholder="Von" />
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-8 w-32 text-xs" placeholder="Bis" />
+          {(vendorFilter || dateFrom || dateTo) && (
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setVendorFilter(""); setDateFrom(""); setDateTo(""); }}>Filter zurücksetzen</Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1 text-xs"
+            onClick={() => {
+              const headers = "Datum;Lieferant;Objekt;Kategorie;Betrag;Status;Fällig\n";
+              const rows = filteredInvoices.map(inv =>
+                [inv.invoice_date, inv.vendor_name, getPropertyName(inv.property_id), inv.category, inv.amount, inv.status, inv.due_date || ""].join(";")
+              ).join("\n");
+              const csv = "\uFEFF" + headers + rows;
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `rechnungen-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toastSuccess("Rechnungen exportiert");
+            }}
+          >
+            <Download className="h-3 w-3" /> CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1 text-xs"
+            onClick={exportPDF}
+            disabled={filteredInvoices.length === 0}
+          >
+            <FileText className="h-3 w-3" /> PDF
+          </Button>
           <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="ghost" className="text-xs"><Plus className="h-3 w-3 mr-1" /> Schnell</Button>
@@ -278,7 +402,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
       </div>
 
       {/* Bulk actions */}
-      {selectedIds.size > 0 && invoices.length > 0 && (
+      {selectedIds.size > 0 && filteredInvoices.length > 0 && (
         <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-primary/20 bg-primary/5 mb-4">
           <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
           <div className="flex gap-2">
@@ -298,7 +422,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
               size="sm"
               variant="destructive"
               className="gap-1.5"
-              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              onClick={() => setBulkDeleteIds(Array.from(selectedIds))}
               disabled={bulkDeleteMutation.isPending}
             >
               <Trash2 className="h-3.5 w-3.5" /> Löschen
@@ -325,7 +449,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground animate-pulse" role="status" aria-live="polite">Laden...</div>
-      ) : invoices.length === 0 ? (
+      ) : filteredInvoices.length === 0 ? (
         <EmptyState
           icon={Receipt}
           title="Keine Rechnungen"
@@ -338,14 +462,17 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
         />
       ) : (
         <div className="overflow-auto">
+          {(vendorFilter || dateFrom || dateTo) && (
+            <p className="text-xs text-muted-foreground mb-2">{filteredInvoices.length} von {invoices.length} Rechnungen</p>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
-                    checked={invoices.length > 0 && invoices.every((inv) => selectedIds.has(inv.id))}
+                    checked={filteredInvoices.length > 0 && filteredInvoices.every((inv) => selectedIds.has(inv.id))}
                     onCheckedChange={(c) =>
-                      setSelectedIds(c ? new Set(invoices.map((i) => i.id)) : new Set())
+                      setSelectedIds(c ? new Set(filteredInvoices.map((i) => i.id)) : new Set())
                     }
                     aria-label="Alle auswählen"
                   />
@@ -361,7 +488,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map((inv: InvoiceRow) => (
+              {filteredInvoices.map((inv: InvoiceRow) => (
                 <TableRow key={inv.id}>
                   <TableCell>
                     <Checkbox
@@ -385,7 +512,21 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
                   <TableCell className="text-xs">{inv.due_date ? formatDate(inv.due_date) : "–"}</TableCell>
                   <TableCell>{getStatusBadge(inv.status, inv.due_date)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
+                      {inv.status === "offen" && inv.due_date && new Date(inv.due_date) < new Date() && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            const subject = `Zahlungserinnerung ${inv.invoice_number || inv.vendor_name}`;
+                            const body = `Guten Tag,\n\nhiermit erinnern wir an die noch offene Rechnung:\n\nLieferant: ${inv.vendor_name}\nBetrag: ${formatCurrency(inv.amount)}\nFällig seit: ${inv.due_date}\n\nBitte überweisen Sie den Betrag zeitnah.\n\nMit freundlichen Grüßen`;
+                            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+                          }}
+                        >
+                          <Mail className="h-3 w-3 mr-1" /> Erinnerung
+                        </Button>
+                      )}
                       {inv.status === "offen" && (
                         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => updateStatus.mutate({ id: inv.id, status: "bezahlt" })}>
                           <Check className="h-3 w-3 mr-1" /> Bezahlt
@@ -402,6 +543,28 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!bulkDeleteIds && bulkDeleteIds.length > 0} onOpenChange={(o) => { if (!o) setBulkDeleteIds(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{bulkDeleteIds?.length ?? 0} Rechnung{bulkDeleteIds && bulkDeleteIds.length > 1 ? "en" : ""} löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die folgenden Rechnungen werden unwiderruflich gelöscht:
+              <ul className="mt-2 list-disc list-inside text-xs max-h-24 overflow-y-auto">
+                {bulkDeleteIds?.slice(0, 10).map(id => {
+                  const inv = invoices.find(i => i.id === id);
+                  return inv ? <li key={id}>{inv.vendor_name} · {formatCurrency(inv.amount)}</li> : null;
+                })}
+                {bulkDeleteIds && bulkDeleteIds.length > 10 && <li className="text-muted-foreground">… und {bulkDeleteIds.length - 10} weitere</li>}
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => { if (bulkDeleteIds?.length) { bulkDeleteMutation.mutate(bulkDeleteIds); setBulkDeleteIds(null); } }}>Löschen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
         <AlertDialogContent>

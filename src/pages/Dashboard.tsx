@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useDashboardExports } from "@/hooks/useDashboardExports";
-import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Camera, CalendarDays, Info, MoreHorizontal, LayoutDashboard } from "lucide-react";
+import { Building2, TrendingUp, Wallet, Landmark, PiggyBank, Search, ArrowUpDown, Download, Trophy, TriangleAlert as AlertTriangle, Ruler, Banknote, X, RefreshCw, Share2, Clock, Printer, Percent, Users, ChartBar as BarChart3, GripVertical, Briefcase, Store, FileText, Receipt, Camera, CalendarDays, Info, MoreHorizontal, LayoutDashboard } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import OverduePaymentBanner from "@/components/OverduePaymentBanner";
@@ -31,10 +31,10 @@ import { Button } from "@/components/ui/button";
 import { LoadingBlock } from "@/components/ui/loading-block";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate, Link } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, contractsWithAddInvoice } from "@/lib/routes";
 import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { formatCurrency, formatCompactDE, pluralDE, safeDivide, truncate } from "@/lib/formatters";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -388,6 +388,13 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px]">
+                <DropdownMenuItem onClick={() => navigate(contractsWithAddInvoice())}>
+                  <Receipt className="h-3.5 w-3.5 mr-2" /> Rechnung erfassen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.CONTRACTS)}>
+                  <FileText className="h-3.5 w-3.5 mr-2" /> Verträge
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={sharePortfolio}>
                   <Share2 className="h-3.5 w-3.5 mr-2" /> Teilen
                 </DropdownMenuItem>
@@ -426,6 +433,13 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px]">
+                <DropdownMenuItem onClick={() => navigate(contractsWithAddInvoice())}>
+                  <Receipt className="h-3.5 w-3.5 mr-2" /> Rechnung erfassen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(ROUTES.CONTRACTS)}>
+                  <FileText className="h-3.5 w-3.5 mr-2" /> Verträge
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={sharePortfolio}>
                   <Share2 className="h-3.5 w-3.5 mr-2" /> Teilen
                 </DropdownMenuItem>

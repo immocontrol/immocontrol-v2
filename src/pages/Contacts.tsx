@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileSwipeToAction } from "@/components/mobile/MobileSwipeToAction";
-import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2, Briefcase, CheckSquare } from "lucide-react";
+import { Contact, Plus, Search, Mail, MapPin, Trash2, Edit2, X, Upload, MessageCircle, Download, RotateCcw, Archive, Store, CalendarCheck, Sparkles, Loader2, Briefcase, CheckSquare, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ContactCsvImport from "@/components/ContactCsvImport";
 import ContactStats from "@/components/ContactStats";
@@ -99,6 +99,22 @@ const ContactManagement = () => {
   useEffect(() => {
     if (showTrash) setSelectedIds(new Set());
   }, [showTrash]);
+
+  /* Ctrl+A: Alle sichtbaren Kontakte auswählen (nicht in Input) */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+        e.preventDefault();
+        if (filtered.length === 0) return;
+        const visible = filtered.slice(0, visibleCount).map(c => c.id);
+        setSelectedIds(prev => prev.size === visible.length ? new Set() : new Set(visible));
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [filtered, visibleCount]);
 
   // Improvement 5: React Query for contacts
   const { data: contacts = [] } = useQuery({
@@ -336,10 +352,38 @@ const ContactManagement = () => {
 
   const debouncedSearch = useDebounce(search, 200);
 
-  /* IMPROVE-2: Sort contacts alphabetically within each category */
+  const FAVORITES_KEY = "immocontrol_contact_favorites";
+
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        return new Set(Array.isArray(arr) ? arr : []);
+      }
+    } catch { /* ignore */ }
+    return new Set();
+  });
+
+  const toggleFavorite = (id: string) => {
+    setFavoriteIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      try { localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  /* IMPROVE-2: Sort contacts alphabetically, favorites first */
   const sortedContacts = useMemo(() =>
-    [...contacts].sort((a, b) => a.name.localeCompare(b.name, "de")),
-    [contacts]
+    [...contacts].sort((a, b) => {
+      const aFav = favoriteIds.has(a.id);
+      const bFav = favoriteIds.has(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return a.name.localeCompare(b.name, "de");
+    }),
+    [contacts, favoriteIds]
   );
 
   /* IMPROVE-25: Debounced search input avoids re-filtering on every keystroke */
@@ -616,7 +660,15 @@ const ContactManagement = () => {
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>{selectedIds.size} Kontakt{selectedIds.size > 1 ? "e" : ""} löschen?</AlertDialogTitle>
-                  <AlertDialogDescription>Die Kontakte werden in den Papierkorb verschoben und können dort wiederhergestellt werden.</AlertDialogDescription>
+                  <AlertDialogDescription>
+                    Die folgenden Kontakte werden in den Papierkorb verschoben und können dort wiederhergestellt werden:
+                    <ul className="mt-2 list-disc list-inside text-xs max-h-24 overflow-y-auto">
+                      {contacts.filter(c => selectedIds.has(c.id)).slice(0, 10).map(c => (
+                        <li key={c.id}>{c.name}</li>
+                      ))}
+                      {selectedIds.size > 10 && <li className="text-muted-foreground">… und {selectedIds.size - 10} weitere</li>}
+                    </ul>
+                  </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Abbrechen</AlertDialogCancel>
@@ -710,6 +762,14 @@ const ContactManagement = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(c.id); }}
+                        className="shrink-0 text-muted-foreground hover:text-gold transition-colors touch-target min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
+                        aria-label={favoriteIds.has(c.id) ? "Aus Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                      >
+                        <Star className={`h-4 w-4 ${favoriteIds.has(c.id) ? "fill-gold text-gold" : ""}`} />
+                      </button>
                       <span className="text-sm font-semibold truncate min-w-0" title={c.name}>{c.name}</span>
                       <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{c.category}</span>
                       {/* Synergy 7: Active ticket count per contact */}
