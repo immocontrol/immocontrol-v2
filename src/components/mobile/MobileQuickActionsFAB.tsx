@@ -91,11 +91,11 @@ export const MobileQuickActionsFAB = memo(function MobileQuickActionsFAB({
                 className="flex items-center gap-3 animate-fade-in"
                 style={{ animationDelay: `${idx * 60}ms` }}
               >
-                <span className="bg-background border border-border rounded-lg px-3 py-2 text-sm font-medium shadow-lg whitespace-nowrap">
+                <span className="whitespace-nowrap rounded-xl border border-border/80 bg-background/95 px-3 py-2 text-sm font-medium shadow-md backdrop-blur-sm">
                   {action.label}
                 </span>
                 <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform active:scale-90",
+                  "flex h-12 w-12 items-center justify-center rounded-full text-white shadow-xl transition-transform duration-base ease-out-modern active:scale-90",
                   action.color,
                 )}>
                   {action.icon}

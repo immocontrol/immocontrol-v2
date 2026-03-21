@@ -155,7 +155,7 @@ export const MobileTaskBoard = memo(function MobileTaskBoard({
             <MoreVertical className="w-3 h-3" />
           </button>
           {showMenu === task.id && (
-            <div className="absolute right-0 top-5 z-20 bg-background border rounded-lg shadow-lg py-1 min-w-[140px] animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 top-5 z-20 min-w-[140px] animate-in fade-in zoom-in-95 rounded-xl border border-border/80 bg-background/95 py-1 shadow-md backdrop-blur-sm duration-150">
               {columns.filter(c => c.id !== task.status).map(col => (
                 <button
                   key={col.id}

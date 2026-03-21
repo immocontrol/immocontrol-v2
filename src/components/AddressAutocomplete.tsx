@@ -114,7 +114,7 @@ const AddressAutocomplete = ({
       </div>
       {/* IMP-44-12: Add ARIA listbox role and label for screen reader accessibility */}
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden" role="listbox" aria-label="Adressvorschläge">
+        <div className="absolute z-50 w-full mt-1 overflow-hidden rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm" role="listbox" aria-label="Adressvorschläge">
           {suggestions.map((suggestion, i) => (
             <button
               key={`${suggestion.formatted}-${i}`}

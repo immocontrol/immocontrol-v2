@@ -14,7 +14,7 @@ export function ConfigErrorScreen() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-      <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 shadow-lg">
+      <div className="w-full max-w-md rounded-2xl border border-border/80 bg-card p-6 shadow-xl">
         <div className="w-14 h-14 rounded-xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
           <AlertTriangle className="h-7 w-7 text-amber-600 dark:text-amber-400" />
         </div>

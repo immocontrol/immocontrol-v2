@@ -142,7 +142,7 @@ export const MobileConnectionIndicator = memo(function MobileConnectionIndicator
 
       {/* Expanded details */}
       {expanded && showDetails && (
-        <div className="absolute top-full mt-1 right-0 bg-background rounded-lg border shadow-lg p-3 min-w-[180px] z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[180px] animate-in fade-in zoom-in-95 rounded-xl border border-border/80 bg-background/95 p-3 shadow-md backdrop-blur-sm duration-150">
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Qualität</span>

@@ -159,7 +159,7 @@ function detectChanges(
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="bg-popover border border-border rounded-lg shadow-lg p-3 text-xs min-w-[180px]">
+    <div className="min-w-[180px] rounded-xl border border-border/80 bg-popover/95 p-3 text-xs text-popover-foreground shadow-md backdrop-blur-sm">
       <p className="font-semibold mb-1.5">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-4 py-0.5">

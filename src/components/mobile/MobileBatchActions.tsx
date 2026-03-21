@@ -197,7 +197,7 @@ export const MobileBatchActions = memo(function MobileBatchActions<T>({
 
       {/* Batch action bar */}
       {selectionMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t shadow-lg px-4 py-3 pb-safe animate-in slide-in-from-bottom duration-200">
+        <div className="fixed bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom border-t border-border/80 bg-background/95 px-4 py-3 pb-safe shadow-xl backdrop-blur-sm duration-200">
           <div className="flex items-center justify-center gap-3">
             {actions.map((action) => (
               <Button

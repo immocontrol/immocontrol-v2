@@ -128,7 +128,7 @@ export const MobileVoiceInput = memo(function MobileVoiceInput({
       className={cn(
         "rounded-full flex items-center justify-center transition-all active:scale-95",
         listening
-          ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg"
+          ? "animate-pulse bg-destructive text-destructive-foreground shadow-xl"
           : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         sizes[size],
         className,

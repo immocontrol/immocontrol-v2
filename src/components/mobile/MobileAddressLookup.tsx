@@ -312,7 +312,7 @@ export const MobileAddressLookup = memo(function MobileAddressLookup({
 
       {/* Results dropdown */}
       {showResults && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 rounded-lg border bg-background shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-border/80 bg-background/95 shadow-md backdrop-blur-sm">
           {results.map((result, index) => (
             <button
               key={index}

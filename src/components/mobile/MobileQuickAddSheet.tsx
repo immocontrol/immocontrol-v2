@@ -55,7 +55,7 @@ export const MobileQuickAddSheet = memo(function MobileQuickAddSheet({
       <button
         onClick={toggleSheet}
         className={cn(
-          "fixed z-[180] right-4 bg-primary text-primary-foreground rounded-full shadow-lg",
+          "fixed right-4 z-[180] rounded-full bg-primary text-primary-foreground shadow-xl",
           "flex items-center justify-center w-12 h-12",
           "transition-all duration-300 active:scale-90",
           "transform-gpu",

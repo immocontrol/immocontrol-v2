@@ -152,7 +152,7 @@ export const MobileQuickNote = memo(function MobileQuickNote({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed z-40 w-12 h-12 rounded-full shadow-lg",
+          "fixed z-40 h-12 w-12 rounded-full shadow-xl",
           "flex items-center justify-center transition-all",
           "bg-amber-500 text-white hover:bg-amber-600",
           "hover:shadow-xl active:scale-95",

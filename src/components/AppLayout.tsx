@@ -506,7 +506,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* #11: Pull-to-refresh indicator */}
       <div
         ref={pullIndicatorRef}
-        className="fixed top-0 left-1/2 z-[300] bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center shadow-lg pointer-events-none"
+        className="fixed top-0 left-1/2 z-[300] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl pointer-events-none"
         style={{ opacity: 0, transform: "translateX(-50%) translateY(-40px)" }}
         aria-hidden
       >
@@ -548,11 +548,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       >
                         <entry.icon className="h-4 w-4" />
                         {entry.label}
-                        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
+                        <ChevronDown className={`h-3 w-3 transition-transform duration-base ease-out-modern ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
                       </button>
                       <div
                         ref={openDropdown === entry.label ? openDropdownPanelRef : undefined}
-                        className={`absolute top-full left-0 mt-1 min-w-[200px] bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[300] overflow-hidden ${
+                        className={`absolute top-full left-0 z-[300] mt-1 min-w-[200px] overflow-hidden rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm transition-all duration-base ease-out-modern ${
                           openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
                         }`}
                       >

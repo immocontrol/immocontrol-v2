@@ -52,7 +52,7 @@ export function FloatingActionButton({
             <button
               key={idx}
               onClick={() => { action.onClick(); setExpanded(false); }}
-              className="flex items-center gap-2 bg-background border border-border rounded-full px-4 py-2.5 shadow-lg text-sm font-medium hover:bg-secondary transition-all"
+              className="flex items-center gap-2 rounded-full border border-border/80 bg-background/95 px-4 py-2.5 text-sm font-medium shadow-xl backdrop-blur-sm transition-all duration-base ease-out-modern hover:bg-secondary"
               style={{ animationDelay: `${idx * 50}ms` }}
             >
               {action.icon}

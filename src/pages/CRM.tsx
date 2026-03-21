@@ -601,7 +601,7 @@ const CRM = () => {
                   />
                   {/* Autocomplete dropdown */}
                   {showAutocomplete && autocompleteSuggestions.length > 0 && (
-                    <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm">
                       {autocompleteSuggestions.map((s) => (
                         <button
                           key={s.place_id}

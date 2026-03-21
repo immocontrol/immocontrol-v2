@@ -385,7 +385,7 @@ export default function ImmoAIBubble({ mobileSubmenuExpanded = false }: ImmoAIBu
           onMouseDown={(e) => handleDragStart(e.clientY)}
           onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
           onClick={() => { if (!isDragging.current) setOpen(true); }}
-          className="fixed z-[9999] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-shadow duration-200 flex items-center justify-center group cursor-grab active:cursor-grabbing select-none touch-none"
+          className="group fixed z-[9999] flex h-14 w-14 cursor-grab select-none items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-[box-shadow,transform] duration-base ease-out-modern hover:scale-105 hover:shadow-xl active:cursor-grabbing touch-none"
           style={
             bubblePos
               ? { right: "1rem", top: bubblePos.y }

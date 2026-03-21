@@ -19,5 +19,5 @@ export function LoadingBlock({ className, ...props }: React.HTMLAttributes<HTMLD
 
 /** Kompakte Zeile für eingebettete Ladezustände. */
 export function LoadingLine({ className }: { className?: string }) {
-  return <div className={cn("h-4 rounded-md skeleton-shimmer", className)} />;
+  return <div className={cn("h-4 rounded-lg skeleton-shimmer", className)} />;
 }

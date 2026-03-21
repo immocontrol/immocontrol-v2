@@ -48,7 +48,7 @@ export const MobilePullToRefresh = memo(function MobilePullToRefresh({ queryKeys
     <div
       ref={indicatorRef}
       className={cn(
-        "fixed top-0 left-1/2 z-[300] rounded-full w-10 h-10 flex items-center justify-center shadow-lg pointer-events-none transition-all duration-200",
+        "fixed left-1/2 top-0 z-[300] flex h-10 w-10 items-center justify-center rounded-full shadow-xl pointer-events-none transition-all duration-200",
         refreshing ? "bg-primary text-primary-foreground" : "bg-background border border-border text-foreground",
       )}
       style={{ opacity: 0, transform: "translateX(-50%) translateY(-40px)" }}

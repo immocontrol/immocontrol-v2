@@ -27,7 +27,7 @@ export function ActiveCallBar() {
         "bg-primary/95 text-primary-foreground backdrop-blur",
         "border-b border-primary/30",
         "safe-area-top",
-        "md:left-auto md:right-4 md:top-4 md:bottom-auto md:w-[320px] md:rounded-xl md:border md:shadow-lg"
+        "md:left-auto md:right-4 md:top-4 md:bottom-auto md:w-[320px] md:rounded-xl md:border md:border-border/80 md:shadow-xl"
       )}
     >
       <div className="min-w-0 flex-1">

@@ -99,7 +99,7 @@ const RatingTrafficLight = ({ calc }: Props) => {
                 <span className="text-xs font-medium">{item.detail}</span>
                 <div className="relative">
                   <Info className="h-3 w-3 text-muted-foreground/50 cursor-help peer" />
-                  <div className="absolute right-0 bottom-full mb-1 w-52 bg-popover text-popover-foreground text-[10px] p-2 rounded-lg shadow-lg border border-border opacity-0 pointer-events-none peer-hover:opacity-100 peer-hover:pointer-events-auto transition-opacity z-50">
+                  <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-1 w-52 rounded-xl border border-border/80 bg-popover/95 p-2 text-[10px] text-popover-foreground opacity-0 shadow-md backdrop-blur-sm transition-opacity peer-hover:pointer-events-auto peer-hover:opacity-100">
                     {item.tip}
                   </div>
                 </div>

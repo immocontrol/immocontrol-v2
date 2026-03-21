@@ -995,7 +995,7 @@ const Newsticker = () => {
             return (
               <div
                 key={item.id}
-                className="group gradient-card rounded-xl border border-border p-4 hover:border-primary/30 hover:shadow-lg transition-all duration-300 animate-fade-in"
+                className="group gradient-card animate-fade-in rounded-xl border border-border p-4 transition-all duration-300 ease-out-modern hover:border-primary/30 hover:shadow-xl"
                 style={{ animationDelay: `${Math.min(idx * 30, 300)}ms` }}
               >
                 <div className="flex gap-4">

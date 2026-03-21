@@ -381,7 +381,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
               className={cn(
                 "h-10 w-10 rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0",
                 voiceListening
-                  ? "bg-destructive text-destructive-foreground animate-pulse shadow-lg"
+                  ? "animate-pulse bg-destructive text-destructive-foreground shadow-xl"
                   : voiceDenied
                     ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30"
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80",

@@ -157,7 +157,7 @@ export const MobileTouchSlider = memo(function MobileTouchSlider({
         {/* Thumb with value label */}
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full border-2 shadow-lg transition-transform",
+            "absolute top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-xl transition-transform duration-base ease-out-modern",
             thumbColorClasses[color],
             isDragging && "scale-125 shadow-xl",
           )}

@@ -97,7 +97,7 @@ const AnalysisResults = ({ inputs, calc }: Props) => {
             DSCR
             <span className="relative group">
               <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
-              <span className="absolute left-0 bottom-full mb-1 w-48 bg-popover text-popover-foreground text-[10px] p-2 rounded-lg shadow-lg border border-border opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+              <span className="pointer-events-none absolute bottom-full left-0 z-50 mb-1 w-48 rounded-xl border border-border/80 bg-popover/95 p-2 text-[10px] text-popover-foreground opacity-0 shadow-md backdrop-blur-sm transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
                 Debt Service Coverage Ratio: Nettomiete / Kreditrate. Ab 1.2 gilt als sicher.
               </span>
             </span>

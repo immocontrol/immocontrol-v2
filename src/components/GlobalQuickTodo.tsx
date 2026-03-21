@@ -47,7 +47,7 @@ const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="fixed bottom-24 right-4 md:bottom-6 z-40">
       {open ? (
-        <div className="bg-card border border-border rounded-xl shadow-lg p-3 w-72 animate-fade-in">
+        <div className="w-72 animate-fade-in rounded-xl border border-border/80 bg-card p-3 shadow-card">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-semibold text-muted-foreground">Schnell-Aufgabe</span>
             <button onClick={() => { setOpen(false); setTitle(""); }} className="ml-auto text-muted-foreground hover:text-foreground">
@@ -75,7 +75,7 @@ const GlobalQuickTodo = forwardRef<HTMLDivElement>((_, ref) => {
               data-global-quick-todo
               onClick={() => setOpen(true)}
               size="icon"
-              className="h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform"
+              className="h-12 w-12 rounded-full shadow-xl transition-transform duration-base ease-out-modern hover:scale-110"
             >
               <Plus className="h-5 w-5" />
             </Button>

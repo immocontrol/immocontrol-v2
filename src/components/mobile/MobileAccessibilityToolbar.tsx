@@ -142,7 +142,7 @@ export const MobileAccessibilityToolbar = memo(function MobileAccessibilityToolb
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed z-40 w-11 h-11 rounded-full shadow-lg",
+          "fixed z-40 h-11 w-11 rounded-full shadow-xl",
           "flex items-center justify-center transition-all",
           "bg-primary text-primary-foreground",
           "hover:shadow-xl active:scale-95",

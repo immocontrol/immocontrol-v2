@@ -557,7 +557,7 @@ const ImmobilienBewertung = () => {
                 </div>
                 {/* Autocomplete dropdown */}
                 {showSuggestions && addressSuggestions.length > 0 && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm">
                     {addressLoading && (
                       <div className="px-3 py-2 text-[10px] text-muted-foreground flex items-center gap-1.5">
                         <Loader2 className="h-3 w-3 animate-spin" /> Suche...

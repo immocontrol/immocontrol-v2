@@ -67,7 +67,7 @@ const QuickActions = ({ onScrollTo, onNavigate }: QuickActionsProps) => {
         <TooltipContent>Schnellaktion (Q)</TooltipContent>
       </Tooltip>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-52 p-1 bg-popover border border-border rounded-lg shadow-lg z-[9999] animate-fade-in">
+        <div className="absolute right-0 top-full z-[9999] mt-1 w-52 animate-fade-in rounded-xl border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-md backdrop-blur-sm">
           {actions.map(action => {
             const Icon = action.icon;
             const navAction = "navigate" in action && action.navigate && onNavigate;

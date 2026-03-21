@@ -142,13 +142,13 @@ export const MobileComparisonSlider = memo(function MobileComparisonSlider({
 
         {/* Divider line */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg z-10"
+          className="absolute bottom-0 top-0 z-10 w-0.5 bg-white shadow-md"
           style={{ left: `${position}%`, transform: "translateX(-50%)" }}
         >
           {/* Handle */}
           <div className={cn(
             "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-            "w-10 h-10 rounded-full bg-white shadow-lg border-2 border-white",
+            "h-10 w-10 rounded-full border-2 border-white bg-white shadow-xl",
             "flex items-center justify-center",
             isDragging && "scale-110",
             "transition-transform",

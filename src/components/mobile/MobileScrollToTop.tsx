@@ -74,7 +74,7 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
       onClick={scrollToTop}
       className={cn(
         "fixed right-4 z-40 w-10 h-10 rounded-full",
-        "bg-primary text-primary-foreground shadow-lg",
+        "bg-primary text-primary-foreground shadow-xl",
         "flex items-center justify-center",
         "transition-all duration-300",
         "active:scale-95 hover:shadow-xl",
