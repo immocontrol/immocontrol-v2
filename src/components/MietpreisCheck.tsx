@@ -50,9 +50,10 @@ const MietpreisCheck = memo(() => {
       const sqm = p.sqm || 1;
       const currentRentPerSqm = p.monthlyRent / sqm;
 
-      // Find matching Mietspiegel
+      // Find matching Mietspiegel (p.location can be null/undefined)
+      const locationStr = p.location ?? "";
       const locationKey = Object.keys(MIETSPIEGEL_RANGES).find((k) =>
-        p.location.toLowerCase().includes(k.toLowerCase())
+        locationStr.toLowerCase().includes(k.toLowerCase())
       ) || "default";
       const range = MIETSPIEGEL_RANGES[locationKey];
 

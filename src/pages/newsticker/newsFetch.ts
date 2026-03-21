@@ -51,16 +51,34 @@ async function fetchRSSViaAllOriginsJson(feedUrl: string): Promise<string | null
 }
 
 const CORS_PROXIES = [
+  (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
   (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   (url: string) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
   (url: string) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
 ];
+
+async function fetchViaCorsProxy(feedUrl: string): Promise<string | null> {
+  try {
+    const u = `https://corsproxy.io/?url=${encodeURIComponent(feedUrl)}`;
+    const resp = await fetch(u, { signal: AbortSignal.timeout(12000) });
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    if (!text || text.length < 100 || !looksLikeXmlFeed(text)) return null;
+    return text;
+  } catch {
+    return null;
+  }
+}
 
 async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
   const viaEdge = await fetchRssTextViaEdge(feedUrl);
   if (viaEdge && looksLikeXmlFeed(viaEdge)) {
     const parsed = parseRSSItems(viaEdge, source, icon);
+    if (parsed.length > 0) return parsed;
+  }
+  const viaCorsProxy = await fetchViaCorsProxy(feedUrl);
+  if (viaCorsProxy) {
+    const parsed = parseRSSItems(viaCorsProxy, source, icon);
     if (parsed.length > 0) return parsed;
   }
   const viaJson = await fetchRSSViaAllOriginsJson(feedUrl);
