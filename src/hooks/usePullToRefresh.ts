@@ -3,13 +3,12 @@
  * Touch-based pull-to-refresh; content follows finger (iOS-style pull-down).
  * Only triggers when user is at the very top and then pulls down — not when scrolling up from below.
  */
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 
 const MAX_PULL_PX = 120;
 const SNAP_DURATION_MS = 280;
 const SNAP_EASING = "cubic-bezier(0.33, 1, 0.68, 1)"; // smooth ease-out, slight overshoot feel
-const INDICATOR_SMOOTH_MS = 80; // short transition during pull so indicator doesn't stutter
-/** Min downward movement (px) before we treat the gesture as pull — avoids trigger when user scrolls up (finger moves up). */
+/** Min downward movement (px) before we treat the gesture as pull — avoids trigger when scrolling up (finger moves up). */
 const PULL_START_THRESHOLD_PX = 26;
 /** Indicator only visible after this pull distance — avoids brief flash when scrolling up past top. */
 const INDICATOR_VISIBLE_AFTER_PX = 32;
@@ -21,6 +20,25 @@ function pullDistance(diff: number): number {
   const eased = 1 - Math.exp(-t * 1.8);
   return Math.min(MAX_PULL_PX * eased, MAX_PULL_PX);
 }
+
+export interface PullToRefreshIndicatorState {
+  opacity: number;
+  translateY: number;
+  /** 0–1 ring fill */
+  progress: number;
+  /** Threshold reached — show checkmark, user can release */
+  ready: boolean;
+  /** Refresh in progress — show spinner */
+  refreshing: boolean;
+}
+
+const IDLE_INDICATOR: PullToRefreshIndicatorState = {
+  opacity: 0,
+  translateY: -40,
+  progress: 0,
+  ready: false,
+  refreshing: false,
+};
 
 interface PullToRefreshOptions {
   onRefresh: () => Promise<void> | void;
@@ -36,6 +54,9 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
   /** True once user has actually pulled down past PULL_START_THRESHOLD_PX; avoids starting pull when scrolling up. */
   const pullStarted = useRef(false);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
+  const refreshingRef = useRef(false);
+
+  const [indicator, setIndicator] = useState<PullToRefreshIndicatorState>(IDLE_INDICATOR);
 
   const getScrollTop = useCallback(() => {
     if (contentRef?.current) return contentRef.current.scrollTop;
@@ -51,21 +72,11 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
     }
   }, [contentRef]);
 
-  const setIndicator = useCallback((yPx: number, opacity: number, withTransition: boolean) => {
-    if (!indicatorRef.current) return;
-    const durationMs = withTransition && yPx === 0 ? SNAP_DURATION_MS : withTransition ? INDICATOR_SMOOTH_MS : 0;
-    indicatorRef.current.style.transition = durationMs > 0
-      ? `transform ${durationMs}ms ${SNAP_EASING}, opacity ${durationMs}ms ease-out`
-      : "none";
-    indicatorRef.current.style.transform = `translateX(-50%) translateY(${yPx}px)`;
-    indicatorRef.current.style.opacity = String(opacity);
-  }, []);
-
   /** Touch started at scroll top; we only treat as pull once user moves finger down past PULL_START_THRESHOLD_PX. */
   const atTopTouch = useRef(false);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (disabled) return;
+    if (disabled || refreshingRef.current) return;
     const scrollTop = getScrollTop();
     if (scrollTop > 0) return;
     const active = document.activeElement;
@@ -77,7 +88,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
   }, [disabled, getScrollTop]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (disabled) return;
+    if (disabled || refreshingRef.current) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
 
@@ -96,33 +107,58 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
       pullStarted.current = false;
       atTopTouch.current = false;
       setContentTransform(0, true);
-      setIndicator(0, 0, true);
+      setIndicator(IDLE_INDICATOR);
       return;
     }
     const distance = pullDistance(diff);
     setContentTransform(distance, false);
     const progress = Math.min(diff / threshold, 1);
-    const indicatorOpacity = distance >= INDICATOR_VISIBLE_AFTER_PX ? progress : 0;
-    setIndicator(Math.min(distance * 0.6, threshold * 0.6), indicatorOpacity, true);
-  }, [threshold, disabled, setContentTransform, setIndicator]);
+    const opacity = distance >= INDICATOR_VISIBLE_AFTER_PX ? progress : 0;
+    const translateY = Math.min(distance * 0.6, threshold * 0.6);
+    const ready = diff >= threshold;
+    setIndicator({
+      opacity,
+      translateY,
+      progress,
+      ready,
+      refreshing: false,
+    });
+  }, [threshold, disabled, setContentTransform]);
 
-  const handleTouchEnd = useCallback(async (e: TouchEvent) => {
-    const wasPulling = pulling.current;
-    pulling.current = false;
-    pullStarted.current = false;
-    atTopTouch.current = false;
+  const handleTouchEnd = useCallback(
+    async (e: TouchEvent) => {
+      const wasPulling = pulling.current;
+      pulling.current = false;
+      pullStarted.current = false;
+      atTopTouch.current = false;
 
-    if (!wasPulling || disabled) return;
-    const endY = e.changedTouches[0].clientY;
-    const diff = endY - startY.current;
+      if (!wasPulling || disabled || refreshingRef.current) return;
+      const endY = e.changedTouches[0].clientY;
+      const diff = endY - startY.current;
 
-    setContentTransform(0, true);
-    setIndicator(0, 0, true);
+      setContentTransform(0, true);
 
-    if (diff >= threshold) {
-      await onRefresh();
-    }
-  }, [onRefresh, threshold, disabled, setContentTransform, setIndicator]);
+      if (diff >= threshold) {
+        refreshingRef.current = true;
+        setIndicator({
+          opacity: 1,
+          translateY: 8,
+          progress: 1,
+          ready: false,
+          refreshing: true,
+        });
+        try {
+          await onRefresh();
+        } finally {
+          refreshingRef.current = false;
+          setIndicator(IDLE_INDICATOR);
+        }
+      } else {
+        setIndicator(IDLE_INDICATOR);
+      }
+    },
+    [onRefresh, threshold, disabled, setContentTransform],
+  );
 
   useEffect(() => {
     if (disabled) return;
@@ -134,8 +170,10 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false, 
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
       setContentTransform(0, false);
+      refreshingRef.current = false;
+      setIndicator(IDLE_INDICATOR);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd, disabled, setContentTransform]);
 
-  return { indicatorRef };
+  return { indicatorRef, indicator };
 }

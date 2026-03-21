@@ -1,16 +1,16 @@
 /**
  * MOB-2: Enhanced Pull-to-Refresh with visual indicator
- * Shows a spinner with progress feedback and haptic response on mobile.
+ * Ring progress → check when ready → spinner while invalidating queries.
  */
-import { memo, useState, useCallback } from "react";
-import { RefreshCw } from "lucide-react";
+import { memo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
-import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MobilePullToRefreshProps {
   /** Additional query keys to invalidate on refresh */
@@ -20,10 +20,9 @@ interface MobilePullToRefreshProps {
 export const MobilePullToRefresh = memo(function MobilePullToRefresh({ queryKeys: extraKeys }: MobilePullToRefreshProps) {
   const qc = useQueryClient();
   const haptic = useHaptic();
-  const [refreshing, setRefreshing] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
     haptic.medium();
     try {
       if (extraKeys && extraKeys.length > 0) {
@@ -37,24 +36,22 @@ export const MobilePullToRefresh = memo(function MobilePullToRefresh({ queryKeys
       haptic.error();
       handleError(err, { context: "network", showToast: false });
       toastErrorWithRetry("Aktualisierung fehlgeschlagen", () => handleRefresh());
-    } finally {
-      setTimeout(() => setRefreshing(false), 500);
     }
   }, [qc, haptic, extraKeys]);
 
-  const { indicatorRef } = usePullToRefresh({ onRefresh: handleRefresh });
+  const { indicatorRef, indicator } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
 
   return (
-    <div
-      ref={indicatorRef}
-      className={cn(
-        "fixed left-1/2 top-0 z-[300] flex h-10 w-10 items-center justify-center rounded-full shadow-xl pointer-events-none transition-all duration-200",
-        refreshing ? "bg-primary text-primary-foreground" : "bg-background border border-border text-foreground",
-      )}
-      style={{ opacity: 0, transform: "translateX(-50%) translateY(-40px)" }}
-      aria-hidden
-    >
-      <RefreshCw className={cn("h-5 w-5", refreshing && "animate-spin")} />
-    </div>
+    <PullToRefreshIndicator
+      rootRef={indicatorRef}
+      opacity={indicator.opacity}
+      translateY={indicator.translateY}
+      progress={indicator.progress}
+      ready={indicator.ready}
+      refreshing={indicator.refreshing}
+    />
   );
 });

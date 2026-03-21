@@ -115,8 +115,8 @@ const SENTIMENT_CONFIG = {
 const RSS_FEEDS = [
   /* Core search feeds — wirtschaftlich fokussiert */
   { url: "https://news.google.com/rss/search?q=immobilien+markt+berlin+OR+brandenburg+investition+OR+rendite+OR+preis+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "Google News", icon: "\uD83D\uDD0D" },
-  { url: "https://www.tagesspiegel.de/wirtschaft/immobilien/rss", source: "Tagesspiegel", icon: "\uD83D\uDCF0" },
-  { url: "https://www.morgenpost.de/berlin/feed.rss", source: "Berliner Morgenpost", icon: "\uD83D\uDCF0" },
+  { url: "https://www.tagesspiegel.de/contentexport/feed/wirtschaft/immobilien", source: "Tagesspiegel", icon: "\uD83D\uDCF0" },
+  { url: "https://news.google.com/rss/search?q=site:morgenpost.de+berlin+immobilien&hl=de&gl=DE&ceid=DE:de", source: "Berliner Morgenpost (via Google)", icon: "\uD83D\uDCF0" },
   { url: "https://www.rbb24.de/wirtschaft/index.xml/feed=rss.xml", source: "rbb24", icon: "\uD83D\uDCFA" },
   /* Fachmedien — via Google News Site-Search */
   { url: "https://news.google.com/rss/search?q=site:iz.de+berlin+OR+brandenburg&hl=de&gl=DE&ceid=DE:de", source: "IZ (via Google)", icon: "\uD83C\uDFE2" },
@@ -257,7 +257,21 @@ function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
   return items;
 }
 
-/* ─── Fetch RSS via CORS proxy ─── */
+/* ─── Fetch RSS via CORS proxy (browser cannot call RSS URLs directly) ─── */
+/** AllOrigins `/get` returns JSON `{ contents }` — more reliable than `/raw` (often 500). */
+async function fetchRSSViaAllOriginsJson(feedUrl: string): Promise<string | null> {
+  try {
+    const u = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`;
+    const resp = await fetch(u, { signal: AbortSignal.timeout(15000) });
+    if (!resp.ok) return null;
+    const data = (await resp.json()) as { contents?: string };
+    if (typeof data.contents === "string" && data.contents.length > 80) return data.contents;
+  } catch {
+    /* network / JSON */
+  }
+  return null;
+}
+
 const CORS_PROXIES = [
   (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -266,6 +280,11 @@ const CORS_PROXIES = [
 ];
 
 async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
+  const viaJson = await fetchRSSViaAllOriginsJson(feedUrl);
+  if (viaJson) {
+    const parsed = parseRSSItems(viaJson, source, icon);
+    if (parsed.length > 0) return parsed;
+  }
   for (const buildProxyUrl of CORS_PROXIES) {
     try {
       const proxyUrl = buildProxyUrl(feedUrl);

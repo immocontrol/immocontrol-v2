@@ -24,6 +24,7 @@ import { migrateLocalStorageToSupabase } from "@/hooks/useSupabaseStorage";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/lib/logger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useInactivityHint } from "@/hooks/useInactivityHint";
 import { useSessionIdleTimeout } from "@/hooks/useSessionIdleTimeout";
@@ -85,12 +86,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const isFetching = useIsFetching();
   const isMobile = useIsMobile();
   const mainContentRef = useRef<HTMLElement>(null);
-  const { indicatorRef: pullIndicatorRef } = usePullToRefresh({
+  const { indicatorRef: pullIndicatorRef, indicator: pullIndicator } = usePullToRefresh({
     onRefresh: async () => {
       await qc.invalidateQueries();
       toast.success("Daten aktualisiert");
     },
     contentRef: isMobile ? mainContentRef : undefined,
+    disabled: !isMobile,
   });
 
   /* REALTIME-7: Multi-device sync — invalidates React Query cache on remote changes */
@@ -503,15 +505,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">
         Zum Inhalt springen
       </a>
-      {/* #11: Pull-to-refresh indicator */}
-      <div
-        ref={pullIndicatorRef}
-        className="fixed top-0 left-1/2 z-[300] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl pointer-events-none"
-        style={{ opacity: 0, transform: "translateX(-50%) translateY(-40px)" }}
-        aria-hidden
-      >
-        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-      </div>
+      {/* #11: Pull-to-refresh — ring fills → check when ready → spinner while refreshing */}
+      <PullToRefreshIndicator
+        rootRef={pullIndicatorRef}
+        opacity={pullIndicator.opacity}
+        translateY={pullIndicator.translateY}
+        progress={pullIndicator.progress}
+        ready={pullIndicator.ready}
+        refreshing={pullIndicator.refreshing}
+      />
       {/* UX-1: Page transition progress bar */}
       <PageProgressBar />
       <ScrollProgress />
