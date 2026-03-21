@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,10 +93,13 @@ const GesellschaftSelector = ({ value, onChange, error }: GesellschaftSelectorPr
     },
   });
 
-  const allOptions = [
-    ...DEFAULT_OPTIONS.map((name) => ({ id: name, name, isDefault: true })),
-    ...customCompanies.map((c) => ({ ...c, isDefault: false })),
-  ];
+  const allOptions = useMemo(
+    () => [
+      ...DEFAULT_OPTIONS.map((name) => ({ id: name, name, isDefault: true })),
+      ...customCompanies.map((c) => ({ ...c, isDefault: false })),
+    ],
+    [customCompanies]
+  );
 
   const filtered = search.trim()
     ? allOptions.filter((o) => o.name.toLowerCase().includes(search.toLowerCase()))

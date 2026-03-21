@@ -31,7 +31,7 @@ export function ConfigErrorScreen() {
               <p className="font-medium">So behebst du es (Codemagic / iOS):</p>
               <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
                 <li>Codemagic Dashboard → deine App → <strong>Environment variables</strong></li>
-                <li>Gruppe anlegen (z. B. <strong>supabase_config</strong>) und dem Workflow zuweisen</li>
+                <li>Gruppe anlegen (z. B. <strong>supabase_config</strong>) und dem Workflow zuweisen</li>
                 <li>In der Gruppe setzen:
                   <ul className="list-disc list-inside mt-1 ml-2">
                     <li><code className="text-xs bg-muted px-1 rounded">VITE_SUPABASE_URL</code></li>

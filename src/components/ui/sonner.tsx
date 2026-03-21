@@ -6,6 +6,8 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
 /** Badge zeigt Gesamtzahl der Toasts auf dem vordersten Toast (nur wenn > 1) */
 function ToastCountBadge() {
   try {
+    // useSonner darf hier nicht als conditional erkannt werden – der Hook wird immer aufgerufen
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- Hook steht am Anfang, try/catch fängt nur Laufzeitfehler
     const { toasts } = useSonner();
     const count = Array.isArray(toasts) ? toasts.length : 0;
     if (count <= 1) return null;

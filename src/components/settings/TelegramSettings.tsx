@@ -176,7 +176,7 @@ export function TelegramSettings({ sectionRef }: TelegramSettingsProps) {
         <MessageSquare className="h-4 w-4 text-[#0088cc]" /> Telegram Integration
       </h2>
       <p className="text-xs text-muted-foreground">
-        Bot mit ImmoControl verknüpfen: Deals aus ImmoMetrica oder z. B. von @immometrica_bot importieren. Nachrichten von @immometrica_bot einfach an deinen Bot weiterleiten – sie landen automatisch als Deals in der App.
+        Bot mit ImmoControl verknüpfen: Deals aus ImmoMetrica oder z. B. von @immometrica_bot importieren. Nachrichten von @immometrica_bot einfach an deinen Bot weiterleiten – sie landen automatisch als Deals in der App.
       </p>
       <div className="space-y-3">
         <div className="space-y-1.5">

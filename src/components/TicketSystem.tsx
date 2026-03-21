@@ -15,6 +15,7 @@ import { isDeepSeekConfigured, suggestTicketDescription } from "@/integrations/a
 import { formatCurrency } from "@/lib/formatters";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
+import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/routes";
 import { CallButton } from "@/components/CallButton";
 
@@ -173,7 +174,12 @@ const TicketRow = ({
             {ticket.actual_cost > 0 && (
               <>
                 <span>·</span>
-                <span className={`flex items-center gap-0.5 font-medium ${ticket.actual_cost > ticket.estimated_cost ? "text-loss" : "text-profit"}`}>
+                <span
+                  className={cn(
+                    "flex items-center gap-0.5 font-medium",
+                    ticket.actual_cost > ticket.estimated_cost ? "text-loss" : "text-profit"
+                  )}
+                >
                   Tatsächlich: {formatCurrency(Number(ticket.actual_cost))}
                 </span>
               </>
