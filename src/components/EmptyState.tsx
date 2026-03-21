@@ -24,7 +24,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center py-10 md:py-12 px-4 text-center rounded-xl border border-dashed border-border/80 bg-gradient-to-b from-muted/25 to-muted/10 shadow-sm backdrop-blur-[2px] transition-shadow duration-200",
+        "flex flex-col items-center justify-center py-10 md:py-12 px-4 text-center rounded-xl border border-dashed border-border/80 bg-gradient-to-b from-muted/25 to-muted/10 shadow-sm backdrop-blur-[2px] transition-[box-shadow,border-color] duration-base ease-out-modern motion-safe:animate-fade-in",
         className,
       )}
       role="status"

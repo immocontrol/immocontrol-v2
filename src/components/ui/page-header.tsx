@@ -22,7 +22,7 @@ export function PageHeaderTitle({ className, ...props }: React.HTMLAttributes<HT
   return (
     <h1
       className={cn(
-        "text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 min-w-0",
+        "text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 min-w-0 text-balance",
         className,
       )}
       {...props}
@@ -32,7 +32,7 @@ export function PageHeaderTitle({ className, ...props }: React.HTMLAttributes<HT
 
 export function PageHeaderDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm text-muted-foreground mt-1 max-w-2xl text-wrap-safe leading-relaxed", className)} {...props} />
+    <p className={cn("text-sm text-muted-foreground mt-1 max-w-2xl text-wrap-safe leading-relaxed text-pretty", className)} {...props} />
   );
 }
 

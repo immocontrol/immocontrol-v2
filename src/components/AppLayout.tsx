@@ -487,7 +487,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   };
 
   return (
-    <div data-session-id={sessionIdRef.current} className="min-h-screen bg-background flex flex-col theme-transition-smooth dark-mode-contrast">
+    <div data-session-id={sessionIdRef.current} className="app-shell min-h-screen flex flex-col theme-transition-smooth dark-mode-contrast">
       {/* STR-11: Improved offline banner with auto-dismiss and reconnect detection */}
       {!isOnline && (
         <div className="offline-banner animate-fade-in" role="alert" aria-live="assertive">
