@@ -147,8 +147,17 @@ const preloadHighTrafficRoutes = () => {
 };
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-live="polite" aria-label="Seite wird geladen">
-    <div className="animate-pulse text-muted-foreground">Laden...</div>
+  <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6" role="status" aria-live="polite" aria-label="Seite wird geladen">
+    <div className="w-full max-w-xs space-y-3">
+      <div className="h-8 w-3/4 rounded-lg skeleton-shimmer" />
+      <div className="h-4 w-full rounded-md skeleton-shimmer opacity-80" />
+      <div className="h-4 w-5/6 rounded-md skeleton-shimmer opacity-80" />
+      <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="h-24 rounded-xl border border-border/50 skeleton-shimmer" />
+        <div className="h-24 rounded-xl border border-border/50 skeleton-shimmer" />
+      </div>
+    </div>
+    <p className="text-sm text-muted-foreground">Laden…</p>
   </div>
 );
 

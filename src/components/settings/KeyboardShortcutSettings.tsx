@@ -19,7 +19,8 @@ const DEFAULT_SHORTCUTS: Record<string, string> = {
   "Navigation: CRM": "Alt+8",
   "Navigation: Deals": "Alt+0",
   "Navigation: Einstellungen": "Alt+9",
-  "Suche öffnen": "Ctrl+K",
+  "Befehlspalette": "Ctrl+K",
+  "Globale Suche fokussieren": "Alt+S",
   "Neues Objekt": "Ctrl+N",
 };
 

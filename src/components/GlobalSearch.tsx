@@ -44,13 +44,13 @@ export const GlobalSearch = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Cmd+K to focus
+  // Alt+S: Fokus globale Suche (Cmd+K ist reserviert für die Befehlspalette)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (e.altKey && e.key.toLowerCase() === "s" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         inputRef.current?.focus();
-        setOpen(true);
+        setOpen(!!inputRef.current?.value.trim());
       }
     };
     window.addEventListener("keydown", handler);
@@ -88,7 +88,7 @@ export const GlobalSearch = () => {
       { id: "nav-deal-benchmark", title: "Deal-Benchmark", subtitle: "Erwartete vs. realisierte Rendite", path: ROUTES.DEAL_BENCHMARK },
       { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: ROUTES.BESICHTIGUNGEN },
       { id: "nav-settings", title: "Einstellungen", subtitle: "Profil & Theme", path: ROUTES.SETTINGS },
-      { id: "nav-shortcuts", title: "Tastenkombinationen", subtitle: "Liste aller Shortcuts (Ctrl+K, Ctrl+N, …)", path: `${ROUTES.SETTINGS}#tastenkombinationen` },
+      { id: "nav-shortcuts", title: "Tastenkombinationen", subtitle: "Liste aller Shortcuts (⌘K, Alt+S, Ctrl+N, …)", path: `${ROUTES.SETTINGS}#tastenkombinationen` },
     ];
     return items.map(i => ({
       id: i.id,
@@ -312,12 +312,13 @@ export const GlobalSearch = () => {
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none shrink-0" aria-hidden />
             <Input
               ref={inputRef}
+              data-global-search-input
               value={query}
               onChange={e => { setQuery(e.target.value); setOpen(true); }}
               onFocus={() => { if (query.trim()) setOpen(true); }}
               onKeyDown={handleKeyDown}
               placeholder="z. B. Objekt, Seite, Aktion"
-              className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all min-w-0"
+              className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all min-w-0 search-input-enhanced"
               autoComplete="off"
               aria-label="Globale Suche – Objekte, Seiten, Kontakte, Deals"
               aria-expanded={open && !!query.trim()}
@@ -337,12 +338,14 @@ export const GlobalSearch = () => {
               </button>
             ) : (
               <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden md:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground" aria-hidden>
-                ⌘K
+                Alt+S
               </kbd>
             )}
           </div>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">Schnellsuche (Ctrl+K / ⌘K)</TooltipContent>
+        <TooltipContent side="bottom" className="text-xs max-w-[240px]">
+          Globale Suche: Objekte, Seiten, Kontakte, Deals (mind. 2 Zeichen für Datenbank). Tastenkürzel Alt+S. Schnellnavigation: ⌘K / Strg+K.
+        </TooltipContent>
       </Tooltip>
 
       {open && query.trim() && (

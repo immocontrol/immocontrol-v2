@@ -243,7 +243,7 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
 
   if (!open) return null;
 
-  // Desktop: Cmd+K opens CommandPalette
+  // Desktop: Cmd+K öffnet die Befehlspalette; globale Header-Suche nutzt Alt+S
   if (!isMobile) return null;
 
   const hasResults = debouncedQuery && results.length > 0;

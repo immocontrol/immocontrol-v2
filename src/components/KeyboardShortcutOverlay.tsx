@@ -25,8 +25,9 @@ const SHORTCUT_GROUPS: { title: string; shortcuts: { keys: string; description: 
   {
     title: "Aktionen",
     shortcuts: [
-      { keys: "Ctrl+K", description: "Suche öffnen / Spotlight" },
-      { keys: "Cmd+K", description: "Globale Suche (Desktop)" },
+      { keys: "Ctrl+K", description: "Befehlspalette (Navigation & Objekte)" },
+      { keys: "Cmd+K", description: "Befehlspalette (macOS)" },
+      { keys: "Alt+S", description: "Globale Suche fokussieren (Desktop)" },
       { keys: "Ctrl+N", description: "Neues Objekt anlegen" },
       { keys: "n", description: "Neue Besichtigung (auf /besichtigungen)" },
       { keys: "Alt+I", description: "Immo AI öffnen" },
@@ -37,7 +38,6 @@ const SHORTCUT_GROUPS: { title: string; shortcuts: { keys: string; description: 
   {
     title: "Dashboard",
     shortcuts: [
-      { keys: "Ctrl+K", description: "Objekt suchen" },
       { keys: "Esc", description: "Suche/Dialog schließen" },
     ],
   },

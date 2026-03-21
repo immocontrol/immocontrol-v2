@@ -59,7 +59,7 @@ const StatCard = ({ label, value, subValue, icon, trend, delay = 0, tooltip, hre
             {copied ? <Check className="h-4 w-4 text-profit" /> : icon}
           </span>
         </div>
-        <div className="text-2xl font-bold tracking-tight animate-count">{displayValue}</div>
+        <div className="text-2xl font-bold tracking-tight animate-count tabular-nums kpi-number">{displayValue}</div>
         {displaySubValue != null && (
           <div className="flex items-center gap-1 mt-1">
             {trend === "up" && <TrendingUp className="h-3 w-3 text-profit" />}

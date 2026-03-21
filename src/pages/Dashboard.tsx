@@ -172,11 +172,6 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
         e.preventDefault();
         document.querySelector<HTMLButtonElement>("[data-add-property]")?.click();
       }
-      // Improvement 11: Ctrl+K to focus search
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -817,7 +812,7 @@ const Dashboard = ({ mode = "portfolio" }: { mode?: "portfolio" | "personal" }) 
           <Input
             ref={searchRef}
             type="search"
-            placeholder="z. B. Musterstraße 12 oder Objektname (⌘K)"
+            placeholder="z. B. Musterstraße 12 oder Objektname"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 pr-8 h-9 text-sm"

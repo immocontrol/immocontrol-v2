@@ -28,7 +28,7 @@ export const CommandPalette = () => {
   const navigate = useNavigate();
   const { properties } = useProperties();
 
-  // Open on Cmd+K / Ctrl+K
+  // Schnellnavigation: Cmd+K / Ctrl+K (globale Suche: Alt+S im Header)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -126,8 +126,8 @@ export const CommandPalette = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" aria-label="Befehlspalette">
-        <div className="flex items-center gap-2 px-3 border-b border-border">
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden border-border/80 shadow-xl dark:shadow-[0_24px_48px_-12px_hsl(0_0%_0%/_0.45)]" aria-label="Befehlspalette">
+        <div className="flex items-center gap-2 px-3 border-b border-border/60 bg-muted/20">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <Input
             placeholder="z. B. Dashboard, Musterstraße, Aufgaben"

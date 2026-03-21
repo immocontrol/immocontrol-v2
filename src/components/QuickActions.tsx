@@ -108,7 +108,8 @@ const ACTION_CATEGORIES = {
 const QUICK_ACTION_SHORTCUTS: Record<string, string> = {
   "Neues Objekt": "Ctrl+N",
   "Neue Aufgabe": "Enter",
-  "Suche": "Ctrl+K",
+  "Globale Suche": "Alt+S",
+  "Befehlspalette": "Ctrl+K",
 };
 
 

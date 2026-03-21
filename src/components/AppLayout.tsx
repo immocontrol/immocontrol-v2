@@ -658,7 +658,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         id="main-content"
         role="main"
         tabIndex={-1}
-        className="flex-1 min-h-0 container py-6 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-6 overflow-x-hidden overflow-y-auto min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="flex-1 min-h-0 container py-6 md:py-8 lg:py-10 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-8 overflow-x-hidden overflow-y-auto min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onKeyDown={enterToNextHandler}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
