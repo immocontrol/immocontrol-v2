@@ -759,7 +759,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
               {showSuggestions && suggestions.length > 0 && (
                 <ul
                   ref={suggestionRef}
-                  className="absolute z-50 top-full left-0 right-0 mt-0.5 rounded-md border border-border bg-popover text-popover-foreground shadow-md max-h-[220px] overflow-y-auto"
+                  className="absolute left-0 right-0 top-full z-50 mt-0.5 max-h-[220px] overflow-y-auto rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm"
                   role="listbox"
                   id="scout-suggestions-listbox"
                 >

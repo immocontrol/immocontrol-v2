@@ -353,7 +353,7 @@ export const GlobalSearch = () => {
           id={listboxId}
           role="listbox"
           aria-label={`Suchergebnisse${results.length > 0 ? `, ${results.length} Treffer` : ""}`}
-          className="absolute top-full mt-1 right-0 w-full min-w-[280px] max-w-[min(24rem,calc(100vw-2rem))] sm:w-96 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden"
+          className="absolute right-0 top-full z-50 mt-1 w-full min-w-[280px] max-w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm sm:w-96"
         >
           {loading && results.length === 0 ? (
             <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground text-sm" role="status" aria-label="Suche wird ausgeführt">
