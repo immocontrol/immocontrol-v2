@@ -784,7 +784,7 @@ const TenantPortal = () => {
               ) : (
                 <ul className="space-y-3">
                   {handoverProtocols.map((hp) => (
-                    <li key={hp.id} className="border border-border rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
+                    <li key={hp.id} className="surface-section p-3 flex flex-wrap items-center justify-between gap-2">
                       <button
                         type="button"
                         onClick={() => setSelectedHandoverId(hp.id)}
@@ -844,7 +844,7 @@ const TenantPortal = () => {
                         </div>
                       )}
                       {selectedHandover.protocol_data?.rooms?.map((room, ri) => (
-                        <div key={ri} className="border border-border rounded-lg p-2">
+                        <div key={ri} className="surface-section p-2">
                           <p className="font-medium text-xs">{room.name} – {HANDOVER_CONDITION_LABELS[room.condition] || ""}</p>
                           <ul className="mt-1 text-xs text-muted-foreground space-y-0.5">
                             {room.items?.map((item, ii) => (

@@ -145,7 +145,7 @@ const KautionsManagement = memo(() => {
 
       {/* New kaution form */}
       {showNew && (
-        <div className="border border-border rounded-lg p-2 mb-3 space-y-2">
+        <div className="surface-section p-2 mb-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Input className="h-7 text-[10px]" placeholder="Mietername" value={newKaution.tenantName || ""} onChange={(e) => setNewKaution((p) => ({ ...p, tenantName: e.target.value }))} />
             <Input className="h-7 text-[10px]" placeholder="Objekt" value={newKaution.propertyName || ""} onChange={(e) => setNewKaution((p) => ({ ...p, propertyName: e.target.value }))} />

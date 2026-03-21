@@ -55,7 +55,7 @@ export function PropertyRenditeTracking({
 
   if (compact) {
     return (
-      <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs">
+      <div className="surface-section p-2 text-xs">
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-1">
             <BarChart2 className="h-3.5 w-3.5 text-primary" />

@@ -386,7 +386,7 @@ const Auth = () => {
 
   if (user && isRecoverySession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Neues Passwort setzen">
+      <div className="app-shell flex min-h-screen items-center justify-center overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Neues Passwort setzen">
         <div className="w-full max-w-sm space-y-6 animate-fade-in">
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center gap-2">
@@ -398,7 +398,7 @@ const Auth = () => {
             <p className="text-sm text-muted-foreground">Neues Passwort setzen</p>
             <p className="text-xs text-muted-foreground">Du wurdest über den Link aus der E-Mail hierher geleitet. Setze jetzt ein neues Passwort. Danach kannst du dich damit anmelden.</p>
           </div>
-          <form onSubmit={handleSetNewPassword} className="gradient-card rounded-xl border border-border p-6 space-y-4">
+          <form onSubmit={handleSetNewPassword} className="gradient-card space-y-4 p-6">
             <div className="space-y-1.5">
               <Label htmlFor="new-pw" className="text-xs text-muted-foreground">Neues Passwort *</Label>
               <div className="relative">
@@ -455,7 +455,7 @@ const Auth = () => {
   return (
     /* Item 6: Improved auth page — smoother animations, gradient bg, better spacing */
     /* IMP-44-6: ARIA landmark for auth page */
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Authentifizierung">
+    <div className="app-shell flex min-h-screen items-center justify-center overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]" role="main" aria-label="Authentifizierung">
       <div className="w-full max-w-sm space-y-6 animate-fade-in [animation-delay:100ms]">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-2">
@@ -480,7 +480,7 @@ const Auth = () => {
 
         {/* 2FA Verification Step */}
         {needs2FA ? (
-          <div className="gradient-card rounded-xl border border-border p-6 space-y-4">
+          <div className="gradient-card space-y-4 p-6">
             <div className="text-center">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                 <Shield className="h-6 w-6 text-primary" />
@@ -558,7 +558,7 @@ const Auth = () => {
           </div>
         ) : (
 
-        <form onSubmit={handleSubmit} className="gradient-card rounded-xl border border-border p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="gradient-card space-y-4 p-6">
           {/* Back button for forgot mode */}
           {mode === "forgot" && (
             <button

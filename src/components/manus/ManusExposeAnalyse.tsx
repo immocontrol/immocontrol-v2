@@ -128,7 +128,7 @@ export const ManusExposeAnalyse = ({ data, onResult }: ManusExposeAnalyseProps) 
       )}
 
       {result && (
-        <div className="rounded-lg border border-border bg-card/50 p-4 space-y-3 animate-fade-in">
+        <div className="surface-section p-4 space-y-3 animate-fade-in">
           {/* Deal Score Header */}
           {result.deal_score !== undefined && (
             <div className="flex items-center gap-3">

@@ -260,7 +260,7 @@
     background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.82) 100%);
     box-shadow: var(--shadow-sm);
     border: 1px solid hsl(var(--border) / 0.75);
-    border-radius: var(--radius);
+    border-radius: var(--radius-xl);
     transition:
       box-shadow var(--duration-base) var(--ease-out-modern),
       border-color var(--duration-base) var(--ease-out-modern),

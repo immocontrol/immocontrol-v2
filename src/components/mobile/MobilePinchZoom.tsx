@@ -85,7 +85,7 @@ export const MobilePinchZoom = memo(function MobilePinchZoom({
     <div className={cn("relative overflow-hidden rounded-lg", className)} ref={containerRef}>
       {/* Zoom controls */}
       {scale > 1 && (
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-lg border border-border p-1 shadow-sm">
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm surface-section p-1 shadow-sm">
           <button onClick={zoomOut} className="p-1 rounded hover:bg-secondary" aria-label="Verkleinern">
             <ZoomOut className="h-3.5 w-3.5" />
           </button>

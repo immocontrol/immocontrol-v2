@@ -344,7 +344,7 @@ const ContactCsvImport = ({ open, onClose, onImported }: Props) => {
 
             <div className="space-y-2">
               {previewContacts.map((c, i) => (
-                <div key={`preview-${i}-${c.name ?? ""}-${c.email ?? ""}`} className="border border-border rounded-lg p-3 text-sm">
+                <div key={`preview-${i}-${c.name ?? ""}-${c.email ?? ""}`} className="surface-section p-3 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{c.name}</span>
                     <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">{c.category}</span>

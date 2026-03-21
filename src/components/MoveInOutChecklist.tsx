@@ -63,7 +63,7 @@ export function MoveInOutChecklist({ type, tenantOrUnitId, label }: MoveInOutChe
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <div className="rounded-lg border border-border bg-muted/30 p-4">
+    <div className="surface-section p-4">
       <h3 className="flex items-center gap-2 text-sm font-medium mb-2">
         {type === "einzug" ? <LogIn className="h-4 w-4 text-primary" /> : <LogOut className="h-4 w-4 text-loss" />}
         {type === "einzug" ? "Einzugs-Checkliste" : "Auszugs-Checkliste"}

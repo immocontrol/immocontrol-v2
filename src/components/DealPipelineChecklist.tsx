@@ -120,7 +120,7 @@ export function DealPipelineChecklist({ dealId, stage, propertyType, compact }: 
 
   if (compact) {
     return (
-      <div className="rounded-lg border border-border bg-muted/30 p-2">
+      <div className="surface-section p-2">
         <button
           type="button"
           onClick={() => setOpen(!open)}

@@ -305,7 +305,7 @@ export function HandoverProtocol() {
         <div className="space-y-4">
           {/* Bereits gespeicherte Protokolle (Objekt ausgewählt) */}
           {propertyId && savedProtocols.length > 0 && (
-            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <div className="surface-section p-3 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Gespeicherte Protokolle (dieses Objekt)</p>
               <ul className="space-y-1.5 max-h-32 overflow-y-auto">
                 {savedProtocols.map((hp) => {
@@ -437,7 +437,7 @@ export function HandoverProtocol() {
 
           {/* Rooms */}
           {rooms.map((room, ri) => (
-            <div key={ri} className="border border-border rounded-lg p-3 space-y-2">
+            <div key={ri} className="surface-section p-3 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-1">
                 <h3 className="text-sm font-semibold min-w-0 truncate">{room.name}</h3>
                 <div className="flex items-center gap-0.5 shrink-0">

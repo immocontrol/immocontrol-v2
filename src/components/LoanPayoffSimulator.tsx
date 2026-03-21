@@ -69,15 +69,15 @@ const LoanPayoffSimulator = ({ remainingBalance, interestRate, monthlyPayment, b
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Restschuld</p>
               <p className="text-sm font-bold mt-1">{formatCurrency(remainingBalance)}</p>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Rate/Monat</p>
               <p className="text-sm font-bold mt-1">{formatCurrency(monthlyPayment)}</p>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Zinssatz</p>
               <p className="text-sm font-bold mt-1">{interestRate.toFixed(2)}%</p>
             </div>
@@ -89,7 +89,7 @@ const LoanPayoffSimulator = ({ remainingBalance, interestRate, monthlyPayment, b
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="gradient-card rounded-lg border border-border p-3 space-y-2">
+            <div className="gradient-card p-3 space-y-2">
               <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Ohne Sondertilgung</p>
               <p className="text-sm font-bold">{Math.floor(base.months / 12)} J. {base.months % 12} M.</p>
               <p className="text-xs text-muted-foreground">Zinsen: {formatCurrency(base.totalInterest)}</p>

@@ -93,7 +93,7 @@ const VacancyScenarios = memo(({ propertyId }: VacancyScenariosProps) => {
           return (
             <div
               key={s.key}
-              className="rounded-lg border border-border bg-background/50 p-3 text-center"
+              className="surface-section bg-background/50 p-3 text-center"
             >
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Icon className="h-3.5 w-3.5 text-muted-foreground" />

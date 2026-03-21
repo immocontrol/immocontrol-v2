@@ -376,7 +376,7 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
           {filteredErrors.length} Eintr\u00e4ge {filteredErrors.length !== errors.length && `(gefiltert von ${errors.length})`}
         </p>
       )}
-      <div className="space-y-1.5 max-h-[400px] overflow-y-auto overflow-x-hidden min-w-0 rounded-lg border border-border/50 bg-muted/20" role="list" aria-label="Fehlerliste" aria-live="polite">
+      <div className="min-w-0 max-h-[400px] space-y-1.5 overflow-x-hidden overflow-y-auto rounded-xl border border-border/50 bg-muted/20" role="list" aria-label="Fehlerliste" aria-live="polite">
         {filteredErrors.length === 0 ? (
           <div className="text-center py-10 px-4 text-xs text-muted-foreground">
             <Bug className="h-10 w-10 mx-auto mb-3 opacity-30" aria-hidden />

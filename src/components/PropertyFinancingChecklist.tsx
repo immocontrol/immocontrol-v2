@@ -57,7 +57,7 @@ export function PropertyFinancingChecklist({ propertyId, propertyName, compact }
 
   if (compact) {
     return (
-      <div className="rounded-lg border border-border bg-muted/30 p-3">
+      <div className="surface-section p-3">
         <button
           type="button"
           onClick={() => setOpen(!open)}

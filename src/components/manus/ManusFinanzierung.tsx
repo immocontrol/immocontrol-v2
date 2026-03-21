@@ -195,7 +195,7 @@ export const ManusFinanzierung = ({ loans, gesamtPortfolioWert, onResult }: Manu
               <h4 className="text-xs font-medium">Refinanzierungs-Empfehlungen</h4>
               <div className="space-y-2">
                 {result.refinanzierung_empfehlungen.map((r, i) => (
-                  <div key={i} className="text-xs p-3 rounded-lg border border-border bg-card/50">
+                  <div key={i} className="text-xs p-3 surface-section">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-medium">Darlehen #{r.darlehen_nr}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${

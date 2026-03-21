@@ -705,7 +705,7 @@ const BankMatching = () => {
                         </p>
                       ) : (
                         csvPreview.map((tx, i) => (
-                          <div key={i} className="border border-border rounded-lg p-2">
+                          <div key={i} className="surface-section p-2">
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs font-medium">{tx.date}</span>
                               <span className={`text-xs font-semibold ${tx.amount >= 0 ? "text-profit" : "text-loss"}`}>
@@ -843,7 +843,7 @@ const BankMatching = () => {
                 const suggestedProperty = suggestion ? propertyMap[suggestion.payment.property_id] : null;
                 const account = tx.account_id ? accountMap[tx.account_id] : null;
                 return (
-                  <div key={tx.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors">
+                  <div key={tx.id} className="flex items-center gap-3 p-3 surface-section bg-card hover:bg-secondary/30 transition-colors">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium truncate">{tx.sender_receiver || "Unbekannt"}</span>
@@ -946,7 +946,7 @@ const BankMatching = () => {
               {accounts.map(a => {
                 const txCount = transactions.filter(t => t.account_id === a.id).length;
                 return (
-                  <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                  <div key={a.id} className="flex items-center gap-3 p-3 surface-section bg-card">
                     <Landmark className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">{a.name}</div>
@@ -1031,7 +1031,7 @@ const BankMatching = () => {
                 const tenant = r.tenant_id ? tenantMap[r.tenant_id] : null;
                 const property = r.property_id ? propertyMap[r.property_id] : null;
                 return (
-                  <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                  <div key={r.id} className="flex items-center gap-3 p-3 surface-section bg-card">
                     <Settings2 className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">{r.name || "Regel"}</div>

@@ -383,7 +383,7 @@ const AddPropertyDialog = () => {
                   />
                 </div>
               </div>
-              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <div className="surface-section p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Wird automatisch berechnet</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <span className="text-muted-foreground">Aktueller Wert</span>
@@ -413,7 +413,7 @@ const AddPropertyDialog = () => {
           <div className={step === 2 ? "block" : "hidden"}>
             <div className="space-y-4">
               <p className="text-xs text-muted-foreground">Parkplätze, Gärten und sonstiges separat Vermietbares (optional).</p>
-              <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="surface-section p-3 space-y-3">
                 <p className="text-xs font-medium text-muted-foreground">Parkplätze / Stellplätze</p>
                 <div className="grid grid-cols-3 gap-3">
                   <Field label="Tiefgarage (Anz.)" name="parkingUnderground" type="number" placeholder="0" register={register} errors={errors} />

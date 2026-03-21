@@ -62,7 +62,7 @@ export function ViewingAISummary({
   if (!isDeepSeekConfigured()) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+    <div className="surface-section p-3 space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">KI-Zusammenfassung</span>
         <Button variant="outline" size="sm" onClick={run} disabled={loading} className="gap-1.5 text-xs">

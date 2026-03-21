@@ -135,7 +135,7 @@ export function CRMSkeleton() {
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-border p-3 space-y-1">
+          <div key={i} className="surface-section p-3 space-y-1">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-6 w-12" />
           </div>
@@ -143,7 +143,7 @@ export function CRMSkeleton() {
       </div>
       {/* Leads list */}
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-border p-4 flex items-center gap-3">
+        <div key={i} className="surface-section p-4 flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-full" />
           <div className="flex-1 space-y-1">
             <Skeleton className="h-4 w-40" />

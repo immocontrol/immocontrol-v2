@@ -154,7 +154,7 @@ const Onboarding = () => {
   const canProceedStep1 = name.trim() && address.trim() && (Number(purchasePrice?.replace(/\D/g, "")) || 0) > 0;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="app-shell flex min-h-screen items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className="w-full max-w-md space-y-6 animate-fade-in">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
@@ -177,7 +177,7 @@ const Onboarding = () => {
           ))}
         </div>
 
-        <div className="gradient-card rounded-xl border border-border p-6 space-y-5">
+        <div className="gradient-card space-y-5 p-6">
           {/* Step 0: Intro */}
           {step === 0 && (
             <div className="space-y-4">

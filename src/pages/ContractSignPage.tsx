@@ -188,7 +188,7 @@ export default function ContractSignPage() {
 
                 <div className="space-y-2">
                   <Label className="text-xs">Unterschrift (optional – sonst reicht Bestätigung)</Label>
-                  <div className="border border-border rounded-lg bg-white overflow-hidden">
+                  <div className="overflow-hidden rounded-xl border border-border/80 bg-white">
                     <canvas
                       ref={canvasRef}
                       width={400}

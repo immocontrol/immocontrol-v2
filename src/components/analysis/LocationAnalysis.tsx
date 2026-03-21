@@ -344,7 +344,7 @@ const LocationAnalysis = () => {
           </div>
 
           {/* Manus AI: Deep Research / Marktanalyse */}
-          <div className="rounded-lg border border-border bg-card/50 p-4 space-y-2">
+          <div className="surface-section p-4 space-y-2">
             <h3 className="text-xs font-semibold flex items-center gap-1.5">
               <TrendingUp className="h-3 w-3 text-primary" /> Manus AI: Marktanalyse
             </h3>

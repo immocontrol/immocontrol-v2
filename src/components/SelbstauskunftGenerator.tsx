@@ -620,7 +620,7 @@ export const SelbstauskunftGenerator = () => {
                 className="w-full h-20 bg-secondary text-foreground text-sm rounded-lg px-3 py-2 outline-none resize-none border border-input focus:border-primary transition-colors"
               />
             </div>
-            <div className="rounded-lg border border-border p-4 space-y-2 bg-secondary/30">
+            <div className="surface-section p-4 space-y-2 bg-secondary/30">
               <h4 className="text-sm font-semibold">Zusammenfassung</h4>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div><span className="text-muted-foreground">Name:</span> {data.vorname} {data.name}</div>

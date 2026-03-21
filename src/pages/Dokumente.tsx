@@ -577,7 +577,7 @@ const Dokumente = () => {
               {pdfPreviewUrl ? (
                 <iframe
                   src={pdfPreviewUrl}
-                  className="w-full h-[70vh] rounded-lg border border-border"
+                  className="h-[70vh] w-full rounded-xl border border-border/80 bg-muted/10"
                   title={`PDF Vorschau: ${previewDoc.file_name}`}
                 />
               ) : (

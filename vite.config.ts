@@ -100,7 +100,8 @@ export default defineConfig(async ({ mode }) => {
       compress: { dead_code: true, drop_console: false },
       format: { comments: false },
     },
-    chunkSizeWarningLimit: 600,
+    /* Large vendor + app bundle; splitting is manual-chunk risky (TDZ). */
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         /* manualChunks disabled — caused "Cannot access 'd' before initialization" on Settings

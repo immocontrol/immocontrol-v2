@@ -121,7 +121,7 @@ export const ManusSparkasse = ({ data, onResult }: ManusSparkasseProps) => {
       )}
 
       {result && (
-        <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2 animate-fade-in">
+        <div className="surface-section p-3 space-y-2 animate-fade-in">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-500">
             <Landmark className="h-3.5 w-3.5" />
             S-ImmoPreisfinder Ergebnis

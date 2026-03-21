@@ -678,7 +678,7 @@ const CRM = () => {
               {filteredPlacesResults.length > 0 && (
                 <div className="space-y-2">
                   {filteredPlacesResults.map(place => (
-                    <div key={place.place_id} className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors">
+                    <div key={place.place_id} className="flex items-start gap-3 p-3 surface-section hover:bg-secondary/50 transition-colors">
                       <Building2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

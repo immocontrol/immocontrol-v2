@@ -179,7 +179,7 @@ const HandwerkerAusschreibung = memo(() => {
 
       {/* New Ausschreibung */}
       {showNew && (
-        <div className="border border-border rounded-lg p-2 mb-3 space-y-2">
+        <div className="surface-section p-2 mb-3 space-y-2">
           <Input className="h-7 text-[10px]" placeholder="Titel (z.B. Badezimmer-Sanierung)" value={newAusschreibung.titel} onChange={(e) => setNewAusschreibung((p) => ({ ...p, titel: e.target.value }))} />
           <div className="grid grid-cols-2 gap-2">
             <Select value={newAusschreibung.gewerk} onValueChange={(v) => setNewAusschreibung((p) => ({ ...p, gewerk: v }))}>
@@ -243,7 +243,7 @@ const HandwerkerAusschreibung = memo(() => {
 
           {/* New Angebot form */}
           {showNewAngebot === current.id && (
-            <div className="border border-border rounded-lg p-2 mb-2 space-y-1.5">
+            <div className="surface-section p-2 mb-2 space-y-1.5">
               <div className="grid grid-cols-2 gap-2">
                 <Input className="h-7 text-[10px]" placeholder="Firmenname" value={newAngebot.firmenname || ""} onChange={(e) => setNewAngebot((p) => ({ ...p, firmenname: e.target.value }))} />
                 <Input className="h-7 text-[10px]" type="number" placeholder="Preis €" value={newAngebot.preis || ""} onChange={(e) => setNewAngebot((p) => ({ ...p, preis: parseFloat(e.target.value) || 0 }))} />

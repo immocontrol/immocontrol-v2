@@ -188,7 +188,7 @@ const DocumentOCR = ({ onTextExtracted }: DocumentOCRProps) => {
 
           {/* Preview */}
           {previewUrl && (
-            <div className="rounded-lg border border-border overflow-hidden">
+            <div className="surface-section overflow-hidden">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/30 text-xs text-muted-foreground">
                 <ImageIcon className="h-3 w-3" /> Vorschau (kontrastverbessert)
               </div>

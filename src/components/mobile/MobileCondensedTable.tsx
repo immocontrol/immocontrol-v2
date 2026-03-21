@@ -51,7 +51,7 @@ const CondensedRow = memo(function CondensedRow({
   }, [haptic]);
 
   return (
-    <div className="gradient-card rounded-lg border border-border overflow-hidden">
+    <div className="gradient-card overflow-hidden">
       <button
         onClick={toggle}
         className="flex items-start justify-between w-full p-3 text-left active:bg-secondary/50 transition-colors"

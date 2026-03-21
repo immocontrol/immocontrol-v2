@@ -106,7 +106,7 @@ export function BackupSettings({ sectionRef }: BackupSettingsProps) {
         </div>
       )}
       <DataExportBackup />
-      <div className="rounded-lg border border-border/50 p-3 space-y-2">
+      <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 p-3">
         <p className="text-xs font-medium flex items-center gap-1.5">
           <Cloud className="h-3.5 w-3.5 text-muted-foreground" /> Cloud-Backup
         </p>

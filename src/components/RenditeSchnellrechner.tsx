@@ -59,7 +59,7 @@ export function RenditeSchnellrechner() {
           </div>
         </div>
         {(purchasePrice > 0 || monthlyRent > 0) && (
-          <div className="rounded-lg border border-border bg-muted/40 p-3 flex flex-wrap items-center gap-4">
+          <div className="surface-section p-3 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <Percent className="h-4 w-4 shrink-0 text-primary" />
               <div>

@@ -161,7 +161,7 @@ export default function HandoverConfirmPage() {
             )}
 
             {rooms.map((room, ri) => (
-              <div key={ri} className="border border-border rounded-lg p-3">
+              <div key={ri} className="surface-section p-3">
                 <p className="font-medium text-sm">{room.name} – {CONDITION_LABELS[room.condition] || ""}</p>
                 <ul className="mt-1 text-xs text-muted-foreground space-y-0.5">
                   {room.items?.map((item, ii) => (

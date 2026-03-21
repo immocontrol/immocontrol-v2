@@ -141,7 +141,7 @@ const DealBewertungsScorecard = memo(() => {
 
       {/* New deal form */}
       {showNew && (
-        <div className="border border-border rounded-lg p-2 mb-3 space-y-2">
+        <div className="surface-section p-2 mb-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Input className="h-7 text-[10px]" placeholder="Objektname" value={newDeal.name} onChange={(e) => setNewDeal((p) => ({ ...p, name: e.target.value }))} />
             <Input className="h-7 text-[10px]" placeholder="Adresse" value={newDeal.address} onChange={(e) => setNewDeal((p) => ({ ...p, address: e.target.value }))} />

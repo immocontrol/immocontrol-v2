@@ -582,19 +582,19 @@ const Todos = () => {
         {/* UPD-11: Add stagger animation to todo stats */}
         {todos.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 card-stagger-enter">
-            <div className="glass-card rounded-lg border border-border p-2.5 text-center">
+            <div className="glass-card rounded-xl border border-border/80 p-2.5 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Erledigt</p>
               <p className={`text-base font-bold ${completionRate >= 70 ? "text-profit" : completionRate >= 40 ? "text-gold" : "text-loss"}`}>{completionRate}%</p>
               <div className="h-1 bg-secondary rounded-full mt-1 overflow-hidden progress-bar-animated">
                 <div className="h-full bg-primary rounded-full" style={{ width: `${completionRate}%` }} />
               </div>
             </div>
-            <div className="glass-card rounded-lg border border-border p-2.5 text-center">
+            <div className="glass-card rounded-xl border border-border/80 p-2.5 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Ø Dauer</p>
               <p className="text-base font-bold">{avgCompletionDays}d</p>
             </div>
             {upcomingDeadlines.length > 0 && (
-              <div className="glass-card rounded-lg border border-border p-2.5 text-center">
+              <div className="glass-card rounded-xl border border-border/80 p-2.5 text-center">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Bald fällig</p>
                 <p className="text-base font-bold text-gold">{upcomingDeadlines.length}</p>
               </div>

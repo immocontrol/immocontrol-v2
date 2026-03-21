@@ -480,7 +480,7 @@ export default function ImmoAIBubble({ mobileSubmenuExpanded = false }: ImmoAIBu
                     <button
                       key={s}
                       onClick={() => send(s)}
-                      className="text-xs text-left px-3 py-2 rounded-lg border border-border hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                      className="rounded-lg border border-border/80 bg-background/80 px-3 py-2 text-left text-xs text-muted-foreground transition-colors duration-base ease-out-modern hover:bg-muted/50 hover:text-foreground"
                     >
                       {s}
                     </button>

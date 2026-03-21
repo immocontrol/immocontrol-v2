@@ -409,12 +409,12 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
 
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div className="gradient-card rounded-lg border border-border p-3 text-center">
+            <div className="gradient-card p-3 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Nettovermögen ({primaryNetWorthLabel})</p>
               <p className="text-sm font-bold text-profit mt-1">{formatCurrencyCompact(primaryNetWorth)}</p>
               <p className="text-[9px] text-muted-foreground">{secondaryNetWorthLabel}: {formatCurrencyCompact(secondaryNetWorth)}</p>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3 text-center">
+            <div className="gradient-card p-3 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Portfoliowert</p>
               <p className="text-sm font-bold mt-1">{formatCurrencyCompact(last.portfolioValue)}</p>
               <p className="text-[9px] text-muted-foreground">
@@ -424,14 +424,14 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
                 )}
               </p>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3 text-center">
+            <div className="gradient-card p-3 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Gesamtrendite</p>
               <p className={`text-sm font-bold mt-1 ${totalReturn >= 0 ? "text-profit" : "text-loss"}`}>
                 {totalReturn.toFixed(0)}%
               </p>
               <p className="text-[9px] text-muted-foreground">CAGR: {cagr.toFixed(1)}%</p>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3 text-center">
+            <div className="gradient-card p-3 text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Monatl. Cashflow</p>
               <p className={`text-sm font-bold mt-1 ${last.monthlyNetRent >= 0 ? "text-profit" : "text-loss"}`}>
                 {formatCurrency(last.monthlyNetRent)}
@@ -663,7 +663,7 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
 
           {/* Sensitivity analysis */}
           {showSensitivity && (
-            <div className="space-y-2 border border-border rounded-lg p-3">
+            <div className="space-y-2 surface-section p-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold">Sensitivit&#228;tsanalyse</h4>
                 <Select value={sensitivityKey} onValueChange={v => setSensitivityKey(v as keyof SimParams)}>

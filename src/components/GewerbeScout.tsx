@@ -872,7 +872,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
             {(loadingStep === "gebaeude" || (loadingStep === "gewerbe" && results.length === 0)) && (
               <ul className="space-y-2 max-h-[280px] overflow-hidden" aria-hidden>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <li key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 animate-pulse">
+                  <li key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 surface-section animate-pulse">
                     <div className="flex-1 space-y-1">
                       <div className="h-4 w-32 rounded bg-muted" />
                       <div className="h-3 w-48 rounded bg-muted" />
@@ -916,7 +916,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
         )}
 
         {!loading && searchLabel !== null && results.length === 0 && (
-          <div className="rounded-lg border border-border bg-muted/40 p-4 flex flex-col sm:flex-row sm:items-start gap-3" role="status" aria-label="Keine Treffer">
+          <div className="surface-section p-4 flex flex-col sm:flex-row sm:items-start gap-3" role="status" aria-label="Keine Treffer">
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe flex-1 min-w-0">
               <p className="font-medium text-foreground">Keine Treffer gefunden</p>
@@ -1315,7 +1315,7 @@ export default function GewerbeScout({ onAddAsLead, onAddAsDeal, onAddAsDealBatc
                   role="option"
                   aria-selected={i === focusedResultIndex}
                   className={cn(
-                    "flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border bg-card text-sm touch-target min-h-[44px]",
+                    "flex flex-col sm:flex-row sm:items-center gap-2 p-3 surface-section bg-card text-sm touch-target min-h-[44px]",
                     i === focusedResultIndex && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
                   )}
                   onClick={() => setFocusedResultIndex(i)}

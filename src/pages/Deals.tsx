@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -885,130 +886,145 @@ const Deals = () => {
               ))}
             </div>
             <div className="overflow-x-auto" role="region" aria-label="Deals-Tabelle (horizontal scrollbar auf kleinen Bildschirmen)">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground">
-                    <th className="text-left p-3 font-medium">Deal</th>
-                    <th className="text-left p-3 font-medium">Stage</th>
-                    <th className="text-left p-3 font-medium">Preis</th>
-                    <th className="text-left p-3 font-medium">Rendite</th>
-                    <th className="text-left p-3 font-medium hidden md:table-cell">Kontakt</th>
-                    <th className="text-left p-3 font-medium hidden sm:table-cell">Quelle</th>
-                    <th className="text-left p-3 font-medium">Erstellt</th>
-                    <th className="p-3" aria-label="Aktionen"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDeals.map((deal) => {
-                    const s = stageMap[deal.stage];
-                    return (
-                      <tr key={deal.id} className="border-b border-border/50 hover:bg-secondary/30 cursor-pointer transition-colors" onClick={() => openEdit(deal)}>
-                        <td className="p-3">
-                          <p className="font-medium">{deal.title}</p>
-                          {deal.address && <p className="text-xs text-muted-foreground">{deal.address}</p>}
-                        </td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-1.5">
-                            <div className={cn("w-2 h-2 rounded-full", s?.color)} />
-                            <span className="text-xs">{s?.label || deal.stage}</span>
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          {(deal.purchase_price ?? 0) > 0 ? (
-                            <>
-                              {fmt(deal.purchase_price!)}
-                              {(deal.sqm ?? 0) > 0 && (
-                                <span className="block text-xs text-muted-foreground">{fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²</span>
+              <Table frame={false} className="text-sm">
+                {filteredDeals.length === 0 ? (
+                  <TableBody>
+                    <TableRow className="border-0 hover:bg-transparent">
+                      <TableCell colSpan={8} className="border-0 p-0">
+                        <div className="p-4">
+                          <EmptyState
+                            icon={Building2}
+                            title={search ? "Keine Treffer" : "Noch keine Deals"}
+                            description={
+                              search
+                                ? `Keine Deals für „${search}". Suche zurücksetzen oder neuen Deal anlegen.`
+                                : "Lege einen Deal an, um Angebote und Besichtigungen zu verfolgen. Oder importiere aus CRM oder Telegram."
+                            }
+                            action={
+                              <div className="flex flex-wrap items-center justify-center gap-2">
+                                {search && (
+                                  <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => setSearch("")}>
+                                    Suche zurücksetzen
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  className="gap-1.5 touch-target min-h-[44px]"
+                                  onClick={() => {
+                                    if (!hasDealDraft) setForm({ ...emptyForm });
+                                    setEditDeal(null);
+                                    setAddOpen(true);
+                                  }}
+                                >
+                                  <Plus className="h-3.5 w-3.5" /> Deal anlegen
+                                </Button>
+                                <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5">
+                                  <Link to={ROUTES.CRM}>Leads aus CRM</Link>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="WGH-Scout">
+                                  <Link to={ROUTES.CRM_SCOUT}><Store className="h-3 w-3" /> WGH</Link>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="Besichtigung planen">
+                                  <Link to={ROUTES.BESICHTIGUNGEN}><CalendarCheck className="h-3 w-3" /> Besichtigung</Link>
+                                </Button>
+                              </div>
+                            }
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                ) : (
+                  <>
+                    <TableHeader>
+                      <TableRow className="border-b border-border text-xs text-muted-foreground hover:bg-transparent">
+                        <TableHead className="p-3 text-left font-medium">Deal</TableHead>
+                        <TableHead className="p-3 text-left font-medium">Stage</TableHead>
+                        <TableHead className="p-3 text-left font-medium">Preis</TableHead>
+                        <TableHead className="p-3 text-left font-medium">Rendite</TableHead>
+                        <TableHead className="hidden p-3 text-left font-medium md:table-cell">Kontakt</TableHead>
+                        <TableHead className="hidden p-3 text-left font-medium sm:table-cell">Quelle</TableHead>
+                        <TableHead className="p-3 text-left font-medium">Erstellt</TableHead>
+                        <TableHead className="p-3" aria-label="Aktionen" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredDeals.map((deal) => {
+                        const s = stageMap[deal.stage];
+                        return (
+                          <TableRow
+                            key={deal.id}
+                            className="cursor-pointer border-b border-border/50 hover:bg-secondary/30"
+                            onClick={() => openEdit(deal)}
+                          >
+                            <TableCell className="p-3">
+                              <p className="font-medium">{deal.title}</p>
+                              {deal.address && <p className="text-xs text-muted-foreground">{deal.address}</p>}
+                            </TableCell>
+                            <TableCell className="p-3">
+                              <div className="flex items-center gap-1.5">
+                                <div className={cn("h-2 w-2 rounded-full", s?.color)} />
+                                <span className="text-xs">{s?.label || deal.stage}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="p-3">
+                              {(deal.purchase_price ?? 0) > 0 ? (
+                                <>
+                                  {fmt(deal.purchase_price!)}
+                                  {(deal.sqm ?? 0) > 0 && (
+                                    <span className="block text-xs text-muted-foreground">{fmt(Math.round(deal.purchase_price! / deal.sqm!))} / m²</span>
+                                  )}
+                                </>
+                              ) : (
+                                "\u2013"
                               )}
-                            </>
-                          ) : "\u2013"}
-                        </td>
-                        <td className="p-3">{(deal.expected_yield ?? 0) > 0 ? `${deal.expected_yield!.toFixed(1)}%` : "\u2013"}</td>
-                        <td className="p-3 text-xs text-muted-foreground hidden md:table-cell">{deal.contact_name || "\u2013"}</td>
-                        <td className="p-3 text-xs text-muted-foreground hidden sm:table-cell">
-                          {deal.source ? (
-                            <span className="flex items-center gap-1">
-                              {deal.source.toLowerCase().includes("telegram") && <MessageSquare className="h-3 w-3 text-blue-500" />}
-                              {deal.source}
-                            </span>
-                          ) : "\u2013"}
-                        </td>
-                        <td className="p-3 text-xs text-muted-foreground">{new Date(deal.created_at).toLocaleDateString("de-DE")}</td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-1">
-                            {deal.address && (
-                              <Link
-                                to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(deal.address)}`}
-                                className="text-xs text-primary hover:underline flex items-center gap-0.5 px-1.5 py-1 rounded hover:bg-secondary"
-                                onClick={e => e.stopPropagation()}
-                                aria-label="WGH in Umgebung suchen"
-                              >
-                                <Store className="h-3 w-3" /> Scout
-                              </Link>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              aria-label="Deal l\u00f6schen"
-                              onClick={e => { e.stopPropagation(); setDeleteTarget(deal.id); }}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {/* UX: Empty state mit klarer nächster Aktion */}
-              {filteredDeals.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-0 border-0">
-                    <div className="p-4">
-                      <EmptyState
-                        icon={Building2}
-                        title={search ? "Keine Treffer" : "Noch keine Deals"}
-                        description={
-                          search
-                            ? `Keine Deals für „${search}". Suche zurücksetzen oder neuen Deal anlegen.`
-                            : "Lege einen Deal an, um Angebote und Besichtigungen zu verfolgen. Oder importiere aus CRM oder Telegram."
-                        }
-                        action={
-                          <div className="flex flex-wrap items-center justify-center gap-2">
-                            {search && (
-                              <Button variant="outline" size="sm" className="touch-target min-h-[44px]" onClick={() => setSearch("")}>
-                                Suche zurücksetzen
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              className="gap-1.5 touch-target min-h-[44px]"
-                              onClick={() => {
-                                if (!hasDealDraft) setForm({ ...emptyForm });
-                                setEditDeal(null);
-                                setAddOpen(true);
-                              }}
-                            >
-                              <Plus className="h-3.5 w-3.5" /> Deal anlegen
-                            </Button>
-                            <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5">
-                              <Link to={ROUTES.CRM}>Leads aus CRM</Link>
-                            </Button>
-                            <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="WGH-Scout">
-                              <Link to={ROUTES.CRM_SCOUT}><Store className="h-3 w-3" /> WGH</Link>
-                            </Button>
-                            <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px] gap-1.5" aria-label="Besichtigung planen">
-                              <Link to={ROUTES.BESICHTIGUNGEN}><CalendarCheck className="h-3 w-3" /> Besichtigung</Link>
-                            </Button>
-                          </div>
-                        }
-                      />
-                    </div>
-                  </td>
-                </tr>
-              )}
+                            </TableCell>
+                            <TableCell className="p-3">{(deal.expected_yield ?? 0) > 0 ? `${deal.expected_yield!.toFixed(1)}%` : "\u2013"}</TableCell>
+                            <TableCell className="hidden p-3 text-xs text-muted-foreground md:table-cell">{deal.contact_name || "\u2013"}</TableCell>
+                            <TableCell className="hidden p-3 text-xs text-muted-foreground sm:table-cell">
+                              {deal.source ? (
+                                <span className="flex items-center gap-1">
+                                  {deal.source.toLowerCase().includes("telegram") && <MessageSquare className="h-3 w-3 text-blue-500" />}
+                                  {deal.source}
+                                </span>
+                              ) : (
+                                "\u2013"
+                              )}
+                            </TableCell>
+                            <TableCell className="p-3 text-xs text-muted-foreground">{new Date(deal.created_at).toLocaleDateString("de-DE")}</TableCell>
+                            <TableCell className="p-3">
+                              <div className="flex items-center gap-1">
+                                {deal.address && (
+                                  <Link
+                                    to={`${ROUTES.CRM_SCOUT}&q=${encodeURIComponent(deal.address)}`}
+                                    className="flex items-center gap-0.5 rounded px-1.5 py-1 text-xs text-primary hover:bg-secondary hover:underline"
+                                    onClick={(e) => e.stopPropagation()}
+                                    aria-label="WGH in Umgebung suchen"
+                                  >
+                                    <Store className="h-3 w-3" /> Scout
+                                  </Link>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  aria-label="Deal l\u00f6schen"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget(deal.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </>
+                )}
+              </Table>
             </div>
           </CardContent>
         </Card>

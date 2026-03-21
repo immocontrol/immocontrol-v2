@@ -284,7 +284,7 @@ const TodoCalendarSync = ({ todos }: TodoCalendarSyncProps) => {
                 return (
                   <button
                     key={p.key}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border hover:bg-secondary/50 transition-all group"
+                    className="w-full flex items-center gap-3 px-4 py-3 surface-section hover:bg-secondary/50 transition-all group"
                     onClick={() => {
                       if (p.hasDirectLink && p.buildUrl) {
                         handleDirectSync(p.key, p.buildUrl);

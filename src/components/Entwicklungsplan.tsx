@@ -495,7 +495,7 @@ export function Entwicklungsplan({
                   return (
                     <li
                       key={m.id}
-                      className="flex gap-3 p-3 rounded-lg border border-border bg-card text-wrap-safe"
+                      className="flex gap-3 p-3 surface-section bg-card text-wrap-safe"
                     >
                       <Icon className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
@@ -526,7 +526,7 @@ export function Entwicklungsplan({
 
             {/* KI Kurztext für Bank */}
             {isDeepSeekConfigured() && (
-              <div className="rounded-lg border border-border p-3 bg-muted/30">
+              <div className="surface-section p-3 bg-muted/30">
                 <Label className="text-xs font-medium">Kurztext für Bankanschreiben (KI)</Label>
                 <Button
                   type="button"

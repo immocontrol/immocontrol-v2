@@ -78,7 +78,7 @@ export function TilgungsplanSchnellrechner() {
           </div>
         </div>
         {principal > 0 && years > 0 && (
-          <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-start gap-2">
+          <div className="surface-section p-3 flex items-start gap-2">
             <TrendingDown className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
             <div className="text-sm text-wrap-safe">
               <p className="font-medium text-foreground">Monatliche Rate</p>

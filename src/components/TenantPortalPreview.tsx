@@ -67,21 +67,21 @@ const TenantPortalPreview = ({ tenant }: { tenant: Tenant }) => {
 
           {/* Key figures */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <div className="text-xs text-muted-foreground">Kaltmiete</div>
               <div className="text-lg font-bold">{formatCurrency(tenant.monthly_rent)}</div>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <div className="text-xs text-muted-foreground">Kaution</div>
               <div className="text-lg font-bold">{formatCurrency(tenant.deposit)}</div>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <div className="text-xs text-muted-foreground">Einzug</div>
               <div className="text-sm font-bold">
                 {moveInDate ? moveInDate.toLocaleDateString("de-DE") : "–"}
               </div>
             </div>
-            <div className="gradient-card rounded-lg border border-border p-3">
+            <div className="gradient-card p-3">
               <div className="text-xs text-muted-foreground">Wohndauer</div>
               <div className="text-sm font-bold">{monthsSinceMoveIn > 0 ? `${monthsSinceMoveIn} Monate` : "–"}</div>
             </div>

@@ -102,7 +102,7 @@ const WidgetCustomizer = ({ onConfigChange }: WidgetCustomizerProps) => {
             {[...filteredWidgets].sort((a, b) => a.order - b.order).map((widget: WidgetConfig) => (
               <div
                 key={widget.id}
-                className={`flex items-center justify-between gap-3 p-3 rounded-lg border border-border transition-colors ${
+                className={`flex items-center justify-between gap-3 p-3 surface-section transition-colors ${
                   widget.visible ? "bg-secondary/30" : "bg-secondary/10 opacity-60"
                 }`}
               >
