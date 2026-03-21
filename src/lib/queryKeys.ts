@@ -139,4 +139,8 @@ export const queryKeys = {
   userAchievements: {
     all: (userId: string) => ["user_achievements", userId] as const,
   },
+  /* Newsticker: RSS news (stale-while-revalidate, 5 min) */
+  newsticker: {
+    all: ["newsticker"] as const,
+  },
 } as const;

@@ -43,6 +43,17 @@ export const CommandPalette = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // Öffnen per Custom-Event (z. B. von Header-Button)
+  useEffect(() => {
+    const handler = () => {
+      setOpen(true);
+      setQuery("");
+      setSelectedIndex(0);
+    };
+    window.addEventListener("open-command-palette", handler);
+    return () => window.removeEventListener("open-command-palette", handler);
+  }, []);
+
   const go = useCallback((path: string) => {
     navigate(path);
     setOpen(false);

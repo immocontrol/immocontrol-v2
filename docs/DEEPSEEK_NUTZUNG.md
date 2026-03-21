@@ -69,6 +69,22 @@ Mit gesetztem **VITE_DEEPSEEK_API_KEY** stehen dir folgende und erweiterbare KI-
 
 ---
 
+## Produktion: DeepSeek API Key schützen
+
+**Hinweis:** Wenn `VITE_DEEPSEEK_API_KEY` im Frontend gesetzt wird, ist der Key im Client sichtbar. Für Produktion empfiehlt sich ein **Backend-Proxy**:
+
+1. **Eigene Edge Function** (z. B. `deepseek-proxy` in Supabase):
+   - Nimmt Anfragen vom Frontend entgegen
+   - Liest `DEEPSEEK_API_KEY` aus Supabase Secrets
+   - Leitet Anfragen an `api.deepseek.com` weiter
+   - Frontend ruft nur die eigene Edge Function auf (ohne Key)
+
+2. **Struktur:** `supabase/functions/deepseek-proxy/index.ts` analog zu `immo-ai-chat` (der bereits einen Server-Key nutzt). Die Immo-AI-Seite kann optional zwischen direktem DeepSeek-Call (Entwicklung) und Proxy (Produktion) umschalten, z. B. über eine Umgebungsvariable `VITE_USE_DEEPSEEK_PROXY=true`.
+
+3. **Vorteile:** Key bleibt server-seitig; Rate-Limits zentral steuerbar; evtl. Logging/Audit.
+
+---
+
 ## Technik
 
 - **API:** DeepSeek Chat Completions (OpenAI-kompatibel), Modell `deepseek-chat`.

@@ -6,8 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Newspaper, ExternalLink, RefreshCw, Filter, Search, Clock, MapPin, Tag,
   ChevronDown, AlertCircle, Globe, Bookmark, BookmarkCheck,
-  Share2, TrendingUp, Minus, LayoutGrid, List, BarChart3,
-  ThumbsUp, ThumbsDown, Flame,
+  Share2, TrendingUp, LayoutGrid, List, BarChart3, Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,349 +16,22 @@ import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ManusNewstickerIntelligence } from "@/components/manus/ManusNewstickerIntelligence";
 import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
-
-/* ─── Types ─── */
-interface NewsItem {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-  source: string;
-  sourceIcon?: string;
-  publishedAt: string;
-  category: NewsCategory;
-  region: "berlin" | "brandenburg" | "both";
-  imageUrl?: string;
-  sentiment: "positive" | "negative" | "neutral";
-}
-
-type NewsCategory =
-  | "markt"
-  | "neubau"
-  | "politik"
-  | "gewerbe"
-  | "wohnen"
-  | "investment"
-  | "stadtentwicklung"
-  | "sonstiges";
-
-const CATEGORY_LABELS: Record<NewsCategory, string> = {
-  markt: "Marktberichte",
-  neubau: "Neubauprojekte",
-  politik: "Mietenpolitik",
-  gewerbe: "Gewerbe",
-  wohnen: "Wohnen",
-  investment: "Investment",
-  stadtentwicklung: "Stadtentwicklung",
-  sonstiges: "Sonstiges",
-};
-
-const CATEGORY_COLORS: Record<NewsCategory, string> = {
-  markt: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  neubau: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  politik: "bg-red-500/10 text-red-600 dark:text-red-400",
-  gewerbe: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  wohnen: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  investment: "bg-green-500/10 text-green-600 dark:text-green-400",
-  stadtentwicklung: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
-  sonstiges: "bg-gray-500/10 text-gray-600 dark:text-gray-400",
-};
-
-const REGION_LABELS: Record<string, string> = {
-  berlin: "Berlin",
-  brandenburg: "Brandenburg",
-  both: "Berlin & Brandenburg",
-};
-
-/* ─── Individual city filters (MOB3 extension) ─── */
-const BERLIN_DISTRICTS = [
-  "Charlottenburg", "Friedrichshain", "Kreuzberg", "Lichtenberg", "Marzahn",
-  "Mitte", "Neukölln", "Pankow", "Prenzlauer Berg", "Reinickendorf",
-  "Spandau", "Steglitz", "Tempelhof", "Treptow", "Wedding",
-] as const;
-
-const BRANDENBURG_CITIES = [
-  "Potsdam", "Cottbus", "Frankfurt/Oder", "Oranienburg", "Bernau",
-  "Falkensee", "Eberswalde", "Ludwigsfelde", "Königs Wusterhausen", "Wildau",
-  "Schönefeld", "Luckenwalde", "Strausberg", "Fürstenwalde", "Neuruppin",
-  "Wittenberge", "Rathenow", "Senftenberg", "Spremberg", "Guben",
-  "Forst", "Eisenhüttenstadt", "Schwedt", "Prenzlau", "Templin",
-  "Angermünde", "Bad Freienwalde", "Seelow", "Beeskow", "Lübben",
-  "Lübbenau", "Herzberg", "Finsterwalde", "Elsterwerda", "Bad Belzig",
-  "Brandenburg/Havel", "Werder", "Teltow", "Kleinmachnow", "Stahnsdorf",
-  "Blankenfelde", "Mahlow", "Rangsdorf", "Zossen", "Nauen",
-  "Henningsdorf", "Velten", "Hohen Neuendorf", "Birkenwerder", "Wandlitz",
-] as const;
-
-/** Detect which specific city/district is mentioned in a news item */
-function detectCity(title: string, description: string): string | null {
-  const text = `${title} ${description}`.toLowerCase();
-  for (const d of BERLIN_DISTRICTS) {
-    if (text.includes(d.toLowerCase())) return d;
-  }
-  for (const c of BRANDENBURG_CITIES) {
-    // Handle slash-names like "Frankfurt/Oder" and "Brandenburg/Havel"
-    const searchTerm = c.includes("/") ? c.split("/")[0].toLowerCase() : c.toLowerCase();
-    if (text.includes(searchTerm)) return c;
-  }
-  return null;
-}
-
-const SENTIMENT_CONFIG = {
-  positive: { icon: ThumbsUp, label: "Positiv", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  negative: { icon: ThumbsDown, label: "Negativ", color: "text-red-500", bg: "bg-red-500/10" },
-  neutral: { icon: Minus, label: "Neutral", color: "text-gray-400", bg: "bg-gray-500/10" },
-} as const;
-
-/* ─── RSS Feed Sources (18 sources — expanded for faster/broader coverage) ─── */
-const RSS_FEEDS = [
-  /* Core search feeds — wirtschaftlich fokussiert */
-  { url: "https://news.google.com/rss/search?q=immobilien+markt+berlin+OR+brandenburg+investition+OR+rendite+OR+preis+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "Google News", icon: "\uD83D\uDD0D" },
-  { url: "https://www.tagesspiegel.de/contentexport/feed/wirtschaft/immobilien", source: "Tagesspiegel", icon: "\uD83D\uDCF0" },
-  { url: "https://news.google.com/rss/search?q=site:morgenpost.de+berlin+immobilien&hl=de&gl=DE&ceid=DE:de", source: "Berliner Morgenpost (via Google)", icon: "\uD83D\uDCF0" },
-  { url: "https://www.rbb24.de/wirtschaft/index.xml/feed=rss.xml", source: "rbb24", icon: "\uD83D\uDCFA" },
-  /* Fachmedien — via Google News Site-Search */
-  { url: "https://news.google.com/rss/search?q=site:iz.de+berlin+OR+brandenburg&hl=de&gl=DE&ceid=DE:de", source: "IZ (via Google)", icon: "\uD83C\uDFE2" },
-  { url: "https://news.google.com/rss/search?q=site:haufe.de+immobilien+berlin+OR+markt+OR+statistik&hl=de&gl=DE&ceid=DE:de", source: "Haufe (via Google)", icon: "\uD83D\uDCCA" },
-  { url: "https://news.google.com/rss/search?q=site:handelsblatt.com+immobilien+berlin+OR+investition+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "Handelsblatt", icon: "\uD83D\uDCBC" },
-  { url: "https://news.google.com/rss/search?q=site:capital.de+immobilien+berlin+OR+brandenburg+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "Capital", icon: "\uD83D\uDCB0" },
-  { url: "https://news.google.com/rss/search?q=site:bz-berlin.de+immobilien+OR+wohnungsmarkt+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "BZ Berlin", icon: "\uD83D\uDDDE\uFE0F" },
-  { url: "https://news.google.com/rss/search?q=site:berliner-zeitung.de+immobilien+OR+wohnungsmarkt+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "Berliner Zeitung", icon: "\uD83D\uDCF0" },
-  { url: "https://news.google.com/rss/search?q=site:wiwo.de+immobilien+berlin+OR+investition+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "WirtschaftsWoche", icon: "\uD83D\uDCC8" },
-  /* Neue Quellen — Fachpresse & Statistik */
-  { url: "https://news.google.com/rss/search?q=site:iwkoeln.de+immobilien+OR+wohnungsmarkt&hl=de&gl=DE&ceid=DE:de", source: "IW Köln", icon: "\uD83D\uDCCA" },
-  { url: "https://news.google.com/rss/search?q=site:destatis.de+immobilienpreisindex+OR+baugenehmigungen&hl=de&gl=DE&ceid=DE:de", source: "Destatis", icon: "\uD83D\uDCC8" },
-  { url: "https://news.google.com/rss/search?q=site:manager-magazin.de+immobilien+berlin+OR+investment&hl=de&gl=DE&ceid=DE:de", source: "Manager Magazin", icon: "\uD83D\uDCBC" },
-  { url: "https://news.google.com/rss/search?q=site:faz.net+immobilien+berlin+OR+wohnungsmarkt+OR+rendite&hl=de&gl=DE&ceid=DE:de", source: "FAZ", icon: "\uD83D\uDCF0" },
-  /* Brandenburg-Städte-Feeds */
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnungsmarkt+OR+mietspiegel+bernau+OR+eberswalde+OR+oranienburg+OR+luckenwalde+OR+barnim&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg Nord", icon: "\uD83C\uDFE1" },
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnungsmarkt+OR+mietspiegel+strausberg+OR+f%C3%BCrstenwalde+OR+neuruppin+OR+wittenberge+OR+rathenow&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg West/Ost", icon: "\uD83C\uDFE1" },
-  { url: "https://news.google.com/rss/search?q=immobilien+OR+wohnungsmarkt+OR+mietspiegel+%22brandenburg+havel%22+OR+werder+OR+teltow+OR+kleinmachnow+OR+stahnsdorf+OR+blankenfelde&hl=de&gl=DE&ceid=DE:de", source: "Brandenburg S\u00fcd", icon: "\uD83C\uDFE1" },
-];
-
-/* ─── Categorise news by keywords ─── */
-function categoriseNews(title: string, description: string): NewsCategory {
-  const text = `${title} ${description}`.toLowerCase();
-  if (/marktbericht|preisentwicklung|immobilienpreise|quadratmeterpreis|mietpreisspiegel|preisindex|statistik|kaufpreise|angebotspreise/.test(text)) return "markt";
-  if (/neubau|bauprojekt|bauvorhaben|richtfest|grundsteinlegung|baugenehmigung|wohnungsbau/.test(text)) return "neubau";
-  if (/mietendeckel|mietpreisbremse|regulierung|verordnung|gesetz|senat|bezirksamt|politik|koalition/.test(text)) return "politik";
-  if (/gewerbe|b\u00fcro|office|einzelhandel|logistik|gewerbefl\u00e4che/.test(text)) return "gewerbe";
-  if (/investment|transaktion|ankauf|verkauf|portfolio|fonds|rendite|investor/.test(text)) return "investment";
-  if (/stadtentwicklung|quartier|infrastruktur|verkehr|bahn|flughafen|ber\b/.test(text)) return "stadtentwicklung";
-  if (/wohnung|miete|eigentum|wohnraum|mietwohnung|eigentumswohnung|wohnen/.test(text)) return "wohnen";
-  return "sonstiges";
-}
-
-/* ─── Filter out non-economic/crime news ─── */
-const CRIME_BLACKLIST = /polizei|straftat|überfall|raub|\bmord\b|totschlag|\bmesser\b|festnahme|verhaftet|tatverdächtig|kriminalität|wohnungseinbruch|einbruchdiebstahl|diebstahl|brandstiftung|drogenhandel|schüsse|schießerei|leiche|verkehrsunfall|messerattacke|schlägerei|vergewaltigung|körperverletzung/i;
-
-function isEconomicallyRelevant(title: string, description: string): boolean {
-  const text = `${title} ${description}`.toLowerCase();
-  // Filter out crime/police reports that are not relevant to real estate market
-  if (CRIME_BLACKLIST.test(text)) return false;
-  return true;
-}
-
-/* ─── Sentiment analysis via keyword matching ─── */
-const POSITIVE_KEYWORDS = [
-  "steigt", "steigerung", "wachstum", "boom", "rekord", "nachfrage", "positiv",
-  "erholung", "gewinn", "chancen", "zunahme", "aufwind", "erfolgreich", "attraktiv",
-  "g\u00fcnstig", "bezahlbar", "f\u00f6rderung", "subvention", "entlastung", "investition",
-  "neubau", "richtfest", "grundsteinlegung", "ausbau", "modernisierung",
-];
-const NEGATIVE_KEYWORDS = [
-  "sinkt", "r\u00fcckgang", "krise", "einbruch", "verlust", "mangel", "knappheit",
-  "teuer", "unbezahlbar", "leerstand", "insolvenz", "pleite", "stagnation",
-  "r\u00fcckl\u00e4ufig", "negativ", "warnung", "risiko", "problem", "sorge", "angst",
-  "mietpreisbremse", "zwangsversteigerung", "abriss", "verbot", "baustopp",
-  "enteignung", "mietendeckel", "versch\u00e4rfung", "belastung",
-];
-
-function detectSentiment(title: string, description: string): "positive" | "negative" | "neutral" {
-  const text = `${title} ${description}`.toLowerCase();
-  let score = 0;
-  for (const kw of POSITIVE_KEYWORDS) { if (text.includes(kw)) score++; }
-  for (const kw of NEGATIVE_KEYWORDS) { if (text.includes(kw)) score--; }
-  if (score >= 2) return "positive";
-  if (score <= -2) return "negative";
-  return "neutral";
-}
-
-/* ─── Detect region ─── */
-function detectRegion(title: string, description: string): "berlin" | "brandenburg" | "both" {
-  const text = `${title} ${description}`.toLowerCase();
-  const hasBerlin = /berlin|charlottenburg|kreuzberg|mitte|neuk\u00f6lln|prenzlauer|friedrichshain|tempelhof|spandau|steglitz|pankow|lichtenberg|treptow|marzahn|reinickendorf|wedding/.test(text);
-  const hasBrandenburg = /brandenburg|potsdam|cottbus|frankfurt.*oder|oranienburg|bernau|falkensee|eberswalde|ludwigsfelde|königs.?wusterhausen|wildau|schönefeld|luckenwalde|strausberg|fürstenwalde|neuruppin|wittenberge|rathenow|senftenberg|spremberg|guben|\bforst\b|eisenhüttenstadt|schwedt|\bprenzlau\b|templin|angermünde|bad\s?freienwalde|seelow|beeskow|lübben|lübbenau|herzberg|finsterwalde|elsterwerda|bad\s?belzig|brandenburg.*havel|\bwerder\b|teltow|kleinmachnow|stahnsdorf|blankenfelde|mahlow|rangsdorf|zossen|baruth|jüterbog|\bdahme\b|\bnauen\b|ketzin|henningsdorf|\bvelten\b|hohen\s?neuendorf|birkenwerder|glienicke|mühlenbecker|wandlitz|biesenthal|barnim|oberhavel|havelland|oder.?spree|spree.?neiße|dahme.?spreewald|teltow.?fläming|ostprignitz|prignitz|uckermark|märkisch.?oderland/.test(text);
-  if (hasBerlin && hasBrandenburg) return "both";
-  if (hasBrandenburg) return "brandenburg";
-  return "berlin";
-}
-
-/* ─── Parse RSS XML ─── */
-function parseRSSItems(xml: string, source: string, icon: string): NewsItem[] {
-  const items: NewsItem[] = [];
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "text/xml");
-    const parseError = doc.querySelector("parsererror");
-    if (parseError) return [];
-    let entries = doc.querySelectorAll("item, entry");
-    if (entries.length === 0) {
-      const byTag = doc.getElementsByTagName("item");
-      if (byTag.length > 0) entries = byTag as unknown as NodeListOf<Element>;
-      else {
-        const byEntry = doc.getElementsByTagName("entry");
-        if (byEntry.length > 0) entries = byEntry as unknown as NodeListOf<Element>;
-      }
-    }
-    entries.forEach((entry) => {
-      const title = entry.querySelector("title")?.textContent?.trim() || "";
-      const linkEl = entry.querySelector("link");
-      const link = (linkEl?.textContent?.trim() || linkEl?.getAttribute("href") || "").trim();
-      const guid = entry.querySelector("guid")?.textContent?.trim() || "";
-      const articleUrl = link || guid;
-      const description = (
-        entry.querySelector("description")?.textContent?.trim()
-        || entry.querySelector("summary")?.textContent?.trim()
-        || entry.querySelector("content")?.textContent?.trim()
-        || ""
-      ).replace(/<[^>]+>/g, "").slice(0, 300);
-      const pubDate = entry.querySelector("pubDate")?.textContent?.trim()
-        || entry.querySelector("published")?.textContent?.trim()
-        || entry.querySelector("updated")?.textContent?.trim()
-        || "";
-      const mediaUrl = entry.querySelector("media\\:content, content")?.getAttribute("url")
-        || entry.querySelector("enclosure")?.getAttribute("url")
-        || undefined;
-      const imageUrl = mediaUrl && /\.(jpg|jpeg|png|webp|gif)/i.test(mediaUrl) ? mediaUrl : undefined;
-      if (title && articleUrl) {
-        try {
-          const category = categoriseNews(title, description);
-          const region = detectRegion(title, description);
-          const sentiment = detectSentiment(title, description);
-          const safeId = `${source}-${encodeURIComponent(articleUrl).slice(0, 120)}`;
-          let publishedAt: string;
-          try {
-            publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
-            if (publishedAt === "Invalid Date") throw new Error();
-          } catch {
-            publishedAt = new Date().toISOString();
-          }
-          items.push({ id: safeId, title, description, url: articleUrl, source, sourceIcon: icon, publishedAt, category, region, imageUrl, sentiment });
-        } catch {
-          /* skip malformed item */
-        }
-      }
-    });
-  } catch {
-    /* RSS parse error */
-  }
-  return items;
-}
-
-/* ─── Fetch RSS via CORS proxy (browser cannot call RSS URLs directly) ─── */
-/** Reject proxies that return HTML error pages (saves bogus parses and retries fallback). */
-function looksLikeXmlFeed(text: string): boolean {
-  const head = text.trimStart().slice(0, 1200).toLowerCase();
-  if (!head) return false;
-  if (/<!doctype\s+html|<html[\s>]/.test(head)) return false;
-  return /<rss[\s>]/.test(head) || /<feed[\s>]/.test(head) || (/\?xml/.test(head) && /<(?:rss|feed)[\s>]/.test(head));
-}
-
-/** AllOrigins `/get` returns JSON `{ contents }` — more reliable than `/raw` (often 500). */
-async function fetchRSSViaAllOriginsJson(feedUrl: string): Promise<string | null> {
-  try {
-    const u = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`;
-    const resp = await fetch(u, { signal: AbortSignal.timeout(15000) });
-    if (!resp.ok) return null;
-    const data = (await resp.json()) as { contents?: string };
-    if (typeof data.contents !== "string" || data.contents.length < 80) return null;
-    if (!looksLikeXmlFeed(data.contents)) return null;
-    return data.contents;
-  } catch {
-    /* network / JSON */
-  }
-  return null;
-}
-
-const CORS_PROXIES = [
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  (url: string) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
-  (url: string) => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
-];
-
-async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
-  const viaJson = await fetchRSSViaAllOriginsJson(feedUrl);
-  if (viaJson) {
-    const parsed = parseRSSItems(viaJson, source, icon);
-    if (parsed.length > 0) return parsed;
-  }
-  for (const buildProxyUrl of CORS_PROXIES) {
-    try {
-      const proxyUrl = buildProxyUrl(feedUrl);
-      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-      if (!resp.ok) continue;
-      const text = await resp.text();
-      if (!text || text.length < 100) continue;
-      if (!looksLikeXmlFeed(text)) continue;
-      const items = parseRSSItems(text, source, icon);
-      if (items.length > 0) return items;
-    } catch {
-      continue;
-    }
-  }
-  /* Last resort: rss2json API (free tier may require API key) */
-  try {
-    const resp = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
-      { signal: AbortSignal.timeout(10000) },
-    );
-    if (resp.ok) {
-      const data = await resp.json();
-      if (data.status === "ok" && Array.isArray(data.items) && data.items.length > 0) {
-        return data.items.map((item: { title?: string; link?: string; description?: string; pubDate?: string; thumbnail?: string }, idx: number) => {
-          const title = item.title?.trim() || "";
-          const description = (item.description || "").replace(/<[^>]+>/g, "").slice(0, 300);
-          return {
-            id: `${source}-rss2json-${idx}`,
-            title,
-            description,
-            url: item.link || "",
-            source,
-            sourceIcon: icon,
-            publishedAt: (() => { try { return item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(); } catch { return new Date().toISOString(); } })(),
-            category: categoriseNews(title, description),
-            region: detectRegion(title, description),
-            sentiment: detectSentiment(title, description),
-            imageUrl: item.thumbnail && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail) ? item.thumbnail : undefined,
-          } satisfies NewsItem;
-        }).filter((n: NewsItem) => n.title && n.url);
-      }
-    }
-  } catch {
-    /* rss2json also failed */
-  }
-  return [];
-}
-
-/* ─── Relative time in German ─── */
-function relativeTimeDE(dateStr: string): string {
-  const now = Date.now();
-  const parsed = new Date(dateStr).getTime();
-  if (isNaN(parsed)) return "";
-  const diffMs = now - parsed;
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "Gerade eben";
-  if (mins < 60) return `Vor ${mins} Min.`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `Vor ${hours} Std.`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Gestern";
-  if (days < 7) return `Vor ${days} Tagen`;
-  if (days < 30) return `Vor ${Math.floor(days / 7)} Wochen`;
-  return new Date(dateStr).toLocaleDateString("de-DE", { day: "2-digit", month: "short", year: "numeric" });
-}
+import { MobilePagePullToRefresh } from "@/components/mobile/MobilePagePullToRefresh";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import {
+  type NewsItem,
+  type NewsCategory,
+  CATEGORY_LABELS,
+  CATEGORY_COLORS,
+  REGION_LABELS,
+  BERLIN_DISTRICTS,
+  BRANDENBURG_CITIES,
+  SENTIMENT_CONFIG,
+  detectCity,
+  relativeTimeDE,
+} from "./newsticker/newsUtils";
+import { fetchAllRssNews, RSS_FEEDS } from "./newsticker/newsFetch";
 
 /* ─── Bookmarks persistence ─── */
 const BOOKMARKS_KEY = "immocontrol_news_bookmarks";
@@ -385,10 +57,37 @@ function saveBookmarks(ids: Set<string>) {
 const VIEW_MODE_KEY = "immocontrol_news_view";
 
 /* ─── Component ─── */
+const NEWSTICKER_STALE_MS = 5 * 60 * 1000; // 5 min cache
+
 const Newsticker = () => {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    data: news = [],
+    isLoading: loading,
+    isRefetching: refreshing,
+    dataUpdatedAt,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.newsticker.all,
+    queryFn: async () => {
+      const items = await fetchAllRssNews();
+      return items;
+    },
+    staleTime: NEWSTICKER_STALE_MS,
+    retry: 1,
+  });
+
+  const fetchAllNews = useCallback(async (isRefresh = false) => {
+    try {
+      const result = await refetch();
+      if (isRefresh && result.data) {
+        toast.success(`${result.data.length} Nachrichten aus ${RSS_FEEDS.length} Quellen aktualisiert`);
+      }
+    } catch (e: unknown) {
+      handleError(e, { context: "network", showToast: false });
+      toastErrorWithRetry("Fehler beim Laden der Nachrichten", () => refetch());
+    }
+  }, [refetch]);
+
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [selectedCategories, setSelectedCategories] = useState<Set<NewsCategory>>(new Set());
@@ -397,54 +96,21 @@ const Newsticker = () => {
   const [selectedSentiment, setSelectedSentiment] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [displayCount, setDisplayCount] = useState(20);
-  const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [bookmarks, setBookmarks] = useState<Set<string>>(loadBookmarks);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "compact">(
     () => (localStorage.getItem(VIEW_MODE_KEY) as "cards" | "compact") || "cards"
   );
 
-  useEffect(() => { document.title = "Newsticker \u2013 ImmoControl"; }, []);
-
-  /* Fetch all RSS feeds */
-  const fetchAllNews = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true); else setLoading(true);
-    try {
-      const results = await Promise.allSettled(
-        RSS_FEEDS.map(f => fetchRSSFeed(f.url, f.source, f.icon))
-      );
-      const allItems: NewsItem[] = [];
-      results.forEach(r => { if (r.status === "fulfilled") allItems.push(...r.value); });
-      /* Deduplicate by title similarity */
-      const seen = new Set<string>();
-      const deduped = allItems.filter(item => {
-        const key = item.title.toLowerCase().replace(/[^a-z\u00e4\u00f6\u00fc0-9]/g, "").slice(0, 60);
-        if (seen.has(key)) return false;
-        // Filter out non-economic news (crime, accidents, etc.)
-        if (!isEconomicallyRelevant(item.title, item.description)) return false;
-        seen.add(key);
-        return true;
-      });
-      deduped.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-      setNews(deduped);
-      setLastFetched(new Date());
-      if (isRefresh) toast.success(`${deduped.length} Nachrichten aus ${RSS_FEEDS.length} Quellen aktualisiert`);
-    } catch (e: unknown) {
-      handleError(e, { context: "network", showToast: false });
-      toastErrorWithRetry("Fehler beim Laden der Nachrichten", () => fetchAllNews(true));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchAllNews(); }, [fetchAllNews]);
+  useEffect(() => { document.title = "Newsticker – ImmoControl"; }, []);
 
   /* Auto-refresh every 10 minutes */
   useEffect(() => {
     const iv = setInterval(() => fetchAllNews(true), 10 * 60 * 1000);
     return () => clearInterval(iv);
   }, [fetchAllNews]);
+
+  const lastFetched = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
   /* Bookmark toggle */
   const toggleBookmark = useCallback((id: string) => {
@@ -575,6 +241,7 @@ const Newsticker = () => {
   /* Loading skeleton */
   if (loading) {
     return (
+      <MobilePagePullToRefresh onRefresh={() => fetchAllNews(true)}>
       <div className="space-y-6 animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="space-y-2">
@@ -614,10 +281,12 @@ const Newsticker = () => {
           ))}
         </div>
       </div>
+      </MobilePagePullToRefresh>
     );
   }
 
   return (
+    <MobilePagePullToRefresh onRefresh={() => fetchAllNews(true)} disabled={refreshing}>
     <div className="space-y-6" role="main" aria-label="Immobilien-Newsticker">
       <PageHeader>
         <PageHeaderMain>
@@ -1138,6 +807,7 @@ const Newsticker = () => {
         </p>
       </div>
     </div>
+    </MobilePagePullToRefresh>
   );
 };
 

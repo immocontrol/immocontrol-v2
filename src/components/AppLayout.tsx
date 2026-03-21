@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect, useCallback, useRef, useLayoutEffect, m
 import { useOnlineStatusNotifications } from "@/hooks/useOnlineStatus";
 import { useLocation, Link, useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
+import { scheduleRoutePreload, cancelRoutePreload } from "@/lib/routePreload";
 import { LayoutDashboard, Calculator, Building2, LogOut, Settings, Users, Command, Landmark, CalendarDays, CheckSquare, Sun, Moon, Monitor, Search, FileText, Receipt, FileBarChart, Sparkles, MoreHorizontal, Target, Handshake, FolderOpen, Wrench, ChevronDown, TrendingUp, Newspaper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -560,11 +561,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       >
                         {items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
+                          const basePath = item.path.split("?")[0];
                           const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
                           return (
                             <Link
                               key={item.path}
                               to={item.path}
+                              onMouseEnter={() => scheduleRoutePreload(basePath)}
+                              onMouseLeave={cancelRoutePreload}
                               {...navAttr}
                               aria-current={isActive ? "page" : undefined}
                               className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
@@ -586,6 +590,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     <TooltipTrigger asChild>
                       <Link
                         to={entry.path}
+                        onMouseEnter={() => scheduleRoutePreload(entry.path.split("?")[0])}
+                        onMouseLeave={cancelRoutePreload}
                         data-nav-top
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
@@ -613,6 +619,20 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             </nav>
             <div className="flex items-center gap-1.5 ml-2 min-w-0">
               <RecentPropertiesNav />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                    onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+                    aria-label="Schnellsuche öffnen (Strg+K)"
+                  >
+                    <Command className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Schnellsuche (Strg+K)</TooltipContent>
+              </Tooltip>
               <GlobalSearch />
               <GamificationNavChip />
               {/* Quick theme toggle */}

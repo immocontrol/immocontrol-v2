@@ -8,6 +8,12 @@ Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Neu
 
+- **Newsticker: Pull-to-Refresh, Caching, Modulaufteilung** — Mobile Pull-to-Refresh (MobilePagePullToRefresh) für schnelle Aktualisierung. RSS-Daten über React Query mit 5-min staleTime (Stale-While-Revalidate). Newsticker-Logik ausgelagert in `src/pages/newsticker/newsUtils.ts` und `newsFetch.ts` (Types, Parsing, Kategorisierung, RSS-Fetch). queryKeys.newsticker.all ergänzt.
+- **Command-Palette sichtbar machen** — Header-Button mit Command-Icon öffnet Befehlspalette; Tooltip „Schnellsuche (Strg+K)“. Custom-Event `open-command-palette` für programmatisches Öffnen.
+- **Route-Preload bei Hover** — Nav-Links preloaden Lazy-Route-Chunks nach 300 ms Hover (routePreload.ts, scheduleRoutePreload/cancelRoutePreload). Schnellere Navigation bei Desktop.
+- **mapPool Tests erweitert** — Fehler-Propagation und Concurrency-Limit getestet.
+- **DeepSeek Proxy: Doku** — docs/DEEPSEEK_NUTZUNG.md: Abschnitt „Produktion: DeepSeek API Key schützen“ mit Empfehlung für Backend-Proxy/Edge Function.
+
 - **Investor-Features** — 10 neue Seiten für Immobilieninvestoren: Steuer-Cockpit (Anlage V, AfA, Veräußerungsgewinn), Refinanzierungs-Szenario (Zinsbindung, Umschuldung), Stress-Test (Risiko-Simulation), Portfolio-Diversifikation (Region, Objekttyp), Mietspiegel-Check (Ist vs. ortsüblich), KPIs im Zeitverlauf (Charts), Benachrichtigungen (Fristen-Zentrale, Alarme), Syndication (Co-Invest-Tracking), Deal-Benchmark (erwartete vs. realisierte Rendite), Mobile-Besichtigungen (Offline-Hinweis, Checkliste). DB: user_notifications, property_shareholders. Nav, Global Search, Command Palette und Mobile Tab Bar ergänzt.
 - **Pipeline-Checklisten & Deal-Score** — DealPipelineChecklist mit phasenbasierten Checklisten in Deals. dealScoring.ts berechnet Deal-Score (0–100). Score-Badge auf Deal-Karten. Zusätzliche Objekttypen: Sanierungsfall, Neubau.
 - **Objekt-Roadmap & Rendite-Tracking** — PropertyFinancingChecklist pro Objekt (Finanzierungs-Vorbereitung). PropertyRenditeTracking: Soll- vs. Ist-Rendite pro Objekt.

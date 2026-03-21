@@ -207,6 +207,7 @@ queryClient.setQueryDefaults(queryKeys.maintenance.allList, { staleTime: 5 * 60_
 queryClient.setQueryDefaults(["documents"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(["tickets"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.viewings.all, { staleTime: 2 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.newsticker.all, { staleTime: 5 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
