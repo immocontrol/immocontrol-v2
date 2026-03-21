@@ -32,7 +32,7 @@ export function SettingsToggleRow({
     <div
       className={cn(
         "flex items-center justify-between gap-4 p-3.5 rounded-xl bg-muted/40 dark:bg-muted/20 border border-border/80",
-        "transition-colors duration-200",
+        "transition-colors duration-base ease-out-modern",
         className
       )}
     >
