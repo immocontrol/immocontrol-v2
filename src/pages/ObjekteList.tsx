@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { ROUTES } from "@/lib/routes";
 import { calcBruttoRendite, calcNettoRendite } from "@/lib/calculations";
 
@@ -144,38 +145,38 @@ const ObjekteList = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 min-w-0 overflow-x-hidden" id="main-content">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold flex items-center gap-2">
-            <Building2 className="h-5 w-5 shrink-0" />
+    <div className="p-4 md:p-6 space-y-4 min-w-0 overflow-x-hidden">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Building2 className="h-6 w-6 shrink-0 text-primary" aria-hidden />
             Objekte
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             {properties.length} {properties.length === 1 ? "Objekt" : "Objekte"} im Portfolio
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
-          <div className="relative flex-1 sm:min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
+          <div className="relative flex-1 sm:min-w-[200px] max-w-sm min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden />
             <Input
               ref={searchInputRef}
               placeholder="z. B. Musterstraße oder Objektname"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 shadow-sm"
               aria-label="Objekte durchsuchen"
             />
           </div>
           {search.trim() && (
-            <span className="text-xs text-muted-foreground whitespace-nowrap" aria-live="polite">
+            <span className="text-xs text-muted-foreground whitespace-nowrap self-center" aria-live="polite">
               {filtered.length} {filtered.length === 1 ? "Treffer" : "Treffer"}
             </span>
           )}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortType)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            className="h-9 rounded-lg border border-input/80 bg-background px-3 text-sm shadow-sm transition-[border-color,box-shadow] duration-150 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-primary/35 min-w-[9.5rem]"
             aria-label="Sortierung"
           >
             <option value="name">Name</option>
@@ -187,8 +188,8 @@ const ObjekteList = () => {
           </select>
           <PropertyComparison />
           <AddPropertyDialog />
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* IMP-51: Portfolio-Benchmark (Durchschnitts-Rendite) + Synergien */}
       {sorted.length > 0 && (() => {

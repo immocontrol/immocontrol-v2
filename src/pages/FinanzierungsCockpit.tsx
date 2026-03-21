@@ -242,7 +242,7 @@ export default function FinanzierungsCockpit() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto min-w-0 overflow-x-hidden" id="main-content" role="main" aria-label="Finanzierungs-Cockpit">
+    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto min-w-0 overflow-x-hidden" aria-label="Finanzierungs-Cockpit">
       <div className="min-w-0">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
           <Wallet className="h-6 w-6 text-primary shrink-0" />

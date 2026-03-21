@@ -518,7 +518,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <KeyboardShortcuts />
       {/* UI-6/UI-27: glass-header + page-header */}
       <header
-        className="sticky top-0 z-[150] border-b border-border bg-background/80 backdrop-blur-xl glass-header page-header overflow-visible md:pt-0"
+        className="sticky top-0 z-[150] border-b border-border/70 bg-background/85 backdrop-blur-xl glass-header page-header overflow-visible md:pt-0 shadow-[0_1px_0_hsl(var(--border)/0.5)]"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <div className="container flex h-14 items-center justify-between overflow-visible">
