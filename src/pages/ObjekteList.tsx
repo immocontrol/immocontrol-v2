@@ -6,7 +6,7 @@
  */
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Building2, Search, Briefcase, Camera, Store, FileText, PieChart, ShieldAlert } from "lucide-react";
+import { Building2, Search, Briefcase, Camera, Store, FileText, PieChart, ShieldAlert, ArrowLeftRight } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import PropertyCard from "@/components/PropertyCard";
 import AddPropertyDialog from "@/components/AddPropertyDialog";
@@ -14,6 +14,7 @@ import { PropertyComparison } from "@/components/PropertyComparison";
 import { EmptyState } from "@/components/EmptyState";
 import { VirtualList } from "@/components/VirtualList";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
@@ -54,6 +55,8 @@ const ObjekteList = () => {
   const [search, setSearch] = useState(() => loadListState().search);
   const [sort, setSort] = useState<SortType>(() => loadListState().sort);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [compareIds, setCompareIds] = useState<[string, string] | null>(null);
 
   /* Open Add Property dialog when ?add=1 (e.g. from Command Palette or Ctrl+N) */
   useEffect(() => {
@@ -117,18 +120,41 @@ const ObjekteList = () => {
     [filtered, sort]
   );
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllFiltered = () => {
+    const ids = sorted.map((p) => p.id);
+    const allSelected = ids.length > 0 && ids.every((id) => selectedIds.has(id));
+    setSelectedIds(allSelected ? new Set() : new Set(ids));
+  };
+
   const renderItem = useCallback(
     (property: (typeof properties)[0]) => (
-      <div className="pb-4">
-        <PropertyCard
-          {...property}
-          monthlyExpenses={property.monthlyExpenses}
-          monthlyCreditRate={property.monthlyCreditRate}
-          ownership={property.ownership}
+      <div className="pb-4 flex gap-2 items-start">
+        <Checkbox
+          checked={selectedIds.has(property.id)}
+          onCheckedChange={() => toggleSelect(property.id)}
+          className="mt-2 shrink-0"
+          aria-label={`${property.name} auswählen`}
         />
+        <div className="flex-1 min-w-0">
+          <PropertyCard
+            {...property}
+            monthlyExpenses={property.monthlyExpenses}
+            monthlyCreditRate={property.monthlyCreditRate}
+            ownership={property.ownership}
+          />
+        </div>
       </div>
     ),
-    []
+    [selectedIds]
   );
 
   if (loading) {
@@ -207,7 +233,10 @@ const ObjekteList = () => {
               ))}
             </SelectContent>
           </Select>
-          <PropertyComparison />
+          <PropertyComparison
+            openWithIds={compareIds ?? undefined}
+            onOpenWithIdsClose={() => setCompareIds(null)}
+          />
           <AddPropertyDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
         </PageHeaderActions>
       </PageHeader>
@@ -232,6 +261,43 @@ const ObjekteList = () => {
           </div>
         );
       })()}
+
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && sorted.length > 0 && (
+        <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-primary/20 bg-primary/5">
+          <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+              Auswahl aufheben
+            </Button>
+            {selectedIds.size === 2 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => setCompareIds(Array.from(selectedIds) as [string, string])}
+              >
+                <ArrowLeftRight className="h-3.5 w-3.5" /> Vergleichen
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Select all */}
+      {sorted.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="select-all-objekte"
+            checked={sorted.length > 0 && sorted.every((p) => selectedIds.has(p.id))}
+            onCheckedChange={selectAllFiltered}
+            aria-label="Alle Objekte auswählen"
+          />
+          <label htmlFor="select-all-objekte" className="text-xs text-muted-foreground cursor-pointer">
+            Alle auswählen
+          </label>
+        </div>
+      )}
 
       {sorted.length === 0 ? (
         <EmptyState
@@ -277,14 +343,22 @@ const ObjekteList = () => {
       ) : (
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">
           {sorted.map((property, i) => (
-            <li key={property.id}>
-              <PropertyCard
-                {...property}
-                monthlyExpenses={property.monthlyExpenses}
-                monthlyCreditRate={property.monthlyCreditRate}
-                ownership={property.ownership}
-                delay={i * 60}
+            <li key={property.id} className="flex gap-2 items-start">
+              <Checkbox
+                checked={selectedIds.has(property.id)}
+                onCheckedChange={() => toggleSelect(property.id)}
+                className="mt-2 shrink-0"
+                aria-label={`${property.name} auswählen`}
               />
+              <div className="flex-1 min-w-0">
+                <PropertyCard
+                  {...property}
+                  monthlyExpenses={property.monthlyExpenses}
+                  monthlyCreditRate={property.monthlyCreditRate}
+                  ownership={property.ownership}
+                  delay={i * 60}
+                />
+              </div>
             </li>
           ))}
         </ul>

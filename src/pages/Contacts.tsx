@@ -582,6 +582,31 @@ const ContactManagement = () => {
           <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Auswahl aufheben</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                const toExport = contacts.filter(c => selectedIds.has(c.id));
+                if (toExport.length === 0) return;
+                const vcards = toExport.map(c => {
+                  const parts = c.name.split(" ");
+                  const lastName = parts.pop() || "";
+                  const firstName = parts.join(" ") || "";
+                  return `BEGIN:VCARD\nVERSION:3.0\nN:${lastName};${firstName}\nFN:${c.name}${c.company ? `\nORG:${c.company}` : ""}${c.email ? `\nEMAIL:${c.email}` : ""}${c.phone ? `\nTEL:${c.phone}` : ""}${c.address ? `\nADR:;;${c.address}` : ""}${c.notes ? `\nNOTE:${c.notes}` : ""}\nEND:VCARD`;
+                }).join("\n");
+                const blob = new Blob([vcards], { type: "text/vcard;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `immocontrol-kontakte-${selectedIds.size}.vcf`;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                toastSuccess(`${selectedIds.size} Kontakt${selectedIds.size > 1 ? "e" : ""} exportiert`);
+              }}
+            >
+              <Download className="h-3.5 w-3.5" /> vCard
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm" className="gap-1.5">

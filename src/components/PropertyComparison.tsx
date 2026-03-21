@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { BarChart3, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,10 +6,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { formatCurrency } from "@/lib/formatters";
 import { useProperties } from "@/context/PropertyContext";
 
-export function PropertyComparison() {
+interface PropertyComparisonProps {
+  /** Open with pre-selected IDs (e.g. from bulk selection) */
+  openWithIds?: [string, string];
+  onOpenWithIdsClose?: () => void;
+}
+
+export function PropertyComparison({ openWithIds, onOpenWithIdsClose }: PropertyComparisonProps) {
   const { properties } = useProperties();
   const [propA, setPropA] = useState("");
   const [propB, setPropB] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (openWithIds && openWithIds.length === 2) {
+      setPropA(openWithIds[0]);
+      setPropB(openWithIds[1]);
+      setOpen(true);
+    } else if (!openWithIds) {
+      setOpen(false);
+    }
+  }, [openWithIds]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next && openWithIds) onOpenWithIdsClose?.();
+    setOpen(next);
+  };
 
   const a = properties.find(p => p.id === propA);
   const b = properties.find(p => p.id === propB);
@@ -36,7 +58,10 @@ export function PropertyComparison() {
   if (properties.length < 2) return null;
 
   return (
-    <Dialog>
+    <Dialog
+      open={openWithIds ? open : undefined}
+      onOpenChange={openWithIds ? (v) => { setOpen(v); if (!v) onOpenWithIdsClose?.(); } : undefined}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <ArrowLeftRight className="h-3.5 w-3.5" /> Vergleichen

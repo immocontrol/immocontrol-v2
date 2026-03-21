@@ -267,7 +267,7 @@ const Vertraege = () => {
             <CalendarClock className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fristen</span>
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="mietvertraege"><Mietvertragsverwaltung /></TabsContent>
+        <TabsContent value="mietvertraege"><Mietvertragsverwaltung propertyId={propertyFromUrl} /></TabsContent>
         <TabsContent value="vertraege"><ContractManagement /></TabsContent>
         <TabsContent value="rechnungen"><InvoiceManagement initialOpen={addInvoiceFromUrl} initialPropertyId={propertyFromUrl} onAddOpened={() => setSearchParams((p) => { const n = new URLSearchParams(p); n.delete("add"); return n; }, { replace: true })} /></TabsContent>
         <TabsContent value="dienstleister"><ServiceContracts /></TabsContent>

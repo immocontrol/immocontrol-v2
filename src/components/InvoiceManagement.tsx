@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { toastSuccess } from "@/lib/toastMessages";
 import { useProperties } from "@/context/PropertyContext";
@@ -60,6 +61,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
   const [open, setOpen] = useState(!!initialOpen);
   const [quickOpen, setQuickOpen] = useState(false);
   const [filter, setFilter] = useState("alle");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const today = new Date().toISOString().split("T")[0];
   const [form, setForm] = useState({
@@ -146,9 +148,38 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
+      setDeleteTargetId(null);
       toastSuccess("Gelöscht");
     },
     onError: createMutationErrorHandler("Rechnung löschen", "Fehler beim Löschen"),
+  });
+
+  const bulkUpdateStatusMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      const updates: Record<string, string> = { status };
+      if (status === "bezahlt") updates.payment_date = new Date().toISOString().split("T")[0];
+      const { error } = await supabase.from("invoices").update(updates).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      setSelectedIds(new Set());
+      toastSuccess("Status aktualisiert");
+    },
+    onError: createMutationErrorHandler("Rechnungen aktualisieren", "Fehler"),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("invoices").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      setSelectedIds(new Set());
+      toastSuccess("Gelöscht");
+    },
+    onError: createMutationErrorHandler("Rechnungen löschen", "Fehler"),
   });
 
   const getStatusBadge = (status: string, dueDate: string | null) => {
@@ -246,6 +277,36 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
         </div>
       </div>
 
+      {/* Bulk actions */}
+      {selectedIds.size > 0 && invoices.length > 0 && (
+        <div className="flex items-center justify-between gap-2 p-3 rounded-xl border border-primary/20 bg-primary/5 mb-4">
+          <span className="text-sm font-medium">{selectedIds.size} ausgewählt</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+              Auswahl aufheben
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => bulkUpdateStatusMutation.mutate({ ids: Array.from(selectedIds), status: "bezahlt" })}
+              disabled={bulkUpdateStatusMutation.isPending}
+            >
+              <Check className="h-3.5 w-3.5" /> Als bezahlt
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="gap-1.5"
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedIds))}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Löschen
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="rounded-lg bg-secondary/50 p-3 text-center">
@@ -280,6 +341,15 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={invoices.length > 0 && invoices.every((inv) => selectedIds.has(inv.id))}
+                    onCheckedChange={(c) =>
+                      setSelectedIds(c ? new Set(invoices.map((i) => i.id)) : new Set())
+                    }
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
                 <TableHead>Datum</TableHead>
                 <TableHead>Lieferant</TableHead>
                 <TableHead>Objekt</TableHead>
@@ -293,6 +363,20 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
             <TableBody>
               {invoices.map((inv: InvoiceRow) => (
                 <TableRow key={inv.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(inv.id)}
+                      onCheckedChange={() =>
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(inv.id)) next.delete(inv.id);
+                          else next.add(inv.id);
+                          return next;
+                        })
+                      }
+                      aria-label={`${inv.vendor_name} auswählen`}
+                    />
+                  </TableCell>
                   <TableCell className="text-xs">{formatDate(inv.invoice_date)}</TableCell>
                   <TableCell className="text-xs font-medium">{inv.vendor_name}</TableCell>
                   <TableCell className="text-xs">{getPropertyName(inv.property_id)}</TableCell>

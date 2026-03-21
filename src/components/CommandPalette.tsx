@@ -104,12 +104,24 @@ export const CommandPalette = () => {
 
   const filtered = useMemo(() => {
     if (!query.trim()) return items;
-    const q = query.toLowerCase();
-    return items.filter(i =>
-      i.label.toLowerCase().includes(q) ||
-      i.sublabel?.toLowerCase().includes(q) ||
-      i.category.toLowerCase().includes(q)
-    );
+    const q = query.toLowerCase().trim();
+    const words = q.split(/\s+/).filter(Boolean);
+    return items
+      .map((item) => {
+        const label = item.label.toLowerCase();
+        const sublabel = (item.sublabel || "").toLowerCase();
+        const cat = item.category.toLowerCase();
+        let score = 0;
+        if (label === q || sublabel === q) score = 100;
+        else if (label.startsWith(q) || sublabel.startsWith(q)) score = 80;
+        else if (label.includes(q) || sublabel.includes(q) || cat.includes(q)) score = 60;
+        else if (words.every((w) => label.includes(w) || sublabel.includes(w))) score = 40;
+        if (score > 0) return { item, score };
+        return null;
+      })
+      .filter((x): x is { item: PaletteItem; score: number } => x !== null)
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.item);
   }, [items, query]);
 
   useEffect(() => {
