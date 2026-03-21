@@ -10,6 +10,7 @@ import { formatCurrency, getISOWeek, downloadBlob } from "@/lib/formatters";
 import { Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid, Line, ComposedChart, ReferenceLine } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { toast } from "sonner";
 
 interface Loan {
@@ -150,18 +151,18 @@ const CashForecast = () => {
     /* IMP-13: ARIA landmark for CashForecast page */
     <div className="space-y-6" role="main" aria-label="Cashforecast">
       {/* Improvement 4: Mobile responsive header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Cashforecast
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Cashforecast
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             {forecastWeeks}-Wochen-Vorschau · {properties.length} Objekte · {loans.length} Darlehen
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions className="justify-stretch sm:justify-end">
           <Select value={scenario} onValueChange={v => setScenario(v as "normal" | "optimistic" | "pessimistic" | "mietanpassung")}>
-            <SelectTrigger className="h-9 w-44 text-sm">
+            <SelectTrigger className="h-9 w-44 text-sm min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -175,7 +176,7 @@ const CashForecast = () => {
             <Download className="h-3.5 w-3.5" /> CSV
           </Button>
           <Select value={String(forecastWeeks)} onValueChange={v => setForecastWeeks(Number(v) as 13 | 26 | 52)}>
-            <SelectTrigger className="h-9 w-36 text-sm">
+            <SelectTrigger className="h-9 w-36 text-sm min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -184,8 +185,8 @@ const CashForecast = () => {
               <SelectItem value="52">52 Wochen</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Improvement 5: Scenario description */}
       {scenario !== "normal" && (

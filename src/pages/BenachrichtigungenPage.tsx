@@ -13,7 +13,9 @@ import { ROUTES } from "@/lib/routes";
 import { formatDate } from "@/lib/formatters";
 import { queryKeys } from "@/lib/queryKeys";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 type NotificationRow = {
   id: string;
@@ -100,14 +102,14 @@ const BenachrichtigungenPage = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto px-4 py-6 min-w-0" role="main" aria-label="Benachrichtigungen">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Benachrichtigungen
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Fristen, Zahlungen, Darlehen — alles im Blick
-        </p>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle className="flex-wrap">
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Benachrichtigungen
+          </PageHeaderTitle>
+          <PageHeaderDescription>Fristen, Zahlungen, Darlehen — alles im Blick</PageHeaderDescription>
+        </PageHeaderMain>
+      </PageHeader>
 
       <section aria-label="Fristen-Zentrale" className="min-w-0">
         <h2 className="text-sm font-semibold flex items-center gap-2 mb-3">
@@ -122,9 +124,9 @@ const BenachrichtigungenPage = () => {
             <Bell className="h-4 w-4 shrink-0" />
             Mitteilungen
             {unreadCount > 0 && (
-              <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full" aria-live="polite">
+              <Badge variant="default" className="tabular-nums" aria-live="polite">
                 {unreadCount}
-              </span>
+              </Badge>
             )}
           </h2>
           {unreadCount > 0 && (

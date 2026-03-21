@@ -39,6 +39,7 @@ import { useHaptic } from "@/hooks/useHaptic";
 import { useUndoToast } from "@/hooks/useUndoToast";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeaderDescription, PageHeaderTitle } from "@/components/ui/page-header";
 
 interface Todo {
   id: string;
@@ -416,12 +417,13 @@ const Todos = () => {
     <div className="flex gap-4 sm:gap-6 min-h-[calc(100vh-8rem)] min-w-0">
       <aside className="hidden md:block w-56 shrink-0 space-y-1 min-w-0">
         <div className="mb-4">
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <CheckSquare className="h-5 w-5 text-primary" /> Aufgaben
-          </h1>
-          {/* IMPROVE-32: Show completion rate below heading */}
+          <PageHeaderTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <CheckSquare className="h-5 w-5 text-primary shrink-0" /> Aufgaben
+          </PageHeaderTitle>
           {todos.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">{completionRate}% erledigt · {pluralDE(overdueCount, "überfällig", "überfällige")}</p>
+            <PageHeaderDescription className="text-xs mt-1">
+              {completionRate}% erledigt · {pluralDE(overdueCount, "überfällig", "überfällige")}
+            </PageHeaderDescription>
           )}
         </div>
 

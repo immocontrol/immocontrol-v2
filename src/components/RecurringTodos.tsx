@@ -5,6 +5,7 @@ import { useState, useCallback, useMemo } from "react";
 import { Repeat, Plus, Trash2, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 interface RecurringTask {
@@ -177,15 +178,16 @@ export function RecurringTodos({ onCreateTodo }: RecurringTodosProps) {
             autoFocus
           />
           <div className="flex gap-2">
-            <select
-              value={newInterval}
-              onChange={e => setNewInterval(e.target.value as RecurringTask["interval"])}
-              className="text-xs bg-secondary border border-border rounded px-2 py-1 flex-1"
-            >
-              {Object.entries(INTERVAL_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
+            <Select value={newInterval} onValueChange={(v) => setNewInterval(v as RecurringTask["interval"])}>
+              <SelectTrigger className="h-8 text-xs flex-1 min-w-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(INTERVAL_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button size="sm" onClick={addTask} className="text-xs h-7">Anlegen</Button>
             <Button size="sm" variant="outline" onClick={() => setShowAdd(false)} className="text-xs h-7">Abbrechen</Button>
           </div>

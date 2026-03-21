@@ -8,6 +8,7 @@ import { formatCurrency, safeDivide } from "@/lib/formatters";
 import { calcMonthlyCashflow } from "@/lib/calculations";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/NumberInput";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Scenario {
   label: string;
@@ -92,15 +93,16 @@ export function CashflowScenarios() {
           <BarChart3 className="h-4 w-4 text-primary" />
           Cashflow-Szenarien
         </h3>
-        <select
-          value={years}
-          onChange={e => setYears(Number(e.target.value))}
-          className="text-xs bg-secondary border border-border rounded px-2 py-1"
-        >
-          {[1, 3, 5, 10].map(y => (
-            <option key={y} value={y}>{y} Jahr{y > 1 ? "e" : ""}</option>
-          ))}
-        </select>
+        <Select value={String(years)} onValueChange={(v) => setYears(Number(v))}>
+          <SelectTrigger className="h-8 w-[7.5rem] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[1, 3, 5, 10].map((y) => (
+              <SelectItem key={y} value={String(y)}>{y} Jahr{y > 1 ? "e" : ""}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="mb-3">
         <Label className="text-[10px] text-muted-foreground">Einmalige NK-Nachzahlung (€) — mindert Gesamt-Cashflow</Label>

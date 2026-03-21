@@ -8,6 +8,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { toast } from "sonner";
 import { formatFileSize } from "@/lib/formatters";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const PROP_NONE = "__none__";
 
 interface DragDropDocUploadProps {
   propertyId?: string;
@@ -129,18 +132,22 @@ export function DragDropDocUpload({ propertyId: externalPropertyId, onUploaded }
     <div className="space-y-2">
       {/* Property selector — shown when no propertyId is provided externally (e.g. on Dashboard) */}
       {!externalPropertyId && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-          <select
-            value={selectedPropertyId}
-            onChange={e => setSelectedPropertyId(e.target.value)}
-            className="text-xs bg-secondary border border-border rounded px-2 py-1.5 flex-1"
+          <Select
+            value={selectedPropertyId || PROP_NONE}
+            onValueChange={(v) => setSelectedPropertyId(v === PROP_NONE ? "" : v)}
           >
-            <option value="">Objekt auswählen...</option>
-            {properties.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 text-xs flex-1 min-w-0">
+              <SelectValue placeholder="Objekt auswählen…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={PROP_NONE}>Objekt auswählen…</SelectItem>
+              {properties.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
 import { escapeHtml } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const PROP_NONE = "__none__";
 
 interface BillingItem {
   id: string;
@@ -133,27 +136,32 @@ ${tenantShares.map(t => `<tr>
         </h3>
       </div>
 
-      <div className="flex gap-2 mb-3">
-        <select
-          value={selectedProperty}
-          onChange={e => setSelectedProperty(e.target.value)}
-          className="text-xs bg-secondary border border-border rounded px-2 py-1.5 flex-1"
+      <div className="flex gap-2 mb-3 min-w-0">
+        <Select
+          value={selectedProperty || PROP_NONE}
+          onValueChange={(v) => setSelectedProperty(v === PROP_NONE ? "" : v)}
         >
-          <option value="">Objekt wählen...</option>
-          {properties.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-        <select
-          value={selectedYear}
-          onChange={e => setSelectedYear(Number(e.target.value))}
-          className="text-xs bg-secondary border border-border rounded px-2 py-1.5 w-20"
-        >
-          {[0, 1, 2, 3].map(i => {
-            const y = new Date().getFullYear() - i;
-            return <option key={y} value={y}>{y}</option>;
-          })}
-        </select>
+          <SelectTrigger className="h-9 text-xs flex-1 min-w-0">
+            <SelectValue placeholder="Objekt wählen…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={PROP_NONE}>Objekt wählen…</SelectItem>
+            {properties.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+          <SelectTrigger className="h-9 text-xs w-[5.5rem] shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[0, 1, 2, 3].map((i) => {
+              const y = new Date().getFullYear() - i;
+              return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+            })}
+          </SelectContent>
+        </Select>
       </div>
 
       {selectedProperty && property && (

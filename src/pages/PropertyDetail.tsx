@@ -41,6 +41,7 @@ import { AnlageVExport } from "@/components/AnlageVExport";
 import PropertyValuation from "@/components/PropertyValuation";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { PageHeaderTitle } from "@/components/ui/page-header";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -216,7 +217,7 @@ const PropertyDetail = () => {
         <div className="flex items-start justify-between">
           <div>
             {/* IMP-46: Truncate long property names on mobile to prevent overflow */}
-            <h1 className="text-2xl font-bold truncate max-w-[250px] sm:max-w-none">{property.name}</h1>
+            <PageHeaderTitle className="text-2xl font-bold truncate max-w-[250px] sm:max-w-none">{property.name}</PageHeaderTitle>
             {/* UI-UPDATE-43: Tooltip on copy address action */}
             <Tooltip>
               <TooltipTrigger asChild>

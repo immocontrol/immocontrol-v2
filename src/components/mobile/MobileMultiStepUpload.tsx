@@ -7,9 +7,12 @@ import { useState, useCallback, useRef, useEffect, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Upload, X, FileText, Image, File, Check, Loader2,
-  GripVertical, Trash2, Tag, ChevronDown,
+  GripVertical, Trash2, Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CAT_NONE = "__none__";
 
 export interface UploadFile {
   id: string;
@@ -290,22 +293,25 @@ export const MobileMultiStepUpload = memo(function MobileMultiStepUpload({
 
               {/* Category selector */}
               {file.status === "pending" && (
-                <div className="relative shrink-0">
-                  <select
-                    value={file.category || ""}
-                    onChange={(e) => updateCategory(file.id, e.target.value)}
+                <Select
+                  value={file.category || CAT_NONE}
+                  onValueChange={(v) => updateCategory(file.id, v === CAT_NONE ? "" : v)}
+                >
+                  <SelectTrigger
                     className={cn(
-                      "text-[10px] px-2 py-1 rounded border bg-background appearance-none pr-5",
+                      "h-8 w-[min(8rem,28vw)] text-[10px] px-2 py-1 shrink-0",
                       isMobile && "min-h-[32px]"
                     )}
                   >
-                    <option value="">Kategorie</option>
-                    {categories.map(c => (
-                      <option key={c} value={c}>{c}</option>
+                    <SelectValue placeholder="Kategorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={CAT_NONE}>Kategorie</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
-                  </select>
-                  <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-muted-foreground" />
-                </div>
+                  </SelectContent>
+                </Select>
               )}
 
               {/* Status / Remove */}

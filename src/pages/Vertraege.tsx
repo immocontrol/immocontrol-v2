@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatCurrency, formatDate, formatDaysUntil } from "@/lib/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const Vertraege = () => {
   const { user } = useAuth();
@@ -99,32 +100,32 @@ const Vertraege = () => {
   return (
     /* IMP-16: ARIA landmark for Verträge page */
     <div className="space-y-6 max-w-5xl mx-auto min-w-0" role="main" aria-label="Verträge und Verwaltung">
-      {/* Improvement 8: Mobile responsive heading */}
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold">Verträge & Verwaltung</h1>
-        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
-          {/* IMPROVE-14: Show total active items count */}
-          {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
-          <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
-            <FolderOpen className="h-3.5 w-3.5" /> Dokumente hochladen
-          </Link>
-          <Link to={ROUTES.RENT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
-            <BarChart3 className="h-3.5 w-3.5" /> Mietübersicht
-          </Link>
-          <Link to={ROUTES.REPORTS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Zu Berichte">
-            <FileBarChart className="h-3.5 w-3.5" /> Berichte
-          </Link>
-          <Link to={ROUTES.CRM_SCOUT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="WGH finden">
-            <Store className="h-3.5 w-3.5" /> WGH finden
-          </Link>
-          <Link to={ROUTES.ANALYSE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Objektanalyse">
-            <Calculator className="h-3.5 w-3.5" /> Objektanalyse
-          </Link>
-          <Link to={ROUTES.LOANS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Darlehen">
-            <Landmark className="h-3.5 w-3.5" /> Darlehen
-          </Link>
-        </p>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>Verträge & Verwaltung</PageHeaderTitle>
+          <PageHeaderDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {stats.activeContracts + stats.activeServices} aktive Verträge · Mietverträge, Rechnungen und Dienstleister
+            <Link to={ROUTES.DOKUMENTE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
+              <FolderOpen className="h-3.5 w-3.5" /> Dokumente hochladen
+            </Link>
+            <Link to={ROUTES.RENT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]">
+              <BarChart3 className="h-3.5 w-3.5" /> Mietübersicht
+            </Link>
+            <Link to={ROUTES.REPORTS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Zu Berichte">
+              <FileBarChart className="h-3.5 w-3.5" /> Berichte
+            </Link>
+            <Link to={ROUTES.CRM_SCOUT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="WGH finden">
+              <Store className="h-3.5 w-3.5" /> WGH finden
+            </Link>
+            <Link to={ROUTES.ANALYSE} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Objektanalyse">
+              <Calculator className="h-3.5 w-3.5" /> Objektanalyse
+            </Link>
+            <Link to={ROUTES.LOANS} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="Darlehen">
+              <Landmark className="h-3.5 w-3.5" /> Darlehen
+            </Link>
+          </PageHeaderDescription>
+        </PageHeaderMain>
+      </PageHeader>
 
       {/* IMP-41-11: Overdue invoice warning banner — alerts when invoices are past due */}
       {/* IMP-44-1: ARIA alert role on warning banners for screen reader accessibility */}

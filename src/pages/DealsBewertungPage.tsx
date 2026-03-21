@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Target } from "lucide-react";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const TAB_VALUES = ["crm", "deals", "benchmark", "bewertung"] as const;
 const DEFAULT_TAB = "crm";
@@ -30,15 +31,17 @@ export default function DealsBewertungPage() {
 
   return (
     <div className="space-y-4 min-w-0" role="main" aria-label="Deals und Bewertung">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Target className="h-6 w-6 text-primary" />
-          Deals & Bewertung
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          CRM-Leads, Deal-Pipeline, Benchmark und Schnellbewertung an einem Ort
-        </p>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Target className="h-6 w-6 text-primary shrink-0" />
+            Deals & Bewertung
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            CRM-Leads, Deal-Pipeline, Benchmark und Schnellbewertung an einem Ort
+          </PageHeaderDescription>
+        </PageHeaderMain>
+      </PageHeader>
       <Tabs value={value} onValueChange={onTabChange} className="w-full min-w-0">
         <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/80 w-full sm:w-auto" role="tablist" aria-label="Bereiche">
           <TabsTrigger value="crm" className="nav-label-wrap" role="tab" aria-selected={value === "crm"}>CRM</TabsTrigger>

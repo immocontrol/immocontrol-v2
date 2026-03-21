@@ -23,6 +23,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { AutoNebenkosten } from "@/components/AutoNebenkosten";
 import { EmptyState } from "@/components/EmptyState";
 import { loadJsPDF } from "@/lib/lazyImports";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const NK_CATEGORIES = [
   "Grundsteuer", "Wasserversorgung", "Entwässerung", "Heizkosten", "Warmwasser",
@@ -366,16 +367,15 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
   return (
     <div className="space-y-6" role="main" aria-label="Nebenkostenabrechnung">
       {/* Improvement 12: Mobile responsive header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Nebenkostenabrechnung</h1>
-          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3 flex-wrap">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>Nebenkostenabrechnung</PageHeaderTitle>
+          <PageHeaderDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {billings.length} Abrechnungen
             {billings.length > 0 && (
-              <span className="ml-1">
+              <span>
                 · {formatCurrency(billings.reduce((s, b) => s + Number(b.total_costs), 0))} Gesamtkosten
                 · {billingStatusSummary.draft} Entwurf, {billingStatusSummary.final} final
-                {/* IMP-41-13: Show NK per sqm in subtitle */}
                 {nkPerSqmFormatted && <span> · {nkPerSqmFormatted}</span>}
               </span>
             )}
@@ -385,8 +385,9 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             <Link to={ROUTES.CRM_SCOUT} className="text-primary hover:underline flex items-center gap-1 text-xs touch-target min-h-[44px]" aria-label="WGH finden">
               <Store className="h-3.5 w-3.5" /> WGH finden
             </Link>
-          </p>
-        </div>
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5 touch-target min-h-[44px]"><Plus className="h-3.5 w-3.5" /> Neue Abrechnung</Button>
@@ -428,7 +429,8 @@ ${items.map(i => `<tr><td>${i.category}</td><td>${i.description}</td><td>${i.dis
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* UPD-21: Stagger animation for billing summary cards */}
       {selectedBilling && selectedBillingData ? (

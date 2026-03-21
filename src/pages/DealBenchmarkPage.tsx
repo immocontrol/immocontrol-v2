@@ -11,6 +11,7 @@ import { TrendingUp, Landmark, BarChart3, Home, Receipt } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { formatCurrency } from "@/lib/formatters";
 
 interface DealRecord {
@@ -93,14 +94,16 @@ const DealBenchmarkPage = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto px-4 py-6" role="main" aria-label="Deal-Benchmark">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Deal-Benchmark
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Kennzahlen aus abgeschlossenen Deals — erwartete Rendite, Kaufpreisfaktor
-        </p>
-        <div className="flex flex-wrap gap-2 mt-3">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Deal-Benchmark
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            Kennzahlen aus abgeschlossenen Deals — erwartete Rendite, Kaufpreisfaktor
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
           <Button variant="outline" size="sm" asChild>
             <Link to={ROUTES.DEALS} className="gap-1.5 touch-target min-h-[36px]" aria-label="Deals">
               <TrendingUp className="h-3.5 w-3.5" /> Deals
@@ -121,8 +124,8 @@ const DealBenchmarkPage = () => {
               <Receipt className="h-3.5 w-3.5" /> Steuer-Cockpit
             </Link>
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-border p-4 text-center">

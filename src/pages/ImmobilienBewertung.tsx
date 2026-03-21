@@ -25,6 +25,7 @@ import { generateBewertungsPdf, type ValuationResults } from "@/lib/bewertungPdf
 import { useDebounce } from "@/hooks/useDebounce";
 import { ManusSparkasse } from "@/components/manus/ManusSparkasse";
 import { ManusExposeAnalyse } from "@/components/manus/ManusExposeAnalyse";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 /** Nominatim address suggestion */
 interface AddressSuggestion {
@@ -417,19 +418,18 @@ const ImmobilienBewertung = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <TrendingUp className="h-6 w-6 text-primary shrink-0" />
             Immobilien-Schnellbewertung
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             Exposé-PDF hochladen &rarr; Daten extrahieren &rarr; 3 Bewertungsverfahren &rarr; PDF-Bericht
-          </p>
-        </div>
+          </PageHeaderDescription>
+        </PageHeaderMain>
         {step !== "upload" && (
-          <div className="flex gap-2">
+          <PageHeaderActions>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setStep("upload"); setParsedData(null); setSparkasseRequested(false); setAddressQuery(""); setAddressSuggestions([]); setShowSuggestions(false); }}>
               Neues Exposé
             </Button>
@@ -438,9 +438,9 @@ const ImmobilienBewertung = () => {
                 <Download className="h-3.5 w-3.5" /> PDF-Bericht
               </Button>
             )}
-          </div>
+          </PageHeaderActions>
         )}
-      </div>
+      </PageHeader>
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-xs">

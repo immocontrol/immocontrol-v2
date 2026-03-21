@@ -16,6 +16,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { ManusNewstickerIntelligence } from "@/components/manus/ManusNewstickerIntelligence";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 /* ─── Types ─── */
 interface NewsItem {
@@ -588,23 +589,22 @@ const Newsticker = () => {
 
   return (
     <div className="space-y-6" role="main" aria-label="Immobilien-Newsticker">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Newspaper className="h-6 w-6 text-primary" />
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Newspaper className="h-6 w-6 text-primary shrink-0" />
             Immobilien-Newsticker
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             {news.length} Nachrichten aus {Object.keys(sourceStats).length} Quellen
             {lastFetched && (
               <span className="ml-2 text-[10px]">
                 {"\u00B7"} Aktualisiert {relativeTimeDE(lastFetched.toISOString())}
               </span>
             )}
-          </p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
           <Button
             variant={showBookmarksOnly ? "default" : "outline"}
             size="sm"
@@ -647,8 +647,8 @@ const Newsticker = () => {
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
             Aktualisieren
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Dashboard cards */}
       {news.length > 0 && !showBookmarksOnly && (

@@ -10,6 +10,7 @@ import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, safeDivide } from "@/lib/formatters";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 
@@ -130,14 +131,15 @@ export function BulkRentAdjustment() {
 
       {/* Controls */}
       <div className="flex gap-2 mb-3">
-        <select
-          value={adjustmentType}
-          onChange={e => setAdjustmentType(e.target.value as "percent" | "fixed")}
-          className="text-xs bg-secondary border border-border rounded px-2 py-1.5"
-        >
-          <option value="percent">Prozentual (%)</option>
-          <option value="fixed">Festbetrag (EUR)</option>
-        </select>
+        <Select value={adjustmentType} onValueChange={(v) => setAdjustmentType(v as "percent" | "fixed")}>
+          <SelectTrigger className="h-8 text-xs min-w-[9rem]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="percent">Prozentual (%)</SelectItem>
+            <SelectItem value="fixed">Festbetrag (EUR)</SelectItem>
+          </SelectContent>
+        </Select>
         <input
           type="number"
           value={adjustmentValue}

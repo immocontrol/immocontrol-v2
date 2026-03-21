@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Calculator } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const HEBESATZ_MAP: Record<string, number> = {
   "Berlin": 810, "München": 535, "Hamburg": 540, "Frankfurt": 500,
@@ -32,13 +33,16 @@ const GrundsteuerCalculator = () => {
       <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
         <Calculator className="h-4 w-4 text-muted-foreground" /> Grundsteuer-Rechner (ab 2025)
       </h3>
-      <select
-        value={selectedId}
-        onChange={e => setSelectedId(e.target.value)}
-        className="w-full h-8 text-xs rounded-lg border border-border bg-background px-2 mb-3"
-      >
-        {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
+      <Select value={selectedId} onValueChange={setSelectedId}>
+        <SelectTrigger className="w-full h-8 text-xs mb-3">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {properties.map((p) => (
+            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
           <label className="text-[10px] text-muted-foreground">Bodenrichtwert (€/m²)</label>

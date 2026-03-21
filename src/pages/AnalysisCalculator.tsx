@@ -24,6 +24,7 @@ import { ZinseszinsRechner } from "@/components/ZinseszinsRechner";
 import { useProperties } from "@/context/PropertyContext";
 import { useAnalysisCalculations, type AnalysisInputState, DEFAULT_INPUTS } from "@/hooks/useAnalysisCalculations";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader, PageHeaderActions, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const AnalysisCalculator = () => {
   const navigate = useNavigate();
@@ -152,12 +153,12 @@ th{background:#f5f5f5;font-weight:600}
         <AmortisationsRechner />
         <ZinseszinsRechner />
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <Calculator className="h-6 w-6 shrink-0 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight truncate">Objektanalyse</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
+      <PageHeader>
+        <PageHeaderMain className="flex flex-row items-center gap-2 min-w-0">
+          <Calculator className="h-6 w-6 shrink-0 text-primary" aria-hidden />
+          <PageHeaderTitle className="min-w-0">Objektanalyse</PageHeaderTitle>
+        </PageHeaderMain>
+        <PageHeaderActions>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={copyResults}>
             <Copy className="h-3.5 w-3.5 shrink-0" /> Kopieren
           </Button>
@@ -173,8 +174,8 @@ th{background:#f5f5f5;font-weight:600}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0 touch-target min-h-[44px] sm:min-h-9" onClick={() => navigate(ROUTES.CRM_SCOUT)} aria-label="WGH finden">
             <Store className="h-3.5 w-3.5 shrink-0" /> WGH finden
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-secondary/50 p-1 rounded-lg min-w-0 overflow-x-auto scrollbar-hide">

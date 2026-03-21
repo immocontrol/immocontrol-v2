@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const Datenschutz = () => {
   useEffect(() => {
@@ -21,10 +22,14 @@ const Datenschutz = () => {
           Zurück zur Anmeldung
         </Link>
 
-        <h1 className="text-2xl font-bold mb-2">Datenschutzerklärung</h1>
-        <p className="text-sm text-muted-foreground mb-8">
-          Stand: {new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
-        </p>
+        <PageHeader className="mb-8">
+          <PageHeaderMain>
+            <PageHeaderTitle>Datenschutzerklärung</PageHeaderTitle>
+            <PageHeaderDescription className="mb-0">
+              Stand: {new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
+            </PageHeaderDescription>
+          </PageHeaderMain>
+        </PageHeader>
 
         <div className="space-y-8 text-wrap-safe hyphens-auto">
           <section>

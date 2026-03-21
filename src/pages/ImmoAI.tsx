@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { PdfWithAI } from "@/components/PdfWithAI";
 import { PropertyDescriptionGenerator } from "@/components/PropertyDescriptionGenerator";
 import { BerichteInProsa } from "@/components/BerichteInProsa";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -214,19 +215,19 @@ export default function ImmoAI() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Sparkles className="h-6 w-6 text-primary shrink-0" />
             Immo AI
-          </h1>
-          <p className="text-muted-foreground text-sm">
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             Chat, PDF auswerten und mehr – mit DeepSeek
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
           {messages.length > 0 && (
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground w-full sm:w-auto justify-center sm:justify-end">
               <span>{messageStats.userMsgs} Fragen</span>
               <span>·</span>
               <span>{messageStats.aiMsgs} Antworten</span>
@@ -241,8 +242,8 @@ export default function ImmoAI() {
               <Trash2 className="h-4 w-4 mr-1" /> Neuer Chat
             </Button>
           )}
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       <Tabs defaultValue="chat" className="w-full">
         <TabsList className="grid w-full max-w-[280px] grid-cols-2">

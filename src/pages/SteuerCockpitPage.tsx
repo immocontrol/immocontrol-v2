@@ -13,6 +13,7 @@ import { ROUTES } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
 import { useNavigate } from "react-router-dom";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const SteuerCockpitPage = () => {
   const { properties } = useProperties();
@@ -41,33 +42,34 @@ const SteuerCockpitPage = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto px-4 py-6 min-w-0" role="main" aria-label="Steuer-Cockpit">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Steuer-Cockpit
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Anlage V, AfA, Verlustverrechnung und Veräußerungsgewinn auf einen Blick
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 min-w-0">
-        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
-          <Link to={ROUTES.REPORTS} className="gap-1.5">
-            <FileBarChart className="h-3.5 w-3.5 shrink-0" /> Berichte-Center
-            <ChevronRight className="h-3 w-3 shrink-0" />
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
-          <Link to={ROUTES.MIETSPIEGEL} className="gap-1.5" aria-label="Mietspiegel-Check">
-            <Scale className="h-3.5 w-3.5 shrink-0" /> Mietspiegel-Check
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
-          <Link to={ROUTES.REFINANZIERUNG} className="gap-1.5" aria-label="Refinanzierung">
-            <RefreshCw className="h-3.5 w-3.5 shrink-0" /> Refinanzierung
-          </Link>
-        </Button>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Steuer-Cockpit
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            Anlage V, AfA, Verlustverrechnung und Veräußerungsgewinn auf einen Blick
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
+          <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+            <Link to={ROUTES.REPORTS} className="gap-1.5">
+              <FileBarChart className="h-3.5 w-3.5 shrink-0" /> Berichte-Center
+              <ChevronRight className="h-3 w-3 shrink-0" />
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+            <Link to={ROUTES.MIETSPIEGEL} className="gap-1.5" aria-label="Mietspiegel-Check">
+              <Scale className="h-3.5 w-3.5 shrink-0" /> Mietspiegel-Check
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild className="touch-target min-h-[44px]">
+            <Link to={ROUTES.REFINANZIERUNG} className="gap-1.5" aria-label="Refinanzierung">
+              <RefreshCw className="h-3.5 w-3.5 shrink-0" /> Refinanzierung
+            </Link>
+          </Button>
+        </PageHeaderActions>
+      </PageHeader>
 
       <div className="min-w-0 space-y-6">
         <SteuerCockpit />

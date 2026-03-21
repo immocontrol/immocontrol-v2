@@ -2,7 +2,7 @@
  * #15: Vertragsvorlagen mit Auto-Fill — Mietvertrag-Template das automatisch Objekt+Mieter-Daten einfügt
  */
 import { useState, useMemo, useCallback } from "react";
-import { FileText, Download, Building2, Users } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, downloadBlob } from "@/lib/formatters";
 import { escapeHtml } from "@/lib/sanitize";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const PROP_NONE = "__none__";
+const TENANT_NONE = "__none__";
 
 interface Tenant {
   id: string;
@@ -168,28 +172,41 @@ export function ContractTemplates() {
       </div>
 
       <div className="space-y-2 mb-3">
-        <select
-          value={selectedProperty}
-          onChange={e => { setSelectedProperty(e.target.value); setSelectedTenant(""); }}
-          className="w-full text-xs bg-secondary border border-border rounded px-2 py-1.5"
+        <Select
+          value={selectedProperty || PROP_NONE}
+          onValueChange={(v) => {
+            setSelectedProperty(v === PROP_NONE ? "" : v);
+            setSelectedTenant("");
+          }}
         >
-          <option value="">Objekt wählen...</option>
-          {properties.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full h-9 text-xs">
+            <SelectValue placeholder="Objekt wählen…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={PROP_NONE}>Objekt wählen…</SelectItem>
+            {properties.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {selectedProperty && (
-          <select
-            value={selectedTenant}
-            onChange={e => setSelectedTenant(e.target.value)}
-            className="w-full text-xs bg-secondary border border-border rounded px-2 py-1.5"
+          <Select
+            value={selectedTenant || TENANT_NONE}
+            onValueChange={(v) => setSelectedTenant(v === TENANT_NONE ? "" : v)}
           >
-            <option value="">Mieter wählen...</option>
-            {tenants.map(t => (
-              <option key={t.id} value={t.id}>{t.name} ({formatCurrency(t.monthly_rent)}/M)</option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full h-9 text-xs">
+              <SelectValue placeholder="Mieter wählen…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TENANT_NONE}>Mieter wählen…</SelectItem>
+              {tenants.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name} ({formatCurrency(t.monthly_rent)}/M)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 

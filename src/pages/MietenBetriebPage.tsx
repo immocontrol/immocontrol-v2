@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Receipt } from "lucide-react";
-import { ROUTES } from "@/lib/routes";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const TAB_VALUES = ["mieten", "nebenkosten", "cashflow"] as const;
 const DEFAULT_TAB = "mieten";
@@ -30,15 +30,17 @@ export default function MietenBetriebPage() {
 
   return (
     <div className="space-y-4 min-w-0" role="main" aria-label="Mieten und Betrieb">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Receipt className="h-6 w-6 text-primary shrink-0" />
-          Mieten & Betrieb
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Mieten, Nebenkosten und Cashflow-Prognose an einem Ort
-        </p>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Receipt className="h-6 w-6 text-primary shrink-0" />
+            Mieten & Betrieb
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            Mieten, Nebenkosten und Cashflow-Prognose an einem Ort
+          </PageHeaderDescription>
+        </PageHeaderMain>
+      </PageHeader>
       <Tabs value={value} onValueChange={onTabChange} className="w-full min-w-0">
         <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/80 w-full sm:w-auto" role="tablist" aria-label="Bereiche">
           <TabsTrigger value="mieten" className="nav-label-wrap" role="tab" aria-selected={value === "mieten"}>Mieten</TabsTrigger>

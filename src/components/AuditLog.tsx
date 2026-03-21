@@ -3,6 +3,7 @@
  */
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { History, Clock, User, Building2, ChevronDown, ChevronUp } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AuditEntry {
   id: string;
@@ -91,16 +92,17 @@ export function AuditLog() {
           Änderungshistorie
         </h3>
         <div className="flex items-center gap-1.5">
-          <select
-            value={filter}
-            onChange={e => setFilter(e.target.value as typeof filter)}
-            className="text-[10px] bg-secondary border border-border rounded px-1.5 py-0.5"
-          >
-            <option value="all">Alle ({entries.length})</option>
-            <option value="create">Erstellt</option>
-            <option value="update">Geändert</option>
-            <option value="delete">Gelöscht</option>
-          </select>
+          <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+            <SelectTrigger className="h-7 w-[min(100%,9rem)] text-[10px] px-1.5 py-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle ({entries.length})</SelectItem>
+              <SelectItem value="create">Erstellt</SelectItem>
+              <SelectItem value="update">Geändert</SelectItem>
+              <SelectItem value="delete">Gelöscht</SelectItem>
+            </SelectContent>
+          </Select>
           <button onClick={clearLog} className="text-[10px] text-muted-foreground hover:text-loss transition-colors">
             Leeren
           </button>

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Scale, AlertTriangle, CheckCircle, Info } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const MIETSPIEGEL_RANGES: Record<string, { min: number; max: number }> = {
   "München": { min: 12.5, max: 19.5 },
@@ -40,13 +41,16 @@ const MietpreisbremseChecker = () => {
       <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
         <Scale className="h-4 w-4 text-muted-foreground" /> Mietpreisbremse-Check
       </h3>
-      <select
-        value={selectedId}
-        onChange={e => setSelectedId(e.target.value)}
-        className="w-full h-8 text-xs rounded-lg border border-border bg-background px-2 mb-3"
-      >
-        {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
+      <Select value={selectedId} onValueChange={setSelectedId}>
+        <SelectTrigger className="w-full h-8 text-xs mb-3">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {properties.map((p) => (
+            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {result && (
         <div className="space-y-2">
           <div className="flex justify-between text-xs">

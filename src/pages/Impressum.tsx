@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const Impressum = () => {
   useEffect(() => {
@@ -21,10 +22,12 @@ const Impressum = () => {
           Zurück zur Anmeldung
         </Link>
 
-        <h1 className="text-2xl font-bold mb-2">Impressum</h1>
-        <p className="text-sm text-muted-foreground mb-8">
-          Angaben gemäß § 5 TMG
-        </p>
+        <PageHeader className="mb-8">
+          <PageHeaderMain>
+            <PageHeaderTitle>Impressum</PageHeaderTitle>
+            <PageHeaderDescription className="mb-0">Angaben gemäß § 5 TMG</PageHeaderDescription>
+          </PageHeaderMain>
+        </PageHeader>
 
         <div className="space-y-6 text-wrap-safe hyphens-auto">
           <section>

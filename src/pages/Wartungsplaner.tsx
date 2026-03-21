@@ -26,6 +26,7 @@ import MaintenanceCalendar from "@/components/MaintenanceCalendar";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { isDeepSeekConfigured, suggestMaintenanceNotes } from "@/integrations/ai/extractors";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 interface MaintenanceItem {
   id: string;
@@ -335,15 +336,16 @@ const Wartungsplaner = () => {
   return (
     /* IMP-15: ARIA landmark for Wartungsplaner page */
     <div className="space-y-6 animate-fade-in" role="main" aria-label="Wartungsplaner">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Wrench className="h-6 w-6 text-primary" /> Wartungsplaner
-          </h1>
-          <p className="text-sm text-muted-foreground">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Wrench className="h-6 w-6 text-primary shrink-0" /> Wartungsplaner
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             {allItems.length} Einträge · {totalRecurring} wiederkehrend · ~{formatCurrency(totalEstimated)} geplant
-          </p>
-        </div>
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
@@ -429,7 +431,8 @@ const Wartungsplaner = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Stats */}
       {/* UPD-3: Add stagger animation to maintenance stats */}

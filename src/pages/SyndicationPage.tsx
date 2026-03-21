@@ -13,6 +13,7 @@ import { ROUTES, propertyDetail } from "@/lib/routes";
 import { queryKeys } from "@/lib/queryKeys";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { formatCurrency } from "@/lib/formatters";
 
 const SyndicationPage = () => {
@@ -101,16 +102,18 @@ const SyndicationPage = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto px-4 py-6 min-w-0" role="main" aria-label="Syndication">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Syndication / Co-Invest
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {propsWithShares.length > 0
-            ? `${propsWithShares.length} ${propsWithShares.length === 1 ? "Objekt" : "Objekte"} mit mehreren Anteilseignern — Anteile und Cashflow-Verteilung`
-            : "Objekte mit mehreren Anteilseignern — Anteile und Cashflow-Verteilung"}
-        </p>
-        <div className="flex flex-wrap gap-2 mt-3">
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" /> Syndication / Co-Invest
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            {propsWithShares.length > 0
+              ? `${propsWithShares.length} ${propsWithShares.length === 1 ? "Objekt" : "Objekte"} mit mehreren Anteilseignern — Anteile und Cashflow-Verteilung`
+              : "Objekte mit mehreren Anteilseignern — Anteile und Cashflow-Verteilung"}
+          </PageHeaderDescription>
+        </PageHeaderMain>
+        <PageHeaderActions>
           <Button variant="outline" size="sm" asChild>
             <Link to={ROUTES.OBJEKTE} className="gap-1.5 touch-target min-h-[36px]" aria-label="Objekte">
               <Home className="h-3.5 w-3.5" /> Objekte
@@ -126,8 +129,8 @@ const SyndicationPage = () => {
               <FileBarChart className="h-3.5 w-3.5" /> Berichte
             </Link>
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {propsWithShares.length === 0 ? (
         <EmptyState

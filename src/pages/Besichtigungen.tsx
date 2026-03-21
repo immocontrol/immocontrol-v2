@@ -31,6 +31,7 @@ import {
 import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES, viewingsWithId } from "@/lib/routes";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import {
   Camera,
   MapPin,
@@ -460,18 +461,18 @@ const Besichtigungen = () => {
 
   return (
     <div className="container max-w-4xl py-6 space-y-6 min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold flex items-center gap-2 break-words">
-            <Camera className="h-7 w-7 text-amber-500" />
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle className="break-words">
+            <Camera className="h-7 w-7 text-amber-500 shrink-0" />
             Besichtigungen
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          </PageHeaderTitle>
+          <PageHeaderDescription>
             Notizen, Bilder und Videos zu Immobilien-Besichtigungen festhalten
-          </p>
+          </PageHeaderDescription>
           <BesichtigungMobileHelper />
-        </div>
-        <div className="flex gap-2 shrink-0">
+        </PageHeaderMain>
+        <PageHeaderActions>
           {filteredViewings.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleExportCsv} aria-label="Als CSV exportieren">
               CSV
@@ -486,8 +487,8 @@ const Besichtigungen = () => {
             Neue Besichtigung
             <span className="hidden sm:inline ml-1 text-xs opacity-70">(n)</span>
           </Button>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 min-w-0">

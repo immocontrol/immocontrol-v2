@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckSquare } from "lucide-react";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const TAB_VALUES = ["aufgaben", "dokumente", "wartung"] as const;
 const DEFAULT_TAB = "aufgaben";
@@ -29,15 +30,17 @@ export default function AufgabenDokumentePage() {
 
   return (
     <div className="space-y-4 min-w-0" role="main" aria-label="Aufgaben und Dokumente">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <CheckSquare className="h-6 w-6 text-primary shrink-0" />
-          Aufgaben & Dokumente
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Todos, Dokumente und Wartungsplanung an einem Ort
-        </p>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <CheckSquare className="h-6 w-6 text-primary shrink-0" />
+            Aufgaben & Dokumente
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            Todos, Dokumente und Wartungsplanung an einem Ort
+          </PageHeaderDescription>
+        </PageHeaderMain>
+      </PageHeader>
       <Tabs value={value} onValueChange={onTabChange} className="w-full min-w-0">
         <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/80 w-full sm:w-auto" role="tablist" aria-label="Bereiche">
           <TabsTrigger value="aufgaben" className="nav-label-wrap" role="tab" aria-selected={value === "aufgaben"}>Aufgaben</TabsTrigger>

@@ -6,6 +6,7 @@ import { Receipt, Download, TrendingDown, TrendingUp } from "lucide-react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency, downloadBlob, safeDivide } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function TaxYearOverview() {
   const { properties, stats } = useProperties();
@@ -75,16 +76,17 @@ export function TaxYearOverview() {
           <Receipt className="h-4 w-4 text-primary" />
           Steuerliche Jahresübersicht
         </h3>
-        <select
-          value={year}
-          onChange={e => setYear(Number(e.target.value))}
-          className="text-xs bg-secondary border border-border rounded px-2 py-1"
-        >
-          {[0, 1, 2].map(i => {
-            const y = new Date().getFullYear() - i;
-            return <option key={y} value={y}>{y}</option>;
-          })}
-        </select>
+        <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+          <SelectTrigger className="h-8 w-[4.5rem] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[0, 1, 2].map((i) => {
+              const y = new Date().getFullYear() - i;
+              return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
+            })}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5 mb-3">

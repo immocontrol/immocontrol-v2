@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText } from "lucide-react";
+import { PageHeader, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
 const TAB_VALUES = ["vertraege", "kontakte"] as const;
 const DEFAULT_TAB = "vertraege";
@@ -28,15 +29,17 @@ export default function VertraegeKontaktePage() {
 
   return (
     <div className="space-y-4 min-w-0" role="main" aria-label="Verträge und Kontakte">
-      <div className="min-w-0">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary shrink-0" />
-          Verträge & Kontakte
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Mietverträge, Rechnungen, Dienstleister und dein Kontaktverzeichnis
-        </p>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle>
+            <FileText className="h-6 w-6 text-primary shrink-0" />
+            Verträge & Kontakte
+          </PageHeaderTitle>
+          <PageHeaderDescription>
+            Mietverträge, Rechnungen, Dienstleister und dein Kontaktverzeichnis
+          </PageHeaderDescription>
+        </PageHeaderMain>
+      </PageHeader>
       <Tabs value={value} onValueChange={onTabChange} className="w-full min-w-0">
         <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/80 w-full sm:w-auto" role="tablist" aria-label="Bereiche">
           <TabsTrigger value="vertraege" className="nav-label-wrap" role="tab" aria-selected={value === "vertraege"}>Verträge</TabsTrigger>

@@ -1,5 +1,6 @@
 import { type AnalysisInputState, BUNDESLAENDER_GRUNDERWERBSTEUER } from "@/hooks/useAnalysisCalculations";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {
   inputs: AnalysisInputState;
@@ -43,15 +44,18 @@ const AnalysisInputs = ({ inputs, updateInput }: Props) => {
         <InputField label="Kaufpreis" value={inputs.kaufpreis} onChange={(v) => updateInput("kaufpreis", v)} suffix="€" max={5000000} step={5000} />
         <div>
           <label className="text-xs text-muted-foreground block mb-1.5">Bundesland</label>
-          <select
-            value={inputs.bundesland}
-            onChange={(e) => updateInput("bundesland", e.target.value)}
-            className="w-full bg-secondary text-foreground text-sm rounded-lg px-3 py-2 outline-none border-none"
-          >
-            {Object.keys(BUNDESLAENDER_GRUNDERWERBSTEUER).map((bl) => (
-              <option key={bl} value={bl}>{bl} ({BUNDESLAENDER_GRUNDERWERBSTEUER[bl]}%)</option>
-            ))}
-          </select>
+          <Select value={inputs.bundesland} onValueChange={(v) => updateInput("bundesland", v)}>
+            <SelectTrigger className="w-full h-10 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(BUNDESLAENDER_GRUNDERWERBSTEUER).map((bl) => (
+                <SelectItem key={bl} value={bl}>
+                  {bl} ({BUNDESLAENDER_GRUNDERWERBSTEUER[bl]}%)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <InputField label="Makler-Provision" value={inputs.maklerProvision} onChange={(v) => updateInput("maklerProvision", v)} suffix="%" min={0} max={7} step={0.01} />
         <InputField label="Notar & Grundbuch" value={inputs.notarKosten} onChange={(v) => updateInput("notarKosten", v)} suffix="%" min={0.5} max={3} step={0.1} />

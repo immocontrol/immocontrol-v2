@@ -17,6 +17,7 @@ import { getCategoryLabel, type AchievementCategory } from "@/lib/achievements";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
+import { PageHeader, PageHeaderActions, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 import { Link, useLocation } from "react-router-dom";
 import { ERFOLOGE_KNOWN_HASH_IDS, ROUTES } from "@/lib/routes";
 import { toast } from "sonner";
@@ -285,15 +286,19 @@ export default function Erfolge() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-gold" />
-          Erfolge
-        </h1>
-        <Link to={ROUTES.PERSONAL_DASHBOARD}>
-          <Button variant="outline" size="sm">Zum Dashboard</Button>
-        </Link>
-      </div>
+      <PageHeader>
+        <PageHeaderMain>
+          <PageHeaderTitle className="text-xl font-semibold">
+            <Trophy className="h-5 w-5 text-gold shrink-0" />
+            Erfolge
+          </PageHeaderTitle>
+        </PageHeaderMain>
+        <PageHeaderActions>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.PERSONAL_DASHBOARD}>Zum Dashboard</Link>
+          </Button>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Level & Punkte & Streak */}
       <section id="level" className="scroll-mt-24 grid grid-cols-1 sm:grid-cols-3 gap-3">
