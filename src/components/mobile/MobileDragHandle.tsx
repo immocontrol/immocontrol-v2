@@ -7,6 +7,7 @@ import { memo, useRef, useState, useCallback, useEffect, type ReactNode } from "
 import { GripVertical } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
+import { appScrollBy } from "@/lib/appScrollContainer";
 
 interface MobileDragHandleProps<T> {
   items: T[];
@@ -54,13 +55,13 @@ export const MobileDragHandle = memo(function MobileDragHandle<T>({
 
     if (touchY < edgeThreshold) {
       const scroll = () => {
-        window.scrollBy(0, -scrollSpeed);
+        appScrollBy(-scrollSpeed, "auto");
         autoScrollRef.current = requestAnimationFrame(scroll);
       };
       autoScrollRef.current = requestAnimationFrame(scroll);
     } else if (touchY > window.innerHeight - edgeThreshold) {
       const scroll = () => {
-        window.scrollBy(0, scrollSpeed);
+        appScrollBy(scrollSpeed, "auto");
         autoScrollRef.current = requestAnimationFrame(scroll);
       };
       autoScrollRef.current = requestAnimationFrame(scroll);

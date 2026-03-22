@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { appScrollTo, getAppScrollTop } from "@/lib/appScrollContainer";
 
 interface MobileScrollToTopProps {
   /** Scroll threshold in pixels before showing button */
@@ -38,8 +39,9 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
       ticking = true;
 
       requestAnimationFrame(() => {
-        const container = scrollContainer?.current;
-        const scrollY = container ? container.scrollTop : window.scrollY;
+        const scrollY = scrollContainer?.current
+          ? scrollContainer.current.scrollTop
+          : getAppScrollTop();
 
         setVisible(scrollY > threshold);
         setIsScrollingUp(scrollY < lastScrollY);
@@ -49,20 +51,28 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
       });
     };
 
-    const target = scrollContainer?.current ?? window;
-    target.addEventListener("scroll", handleScroll, { passive: true });
+    const custom = scrollContainer?.current;
+    if (custom) {
+      custom.addEventListener("scroll", handleScroll, { passive: true });
+      handleScroll();
+      return () => custom.removeEventListener("scroll", handleScroll);
+    }
 
+    const main = document.getElementById("main-content");
+    main?.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => {
-      target.removeEventListener("scroll", handleScroll);
+      main?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [threshold, scrollContainer]);
 
   const scrollToTop = useCallback(() => {
-    const container = scrollContainer?.current;
-    if (container) {
-      container.scrollTo({ top: 0, behavior: "smooth" });
+    if (scrollContainer?.current) {
+      scrollContainer.current.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      appScrollTo(0, "smooth");
     }
   }, [scrollContainer]);
 

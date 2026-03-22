@@ -31,3 +31,13 @@ export function appScrollTo(top: number, behavior: ScrollBehavior = "instant") {
     (c as HTMLElement).scrollTo({ top, behavior });
   }
 }
+
+/** Relatives Scrollen (z. B. Drag-Auto-Scroll, Tastatur) — gleicher Container wie getAppScrollTop. */
+export function appScrollBy(deltaY: number, behavior: ScrollBehavior = "auto") {
+  const c = getAppScrollContainer();
+  if (c === window) {
+    window.scrollBy({ top: deltaY, behavior });
+  } else {
+    (c as HTMLElement).scrollBy({ top: deltaY, behavior });
+  }
+}

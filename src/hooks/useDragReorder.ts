@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { appScrollBy } from "@/lib/appScrollContainer";
 
 /**
  * Custom drag & drop reorder hook using pointer events only.
@@ -48,7 +49,7 @@ export function useDragReorder<T>(
       } else if (y > vh - EDGE_ZONE) {
         speed = MAX_SPEED * (1 - (vh - y) / EDGE_ZONE);
       }
-      if (speed !== 0) window.scrollBy(0, speed);
+      if (speed !== 0) appScrollBy(speed, "auto");
       autoScrollRef.current = requestAnimationFrame(tick);
     };
     autoScrollRef.current = requestAnimationFrame(tick);

@@ -8,6 +8,7 @@ import { GripVertical, Check, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
+import { appScrollBy } from "@/lib/appScrollContainer";
 
 export interface Widget {
   id: string;
@@ -57,10 +58,16 @@ export const MobileDashboardWidgetRearrange = memo(function MobileDashboardWidge
     const edgeThreshold = 60;
     stopAutoScroll();
     if (touchY < edgeThreshold) {
-      const scroll = () => { window.scrollBy(0, -4); autoScrollRef.current = requestAnimationFrame(scroll); };
+      const scroll = () => {
+        appScrollBy(-4, "auto");
+        autoScrollRef.current = requestAnimationFrame(scroll);
+      };
       autoScrollRef.current = requestAnimationFrame(scroll);
     } else if (touchY > window.innerHeight - edgeThreshold) {
-      const scroll = () => { window.scrollBy(0, 4); autoScrollRef.current = requestAnimationFrame(scroll); };
+      const scroll = () => {
+        appScrollBy(4, "auto");
+        autoScrollRef.current = requestAnimationFrame(scroll);
+      };
       autoScrollRef.current = requestAnimationFrame(scroll);
     }
 

@@ -8,6 +8,7 @@ import { RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
+import { getAppScrollTop } from "@/lib/appScrollContainer";
 
 interface MobilePagePullToRefreshProps {
   /** Called when user pulls to refresh — should return a Promise */
@@ -39,7 +40,7 @@ export const MobilePagePullToRefresh = memo(function MobilePagePullToRefresh({
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (disabled || refreshing) return;
-    const scrollTop = containerRef.current?.scrollTop ?? window.scrollY;
+    const scrollTop = containerRef.current?.scrollTop ?? getAppScrollTop();
     if (scrollTop > 5) return;
     startY.current = e.touches[0].clientY;
     pulling.current = true;

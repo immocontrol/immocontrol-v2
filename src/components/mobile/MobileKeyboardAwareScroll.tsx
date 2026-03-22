@@ -6,6 +6,7 @@
 import { useEffect, useCallback, useRef, memo, type ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { appScrollBy } from "@/lib/appScrollContainer";
 
 interface MobileKeyboardAwareScrollProps {
   children: ReactNode;
@@ -43,9 +44,9 @@ export function useKeyboardAwareScroll(options?: {
         }
         if (rect.bottom > viewportHeight - 20) {
           const scrollAmount = rect.bottom - viewportHeight + offset;
-          window.scrollBy({ top: scrollAmount, behavior: "smooth" });
+          appScrollBy(scrollAmount, "smooth");
         } else if (rect.top < 0) {
-          window.scrollBy({ top: rect.top - offset, behavior: "smooth" });
+          appScrollBy(rect.top - offset, "smooth");
         }
       }, 300);
     });
