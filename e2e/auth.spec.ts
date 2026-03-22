@@ -37,7 +37,14 @@ test.describe("Portfolio Flow (requires auth)", () => {
     await page.fill('input[type="email"]', process.env.E2E_EMAIL || "");
     await page.fill('input[type="password"]', process.env.E2E_PASSWORD || "");
     await page.click('button[type="submit"]');
-    await page.waitForURL("**/", { timeout: 15000 });
+    await page.waitForURL((url) => {
+      try {
+        const p = new URL(url).pathname;
+        return p === ROUTES.HOME || p === `${ROUTES.HOME}/`;
+      } catch {
+        return false;
+      }
+    }, { timeout: 15000 });
   });
 
   test("should show portfolio after login", async ({ page }) => {

@@ -25,7 +25,29 @@ import { PropertyDescriptionGenerator } from "@/components/PropertyDescriptionGe
 import { BerichteInProsa } from "@/components/BerichteInProsa";
 import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, PageHeaderTitle } from "@/components/ui/page-header";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { id: string; role: "user" | "assistant"; content: string };
+
+function legacyHashContent(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < Math.min(s.length, 800); i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
+function migrateStoredMessages(raw: unknown): Msg[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Msg[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const row = raw[i] as { id?: string; role?: string; content?: unknown };
+    if (row.role !== "user" && row.role !== "assistant") continue;
+    const content = typeof row.content === "string" ? row.content : "";
+    const id =
+      typeof row.id === "string" && row.id.length > 0
+        ? row.id
+        : `legacy-${i}-${legacyHashContent(content)}-${row.role}`;
+    out.push({ id, role: row.role, content });
+  }
+  return out;
+}
 
 const SUGGESTIONS = [
   "Wie ist meine aktuelle Portfolio-Rendite?",
@@ -102,8 +124,10 @@ export default function ImmoAI() {
   const [messages, setMessages] = useState<Msg[]>(() => {
     try {
       const saved = localStorage.getItem("immoai_chat");
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
+      return saved ? migrateStoredMessages(JSON.parse(saved)) : [];
+    } catch {
+      return [];
+    }
   });
   const [input, setInput] = useState("");
 
@@ -137,13 +161,14 @@ export default function ImmoAI() {
       toast.error("Bitte warte kurz bevor du eine weitere Nachricht sendest.");
       return;
     }
-    const userMsg: Msg = { role: "user", content: text.trim() };
+    const userMsg: Msg = { id: crypto.randomUUID(), role: "user", content: text.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
 
     let assistantSoFar = "";
-    const allMessages = [...messages, userMsg];
+    const assistantMsgId = crypto.randomUUID();
+    const allMessages = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
 
     try {
       await streamImmoChat({
@@ -155,7 +180,7 @@ export default function ImmoAI() {
             if (last?.role === "assistant") {
               return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
             }
-            return [...prev, { role: "assistant", content: assistantSoFar }];
+            return [...prev, { id: assistantMsgId, role: "assistant", content: assistantSoFar }];
           });
         },
         getAccessToken: () => session?.access_token,
@@ -169,7 +194,11 @@ export default function ImmoAI() {
       toastErrorWithRetry(errMsg, () => send(text.trim()));
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "❌ Es ist ein Fehler aufgetreten. Klicke auf „Erneut versuchen“ im Toast." },
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "❌ Es ist ein Fehler aufgetreten. Klicke auf „Erneut versuchen“ im Toast.",
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -193,16 +222,16 @@ export default function ImmoAI() {
   /* FUNC-21: Session duration tracking */
   const [sessionStart] = useState(() => Date.now());
 
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const copyMessage = useCallback((content: string, idx: number) => {
+  const copyMessage = useCallback((content: string, msgId: string) => {
     navigator.clipboard.writeText(content).then(
       () => {
-        setCopiedIdx(idx);
+        setCopiedId(msgId);
         toast.success("Kopiert!");
-        setTimeout(() => setCopiedIdx(null), 2000);
+        setTimeout(() => setCopiedId(null), 2000);
       },
-      () => toast.error("Kopieren fehlgeschlagen")
+      () => toast.error("Kopieren fehlgeschlagen"),
     );
   }, []);
 
@@ -286,9 +315,9 @@ export default function ImmoAI() {
                 </div>
               </div>
             ) : (
-              messages.map((msg, i) => (
+              messages.map((msg) => (
                 <div
-                  key={i}
+                  key={msg.id}
                   className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.role === "assistant" && (
@@ -312,10 +341,13 @@ export default function ImmoAI() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              onClick={(e) => { e.stopPropagation(); copyMessage(msg.content, i); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyMessage(msg.content, msg.id);
+                              }}
                               className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-md p-1 shadow-sm hover:bg-secondary"
                             >
-                              {copiedIdx === i ? <Check className="h-3 w-3 text-profit" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                              {copiedId === msg.id ? <Check className="h-3 w-3 text-profit" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                             </button>
                           </TooltipTrigger>
                           <TooltipContent>Kopieren</TooltipContent>

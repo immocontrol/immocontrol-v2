@@ -123,7 +123,8 @@
 | 15  | Meta-Description (Start)   | ✅ `index.html` + OG/Twitter |
 | 1   | aria-label Icon-Buttons    | ✅ Mehrere Komponenten (ImmoAI, HandworkerPortal, TenantPortal, NotificationBell, EditPropertyDialog, TenantManagement, etc.) |
 | 3   | Form label id/htmlFor      | ✅ TodoEditDialog (Titel, Beschreibung, Fälligkeit, Uhrzeit, Priorität, Projekt); weitere Formulare schrittweise |
-| 19  | Stabile Keys in Listen     | 🔄 Wo id vorhanden, key={id} nutzen |
+| 19  | Stabile Keys in Listen     | ✅ u. a. ImmoAI (msg.id), NotificationBell (Hash+Index), DragDropDocUpload (file.id), ContactDuplicateDetector (Kontakt-IDs) |
+| 47  | E2E kritische Flows        | 🔄 Portfolio-Flow in `e2e/auth.spec.ts` weiterhin skip ohne E2E-Zugangsdaten; CI führt Lint+Unit+Build aus |
 | 9   | Loading bei Async-Buttons  | ✅ LoadingButton in TenantManagement, ContractManagement, EnergyCertificateTracker, MaintenancePlanner; weitere schrittweise |
 | 17  | useDisclosure / ExpandableCard | ✅ useDisclosure (hooks), ExpandableCard (components); Pilot-Nutzung möglich |
 | 18  | toErrorMessage()           | ✅ In lib/handleError.ts exportiert (toErrorMessage + ErrorContext) |

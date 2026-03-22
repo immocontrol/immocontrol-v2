@@ -72,6 +72,14 @@ export const NotificationBell = () => {
 
   const total = allNotifications.length;
 
+  /** Stabile Keys ohne reine Index-Keys (gleiche Meldung kann mehrfach vorkommen → Index angehängt) */
+  const notificationRowKey = (n: Notification, index: number) => {
+    let h = 0;
+    const s = `${n.type}|${n.message}`;
+    for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    return `n-${(h >>> 0).toString(36)}-${index}`;
+  };
+
   const iconForType = (type: string) => {
     switch (type) {
       case "overdue_payment": return <AlertTriangle className="h-3.5 w-3.5 text-loss shrink-0" />;
@@ -112,7 +120,7 @@ export const NotificationBell = () => {
             <div className="divide-y divide-border/50">
               {allNotifications.slice(0, 20).map((n, i) => (
                 <div
-                  key={i}
+                  key={notificationRowKey(n, i)}
                   className={`p-3 flex items-start gap-2 text-xs ${
                     n.severity === "high" ? "bg-loss/5" : ""
                   }`}

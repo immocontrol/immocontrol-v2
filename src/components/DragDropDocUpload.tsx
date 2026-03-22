@@ -37,7 +37,9 @@ export function DragDropDocUpload({ propertyId: externalPropertyId, onUploaded }
   const propertyId = externalPropertyId || selectedPropertyId;
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [files, setFiles] = useState<{ name: string; size: number; status: "pending" | "uploading" | "done" | "error" }[]>([]);
+  const [files, setFiles] = useState<
+    { id: string; name: string; size: number; status: "pending" | "uploading" | "done" | "error" }[]
+  >([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -69,7 +71,14 @@ export function DragDropDocUpload({ propertyId: externalPropertyId, onUploaded }
     if (validFiles.length === 0) return;
 
     setUploading(true);
-    setFiles(validFiles.map(f => ({ name: f.name, size: f.size, status: "pending" })));
+    setFiles(
+      validFiles.map((f) => ({
+        id: crypto.randomUUID(),
+        name: f.name,
+        size: f.size,
+        status: "pending" as const,
+      })),
+    );
 
     let successCount = 0;
     for (let i = 0; i < validFiles.length; i++) {
@@ -95,7 +104,7 @@ export function DragDropDocUpload({ propertyId: externalPropertyId, onUploaded }
           file_size: file.size,
         } as never);
 
-        setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "done" } : f));
+        setFiles((prev) => prev.map((f, idx) => (idx === i ? { ...f, status: "done" as const } : f)));
         successCount++;
       } catch {
         setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "error" } : f));
@@ -185,8 +194,8 @@ export function DragDropDocUpload({ propertyId: externalPropertyId, onUploaded }
       {/* File upload progress */}
       {files.length > 0 && (
         <div className="space-y-1">
-          {files.map((f, i) => (
-            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30 text-xs">
+          {files.map((f) => (
+            <div key={f.id} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30 text-xs">
               <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="truncate flex-1">{f.name}</span>
               <span className="text-muted-foreground shrink-0">{formatFileSize(f.size)}</span>

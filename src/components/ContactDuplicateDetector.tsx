@@ -118,10 +118,10 @@ export function ContactDuplicateDetector({ contacts, onMerge }: ContactDuplicate
       </div>
 
       <div className="space-y-2">
-        {visibleDuplicates.slice(0, 5).map((group, idx) => {
+        {visibleDuplicates.slice(0, 5).map((group) => {
           const key = group.contacts.map(c => c.id).sort().join("-");
           return (
-            <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+            <div key={key} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
               <Users className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium">
