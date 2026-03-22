@@ -29,6 +29,8 @@ export interface Property {
   gardenSqm?: number | null;
   /** Sonstiges separat vermietbar (z.B. Keller, Dachterrasse). */
   otherRentableNotes?: string | null;
+  /** Optional: Referenz €/m² kalt für Mietspiegel-Check (überschreibt Stadt-Datenbank). */
+  mietspiegelReferencePerSqm?: number | null;
   /** Verbleibende Nutzungsdauer in Jahren für lineare AfA (nur Gebäudeanteil). */
   restnutzungsdauer?: number | null;
   /** Gebäudeanteil in % des Kaufpreises (Rest = Grund und Boden); Standard 80. */

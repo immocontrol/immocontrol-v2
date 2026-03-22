@@ -84,6 +84,11 @@ export const addPropertyFormSchema = z.object({
   parkingGarage: z.coerce.number().int().min(0).optional().default(0),
   gardenSqm: z.coerce.number().min(0).optional().default(0),
   otherRentableNotes: z.string().optional().default(""),
+  /** Optional €/m² kalt als Mietspiegel-Referenz (Objekt bearbeiten). */
+  mietspiegelReferencePerSqm: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+    z.number().min(0).max(80).optional(),
+  ),
 });
 
 export type AddPropertyFormData = z.infer<typeof addPropertyFormSchema>;

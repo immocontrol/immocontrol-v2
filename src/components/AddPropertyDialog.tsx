@@ -106,6 +106,7 @@ const FORM_DEFAULTS: FormData = {
   parkingGarage: 0,
   gardenSqm: 0,
   otherRentableNotes: "",
+  mietspiegelReferencePerSqm: undefined,
 };
 
 interface AddPropertyDialogProps {
@@ -246,6 +247,12 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
     const restnutzungsdauer = data.restnutzungsdauer !== "" && data.restnutzungsdauer != null ? Number(data.restnutzungsdauer) : undefined;
     const buildingSharePercent = data.buildingSharePercent !== "" && data.buildingSharePercent != null ? Number(data.buildingSharePercent) : 80;
     const warmRent = data.warmRent != null && data.warmRent !== "" ? Number(data.warmRent) : undefined;
+    const mietspiegelReferencePerSqm =
+      data.mietspiegelReferencePerSqm === "" ||
+      data.mietspiegelReferencePerSqm == null ||
+      Number(data.mietspiegelReferencePerSqm) === 0
+        ? null
+        : Number(data.mietspiegelReferencePerSqm);
     const payload = {
       ...data,
       purchaseDate,
@@ -255,6 +262,7 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
       location: (data.address || "").split(",").pop()?.trim() || "",
       restnutzungsdauer,
       buildingSharePercent,
+      mietspiegelReferencePerSqm,
     } as Omit<import("@/data/mockData").Property, "id">;
     try {
       await addProperty(payload);
@@ -426,6 +434,20 @@ const AddPropertyDialog = ({ open: controlledOpen, onOpenChange: controlledOnOpe
                     }}
                   />
                 </div>
+              </div>
+              <div className="surface-section p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Mietspiegel-Check (optional)</p>
+                <Field
+                  label="Referenz €/m² kalt (optional)"
+                  name="mietspiegelReferencePerSqm"
+                  type="number"
+                  placeholder="z. B. 12,5"
+                  register={register}
+                  errors={errors}
+                />
+                <p className="text-[11px] text-muted-foreground text-wrap-safe">
+                  Wenn gesetzt, nutzt der Mietspiegel auf der Objektseite diesen Wert vor dem städtischen Mietspiegel.
+                </p>
               </div>
               <div className="surface-section p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Wird automatisch berechnet</p>

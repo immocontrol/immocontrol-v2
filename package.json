@@ -16,6 +16,7 @@
     "start": "node server/railway-serve.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "smoke": "node scripts/smoke.mjs",
     "cap:sync": "cap sync",
     "cap:ios": "cap sync ios && cap open ios",
     "ios": "npm run build && npm run cap:sync && cap open ios"

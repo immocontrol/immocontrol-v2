@@ -98,6 +98,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
       parkingGarage: property.parkingGarage ?? 0,
       gardenSqm: property.gardenSqm ?? 0,
       otherRentableNotes: property.otherRentableNotes ?? "",
+      mietspiegelReferencePerSqm: property.mietspiegelReferencePerSqm ?? "",
     },
   });
 
@@ -153,6 +154,7 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
         parkingGarage: property.parkingGarage ?? 0,
         gardenSqm: property.gardenSqm ?? 0,
         otherRentableNotes: property.otherRentableNotes ?? "",
+        mietspiegelReferencePerSqm: property.mietspiegelReferencePerSqm ?? "",
       });
     }
   }, [open, property, reset]);
@@ -161,7 +163,17 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
     const monthlyCashflow = typeof data.monthlyCashflow === "number" ? data.monthlyCashflow : calcMonthlyCashflow(data.monthlyRent, data.monthlyExpenses, data.monthlyCreditRate);
     const restnutzungsdauer = data.restnutzungsdauer !== "" && data.restnutzungsdauer != null ? Number(data.restnutzungsdauer) : undefined;
     const buildingSharePercent = data.buildingSharePercent !== "" && data.buildingSharePercent != null ? Number(data.buildingSharePercent) : 80;
-    await updateProperty(property.id, { ...data, monthlyCashflow, restnutzungsdauer, buildingSharePercent } as Partial<Property>);
+    const mietspiegelReferencePerSqm =
+      data.mietspiegelReferencePerSqm === "" || data.mietspiegelReferencePerSqm == null || Number(data.mietspiegelReferencePerSqm) === 0
+        ? null
+        : Number(data.mietspiegelReferencePerSqm);
+    await updateProperty(property.id, {
+      ...data,
+      monthlyCashflow,
+      restnutzungsdauer,
+      buildingSharePercent,
+      mietspiegelReferencePerSqm,
+    } as Partial<Property>);
     toastSuccess(`${data.name} wurde aktualisiert!`);
     setOpen(false);
   }, [property.id, updateProperty]);
@@ -274,6 +286,14 @@ const EditPropertyDialog = ({ property }: { property: Property }) => {
             </div>
             <EditField label="Cashflow/M (berechnet, editierbar)" name="monthlyCashflow" type="number" register={register} errors={errors} />
             <EditField label="Zinssatz (%)" name="interestRate" type="number" register={register} errors={errors} />
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-border">
+            <h4 className="text-sm font-semibold text-foreground">Mietspiegel-Check</h4>
+            <p className="text-[11px] text-muted-foreground text-wrap-safe">
+              Optional: Referenz-Nettokaltmiete €/m² für den Vergleich unter „Mietspiegel-Check“. Leer = automatische Zuordnung über Stadt in der Adresse.
+            </p>
+            <EditField label="Referenz €/m² kalt (optional)" name="mietspiegelReferencePerSqm" type="number" placeholder="z.B. 12,5" register={register} errors={errors} />
           </div>
 
           <div className="space-y-3">

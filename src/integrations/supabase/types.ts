@@ -1131,6 +1131,7 @@ export type Database = {
           updated_at: string
           user_id: string
           year_built: number
+          mietspiegel_reference_per_sqm?: number | null
         }
         Insert: {
           address: string
@@ -1154,6 +1155,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           year_built?: number
+          mietspiegel_reference_per_sqm?: number | null
         }
         Update: {
           address?: string
@@ -1177,6 +1179,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           year_built?: number
+          mietspiegel_reference_per_sqm?: number | null
         }
         Relationships: []
       }

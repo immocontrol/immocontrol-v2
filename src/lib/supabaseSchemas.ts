@@ -34,6 +34,7 @@ export const propertyRowSchema = z.object({
   parking_garage: z.coerce.number().int().min(0).default(0).optional(),
   garden_sqm: z.coerce.number().min(0).nullable().optional(),
   other_rentable_notes: z.string().nullable().optional(),
+  mietspiegel_reference_per_sqm: z.coerce.number().nullable().optional(),
 });
 export type PropertyRow = z.infer<typeof propertyRowSchema>;
 

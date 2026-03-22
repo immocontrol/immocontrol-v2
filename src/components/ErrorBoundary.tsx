@@ -6,6 +6,19 @@ import { logger } from "@/lib/logger";
 import { trackError } from "@/lib/errorTracking";
 import { ROUTES } from "@/lib/routes";
 
+/** Nach Deploy: alte Tabs laden veraltete JS-Chunks → dynamischer Import schlägt fehl */
+function isLikelyChunkOrDeployMismatch(error: Error | null): boolean {
+  const m = (error?.message ?? "").toLowerCase();
+  return (
+    m.includes("failed to fetch dynamically imported module") ||
+    m.includes("error loading dynamically imported module") ||
+    m.includes("importing a module script failed") ||
+    m.includes("chunk load error") ||
+    (m.includes("loading css chunk") && m.includes("failed")) ||
+    (m.includes("loading chunk") && m.includes("failed"))
+  );
+}
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -66,17 +79,24 @@ class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       /* STRONG-18: role="alert" + aria-live="polite" announces error to screen readers */
+      const chunkMismatch = isLikelyChunkOrDeployMismatch(this.state.error);
       return (
         <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center" role="alert" aria-live="polite">
           <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <h2 className="text-lg font-semibold mb-2">Etwas ist schiefgelaufen</h2>
-          <p className="text-sm text-muted-foreground max-w-sm mb-2">
-            {this.state.error?.message || "Ein unerwarteter Fehler ist aufgetreten."}
+          <h2 className="text-lg font-semibold mb-2">
+            {chunkMismatch ? "Neue App-Version oder veralteter Tab" : "Etwas ist schiefgelaufen"}
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-md mb-2 text-wrap-safe">
+            {chunkMismatch
+              ? "Ein Modul konnte nicht geladen werden — oft nach einem Deployment, wenn noch ein alter Tab offen ist. Seite neu laden oder Tab schließen und erneut öffnen."
+              : this.state.error?.message || "Ein unerwarteter Fehler ist aufgetreten."}
           </p>
           <p className="text-xs text-muted-foreground max-w-sm mb-2">
-            Bitte später erneut versuchen oder zur Startseite wechseln.
+            {chunkMismatch
+              ? "Tipp: Einmal hart neu laden (Strg+F5 / Cmd+Shift+R) oder die App neu starten."
+              : "Bitte später erneut versuchen oder zur Startseite wechseln."}
           </p>
           {/* IMP-44-4: Show error timestamp for debugging context */}
           <p className="text-[10px] text-muted-foreground mb-4">

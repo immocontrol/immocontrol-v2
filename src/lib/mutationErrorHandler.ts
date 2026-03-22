@@ -31,6 +31,10 @@ export function getMutationErrorMessage(error: unknown): string {
   if (supaErr?.code && ERROR_MESSAGES[supaErr.code]) return ERROR_MESSAGES[supaErr.code];
   if (msg) {
     if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "Netzwerkfehler — bitte Internetverbindung prüfen";
+    const ml = msg.toLowerCase();
+    if (ml.includes("refresh_token_not_found") || ml.includes("invalid refresh token") || ml.includes("invalid_grant")) {
+      return "Sitzung abgelaufen — bitte erneut anmelden";
+    }
     if (msg.includes("JWT expired") || msg.includes("token")) return "Sitzung abgelaufen — bitte erneut anmelden";
     if (supaErr?.details && typeof supaErr.details === "string") return `${msg} (${supaErr.details})`;
     return msg;

@@ -44,13 +44,16 @@ export function MietspiegelCheck({
       const entry = city ? getMietspiegel(city) : null;
       if (overridePerSqm[p.id] != null) {
         spiegel = overridePerSqm[p.id];
-        source = "Manueller Wert";
+        source = "Manueller Wert (diese Ansicht)";
+      } else if (p.mietspiegelReferencePerSqm != null && p.mietspiegelReferencePerSqm > 0) {
+        spiegel = p.mietspiegelReferencePerSqm;
+        source = "Referenz €/m² am Objekt hinterlegt (Bearbeiten)";
       } else if (entry) {
         spiegel = entry.avgRentPerSqm;
         source = `${entry.source} (Ø ${entry.minRentPerSqm.toFixed(1)}–${entry.maxRentPerSqm.toFixed(1)} €/m²)`;
       } else if (mietspiegelPerSqm[p.id] != null) {
         spiegel = mietspiegelPerSqm[p.id];
-        source = "Manuell hinterlegt";
+        source = "Manuell hinterlegt (Konfiguration)";
       } else {
         spiegel = defaultMietspiegelPerSqm;
         source = `Standardwert – Stadt in Adresse/Location eintragen für Mietspiegel`;

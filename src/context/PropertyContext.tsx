@@ -50,6 +50,7 @@ const FIELD_MAP: Record<string, string> = {
   restnutzungsdauer: "restnutzungsdauer", buildingSharePercent: "building_share_percent",
   parkingUnderground: "parking_underground", parkingStellplatz: "parking_stellplatz", parkingGarage: "parking_garage",
   gardenSqm: "garden_sqm", otherRentableNotes: "other_rentable_notes",
+  mietspiegelReferencePerSqm: "mietspiegel_reference_per_sqm",
 };
 
 interface PropertyDbRow {
@@ -80,6 +81,7 @@ interface PropertyDbRow {
   parking_garage?: number | null;
   garden_sqm?: number | null;
   other_rentable_notes?: string | null;
+  mietspiegel_reference_per_sqm?: number | null;
 }
 
 const mapDbToProperty = (row: PropertyDbRow): Property => ({
@@ -110,6 +112,7 @@ const mapDbToProperty = (row: PropertyDbRow): Property => ({
   parkingGarage: row.parking_garage != null ? Number(row.parking_garage) : undefined,
   gardenSqm: row.garden_sqm != null ? Number(row.garden_sqm) : undefined,
   otherRentableNotes: row.other_rentable_notes ?? undefined,
+  mietspiegelReferencePerSqm: row.mietspiegel_reference_per_sqm != null ? Number(row.mietspiegel_reference_per_sqm) : undefined,
 });
 
 const mapPropertyToDb = (property: Partial<Omit<Property, "id">>): Record<string, unknown> => {
@@ -220,6 +223,7 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         parking_garage: toNumOr(dbFields.parking_garage ?? property.parkingGarage, 0),
         garden_sqm: toNum(dbFields.garden_sqm ?? property.gardenSqm),
         other_rentable_notes: (dbFields.other_rentable_notes ?? property.otherRentableNotes) ?? null,
+        mietspiegel_reference_per_sqm: toNum(dbFields.mietspiegel_reference_per_sqm ?? property.mietspiegelReferencePerSqm),
       });
       if (error) throw error;
     },
@@ -307,6 +311,7 @@ export const PropertyProvider = ({ children }: { children: ReactNode }) => {
         parking_garage: dbFields.parking_garage ?? property.parkingGarage ?? 0,
         garden_sqm: dbFields.garden_sqm ?? property.gardenSqm ?? null,
         other_rentable_notes: dbFields.other_rentable_notes ?? property.otherRentableNotes ?? null,
+        mietspiegel_reference_per_sqm: toNum(dbFields.mietspiegel_reference_per_sqm ?? property.mietspiegelReferencePerSqm),
       };
       await addPendingMutation({ table: "properties", type: "insert", data: insertData });
       await qc.cancelQueries({ queryKey: queryKeys.properties.all });

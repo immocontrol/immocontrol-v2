@@ -107,7 +107,7 @@ export const MobileCurrencyInput = memo(function MobileCurrencyInput({
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
-    if (/^[\d.,\s\-]*$/.test(raw)) {
+    if (/^[\d.,\s-]*$/.test(raw)) {
       setDisplayValue(formatCurrencyInput(raw));
     }
   }, []);
