@@ -6,6 +6,7 @@ import { fetchRssTextViaEdge } from "@/integrations/rss/fetchViaEdge";
 import { mapPool } from "@/lib/mapPool";
 import type { NewsItem } from "./newsUtils";
 import { categoriseNews, detectRegion, detectSentiment, isEconomicallyRelevant, looksLikeXmlFeed, parseRSSItems } from "./newsUtils";
+import { dedupeNewsItems } from "./newsDedup";
 
 export const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=immobilien+markt+berlin+OR+brandenburg+investition+OR+rendite+OR+preis+OR+mietspiegel&hl=de&gl=DE&ceid=DE:de", source: "Google News", icon: "\uD83D\uDD0D" },
@@ -159,19 +160,13 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
   return [];
 }
 
-/** Fetch all feeds, deduplicate by title, filter crime, sort by date. */
+/** Fetch all feeds, filter crime, deduplicate (Titel/URL/Ähnlichkeit), sort by date. */
 export async function fetchAllRssNews(): Promise<NewsItem[]> {
   const feedResults = await mapPool(RSS_FEEDS, RSS_FETCH_CONCURRENCY, (f) => fetchRSSFeed(f.url, f.source, f.icon));
   const allItems: NewsItem[] = [];
   feedResults.forEach((items) => allItems.push(...items));
-  const seen = new Set<string>();
-  const deduped = allItems.filter((item) => {
-    const key = item.title.toLowerCase().replace(/[^a-zäöü0-9]/g, "").slice(0, 60);
-    if (seen.has(key)) return false;
-    if (!isEconomicallyRelevant(item.title, item.description)) return false;
-    seen.add(key);
-    return true;
-  });
+  const relevant = allItems.filter((item) => isEconomicallyRelevant(item.title, item.description));
+  const deduped = dedupeNewsItems(relevant);
   deduped.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   return deduped;
 }

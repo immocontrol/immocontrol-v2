@@ -184,3 +184,32 @@ export function portfolioLocationMatchScore(textLower: string, hints: PortfolioL
   }
   return Math.min(bonus, 12);
 }
+
+/**
+ * Erkannte Portfolio-Ortsbegriffe im Text (für UI-Transparenz).
+ */
+export function getMatchedPortfolioTerms(
+  textLower: string,
+  hints: PortfolioLocationHints,
+  max = 3,
+): string[] {
+  if (!hints.hasPortfolioData || hints.matchTerms.length === 0) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const term of hints.matchTerms) {
+    if (out.length >= max) break;
+    if (seen.has(term)) continue;
+    let hit = false;
+    if (term.includes(" ")) {
+      hit = textLower.includes(term);
+    } else if (term.length >= 3) {
+      const re = new RegExp(`(^|[^a-zäöüß0-9])${escapeRegex(term)}([^a-zäöüß0-9]|$)`, "i");
+      hit = re.test(textLower);
+    }
+    if (hit) {
+      seen.add(term);
+      out.push(term);
+    }
+  }
+  return out;
+}

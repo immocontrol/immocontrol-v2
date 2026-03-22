@@ -9,7 +9,16 @@ import {
   Share2, TrendingUp, LayoutGrid, List, BarChart3,   Flame, Archive, Loader2, Lock, LockOpen, Download, WifiOff, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -39,6 +48,7 @@ import {
 } from "./newsticker/newsUtils";
 import { fetchAllRssNews, RSS_FEEDS } from "./newsticker/newsFetch";
 import { computeDailyTopPicks } from "./newsticker/dailyTopPicks";
+import { loadNewsFeedCache, saveNewsFeedCache } from "./newsticker/newsCache";
 import { buildPortfolioLocationHints, type DealForLocation } from "./newsticker/investmentLocationHints";
 import {
   getNewsNotificationKeywords,
@@ -80,6 +90,28 @@ function saveBookmarks(ids: Set<string>) {
 /* ─── View mode persistence ─── */
 const VIEW_MODE_KEY = "immocontrol_news_view";
 
+const TOP_PICKS_WINDOW_H_KEY = "immocontrol_newsticker_top_max_age_h";
+const TOP_PICKS_CALENDAR_KEY = "immocontrol_newsticker_top_calendar_berlin";
+
+function readTopPicksWindowHours(): number {
+  try {
+    const v = localStorage.getItem(TOP_PICKS_WINDOW_H_KEY);
+    const n = v ? parseInt(v, 10) : 72;
+    if (n === 48 || n === 72 || n === 168) return n;
+  } catch {
+    /* ignore */
+  }
+  return 72;
+}
+
+function readCalendarDayBerlin(): boolean {
+  try {
+    return localStorage.getItem(TOP_PICKS_CALENDAR_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 /* ─── Component ─── */
 const NEWSTICKER_STALE_MS = 5 * 60 * 1000; // 5 min cache
 
@@ -109,8 +141,15 @@ const Newsticker = () => {
   } = useQuery({
     queryKey: queryKeys.newsticker.all,
     queryFn: async () => {
-      const items = await fetchAllRssNews();
-      return items;
+      try {
+        const items = await fetchAllRssNews();
+        saveNewsFeedCache(items);
+        return items;
+      } catch (e) {
+        const cached = loadNewsFeedCache();
+        if (cached && cached.length > 0) return cached;
+        throw e;
+      }
     },
     staleTime: NEWSTICKER_STALE_MS,
     retry: 1,
@@ -155,6 +194,8 @@ const Newsticker = () => {
   const [viewMode, setViewMode] = useState<"cards" | "compact">(
     () => (localStorage.getItem(VIEW_MODE_KEY) as "cards" | "compact") || "cards"
   );
+  const [topPicksWindowHours, setTopPicksWindowHours] = useState<number>(() => readTopPicksWindowHours());
+  const [calendarDayBerlin, setCalendarDayBerlin] = useState<boolean>(() => readCalendarDayBerlin());
 
   useEffect(() => { document.title = "Newsticker – ImmoControl"; }, []);
 
@@ -378,9 +419,13 @@ const Newsticker = () => {
   const dailyTopPicks = useMemo(
     () =>
       news.length > 0
-        ? computeDailyTopPicks(news, Date.now(), { portfolioHints: portfolioLocationHints })
+        ? computeDailyTopPicks(news, Date.now(), {
+            portfolioHints: portfolioLocationHints,
+            maxAgeMs: topPicksWindowHours * 60 * 60 * 1000,
+            calendarDayBerlinOnly: calendarDayBerlin,
+          })
         : null,
-    [news, portfolioLocationHints, dataUpdatedAt],
+    [news, portfolioLocationHints, topPicksWindowHours, calendarDayBerlin],
   );
 
   const toggleCategory = (cat: NewsCategory) => {
@@ -631,10 +676,57 @@ const Newsticker = () => {
             <p className="text-xs text-muted-foreground text-wrap-safe">
               {dailyTopPicks.dateLabelDE}
               {" · "}
-              Automatische Priorisierung aus den geladenen Feeds (bundesweit vs. regional). Region „vor Ort“ nutzt bei hinterlegten Objekten/Deals die Orte aus Standort und Adresse.
-              {" "}
-              Keine redaktionelle Kuratierung.
+              {dailyTopPicks.windowDescriptionDE}
+              {" · "}
+              Automatische Priorisierung (bundesweit vs. regional). „Vor Ort“ nutzt bei Objekten/Deals Orte aus Standort und Adresse. Gründe unter jeder Zeile = heuristische Treffer, keine Redaktion.
             </p>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 pt-2">
+              <div className="flex flex-col gap-1 min-w-0">
+                <Label htmlFor="top-picks-window" className="text-[10px] text-muted-foreground">
+                  Zeitfenster für Tages-Top
+                </Label>
+                <Select
+                  value={String(topPicksWindowHours)}
+                  onValueChange={(v) => {
+                    const h = parseInt(v, 10);
+                    if (h === 48 || h === 72 || h === 168) {
+                      setTopPicksWindowHours(h);
+                      try {
+                        localStorage.setItem(TOP_PICKS_WINDOW_H_KEY, String(h));
+                      } catch {
+                        /* ignore */
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger id="top-picks-window" className="h-9 w-full sm:w-[220px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="48">48 Stunden</SelectItem>
+                    <SelectItem value="72">72 Stunden (Standard)</SelectItem>
+                    <SelectItem value="168">7 Tage</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2 min-w-0">
+                <Switch
+                  id="top-picks-calendar"
+                  checked={calendarDayBerlin}
+                  onCheckedChange={(c) => {
+                    setCalendarDayBerlin(c);
+                    try {
+                      localStorage.setItem(TOP_PICKS_CALENDAR_KEY, c ? "1" : "0");
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                />
+                <Label htmlFor="top-picks-calendar" className="text-xs text-muted-foreground text-wrap-safe cursor-pointer">
+                  Nur Meldungen vom heutigen Kalendertag (Europe/Berlin)
+                </Label>
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-lg border border-border/80 bg-background/60 p-3 min-w-0">
@@ -644,11 +736,11 @@ const Newsticker = () => {
               </h3>
               {dailyTopPicks.deutschland.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-wrap-safe">
-                  In den letzten 72 Stunden keine bundesweit priorisierten Meldungen im Feed. Bitte aktualisieren oder Filter lockern.
+                  Im gewählten Fenster keine bundesweit priorisierten Meldungen. Bitte „Aktualisieren“, anderes Zeitfenster oder Kalendertag-Filter prüfen.
                 </p>
               ) : (
                 <ol className="space-y-2 list-decimal list-inside marker:text-primary">
-                  {dailyTopPicks.deutschland.map((n) => (
+                  {dailyTopPicks.deutschland.map(({ item: n, reasons }) => (
                     <li key={n.id} className="text-sm min-w-0">
                       <a
                         href={n.url}
@@ -666,6 +758,19 @@ const Newsticker = () => {
                           <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
                         </span>
                       </span>
+                      {reasons.length > 0 && (
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          {reasons.map((r) => (
+                            <span
+                              key={r}
+                              className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted/90 text-muted-foreground text-wrap-safe"
+                              title={r}
+                            >
+                              {r}
+                            </span>
+                          ))}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ol>
@@ -685,11 +790,11 @@ const Newsticker = () => {
               )}
               {dailyTopPicks.vorOrt.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-wrap-safe">
-                  In den letzten 72 Stunden keine regional priorisierten Meldungen. Liste aktualisiert sich mit dem nächsten Abruf.
+                  Im gewählten Fenster keine regional priorisierten Meldungen. Mit Kalendertag-Filter oft weniger Treffer — ggf. deaktivieren oder Zeitfenster vergrößern.
                 </p>
               ) : (
                 <ol className="space-y-2 list-decimal list-inside marker:text-primary">
-                  {dailyTopPicks.vorOrt.map((n) => (
+                  {dailyTopPicks.vorOrt.map(({ item: n, reasons }) => (
                     <li key={n.id} className="text-sm min-w-0">
                       <a
                         href={n.url}
@@ -709,6 +814,19 @@ const Newsticker = () => {
                           <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
                         </span>
                       </span>
+                      {reasons.length > 0 && (
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          {reasons.map((r) => (
+                            <span
+                              key={r}
+                              className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted/90 text-muted-foreground text-wrap-safe"
+                              title={r}
+                            >
+                              {r}
+                            </span>
+                          ))}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ol>

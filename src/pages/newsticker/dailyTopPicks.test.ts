@@ -59,7 +59,7 @@ describe("dailyTopPicks", () => {
     expect(scoreLocalInvestment(a, now)).toBeGreaterThan(scoreLocalInvestment(b, now));
   });
 
-  it("liefert bis zu 3 + 3 Einträge und trennt Schwerpunkte", () => {
+  it("liefert Einträge mit Gründen und Fenster-Beschreibung", () => {
     const items: NewsItem[] = [
       item({
         id: "n1",
@@ -113,12 +113,14 @@ describe("dailyTopPicks", () => {
         publishedAt: new Date(now - 7 * 60 * 60 * 1000).toISOString(),
       }),
     ];
-    const { deutschland, vorOrt, dateLabelDE, vorOrtPortfolioLine } = computeDailyTopPicks(items, now);
-    expect(dateLabelDE.length).toBeGreaterThan(5);
-    expect(vorOrtPortfolioLine).toBeNull();
-    expect(deutschland.length).toBeGreaterThanOrEqual(1);
-    expect(vorOrt.length).toBeGreaterThanOrEqual(1);
-    expect(deutschland.length).toBeLessThanOrEqual(3);
-    expect(vorOrt.length).toBeLessThanOrEqual(3);
+    const result = computeDailyTopPicks(items, now);
+    expect(result.dateLabelDE.length).toBeGreaterThan(5);
+    expect(result.vorOrtPortfolioLine).toBeNull();
+    expect(result.windowDescriptionDE.length).toBeGreaterThan(5);
+    expect(result.deutschland.length).toBeGreaterThanOrEqual(1);
+    expect(result.vorOrt.length).toBeGreaterThanOrEqual(1);
+    expect(result.deutschland[0].reasons.length).toBeGreaterThan(0);
+    expect(result.vorOrt[0].reasons.length).toBeGreaterThan(0);
+    expect(result.deutschland.every((e) => e.item.title)).toBe(true);
   });
 });

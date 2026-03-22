@@ -54,7 +54,11 @@ In **Entwicklung** bieten manche Toasts **„Copy for AI“** (Fehlerkontext fü
 - **Mit Login:** Beliebige erlaubte öffentliche `http(s)`-URLs (SSRF-Filter wie zuvor).
 - Nach Änderungen deployen: `supabase functions deploy rss-fetch` (lokal: `supabase functions serve`).
 - Optional: **`VITE_RSS2JSON_API_KEY`** — höheres Kontingent bei [rss2json.com](https://rss2json.com) als zweiter Fallback (CORS-fähig).
-- **Tages-Top 3:** Die Seite zeigt zwei automatische Listen (bundesweit vs. regional) aus den geladenen Artikeln der letzten **72h**; Logik in `src/pages/newsticker/dailyTopPicks.ts` (Heuristik, keine Redaktion). **„Vor Ort“** gewichtet Treffer nach Orten aus **Objekten** (Standort, Adresse, Name) und **aktiven Deals** (nicht `abgelehnt`); Details in `src/pages/newsticker/investmentLocationHints.ts`.
+- **Tages-Top 3:** Zwei automatische Listen (bundesweit vs. regional) mit **kurzen Gründen** unter jeder Zeile; Zeitfenster **48h / 72h / 7 Tage** und optional **nur Kalendertag Europe/Berlin** (localStorage). Logik: `src/pages/newsticker/dailyTopPicks.ts`. **„Vor Ort“** gewichtet nach Orten aus **Objekten** und **aktiven Deals** (`investmentLocationHints.ts`).
+- **Feed-Cache:** Bei Netzwerkfehler wird die letzte erfolgreiche Liste aus **localStorage** angezeigt (bis ca. 48h, `newsCache.ts`).
+- **Deduplizierung:** `newsDedup.ts` reduziert Dubletten (gleiche Story, Google vs. Original).
+- **Monitoring:** Sentry (optional, siehe unten); bei leerem Newsticker in Prod prüfen: Edge-Function `rss-fetch` deployed, Allowlist, ggf. `VITE_RSS2JSON_API_KEY`.
+- **Smoke:** `npm run smoke -- https://…` prüft `/` und optional **`/newsticker`** (SPA muss Route ausliefern).
 
 ## Dialoge und Barrierefreiheit
 

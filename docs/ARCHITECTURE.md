@@ -46,6 +46,19 @@ Der **Rest der Codebase** soll keine Referenzen auf Lovable, Replit, Cursor, Dev
 | **React Query** | Server-State; `queryKeys` in `src/lib/queryKeys.ts`; staleTime pro Entity in App.tsx. |
 | **Offline** | `useOfflineCache`, Service Worker (`public/sw.js`), Pending-Mutations-Queue. |
 
+## Newsticker (RSS)
+
+| Schicht | Rolle |
+|--------|--------|
+| **`newsFetch.ts`** | Paralleler Abruf der Feeds (Supabase Edge `rss-fetch`, rss2json, CORS-Fallbacks). |
+| **`newsDedup.ts`** | Entdoppelung: kanonische URLs (u. a. Google-News-Redirects), ähnliche Überschriften (Jaccard). |
+| **`newsCache.ts`** | `localStorage`-Fallback bei fehlgeschlagenem Fetch (max. 48h alt). |
+| **`dailyTopPicks.ts`** | Tages-Top Deutschland / vor Ort: Scoring, Zeitfenster & optional Kalendertag Europe/Berlin, **Gründe** für Transparenz. |
+| **`investmentLocationHints.ts`** | Orte aus `properties` + aktiven `deals` für Gewichtung „vor Ort“. |
+| **`Newsticker.tsx`** | UI, React Query (`queryKeys.newsticker`), Einstellungen Zeitfenster (localStorage). |
+
+Detaillierte Deploy-/Env-Hinweise: **[OPERATIONS.md](./OPERATIONS.md)** (Abschnitt Newsticker).
+
 ## Auth-Flow
 
 1. **Einstieg:** Ungeloggt → Redirect auf `/auth`. Nach Login/Register prüft `RoleRouter` Rolle (`user_roles`) und Onboarding (`profiles.onboarding_completed`).

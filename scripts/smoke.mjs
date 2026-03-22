@@ -19,6 +19,12 @@ try {
   await check("/");
   process.stdout.write(`smoke OK: ${base}/\n`);
   try {
+    await check("/newsticker");
+    process.stdout.write(`smoke OK: ${base}/newsticker\n`);
+  } catch (e2) {
+    process.stdout.write(`(optional) /newsticker: ${e2 instanceof Error ? e2.message : String(e2)}\n`);
+  }
+  try {
     const r = await check("/version.json");
     const j = await r.json();
     process.stdout.write(`version.json: ${JSON.stringify(j)}\n`);
