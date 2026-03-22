@@ -94,6 +94,8 @@ const Settings = () => {
 
   /* Sidebar scroll spy: aktive Sektion aus vertikalem Scroll. Debounce verhindert Wackeln zwischen Items. */
   const activeSectionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* Nach Klick im Menü: smooth scroll triggert Zwischen-Sektionen im Observer — die überschreiben sonst activeSection verzögert. */
+  const programmaticScrollRef = useRef<{ targetId: string; until: number } | null>(null);
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
@@ -106,6 +108,14 @@ const Settings = () => {
       const newId = candidate.target.id;
       if (activeSectionDebounceRef.current) clearTimeout(activeSectionDebounceRef.current);
       activeSectionDebounceRef.current = setTimeout(() => {
+        const manual = programmaticScrollRef.current;
+        if (manual) {
+          if (Date.now() < manual.until && newId !== manual.targetId) {
+            activeSectionDebounceRef.current = null;
+            return;
+          }
+          programmaticScrollRef.current = null;
+        }
         setActiveSection(newId);
         activeSectionDebounceRef.current = null;
       }, 80);
@@ -260,8 +270,12 @@ const Settings = () => {
   const scrollToSection = (sectionId: string) => {
     const el = sectionRefs.current[sectionId];
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      programmaticScrollRef.current = {
+        targetId: sectionId,
+        until: Date.now() + 750,
+      };
       setActiveSection(sectionId);
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
       /* Animate sidebar active indicator into view */
       const navBtn = document.querySelector(`[data-settings-nav="${sectionId}"]`);
       if (navBtn) navBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
