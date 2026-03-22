@@ -19,6 +19,7 @@ npm run smoke -- https://ihre-domain.de
 ```
 
 - Optional: GitHub Actions **„Smoke (manual)“** (`.github/workflows/smoke.yml`) — manuell auslösen und Deploy-URL eintragen.
+- **CI:** `.github/workflows/ci.yml` — bei Push/PR: ESLint (nur Fehler), `npm test`, `npm run build`.
 
 ## Fehler sammeln und melden
 
