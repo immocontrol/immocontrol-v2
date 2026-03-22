@@ -3,7 +3,7 @@
  * Generates a professional property valuation report using jsPDF.
  */
 import { jsPDF } from "jspdf";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, sanitizeForPdf } from "@/lib/formatters";
 import type { ParsedExposeData } from "@/lib/exposeParser";
 
 export interface ValuationResults {
@@ -52,7 +52,7 @@ export function generateBewertungsPdf(
     doc.setFont("helvetica", opts?.fontStyle || "normal");
     if (opts?.color) doc.setTextColor(...opts.color);
     else doc.setTextColor(30, 30, 30);
-    doc.text(text, x, yPos, { maxWidth: opts?.maxWidth || contentWidth });
+    doc.text(sanitizeForPdf(text), x, yPos, { maxWidth: opts?.maxWidth || contentWidth });
   };
 
   const addLine = (yPos: number) => {

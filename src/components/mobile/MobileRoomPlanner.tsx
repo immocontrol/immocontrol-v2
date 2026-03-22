@@ -72,8 +72,11 @@ export const MobileRoomPlanner = memo(function MobileRoomPlanner({
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver(entries => {
-      const { width, height } = entries[0].contentRect;
-      setCanvasSize({ width, height: Math.max(300, height) });
+      const last = entries[entries.length - 1];
+      if (last) requestAnimationFrame(() => {
+        const { width, height } = last.contentRect;
+        setCanvasSize({ width, height: Math.max(300, height) });
+      });
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();

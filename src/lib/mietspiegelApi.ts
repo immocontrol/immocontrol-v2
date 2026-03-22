@@ -74,6 +74,22 @@ export function getAvailableMietspiegelCities(): string[] {
 }
 
 /**
+ * Extract city from property address/location for Mietspiegel lookup.
+ * Tries location first, then scans address for known city names.
+ */
+export function extractCityForMietspiegel(address?: string, location?: string): string | null {
+  const loc = (location || "").trim();
+  if (loc && getMietspiegel(loc)) return loc;
+  const combined = [address || "", location || ""].filter(Boolean).join(" ").toLowerCase();
+  if (!combined) return null;
+  const cities = Object.keys(MIETSPIEGEL_DB).sort((a, b) => b.length - a.length);
+  for (const city of cities) {
+    if (combined.includes(city)) return city.charAt(0).toUpperCase() + city.slice(1);
+  }
+  return null;
+}
+
+/**
  * FUND-24: Estimate rent range for a city not in the database.
  * Uses regional averages based on Bundesland.
  */

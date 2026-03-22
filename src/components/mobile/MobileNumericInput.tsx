@@ -67,10 +67,13 @@ export const MobileNumericInput = memo(function MobileNumericInput({
     onChange(clamp(value - amount));
   }, [haptic, onChange, value, clamp]);
 
-  const displayValue = isFocused ? String(value || "") : value.toLocaleString("de-DE", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+  const displayValue = isFocused && value === 0
+    ? ""
+    : value.toLocaleString("de-DE", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: true,
+      });
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -90,7 +93,10 @@ export const MobileNumericInput = memo(function MobileNumericInput({
           pattern="[0-9]*[.,]?[0-9]*"
           value={displayValue}
           onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
+          onFocus={(e) => {
+            setIsFocused(true);
+            requestAnimationFrame(() => e.target.select());
+          }}
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder || "0,00"}
           className={cn(

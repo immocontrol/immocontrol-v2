@@ -77,7 +77,7 @@ export const MobileComparisonSlider = memo(function MobileComparisonSlider({
     const updateWidth = () => setContainerWidth(el.offsetWidth);
     updateWidth();
 
-    const observer = new ResizeObserver(() => updateWidth());
+    const observer = new ResizeObserver(() => requestAnimationFrame(updateWidth));
     observer.observe(el);
     return () => observer.disconnect();
   }, []);

@@ -15,7 +15,7 @@ import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatDate } from "@/lib/formatters";
+import { formatDate, sanitizeForPdf } from "@/lib/formatters";
 import { loadJsPDF } from "@/lib/lazyImports";
 
 function getNoticeDeadline(desiredEnd: Date, noticeMonths: number): Date {
@@ -63,45 +63,47 @@ export function KuendigungsschreibenLetter() {
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(landlordName || "[Vermieter Name]", margin, y); y += 5;
-    doc.text(landlordAddress || "[Vermieter Adresse]", margin, y); y += 12;
-    doc.text(tenantName, margin, y); y += 5;
-    doc.text(tenantAddress || "[Mieteradresse]", margin, y); y += 12;
-    doc.text(today, 190 - doc.getTextWidth(today), y); y += 15;
+    doc.text(sanitizeForPdf(landlordName || "[Vermieter Name]"), margin, y); y += 5;
+    doc.text(sanitizeForPdf(landlordAddress || "[Vermieter Adresse]"), margin, y); y += 12;
+    doc.text(sanitizeForPdf(tenantName), margin, y); y += 5;
+    doc.text(sanitizeForPdf(tenantAddress || "[Mieteradresse]"), margin, y); y += 12;
+    doc.text(sanitizeForPdf(today), 190 - doc.getTextWidth(sanitizeForPdf(today)), y); y += 15;
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Kündigung des Mietverhältnisses", margin, y); y += 12;
+    doc.text(sanitizeForPdf("Kündigung des Mietverhältnisses"), margin, y); y += 12;
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Sehr geehrte/r ${tenantName},`, margin, y); y += 8;
+    doc.text(sanitizeForPdf(`Sehr geehrte/r ${tenantName},`), margin, y); y += 8;
     const intro = doc.splitTextToSize(
-      "hiermit kündige ich das Mietverhältnis über die von Ihnen bewohnte Wohnung" +
-      (objectAddress ? ` (${objectAddress})` : "") +
-      " ordentlich zum nächstzulässigen Termin.",
+      sanitizeForPdf(
+        "hiermit kündige ich das Mietverhältnis über die von Ihnen bewohnte Wohnung" +
+        (objectAddress ? ` (${objectAddress})` : "") +
+        " ordentlich zum nächstzulässigen Termin."
+      ),
       160
     );
     doc.text(intro, margin, y); y += intro.length * 5 + 8;
 
     doc.setFont("helvetica", "bold");
-    doc.text(`Ende des Mietverhältnisses: ${endDateFormatted}`, margin, y); y += 8;
+    doc.text(sanitizeForPdf(`Ende des Mietverhältnisses: ${endDateFormatted}`), margin, y); y += 8;
     doc.setFont("helvetica", "normal");
-    doc.text(`Kündigungsfrist: ${noticeMonths} Monat${noticeMonths !== 1 ? "e" : ""} zum Monatsende.`, margin, y); y += 6;
-    doc.text(`Diese Kündigung muss Ihnen spätestens bis zum ${deadlineFormatted} zugegangen sein.`, margin, y); y += 12;
+    doc.text(sanitizeForPdf(`Kündigungsfrist: ${noticeMonths} Monat${noticeMonths !== 1 ? "e" : ""} zum Monatsende.`), margin, y); y += 6;
+    doc.text(sanitizeForPdf(`Diese Kündigung muss Ihnen spätestens bis zum ${deadlineFormatted} zugegangen sein.`), margin, y); y += 12;
 
     const closing = doc.splitTextToSize(
-      "Bitte bestätigen Sie den Erhalt dieser Kündigung und den Räumungstermin. Die Schlüsselübergabe erfolgt zum vereinbarten Termin.",
+      sanitizeForPdf("Bitte bestätigen Sie den Erhalt dieser Kündigung und den Räumungstermin. Die Schlüsselübergabe erfolgt zum vereinbarten Termin."),
       160
     );
     doc.text(closing, margin, y); y += closing.length * 5 + 10;
-    doc.text("Mit freundlichen Grüßen", margin, y); y += 20;
+    doc.text(sanitizeForPdf("Mit freundlichen Grüßen"), margin, y); y += 20;
     doc.text("_________________________________", margin, y); y += 6;
-    doc.text(`${landlordName || "[Vermieter]"}, ${today}`, margin, y);
+    doc.text(sanitizeForPdf(`${landlordName || "[Vermieter]"}, ${today}`), margin, y);
 
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text("Erstellt mit ImmoControl · Kündigungsschreiben Mietvertrag", margin, 285);
+    doc.text(sanitizeForPdf("Erstellt mit ImmoControl · Kündigungsschreiben Mietvertrag"), margin, 285);
 
     const safeName = tenantName.replace(/\s+/g, "_").replace(/[^a-zA-ZäöüÄÖÜß0-9_-]/g, "");
     const fileName = `Kuendigung_${safeName}_${desiredEndStr || "Ende"}.pdf`;

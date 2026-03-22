@@ -6,6 +6,7 @@
  */
 import type { NewsItem } from "./newsUtils";
 import { loadFromIndexedDB, saveToIndexedDB, migrateFromLocalStorage } from "@/lib/newsArchiveDb";
+import { sanitizeForPdf } from "@/lib/formatters";
 
 export interface ArchivedNewsItem {
   id: string;
@@ -200,21 +201,21 @@ async function generatePdfBlob(
   let y = 20;
 
   doc.setFontSize(14);
-  const titleLines = doc.splitTextToSize(item.title, maxW);
+  const titleLines = doc.splitTextToSize(sanitizeForPdf(item.title), maxW);
   doc.text(titleLines, margin, y);
   y += titleLines.length * lineHeight + 4;
 
   doc.setFontSize(9);
   doc.setTextColor(128, 128, 128);
-  doc.text(`${item.source} · ${new Date(item.publishedAt).toLocaleDateString("de-DE")}`, margin, y);
+  doc.text(sanitizeForPdf(`${item.source} · ${new Date(item.publishedAt).toLocaleDateString("de-DE")}`), margin, y);
   y += 6;
-  doc.text(`Quelle: ${item.url}`, margin, y);
+  doc.text(sanitizeForPdf(`Quelle: ${item.url}`), margin, y);
   y += 8;
   doc.setTextColor(0, 0, 0);
 
   if (item.description) {
     doc.setFontSize(10);
-    const descLines = doc.splitTextToSize(item.description, maxW);
+    const descLines = doc.splitTextToSize(sanitizeForPdf(item.description), maxW);
     descLines.forEach((line: string) => {
       if (y > 270) {
         doc.addPage();
@@ -227,7 +228,7 @@ async function generatePdfBlob(
   }
 
   doc.setFontSize(10);
-  const bodyLines = doc.splitTextToSize(fullContent, maxW);
+  const bodyLines = doc.splitTextToSize(sanitizeForPdf(fullContent), maxW);
   bodyLines.forEach((line: string) => {
     if (y > 275) {
       doc.addPage();

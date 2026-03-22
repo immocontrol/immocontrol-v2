@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, sanitizeForPdf } from "@/lib/formatters";
 import { generateRentIncreaseJustification, isDeepSeekConfigured, improveText } from "@/integrations/ai/extractors";
 import { loadJsPDF } from "@/lib/lazyImports";
 
@@ -90,23 +90,23 @@ export function RentIncreaseLetter() {
     // Header
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(landlord.name || "[Vermieter Name]", margin, y); y += 5;
-    doc.text(landlord.address || "[Adresse]", margin, y); y += 12;
-    doc.text(tenantName, margin, y); y += 5;
-    doc.text(tenantAddress || "[Mieteradresse]", margin, y); y += 12;
+    doc.text(sanitizeForPdf(landlord.name || "[Vermieter Name]"), margin, y); y += 5;
+    doc.text(sanitizeForPdf(landlord.address || "[Adresse]"), margin, y); y += 12;
+    doc.text(sanitizeForPdf(tenantName), margin, y); y += 5;
+    doc.text(sanitizeForPdf(tenantAddress || "[Mieteradresse]"), margin, y); y += 12;
 
     // Date right-aligned
-    doc.text(today, 190 - doc.getTextWidth(today), y); y += 15;
+    doc.text(sanitizeForPdf(today), 190 - doc.getTextWidth(sanitizeForPdf(today)), y); y += 15;
 
     // Title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Mieterhöhungsverlangen gemäß § 558 BGB", margin, y); y += 12;
+    doc.text(sanitizeForPdf("Mieterhöhungsverlangen gemäß § 558 BGB"), margin, y); y += 12;
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Sehr geehrte/r ${tenantName},`, margin, y); y += 8;
-    const intro = doc.splitTextToSize("hiermit erlaube ich mir, Sie um Ihre Zustimmung zur Erhöhung der Nettokaltmiete zu bitten.", 160);
+    doc.text(sanitizeForPdf(`Sehr geehrte/r ${tenantName},`), margin, y); y += 8;
+    const intro = doc.splitTextToSize(sanitizeForPdf("hiermit erlaube ich mir, Sie um Ihre Zustimmung zur Erhöhung der Nettokaltmiete zu bitten."), 160);
     doc.text(intro, margin, y); y += intro.length * 5 + 8;
 
     // Highlight box
@@ -114,30 +114,30 @@ export function RentIncreaseLetter() {
     doc.setFillColor(240, 249, 244);
     doc.roundedRect(margin, y - 2, 160, 28, 2, 2, "FD");
     doc.setFont("helvetica", "bold");
-    doc.text(`Aktuelle Miete: ${formatCurrency(currentRent)} / Monat`, margin + 4, y + 5);
-    doc.text(`Neue Miete: ${formatCurrency(newRent)} / Monat`, margin + 4, y + 11);
-    doc.text(`Erhöhung: ${formatCurrency(newRent - currentRent)} (${increase.toFixed(1)}%)`, margin + 4, y + 17);
-    doc.text(`Wirksam ab: ${new Date(effectiveDate).toLocaleDateString("de-DE")}`, margin + 4, y + 23);
+    doc.text(sanitizeForPdf(`Aktuelle Miete: ${formatCurrency(currentRent)} / Monat`), margin + 4, y + 5);
+    doc.text(sanitizeForPdf(`Neue Miete: ${formatCurrency(newRent)} / Monat`), margin + 4, y + 11);
+    doc.text(sanitizeForPdf(`Erhöhung: ${formatCurrency(newRent - currentRent)} (${increase.toFixed(1)}%)`), margin + 4, y + 17);
+    doc.text(sanitizeForPdf(`Wirksam ab: ${new Date(effectiveDate).toLocaleDateString("de-DE")}`), margin + 4, y + 23);
     y += 35;
 
     doc.setFont("helvetica", "normal");
     doc.setFont("helvetica", "bold");
-    doc.text("Begründung:", margin, y);
+    doc.text(sanitizeForPdf("Begründung:"), margin, y);
     doc.setFont("helvetica", "normal");
-    const reasonLines = doc.splitTextToSize(reason, 160);
+    const reasonLines = doc.splitTextToSize(sanitizeForPdf(reason), 160);
     doc.text(reasonLines, margin + 25, y); y += reasonLines.length * 5 + 6;
 
     if (mietspiegelRef) {
       doc.setFont("helvetica", "bold");
-      doc.text("Referenz Mietspiegel:", margin, y);
+      doc.text(sanitizeForPdf("Referenz Mietspiegel:"), margin, y);
       doc.setFont("helvetica", "normal");
-      doc.text(mietspiegelRef, margin + 43, y); y += 8;
+      doc.text(sanitizeForPdf(mietspiegelRef), margin + 43, y); y += 8;
     }
 
     if (mietspiegelInfo && sqm > 0) {
       doc.setFontSize(9);
       doc.setTextColor(100);
-      doc.text(`Mietspiegel ${city} (${mietspiegelInfo.year}): ${mietspiegelInfo.min.toFixed(2)}–${mietspiegelInfo.max.toFixed(2)} €/m² · Neue Miete: ${rentPerSqm.toFixed(2)} €/m²`, margin, y);
+      doc.text(sanitizeForPdf(`Mietspiegel ${city} (${mietspiegelInfo.year}): ${mietspiegelInfo.min.toFixed(2)}-${mietspiegelInfo.max.toFixed(2)} EUR/m² · Neue Miete: ${rentPerSqm.toFixed(2)} EUR/m²`), margin, y);
       doc.setTextColor(0);
       doc.setFontSize(10);
       y += 8;
@@ -148,26 +148,26 @@ export function RentIncreaseLetter() {
       doc.roundedRect(margin, y - 2, 160, 12, 2, 2, "F");
       doc.setFontSize(9);
       doc.setTextColor(200, 100, 0);
-      doc.text(`Hinweis: Die Erhöhung überschreitet die Kappungsgrenze von ${kappungsgrenze}% (§ 558 Abs. 3 BGB).`, margin + 4, y + 5);
+      doc.text(sanitizeForPdf(`Hinweis: Die Erhöhung überschreitet die Kappungsgrenze von ${kappungsgrenze}% (§ 558 Abs. 3 BGB).`), margin + 4, y + 5);
       doc.setTextColor(0);
       doc.setFontSize(10);
       y += 16;
     }
 
     const closingText = doc.splitTextToSize(
-      "Gemäß § 558b BGB bitte ich Sie, Ihre Zustimmung innerhalb von zwei Monaten nach Zugang dieses Schreibens zu erklären. Die erhöhte Miete wird ab dem dritten Kalendermonat nach Zugang dieses Verlangens fällig.",
+      sanitizeForPdf("Gemäß § 558b BGB bitte ich Sie, Ihre Zustimmung innerhalb von zwei Monaten nach Zugang dieses Schreibens zu erklären. Die erhöhte Miete wird ab dem dritten Kalendermonat nach Zugang dieses Verlangens fällig."),
       160
     );
     doc.text(closingText, margin, y); y += closingText.length * 5 + 8;
-    doc.text("Für Rückfragen stehe ich Ihnen gerne zur Verfügung.", margin, y); y += 10;
-    doc.text("Mit freundlichen Grüßen", margin, y); y += 20;
+    doc.text(sanitizeForPdf("Für Rückfragen stehe ich Ihnen gerne zur Verfügung."), margin, y); y += 10;
+    doc.text(sanitizeForPdf("Mit freundlichen Grüßen"), margin, y); y += 20;
     doc.text("_________________________________", margin, y); y += 6;
-    doc.text(`${landlord.name || "[Vermieter]"}, ${today}`, margin, y);
+    doc.text(sanitizeForPdf(`${landlord.name || "[Vermieter]"}, ${today}`), margin, y);
 
     // Footer
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text("Erstellt mit ImmoControl · Mieterhöhungsverlangen nach § 558 BGB", margin, 285);
+    doc.text(sanitizeForPdf("Erstellt mit ImmoControl · Mieterhöhungsverlangen nach § 558 BGB"), margin, 285);
 
     doc.save(`Mieterhoehung_${tenantName.replace(/\s+/g, "_")}_${effectiveDate}.pdf`);
     toast.success("Mieterhöhungsschreiben als PDF erstellt!");

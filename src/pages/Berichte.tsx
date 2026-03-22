@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
-import { formatCurrency, downloadBlob } from "@/lib/formatters";
+import { formatCurrency, downloadBlob, sanitizeForPdf } from "@/lib/formatters";
 import { getAnnualAfa } from "@/lib/afaSanierung";
 import { TaxYearOverview } from "@/components/TaxYearOverview";
 import { SteuerJahresabschluss } from "@/components/SteuerJahresabschluss";
@@ -119,7 +119,7 @@ const Berichte = () => {
     // Header
     doc.setFontSize(18);
     doc.setTextColor(42, 157, 110);
-    doc.text(title, 14, y);
+    doc.text(sanitizeForPdf(title), 14, y);
     y += 4;
     doc.setDrawColor(42, 157, 110);
     doc.setLineWidth(0.5);
@@ -131,15 +131,15 @@ const Berichte = () => {
         checkPage(12);
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
-        doc.text(section.heading, 14, y);
+        doc.text(sanitizeForPdf(section.heading), 14, y);
         y += 7;
       }
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       for (const [label, value] of section.rows) {
         checkPage(7);
-        doc.text(label, 14, y);
-        doc.text(value, pageW - 14, y, { align: "right" });
+        doc.text(sanitizeForPdf(label), 14, y);
+        doc.text(sanitizeForPdf(value), pageW - 14, y, { align: "right" });
         y += 5.5;
       }
       y += 3;
@@ -150,7 +150,7 @@ const Berichte = () => {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(170, 170, 170);
-      doc.text(`ImmoControl · ${title} · ${new Date().toLocaleDateString("de-DE")} · Seite ${i}/${pageCount}`, pageW / 2, 287, { align: "center" });
+      doc.text(sanitizeForPdf(`ImmoControl · ${title} · ${new Date().toLocaleDateString("de-DE")} · Seite ${i}/${pageCount}`), pageW / 2, 287, { align: "center" });
     }
     doc.save(`${title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_${year}.pdf`);
     trackReport();

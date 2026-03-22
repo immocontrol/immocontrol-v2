@@ -9,7 +9,15 @@ initSentryIfConfigured();
 
 /* STABILITY: Track unhandled promise rejections so they don't fail silently */
 window.addEventListener("unhandledrejection", (event) => {
-  const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+  const r = event.reason;
+  let err: Error;
+  if (r instanceof Error) {
+    err = r;
+  } else if (r && typeof r === "object" && "message" in r && typeof (r as { message: unknown }).message === "string") {
+    err = new Error((r as { message: string }).message);
+  } else {
+    err = new Error(r != null && typeof r !== "object" ? String(r) : "Unhandled promise rejection");
+  }
   trackError(err, "unhandledrejection");
 });
 

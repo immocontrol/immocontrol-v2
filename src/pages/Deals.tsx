@@ -136,15 +136,16 @@ const Deals = () => {
   });
 
   /* UPD-20: Use centralised query keys */
-  const { data: deals = [], isLoading } = useQuery({
+  const { data: dealsRaw, isLoading } = useQuery({
     queryKey: [...queryKeys.deals.all, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("deals").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data as DealRecord[];
+      return (Array.isArray(data) ? data : []) as DealRecord[];
     },
     enabled: !!user,
   });
+  const deals = Array.isArray(dealsRaw) ? dealsRaw : [];
 
   const saveDeal = useMutation({
     mutationFn: async () => {

@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProperties } from "@/context/PropertyContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, sanitizeForPdf } from "@/lib/formatters";
 import { toast } from "sonner";
 import { loadJsPDF } from "@/lib/lazyImports";
 import { handleError } from "@/lib/handleError";
@@ -168,7 +168,7 @@ export const AnlageVExport = () => {
       const addTitle = (text: string) => {
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.text(text, margin, y);
+        doc.text(sanitizeForPdf(text), margin, y);
         y += 10;
       };
 
@@ -177,7 +177,7 @@ export const AnlageVExport = () => {
         doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(60, 120, 80);
-        doc.text(text, margin, y);
+        doc.text(sanitizeForPdf(text), margin, y);
         doc.setTextColor(0);
         y += 7;
       };
@@ -186,8 +186,8 @@ export const AnlageVExport = () => {
         doc.setFontSize(10);
         doc.setFont("helvetica", bold ? "bold" : "normal");
         const zPrefix = zeile ? `(Z. ${zeile}) ` : "";
-        doc.text(`${zPrefix}${label}`, margin, y);
-        const amountStr = formatCurrency(amount);
+        doc.text(sanitizeForPdf(`${zPrefix}${label}`), margin, y);
+        const amountStr = sanitizeForPdf(formatCurrency(amount));
         doc.text(amountStr, 190 - doc.getTextWidth(amountStr), y);
         y += 6;
       };
@@ -203,7 +203,7 @@ export const AnlageVExport = () => {
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(120);
-      doc.text(`Erstellt am ${new Date().toLocaleDateString("de-DE")} · ${properties.length} Objekte`, margin, y);
+      doc.text(sanitizeForPdf(`Erstellt am ${new Date().toLocaleDateString("de-DE")} · ${properties.length} Objekte`), margin, y);
       doc.setTextColor(0);
       y += 10;
 
@@ -212,7 +212,7 @@ export const AnlageVExport = () => {
       properties.forEach((p, i) => {
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(`${i + 1}. ${p.name} – ${p.address || "k.A."} (Baujahr ${p.yearBuilt || "k.A."}, ${p.sqm} m²)`, margin + 2, y);
+        doc.text(sanitizeForPdf(`${i + 1}. ${p.name} - ${p.address || "k.A."} (Baujahr ${p.yearBuilt || "k.A."}, ${p.sqm} m²)`), margin + 2, y);
         y += 5;
       });
       y += 3;
@@ -249,18 +249,18 @@ export const AnlageVExport = () => {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100);
       if (anlageV.einkuenfteVV < 0) {
-        doc.text(`Geschätzte Steuerersparnis bei 42%: ${formatCurrency(anlageV.ersparnis42)}`, margin, y);
+        doc.text(sanitizeForPdf(`Geschätzte Steuerersparnis bei 42%: ${formatCurrency(anlageV.ersparnis42)}`), margin, y);
         y += 5;
-        doc.text(`Geschätzte Steuerersparnis bei 35%: ${formatCurrency(anlageV.ersparnis35)}`, margin, y);
+        doc.text(sanitizeForPdf(`Geschätzte Steuerersparnis bei 35%: ${formatCurrency(anlageV.ersparnis35)}`), margin, y);
       } else {
-        doc.text("Keine Steuerersparnis – Einkünfte aus V+V sind positiv.", margin, y);
+        doc.text(sanitizeForPdf("Keine Steuerersparnis – Einkünfte aus V+V sind positiv."), margin, y);
       }
       doc.setTextColor(0);
 
       // Footer
       doc.setFontSize(8);
       doc.setTextColor(150);
-      doc.text("ImmoControl · Anlage V Übersicht · Keine Steuerberatung – bitte Steuerberater konsultieren", margin, 280);
+      doc.text(sanitizeForPdf("ImmoControl · Anlage V Übersicht · Keine Steuerberatung - bitte Steuerberater konsultieren"), margin, 280);
 
       doc.save(`Anlage_V_${year}.pdf`);
       toast.success(`Anlage V für ${year} heruntergeladen`);

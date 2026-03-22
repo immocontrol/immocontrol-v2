@@ -98,6 +98,26 @@ export const formatNumberDE = (value: number | string): string => {
   return new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(num);
 };
 
+/** Format raw digits during typing with German thousand separators (1.000, 10.000 etc.) */
+export const formatRawNumberDE = (raw: string): string => {
+  const cleaned = raw.replace(/[^\d,.-]/g, "");
+  const neg = cleaned.startsWith("-");
+  const rest = neg ? cleaned.slice(1) : cleaned;
+  const commaIdx = rest.indexOf(",");
+  let intPart: string;
+  let decPart: string;
+  if (commaIdx >= 0) {
+    intPart = rest.slice(0, commaIdx).replace(/\D/g, "");
+    decPart = rest.slice(commaIdx + 1).replace(/[^\d]/g, "").slice(0, 2);
+  } else {
+    intPart = rest.replace(/\D/g, "");
+    decPart = "";
+  }
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const result = (neg && (intPart || decPart) ? "-" : "") + formattedInt + (decPart ? `,${decPart}` : "");
+  return result;
+};
+
 /** Parse a German-formatted number string back to a number.
  *  FIX-13: Centralized German number parser — use this instead of inline .replace() chains.
  *  FIX-1: Uses global /,/g to replace ALL commas (not just the first one). */
@@ -492,4 +512,24 @@ export const parseNaturalDateDE = (input: string): string | null => {
   const daysMatch = lower.match(/^in\s+(\d+)\s*(?:d|tag|tagen?)$/i);
   if (daysMatch) { today.setDate(today.getDate() + parseInt(daysMatch[1], 10)); return today.toISOString().split("T")[0]; }
   return null;
+};
+
+/** Sanitize text for jsPDF (Helvetica/WinAnsi). Keeps ä, ö, ü, Ä, Ö, Ü, ß.
+ * Replaces problematic Unicode (em dash, typographic quotes, ellipsis, etc.) with ASCII equivalents.
+ * Replaces any char outside Latin-1 (0x00-0xFF) with "?" to avoid encoding errors. */
+export const sanitizeForPdf = (text: string): string => {
+  return (
+    String(text ?? "")
+      .replace(/[\u2014\u2013\u2212]/g, "-")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/\u2026/g, "...")
+      .replace(/\u2022/g, "-")
+      .replace(/\u00b7/g, " - ")  // middle dot (·)
+      .replace(/\u2713/g, "+")   // checkmark
+      .replace(/\u2717/g, "x")   // cross mark
+      .replace(/\u00A0/g, " ")
+      .replace(/\u20AC/g, " EUR")  // Euro not in WinAnsi
+      .replace(/[\u0100-\uFFFF]/g, "?")
+  );
 };

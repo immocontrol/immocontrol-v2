@@ -18,6 +18,7 @@ import { RecentPropertiesNav } from "@/components/RecentPropertiesNav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { generateTempId, isEqual } from "@/lib/formatters";
 import { useGlobalAutoSave } from "@/hooks/useAutoSave";
 import { useQueryClient, useIsFetching } from "@tanstack/react-query";
@@ -132,9 +133,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       });
   }, [user]);
 
-  /* BUG-5: Track dropdown open state for click-based dropdowns (fixes hidden dropdowns) */
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-
   /* BUG-9: Auto-fade bottom menu on scroll — track scroll direction */
   const [mobileNavVisible, setMobileNavVisible] = useState(true);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
@@ -176,39 +174,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  /* BUG-5: Close dropdown when clicking outside */
-  useEffect(() => {
-    if (!openDropdown) return;
-    const handleClick = () => setOpenDropdown(null);
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [openDropdown]);
-
-  /* Refs für Schließen beim Verlassen (Maus außerhalb Trigger + Panel) */
-  const openDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const openDropdownPanelRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!openDropdown) return;
-    const handleMove = (e: MouseEvent) => {
-      const trigger = openDropdownTriggerRef.current;
-      const panel = openDropdownPanelRef.current;
-      const x = e.clientX;
-      const y = e.clientY;
-      const inTrigger = trigger && (() => {
-        const r = trigger.getBoundingClientRect();
-        return x >= r.left - 2 && x <= r.right + 2 && y >= r.top - 2 && y <= r.bottom + 2;
-      })();
-      const inPanel = panel && (() => {
-        const r = panel.getBoundingClientRect();
-        return x >= r.left - 2 && x <= r.right + 2 && y >= r.top - 2 && y <= r.bottom + 2;
-      })();
-      if (!inTrigger && !inPanel) setOpenDropdown(null);
-    };
-    document.addEventListener("mousemove", handleMove, { passive: true });
-    return () => document.removeEventListener("mousemove", handleMove);
-  }, [openDropdown]);
 
   /* UPD-47: Safe logout with error handling */
   const handleLogout = async () => {
@@ -550,48 +515,42 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   const items = getGroupItems(entry);
                   const groupActive = items.some(i => isRouteActive(i.path, location.pathname));
                   return (
-                    <div key={entry.label} className="relative">
-                      <button
-                        ref={openDropdown === entry.label ? openDropdownTriggerRef : undefined}
-                        data-nav-top
-                        onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === entry.label ? null : entry.label); }}
-                        className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all touch-target whitespace-nowrap shrink-0 ${
-                          groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                        }`}
-                      >
-                        <entry.icon className="h-4 w-4 shrink-0" />
-                        {entry.label}
-                        <ChevronDown className={`h-3 w-3 shrink-0 transition-transform duration-base ease-out-modern ${openDropdown === entry.label ? "rotate-180 opacity-100" : "opacity-50"}`} />
-                      </button>
-                      <div
-                        ref={openDropdown === entry.label ? openDropdownPanelRef : undefined}
-                        className={`absolute top-full left-0 z-[300] mt-1 min-w-[200px] overflow-hidden rounded-xl border border-border/80 bg-popover/95 text-popover-foreground shadow-md backdrop-blur-sm transition-all duration-base ease-out-modern ${
-                          openDropdown === entry.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
-                        }`}
-                      >
+                    <DropdownMenu key={entry.label}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          data-nav-top
+                          className={`group flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all touch-target whitespace-nowrap shrink-0 ${
+                            groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          <entry.icon className="h-4 w-4 shrink-0" />
+                          {entry.label}
+                          <ChevronDown className="h-3 w-3 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-base ease-out-modern" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" sideOffset={4} className="min-w-[200px] z-[200]">
                         {items.map((item) => {
                           const isActive = isRouteActive(item.path, location.pathname);
                           const basePath = item.path.split("?")[0];
                           const navAttr = item.path === ROUTES.LOANS ? { "data-nav-loans": "" } : item.path === ROUTES.RENT ? { "data-nav-rent": "" } : item.path === ROUTES.CONTACTS ? { "data-nav-contacts": "" } : {};
                           return (
-                            <Link
-                              key={item.path}
-                              to={item.path}
-                              onMouseEnter={() => scheduleRoutePreload(basePath)}
-                              onMouseLeave={cancelRoutePreload}
-                              {...navAttr}
-                              aria-current={isActive ? "page" : undefined}
-                              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                                isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-secondary"
-                              }`}
-                            >
-                              <item.icon className="h-4 w-4" />
-                              {item.label}
-                            </Link>
+                            <DropdownMenuItem key={item.path} asChild>
+                              <Link
+                                to={item.path}
+                                onMouseEnter={() => scheduleRoutePreload(basePath)}
+                                onMouseLeave={cancelRoutePreload}
+                                {...navAttr}
+                                aria-current={isActive ? "page" : undefined}
+                                className={`flex items-center gap-2 cursor-pointer ${isActive ? "bg-primary/10 text-primary" : ""}`}
+                              >
+                                <item.icon className="h-4 w-4" />
+                                {item.label}
+                              </Link>
+                            </DropdownMenuItem>
                           );
                         })}
-                      </div>
-                    </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   );
                 }
                 const isActive = isRouteActive(entry.path, location.pathname);

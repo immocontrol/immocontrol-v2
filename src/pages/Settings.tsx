@@ -489,7 +489,8 @@ const Settings = () => {
       </aside>
 
       {/* Main settings content — mittig zentriert; auf Desktop neben fixierter Sidebar (lg:ml-48) */}
-      <div className="w-full min-w-0 box-border space-y-6 max-w-lg mx-auto flex-1 px-2 sm:px-0 lg:ml-48 overflow-x-hidden">
+      <div className="flex-1 flex justify-center w-full min-w-0 lg:ml-48 overflow-x-hidden">
+        <div className="w-full max-w-lg box-border space-y-6 px-2 sm:px-0">
         <PageHeader className="flex-col items-center text-center !mb-6 md:!mb-8">
           <PageHeaderMain className="text-center">
             <PageHeaderTitle className="justify-center">
@@ -579,7 +580,9 @@ const Settings = () => {
             </div>
             {emailStep === "password" && (
               <div className="mt-3 p-3 rounded-lg bg-secondary/30 border border-border space-y-3">
-                <p className="text-[10px] text-muted-foreground">Passwort bestätigen, dann neue E-Mail eingeben. Bestätigungslink geht an alte und neue Adresse.</p>
+                <p className="text-[10px] text-muted-foreground">
+                  1) Passwort bestätigen · 2) Neue E-Mail eingeben · 3) Bestätigungslink an die neue Adresse (zum Abschließen), Hinweis an die alte Adresse.
+                </p>
                 <div className="relative">
                   <Input
                     type={showEmailPassword ? "text" : "password"}
@@ -764,6 +767,7 @@ const Settings = () => {
           <p className="text-[10px] text-muted-foreground">
           ImmoControl{typeof __APP_PACKAGE_VERSION__ !== "undefined" && __APP_PACKAGE_VERSION__ ? ` v${__APP_PACKAGE_VERSION__}` : " v2.0"}
         </p>
+        </div>
         </div>
       </div>
     </div>

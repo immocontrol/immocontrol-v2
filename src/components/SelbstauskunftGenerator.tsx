@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
 import { handleError } from "@/lib/handleError";
 import { queryKeys } from "@/lib/queryKeys";
+import { sanitizeForPdf } from "@/lib/formatters";
 import { isDeepSeekConfigured, suggestSelbstauskunftSummary } from "@/integrations/ai/extractors";
 
 /* IMPROVE-14: Remove unused jsPDF import (smaller bundle, fewer dependencies) */
@@ -54,22 +55,6 @@ const defaultData: SelbstauskunftData = {
 const fmtCur = (v: string) => {
   const n = parseFloat(v);
   return isNaN(n) ? "" : n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " \u20ac";
-};
-
-/* BUG-1: Sanitize text for WinAnsi encoding — replace non-WinAnsi chars with ASCII equivalents */
-/* BUG-2: Fixes "WinAnsi cannot encode \"−\" (0x2212)" error by mapping all problematic Unicode chars to ASCII */
-const sanitizeForWinAnsi = (text: string): string => {
-  return text
-    .replace(/\u2212/g, "-")   // minus sign -> hyphen
-    .replace(/\u2013/g, "-")   // en-dash -> hyphen
-    .replace(/\u2014/g, "--")  // em-dash -> double hyphen
-    .replace(/\u2018/g, "'")   // left single quote
-    .replace(/\u2019/g, "'")   // right single quote
-    .replace(/\u201c/g, '"')   // left double quote
-    .replace(/\u201d/g, '"')   // right double quote
-    .replace(/\u2026/g, "...") // ellipsis
-    .replace(/\u00b7/g, ".")   // middle dot
-    .replace(/\u2022/g, "*");  // bullet
 };
 
 const NAME_FIELDS: (keyof SelbstauskunftData)[] = ["name", "vorname", "geburtsname", "geburtsort"];
@@ -206,7 +191,7 @@ export const SelbstauskunftGenerator = () => {
       const drawText = (text: string, x: number, yPos: number, opts: { size?: number; bold?: boolean; color?: [number, number, number] } = {}) => {
         const font = opts.bold ? helveticaBold : helvetica;
         const c = opts.color || [30, 30, 30];
-        page.drawText(sanitizeForWinAnsi(text), { x, y: yPos, size: opts.size || 10, font, color: rgb(c[0] / 255, c[1] / 255, c[2] / 255) });
+        page.drawText(sanitizeForPdf(text), { x, y: yPos, size: opts.size || 10, font, color: rgb(c[0] / 255, c[1] / 255, c[2] / 255) });
       };
 
       const checkPage = (needed: number) => {
@@ -233,7 +218,7 @@ export const SelbstauskunftGenerator = () => {
         page.drawRectangle({ x, y: yPos - 2, width: w, height: 16, color: rgb(0.98, 0.98, 0.98), borderColor: rgb(0.78, 0.78, 0.78), borderWidth: 0.5 });
         // Create fillable form field
         const textField = form.createTextField(fieldName);
-        textField.setText(sanitizeForWinAnsi(value || ""));
+        textField.setText(sanitizeForPdf(value || ""));
         textField.addToPage(page, { x: x + 2, y: yPos, width: w - 4, height: 12, borderWidth: 0 });
         try { textField.setFontSize(9); } catch { /* some viewers handle font size differently */ }
       };
@@ -383,11 +368,11 @@ export const SelbstauskunftGenerator = () => {
       const tp = pages.length;
       for (let i = 0; i < tp; i++) {
         const pg = pages[i];
-        /* BUG-2: Apply sanitizeForWinAnsi to footer text to prevent encoding crash */
-        pg.drawText(sanitizeForWinAnsi("Selbstauskunft \u00b7 " + data.vorname + " " + data.name + " \u00b7 Seite " + (i + 1) + "/" + tp), {
+        /* BUG-2: Apply sanitizeForPdf to footer text to prevent encoding crash */
+        pg.drawText(sanitizeForPdf("Selbstauskunft · " + data.vorname + " " + data.name + " · Seite " + (i + 1) + "/" + tp), {
           x: margin, y: 20, size: 7, font: helvetica, color: rgb(0.7, 0.7, 0.7),
         });
-        pg.drawText(sanitizeForWinAnsi("Erstellt mit ImmoControl"), {
+        pg.drawText(sanitizeForPdf("Erstellt mit ImmoControl"), {
           x: pageW - margin - 100, y: 20, size: 7, font: helvetica, color: rgb(0.7, 0.7, 0.7),
         });
       }

@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Receipt, Plus, Check, Clock, AlertTriangle, Trash2, Download, Mail, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency, formatDate, sanitizeForPdf } from "@/lib/formatters";
 import { toastSuccess, toastError } from "@/lib/toastMessages";
 import { useProperties } from "@/context/PropertyContext";
 import { EmptyState } from "@/components/EmptyState";
@@ -230,11 +230,11 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
       const checkPage = (need: number) => { if (y + need > pageH - 20) { doc.addPage("a4", "landscape"); y = 18; } };
       doc.setFontSize(14);
       doc.setTextColor(42, 157, 110);
-      doc.text("Rechnungsübersicht", 14, y);
+      doc.text(sanitizeForPdf("Rechnungsübersicht"), 14, y);
       y += 6;
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 80);
-      doc.text(`Export: ${new Date().toLocaleDateString("de-DE")} · ${filteredInvoices.length} Rechnungen`, 14, y);
+      doc.text(sanitizeForPdf(`Export: ${new Date().toLocaleDateString("de-DE")} · ${filteredInvoices.length} Rechnungen`), 14, y);
       y += 8;
       doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(0.3);
@@ -243,7 +243,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
       doc.setFontSize(8);
       doc.setTextColor(34, 34, 34);
       let x = 14;
-      headers.forEach((h, i) => { doc.text(h, x, y); x += colW[i]; });
+      headers.forEach((h, i) => { doc.text(sanitizeForPdf(h), x, y); x += colW[i]; });
       y += 5;
       doc.setDrawColor(220, 220, 220);
       doc.line(14, y, pageW - 14, y);
@@ -254,7 +254,7 @@ const InvoiceManagement = ({ initialOpen, initialPropertyId, onAddOpened }: Invo
         const catLabel = CATEGORIES.find(c => c.value === inv.category)?.label || inv.category;
         const row = [inv.invoice_date, inv.vendor_name.substring(0, 22), getPropertyName(inv.property_id).substring(0, 18), catLabel.substring(0, 18), formatCurrency(inv.amount), inv.status, inv.due_date || "–"];
         x = 14;
-        row.forEach((cell, i) => { doc.text(String(cell), x, y); x += colW[i]; });
+        row.forEach((cell, i) => { doc.text(sanitizeForPdf(String(cell)), x, y); x += colW[i]; });
         y += 5;
       }
       doc.save(`rechnungen-${new Date().toISOString().slice(0, 10)}.pdf`);

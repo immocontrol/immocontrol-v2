@@ -1,13 +1,15 @@
 /**
  * MOB2-15: Biometrische Schnellaktionen
  * After biometric authentication, quick access to frequent actions.
- * Uses Web Authentication API (WebAuthn) for biometric verification.
+ * Nur in nativer iOS-App — verwendet isBiometricSupported (kein WebAuthn im Browser).
  */
 import { memo, useState, useCallback, useEffect } from "react";
 import { Fingerprint, Building2, FileText, Euro, Users, Shield, Lock, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
+import { isBiometricSupported } from "@/lib/biometric";
+import { verifyWithNativeBiometric } from "@/integrations/nativeBiometric";
 
 interface QuickActionItem {
   id: string;
@@ -36,38 +38,6 @@ const DEFAULT_ACTIONS: QuickActionItem[] = [
   { id: "tenants", label: "Mieterdaten", description: "Persönliche Mieterdaten einsehen", icon: <Users className="h-5 w-5" />, onClick: () => {}, requiresAuth: true },
 ];
 
-/** Check if biometric authentication is available */
-async function checkBiometricAvailability(): Promise<boolean> {
-  try {
-    if (!window.PublicKeyCredential) return false;
-    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    return available;
-  } catch { return false; }
-}
-
-/** Trigger biometric authentication via navigator.credentials.get() */
-async function requestBiometricAuth(): Promise<boolean> {
-  try {
-    // Use credentials.get() for verification (not create which registers new credentials)
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-
-    // Try to use the platform authenticator for biometric verification
-    const credential = await navigator.credentials.get({
-      publicKey: {
-        challenge,
-        rpId: window.location.hostname,
-        userVerification: "required",
-        timeout: 60000,
-      },
-    });
-    return !!credential;
-  } catch {
-    // Fallback: if no credential is registered, the biometric prompt itself
-    // still validates the user's identity on supported devices
-    return false;
-  }
-}
 
 export const MobileBiometricQuickActions = memo(function MobileBiometricQuickActions({
   actions = DEFAULT_ACTIONS, biometricAvailable: biometricProp, onAuthenticated, className,
@@ -78,17 +48,17 @@ export const MobileBiometricQuickActions = memo(function MobileBiometricQuickAct
   const [authenticating, setAuthenticating] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState<boolean | null>(biometricProp ?? null);
 
-  // Check availability on mount
+  // Check availability on mount (nur native iOS)
   useEffect(() => {
     if (biometricProp !== undefined) return;
-    checkBiometricAvailability().then(setBiometricSupported).catch(() => setBiometricSupported(false));
+    isBiometricSupported().then(setBiometricSupported).catch(() => setBiometricSupported(false));
   }, [biometricProp]);
 
   const handleAuth = useCallback(async (): Promise<boolean> => {
     setAuthenticating(true);
     haptic.medium();
 
-    const success = await requestBiometricAuth();
+    const success = await verifyWithNativeBiometric("Schnellaktionen entsperren");
 
     if (success) {
       haptic.success();

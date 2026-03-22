@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency, formatCurrencyCompact } from "@/lib/formatters";
+import { formatCurrency, formatCurrencyCompact, sanitizeForPdf } from "@/lib/formatters";
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine, BarChart, Bar, CartesianGrid, Line, ComposedChart } from "recharts";
 import { toast } from "sonner";
 import {
@@ -234,9 +234,9 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFontSize(18);
-    doc.text("Hockey Stick Simulator \u2014 Bericht", 14, 15);
+    doc.text(sanitizeForPdf("Hockey Stick Simulator - Bericht"), 14, 15);
     doc.setFontSize(9);
-    doc.text(`Erstellt: ${new Date().toLocaleString("de-DE")}`, 14, 22);
+    doc.text(sanitizeForPdf(`Erstellt: ${new Date().toLocaleString("de-DE")}`), 14, 22);
     doc.setFontSize(12);
     doc.text("Zusammenfassung", 14, 32);
     doc.setFontSize(9);
@@ -253,12 +253,12 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
       breakEvenYear !== null ? `Break-Even: Jahr ${breakEvenYear}` : "",
       debtFreeYear !== null ? `Schuldenfrei: Jahr ${debtFreeYear}` : "",
     ].filter(Boolean);
-    summaryLines.forEach((l, i) => doc.text(l, 14, 38 + i * 5));
+    summaryLines.forEach((l, i) => doc.text(sanitizeForPdf(l), 14, 38 + i * 5));
     let ty = 38 + summaryLines.length * 5 + 12;
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     ["Jahr", "Portfolio", "EK", "Investiert", "Miete", "Netto", "Schulden", "LTV"].forEach((c, i) =>
-      doc.text(c, 14 + i * 30, ty)
+      doc.text(sanitizeForPdf(c), 14 + i * 30, ty)
     );
     ty += 4;
     doc.setFont("helvetica", "normal");
@@ -267,7 +267,7 @@ export function HockeyStickSimulator({ embedded = false }: { embedded?: boolean 
       [String(d.year), formatCurrencyCompact(d.portfolioValue), formatCurrencyCompact(d.equity),
         formatCurrencyCompact(d.totalInvested), formatCurrencyCompact(d.rentalIncome),
         formatCurrencyCompact(d.netWorth), formatCurrencyCompact(d.debtRemaining), `${d.ltv}%`
-      ].forEach((v, i) => doc.text(v, 14 + i * 30, ty));
+      ].forEach((v, i) => doc.text(sanitizeForPdf(v), 14 + i * 30, ty));
       ty += 4;
     }
     doc.save(`hockey-stick-bericht-${new Date().toISOString().slice(0, 10)}.pdf`);

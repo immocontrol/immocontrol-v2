@@ -214,8 +214,8 @@ const PropertyDetail = () => {
       </div>
 
       <div className="animate-fade-in">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
             {/* IMP-46: Truncate long property names on mobile to prevent overflow */}
             <PageHeaderTitle className="text-2xl font-bold truncate max-w-[250px] sm:max-w-none">{property.name}</PageHeaderTitle>
             {/* UI-UPDATE-43: Tooltip on copy address action */}
@@ -266,7 +266,7 @@ const PropertyDetail = () => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <QuickActions onScrollTo={scrollToSection} onNavigate={(p) => navigate(p)} propertyId={property.id} />
             <EditPropertyDialog property={property} />
             {/* Share/Copy property summary */}

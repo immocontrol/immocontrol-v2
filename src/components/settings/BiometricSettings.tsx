@@ -87,13 +87,11 @@ export function BiometricSettings({ sectionRef, displayName }: BiometricSettings
       {!biometricSupported ? (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground flex items-center gap-1 p-3 rounded-lg bg-secondary/30 border border-border">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Dein Gerät unterstützt keine biometrische Authentifizierung
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            {isNativeIos
+              ? "Dein Gerät unterstützt keine biometrische Authentifizierung. Stelle sicher, dass Face ID in den iOS-Einstellungen aktiviert ist."
+              : "Face ID / Touch ID ist nur in der nativen iPhone-App verfügbar — nicht im Browser."}
           </p>
-          {isNativeIos && (
-            <p className="text-[11px] text-muted-foreground">
-              iPhone-App: Stelle sicher, dass Face ID in den Einstellungen aktiviert ist.
-            </p>
-          )}
         </div>
       ) : (
         <SettingsToggleRow

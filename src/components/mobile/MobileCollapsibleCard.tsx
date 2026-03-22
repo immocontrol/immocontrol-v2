@@ -37,9 +37,8 @@ export const MobileCollapsibleCard = memo(function MobileCollapsibleCard({
   useEffect(() => {
     if (!contentRef.current) return;
     const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContentHeight(entry.contentRect.height);
-      }
+      const last = entries[entries.length - 1];
+      if (last) requestAnimationFrame(() => setContentHeight(last.contentRect.height));
     });
     observer.observe(contentRef.current);
     return () => observer.disconnect();

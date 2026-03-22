@@ -102,10 +102,10 @@ export const MobileContextualHelp = memo(function MobileContextualHelp({
 
     updatePosition();
 
-    // Observe resize
+    // Observe resize (raf to avoid ResizeObserver loop warning)
     const el = document.querySelector(mark.targetSelector);
     if (el) {
-      observerRef.current = new ResizeObserver(updatePosition);
+      observerRef.current = new ResizeObserver(() => requestAnimationFrame(updatePosition));
       observerRef.current.observe(el);
     }
 

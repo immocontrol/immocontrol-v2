@@ -26,20 +26,14 @@ interface MutationErrorOptions {
 
 /** Extract a user-friendly error message from a Supabase/generic error */
 export function getMutationErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    // Check for Supabase error code
-    const supaErr = error as Error & { code?: string; details?: string; hint?: string };
-    if (supaErr.code && ERROR_MESSAGES[supaErr.code]) {
-      return ERROR_MESSAGES[supaErr.code];
-    }
-    // Network errors
-    if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-      return "Netzwerkfehler — bitte Internetverbindung prüfen";
-    }
-    if (error.message.includes("JWT expired") || error.message.includes("token")) {
-      return "Sitzung abgelaufen — bitte erneut anmelden";
-    }
-    return error.message;
+  const supaErr = error as { message?: string; code?: string; details?: string; hint?: string } | null;
+  const msg = typeof supaErr?.message === "string" ? supaErr.message : (error instanceof Error ? error.message : null);
+  if (supaErr?.code && ERROR_MESSAGES[supaErr.code]) return ERROR_MESSAGES[supaErr.code];
+  if (msg) {
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "Netzwerkfehler — bitte Internetverbindung prüfen";
+    if (msg.includes("JWT expired") || msg.includes("token")) return "Sitzung abgelaufen — bitte erneut anmelden";
+    if (supaErr?.details && typeof supaErr.details === "string") return `${msg} (${supaErr.details})`;
+    return msg;
   }
   if (typeof error === "string") return error;
   return "Ein unbekannter Fehler ist aufgetreten";

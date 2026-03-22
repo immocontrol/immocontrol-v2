@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { useProperties } from "@/context/PropertyContext";
 import { formatCurrency } from "@/lib/formatters";
+import { getMietspiegel, extractCityForMietspiegel } from "@/lib/mietspiegelApi";
 import { Info, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -37,7 +38,23 @@ export function MietspiegelCheck({
     return properties.map((p) => {
       const sqm = p.sqm || 1;
       const coldRentPerSqm = (p.monthlyRent || 0) / sqm;
-      const spiegel = overridePerSqm[p.id] ?? mietspiegelPerSqm[p.id] ?? defaultMietspiegelPerSqm;
+      let spiegel: number;
+      let source: string;
+      const city = extractCityForMietspiegel(p.address, p.location);
+      const entry = city ? getMietspiegel(city) : null;
+      if (overridePerSqm[p.id] != null) {
+        spiegel = overridePerSqm[p.id];
+        source = "Manueller Wert";
+      } else if (entry) {
+        spiegel = entry.avgRentPerSqm;
+        source = `${entry.source} (Ø ${entry.minRentPerSqm.toFixed(1)}–${entry.maxRentPerSqm.toFixed(1)} €/m²)`;
+      } else if (mietspiegelPerSqm[p.id] != null) {
+        spiegel = mietspiegelPerSqm[p.id];
+        source = "Manuell hinterlegt";
+      } else {
+        spiegel = defaultMietspiegelPerSqm;
+        source = `Standardwert – Stadt in Adresse/Location eintragen für Mietspiegel`;
+      }
       const diffPercent = spiegel > 0 ? ((coldRentPerSqm - spiegel) / spiegel) * 100 : 0;
       const potentialMonthly = Math.max(0, (spiegel - coldRentPerSqm) * sqm);
       return {
@@ -48,6 +65,7 @@ export function MietspiegelCheck({
         sqm,
         coldRentPerSqm,
         spiegel,
+        source,
         diffPercent,
         potentialMonthly,
         status: diffPercent < -10 ? "unter" : diffPercent > 10 ? "über" : "marktgerecht",
@@ -68,8 +86,7 @@ export function MietspiegelCheck({
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               <p>
-                Vergleicht deine Ist-Miete (kalt/m²) mit dem Mietspiegel. Werte aus Mietspiegel-Datenbank
-                oder manuell hinterlegen. §558 BGB Mieterhöhung prüfen.
+                Vergleicht deine Ist-Miete (kalt/m²) mit dem Mietspiegel. Daten aus amtlichen Mietspiegeln deutscher Städte (2023/2024) oder Standardwert. §558 BGB Mieterhöhung prüfen.
               </p>
             </TooltipContent>
           </Tooltip>
@@ -82,12 +99,15 @@ export function MietspiegelCheck({
             key={a.id}
             className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-secondary/30"
           >
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="font-medium text-sm truncate" title={a.name}>
                 {a.name}
               </p>
               <p className="text-xs text-muted-foreground truncate" title={a.address}>
                 {a.address}
+              </p>
+              <p className="text-[10px] text-muted-foreground/80 mt-0.5" title={a.source}>
+                {a.source}
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs">

@@ -106,7 +106,7 @@ export function PasskeySettings({ sectionRef, displayName }: PasskeySettingsProp
         <Fingerprint className="h-4 w-4 text-muted-foreground" /> Passkeys
       </h2>
       <p className="text-xs text-muted-foreground">
-        Melde dich mit Fingerabdruck, Gesichtserkennung oder deinem Geräte-PIN an.
+        Passkeys ersetzen Passwörter durch sichere, gerätegebundene Anmeldedaten. Beim Login gibt dein Gerät den Passkey frei – je nach Einstellung mit Fingerabdruck, Gesichtserkennung oder Geräte-PIN.
       </p>
       {!passkeySupported ? (
         <p className="text-xs text-loss flex items-center gap-1">

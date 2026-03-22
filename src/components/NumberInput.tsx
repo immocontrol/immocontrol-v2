@@ -50,7 +50,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       setDisplay(numToDisplay(num));
     }, [value, numToDisplay]);
 
-    const handleFocus = () => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       isFocused.current = true;
       /* When value is 0, clear on focus so first key replaces (0 is placeholder hint) */
       const num = typeof value === "string" ? parseFloat(String(value)) : (value as number);
@@ -59,6 +59,8 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         return;
       }
       if (!display && num) setDisplay(numToDisplay(num));
+      /* Select all so typing replaces value (prevents 010 when user wants 10) */
+      requestAnimationFrame(() => e.target.select());
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

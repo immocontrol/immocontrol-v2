@@ -38,9 +38,8 @@ function VirtualListInner<T>({
     const el = containerRef.current;
     if (!el) return;
     const obs = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height);
-      }
+      const last = entries[entries.length - 1];
+      if (last) requestAnimationFrame(() => setContainerHeight(last.contentRect.height));
     });
     obs.observe(el);
     return () => obs.disconnect();

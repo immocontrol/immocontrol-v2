@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { formatNumberDE, parseNumberDE } from "@/lib/formatters";
+import { formatNumberDE, formatRawNumberDE, parseNumberDE } from "@/lib/formatters";
 
 interface NumberInputProps extends Omit<React.ComponentProps<"input">, "onChange" | "value"> {
   value: number | string;
@@ -31,11 +31,9 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
-      // Allow only digits, dots (thousand sep), commas (decimal sep), and minus
-      const cleaned = raw.replace(/[^\d.,-]/g, "");
-      setDisplay(cleaned);
-      const parsed = parseNumberDE(cleaned);
-      onChange(parsed);
+      const formatted = formatRawNumberDE(raw);
+      setDisplay(formatted);
+      onChange(parseNumberDE(formatted));
     };
 
     /* BUGFIX: handleBlur preserves empty input instead of converting to "0" */
@@ -50,13 +48,14 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       onChange(parsed);
     };
 
-    /* BUGFIX: handleFocus correctly handles zero value (0 is falsy in JS) */
-    const handleFocus = () => {
-      // On focus, show raw number for easier editing
+    /* BUGFIX: handleFocus — clear when 0, else select all (prevents 010 when user wants 10) */
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       const parsed = parseNumberDE(display);
-      if (!isNaN(parsed) && parsed !== undefined && display.trim() !== "") {
-        setDisplay(parsed.toString().replace(".", ","));
+      if (!isNaN(parsed) && parsed === 0) {
+        setDisplay("");
+        return;
       }
+      requestAnimationFrame(() => e.target.select());
     };
 
     return (

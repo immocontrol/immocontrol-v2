@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ROUTES } from "@/lib/routes";
 import { queryKeys } from "@/lib/queryKeys";
 import { loadJsPDF } from "@/lib/lazyImports";
-import { formatDate } from "@/lib/formatters";
+import { formatDate, sanitizeForPdf } from "@/lib/formatters";
 
 interface Room {
   name: string;
@@ -181,41 +181,41 @@ export function HandoverProtocol() {
 
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text(`Wohnungsübergabeprotokoll – ${type === "einzug" ? "Einzug" : "Auszug"}`, margin, y); y += lineH + 4;
+      doc.text(sanitizeForPdf(`Wohnungsübergabeprotokoll - ${type === "einzug" ? "Einzug" : "Auszug"}`), margin, y); y += lineH + 4;
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(`Mieter: ${tenant || "–"}`, margin, y); doc.text(`Datum: ${new Date(date).toLocaleDateString("de-DE")}`, pageW - margin - 45, y); y += lineH;
-      doc.text(`Objekt: ${address || "–"}`, margin, y); doc.text(`Schlüssel: ${keysCount} Stück`, pageW - margin - 45, y); y += lineH + 6;
+      doc.text(sanitizeForPdf(`Mieter: ${tenant || "-"}`), margin, y); doc.text(sanitizeForPdf(`Datum: ${new Date(date).toLocaleDateString("de-DE")}`), pageW - margin - 45, y); y += lineH;
+      doc.text(sanitizeForPdf(`Objekt: ${address || "-"}`), margin, y); doc.text(sanitizeForPdf(`Schlüssel: ${keysCount} Stück`), pageW - margin - 45, y); y += lineH + 6;
 
       doc.setFont("helvetica", "bold");
-      doc.text("Zählerstände", margin, y); y += lineH;
+      doc.text(sanitizeForPdf("Zählerstände"), margin, y); y += lineH;
       doc.setFont("helvetica", "normal");
       METER_KEYS.forEach((k) => {
         const label = METER_LABELS[k] || k;
-        const val = meterStand[k] || "–";
-        doc.text(`${label}: ${val}`, margin + 5, y); y += lineH;
+        const val = meterStand[k] || "-";
+        doc.text(sanitizeForPdf(`${label}: ${val}`), margin + 5, y); y += lineH;
       });
       y += 4;
 
       rooms.forEach((room) => {
         checkY();
         doc.setFont("helvetica", "bold");
-        doc.text(`${room.name} – ${CONDITION_LABELS[room.condition] || ""}`, margin, y); y += lineH;
+        doc.text(sanitizeForPdf(`${room.name} - ${CONDITION_LABELS[room.condition] || ""}`), margin, y); y += lineH;
         doc.setFont("helvetica", "normal");
         room.items.forEach((item) => {
           checkY();
-          doc.text(`${item.ok ? "✓" : "✗"} ${item.name}${item.note ? " – " + item.note : ""}`, margin + 5, y); y += lineH;
+          doc.text(sanitizeForPdf(`${item.ok ? "+" : "x"} ${item.name}${item.note ? " - " + item.note : ""}`), margin + 5, y); y += lineH;
         });
-        if (room.notes) { checkY(); doc.setFont("helvetica", "italic"); doc.text(room.notes.substring(0, 80), margin + 5, y); y += lineH; doc.setFont("helvetica", "normal"); }
+        if (room.notes) { checkY(); doc.setFont("helvetica", "italic"); doc.text(sanitizeForPdf(room.notes.substring(0, 80)), margin + 5, y); y += lineH; doc.setFont("helvetica", "normal"); }
         y += 2;
       });
 
       if (generalNotes) {
         checkY();
         doc.setFont("helvetica", "bold");
-        doc.text("Allgemeine Anmerkungen", margin, y); y += lineH;
+        doc.text(sanitizeForPdf("Allgemeine Anmerkungen"), margin, y); y += lineH;
         doc.setFont("helvetica", "normal");
-        const lines = doc.splitTextToSize(generalNotes, pageW - 2 * margin - 10);
+        const lines = doc.splitTextToSize(sanitizeForPdf(generalNotes), pageW - 2 * margin - 10);
         lines.forEach((line: string) => { checkY(); doc.text(line, margin + 5, y); y += lineH; });
         y += 4;
       }
@@ -225,9 +225,9 @@ export function HandoverProtocol() {
       doc.line(margin, y, margin + 75, y); doc.line(pageW - margin - 75, y, pageW - margin, y); y += lineH;
       doc.setFontSize(9);
       doc.setTextColor(120);
-      doc.text("Vermieter, Unterschrift", margin, y); doc.text("Mieter, Unterschrift", pageW - margin - 75, y);
+      doc.text(sanitizeForPdf("Vermieter, Unterschrift"), margin, y); doc.text(sanitizeForPdf("Mieter, Unterschrift"), pageW - margin - 75, y);
       doc.setFontSize(8);
-      doc.text(`Erstellt mit ImmoControl · ${new Date().toLocaleDateString("de-DE")}`, margin, pageH - 10);
+      doc.text(sanitizeForPdf(`Erstellt mit ImmoControl · ${new Date().toLocaleDateString("de-DE")}`), margin, pageH - 10);
       doc.setTextColor(0);
 
       const out = doc.output("blob");

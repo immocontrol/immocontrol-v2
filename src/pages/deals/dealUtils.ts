@@ -36,7 +36,8 @@ export function filterAndSortDeals(
   sortKey: SortKey,
   sortAsc: boolean,
 ): DealRecord[] {
-  let result = [...deals];
+  const list = Array.isArray(deals) ? deals : [];
+  let result = [...list];
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     result = result.filter(d =>

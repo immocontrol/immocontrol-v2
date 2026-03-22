@@ -51,6 +51,24 @@ function parseCurrencyString(str: string): number {
   return isNaN(num) ? 0 : Math.round(num * 100);
 }
 
+function formatCurrencyInput(raw: string): string {
+  const cleaned = raw.replace(/[^\d,.-]/g, "");
+  const neg = cleaned.startsWith("-");
+  const rest = neg ? cleaned.slice(1) : cleaned;
+  const commaIdx = rest.indexOf(",");
+  let intPart: string;
+  let decPart: string;
+  if (commaIdx >= 0) {
+    intPart = rest.slice(0, commaIdx).replace(/\D/g, "");
+    decPart = rest.slice(commaIdx + 1).replace(/[^\d]/g, "").slice(0, 2);
+  } else {
+    intPart = rest.replace(/\D/g, "");
+    decPart = "";
+  }
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (neg && (intPart || decPart) ? "-" : "") + formattedInt + (decPart ? `,${decPart}` : "");
+}
+
 export const MobileCurrencyInput = memo(function MobileCurrencyInput({
   value = 0,
   onChange,
@@ -89,9 +107,8 @@ export const MobileCurrencyInput = memo(function MobileCurrencyInput({
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
-    // Allow typing with German number format
-    if (/^[\d.,\s]*$/.test(raw)) {
-      setDisplayValue(raw);
+    if (/^[\d.,\s\-]*$/.test(raw)) {
+      setDisplayValue(formatCurrencyInput(raw));
     }
   }, []);
 

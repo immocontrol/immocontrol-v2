@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Bug, Download, Trash2, RefreshCw, FileText, AlertTriangle, Info, AlertCircle, ChevronDown, ChevronUp, Search, Copy } from "lucide-react";
 import { trackError, copyErrorReportToClipboard } from "@/lib/errorTracking";
-import { relativeTime } from "@/lib/formatters";
+import { relativeTime, sanitizeForPdf } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -254,17 +254,17 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFontSize(16);
-    doc.text("ImmoControl \u2014 Fehlerprotokoll", 14, 15);
+    doc.text(sanitizeForPdf("ImmoControl - Fehlerprotokoll"), 14, 15);
     doc.setFontSize(8);
-    doc.text(`Exportiert: ${new Date().toLocaleString("de-DE")}`, 14, 22);
-    doc.text(`Eintr\u00e4ge: ${filteredErrors.length}`, 14, 26);
+    doc.text(sanitizeForPdf(`Exportiert: ${new Date().toLocaleString("de-DE")}`), 14, 22);
+    doc.text(sanitizeForPdf(`Einträge: ${filteredErrors.length}`), 14, 26);
     let y = 34;
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
-    doc.text("Zeitstempel", 14, y);
-    doc.text("Schwere", 65, y);
-    doc.text("Nachricht", 90, y);
-    doc.text("Quelle", 220, y);
+    doc.text(sanitizeForPdf("Zeitstempel"), 14, y);
+    doc.text(sanitizeForPdf("Schwere"), 65, y);
+    doc.text(sanitizeForPdf("Nachricht"), 90, y);
+    doc.text(sanitizeForPdf("Quelle"), 220, y);
     doc.text("#", 260, y);
     y += 2;
     doc.line(14, y, 280, y);
@@ -273,14 +273,14 @@ export function ErrorScanner({ sectionRef }: ErrorScannerProps) {
     const msgWidth = 125;
     for (const e of filteredErrors) {
       if (y > 190) { doc.addPage("a4", "landscape"); y = 15; }
-      doc.text(new Date(e.timestamp).toLocaleString("de-DE"), 14, y);
-      doc.text(e.severity, 65, y);
-      const lines = doc.splitTextToSize(e.message, msgWidth);
+      doc.text(sanitizeForPdf(new Date(e.timestamp).toLocaleString("de-DE")), 14, y);
+      doc.text(sanitizeForPdf(e.severity), 65, y);
+      const lines = doc.splitTextToSize(sanitizeForPdf(e.message), msgWidth);
       const maxLines = 3;
       for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
         doc.text(lines[i], 90, y + i * 4);
       }
-      doc.text(e.source.slice(0, 25), 220, y);
+      doc.text(sanitizeForPdf(e.source.slice(0, 25)), 220, y);
       doc.text(String(e.count), 260, y);
       y += Math.min(lines.length, maxLines) * 4 + 2;
     }

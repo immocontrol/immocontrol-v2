@@ -1,8 +1,8 @@
 /**
  * When biometric unlock is enabled, requires Face ID / Touch ID before showing the app.
- * Shown after login (session exists) so "beim Login" the user is asked for biometrics.
+ * Nur in nativer iOS-App — im Browser/Web wird das Gate nicht angezeigt.
  */
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Fingerprint } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   setBiometricVerifiedThisSession,
   isBiometricVerifiedThisSession,
 } from "@/lib/biometric";
+import { isNativeIos } from "@/integrations/nativeBiometric";
 
 /** Re-read session verification on mount (e.g. new tab) */
 function readVerified(): boolean {
@@ -27,8 +28,13 @@ export function BiometricGate({ children }: BiometricGateProps) {
   const [verified, setVerified] = useState(readVerified);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState<boolean | null>(null);
 
   const biometricEnabled = isBiometricUnlockEnabled();
+
+  useEffect(() => {
+    isNativeIos().then(setIsNative);
+  }, []);
 
   const runVerification = useCallback(async () => {
     setError(null);
@@ -48,14 +54,21 @@ export function BiometricGate({ children }: BiometricGateProps) {
     }
   }, []);
 
+  const runVerificationRef = useRef(runVerification);
+  runVerificationRef.current = runVerification;
+
   /* Auto-trigger biometric prompt when gate is shown (e.g. after login / app open) */
   useEffect(() => {
-    if (!user || !biometricEnabled || verified) return;
-    const t = setTimeout(runVerification, 400);
+    if (!user || !biometricEnabled || !isNative || verified) return;
+    const t = setTimeout(() => runVerificationRef.current(), 400);
     return () => clearTimeout(t);
-  }, [user, biometricEnabled, verified, runVerification]);
+  }, [user, biometricEnabled, isNative, verified]);
 
-  if (!user || !biometricEnabled) {
+  /* Nur in nativer iOS-App anzeigen; im Browser/Web immer durchlassen */
+  if (!user || !biometricEnabled || isNative === false) {
+    return <>{children}</>;
+  }
+  if (isNative === null) {
     return <>{children}</>;
   }
   if (verified) {

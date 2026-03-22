@@ -49,19 +49,19 @@ function log(level: LogLevel, message: string, context?: string, data?: unknown)
 
   const formatted = formatEntry(entry);
 
+  const hasData = data !== undefined && data !== null && (typeof data !== "object" || Object.keys(data as object).length > 0);
+  const out = hasData ? data : "";
+
   switch (level) {
     case "debug":
     case "info":
-       
-      console.log(formatted, data ?? "");
+      console.log(formatted, out);
       break;
     case "warn":
-       
-      console.warn(formatted, data ?? "");
+      console.warn(formatted, out);
       break;
     case "error":
-       
-      console.error(formatted, data ?? "");
+      console.error(formatted, out);
       break;
   }
 }

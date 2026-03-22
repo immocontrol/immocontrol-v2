@@ -62,9 +62,8 @@ export function useVirtualList<T>(
     const node = containerRef.current;
     if (!node) return;
     const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height);
-      }
+      const last = entries[entries.length - 1];
+      if (last) requestAnimationFrame(() => setContainerHeight(last.contentRect.height));
     });
     ro.observe(node);
     return () => ro.disconnect();

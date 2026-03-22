@@ -4,7 +4,7 @@
  */
 import { useMemo, useState, useCallback } from "react";
 import { TrendingUp, Sun, Home, Wrench, Calendar, Info, Sparkles, Loader2, FileDown, MessageCircle, BarChart2 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, sanitizeForPdf } from "@/lib/formatters";
 import { loadJsPDF } from "@/lib/lazyImports";
 import { handleError } from "@/lib/handleError";
 import { toastErrorWithRetry } from "@/lib/toastMessages";
@@ -118,12 +118,12 @@ export function Entwicklungsplan({
       /* Header */
       doc.setFontSize(18);
       doc.setTextColor(42, 157, 110);
-      doc.text("Entwicklungsplan", margin, y);
+      doc.text(sanitizeForPdf("Entwicklungsplan"), margin, y);
       y += 5;
       doc.setFontSize(11);
       doc.setTextColor(60, 60, 60);
-      doc.text(property.name, margin, y);
-      if (property.address) { y += 5; doc.setFontSize(9); doc.setTextColor(100, 100, 100); doc.text(property.address, margin, y); y += 4; }
+      doc.text(sanitizeForPdf(property.name), margin, y);
+      if (property.address) { y += 5; doc.setFontSize(9); doc.setTextColor(100, 100, 100); doc.text(sanitizeForPdf(property.address), margin, y); y += 4; }
       y += 4;
       doc.setDrawColor(42, 157, 110);
       doc.setLineWidth(0.5);
@@ -134,7 +134,7 @@ export function Entwicklungsplan({
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(34, 34, 34);
-      doc.text("Kernkennzahlen", margin, y);
+      doc.text(sanitizeForPdf("Kernkennzahlen"), margin, y);
       y += 7;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -154,8 +154,8 @@ export function Entwicklungsplan({
           ];
       for (const [k, v] of kennzahlen) {
         checkPage(6);
-        doc.text(k, margin, y);
-        doc.text(v, pageW - margin, y, { align: "right" });
+        doc.text(sanitizeForPdf(k), margin, y);
+        doc.text(sanitizeForPdf(v), pageW - margin, y, { align: "right" });
         y += 5.5;
       }
       y += 4;
@@ -163,20 +163,20 @@ export function Entwicklungsplan({
       /* Mietverlauf */
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text("Mietverlauf (Monatsmiete)", margin, y);
+      doc.text(sanitizeForPdf("Mietverlauf (Monatsmiete)"), margin, y);
       y += 6;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       checkPage(plan.mieteProJahr.length * 5 + 8);
       doc.setFillColor(245, 245, 245);
       doc.rect(margin, y - 4, pageW - 2 * margin, 6, "F");
-      doc.text("Jahr", margin + 2, y + 0.5);
-      doc.text("Miete/Monat", pageW - margin - 2, y + 0.5, { align: "right" });
+      doc.text(sanitizeForPdf("Jahr"), margin + 2, y + 0.5);
+      doc.text(sanitizeForPdf("Miete/Monat"), pageW - margin - 2, y + 0.5, { align: "right" });
       y += 7;
       for (const yr of plan.mieteProJahr) {
-        doc.text(`Jahr ${yr.year}`, margin + 2, y);
-        doc.text(formatCurrency(yr.mieteMonat), pageW - margin - 2, y, { align: "right" });
-        if (yr.label) doc.text(`+${yr.label}`, pageW - margin - 40, y);
+        doc.text(sanitizeForPdf(`Jahr ${yr.year}`), margin + 2, y);
+        doc.text(sanitizeForPdf(formatCurrency(yr.mieteMonat)), pageW - margin - 2, y, { align: "right" });
+        if (yr.label) doc.text(sanitizeForPdf(`+${yr.label}`), pageW - margin - 40, y);
         y += 5;
       }
       y += 6;
@@ -186,25 +186,25 @@ export function Entwicklungsplan({
         checkPage(12);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
-        doc.text("Einnahmen & Ausgaben pro Jahr", margin, y);
+        doc.text(sanitizeForPdf("Einnahmen & Ausgaben pro Jahr"), margin, y);
         y += 7;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
         doc.setFillColor(245, 245, 245);
         doc.rect(margin, y - 4, pageW - 2 * margin, 6, "F");
-        doc.text("Jahr", margin + 2, y + 0.5);
-        doc.text("Mieteinnahmen", margin + 35, y + 0.5);
-        doc.text("Kreditrate", margin + 80, y + 0.5);
-        doc.text("Instandhaltung", margin + 115, y + 0.5);
-        doc.text("Cashflow", pageW - margin - 25, y + 0.5, { align: "right" });
+        doc.text(sanitizeForPdf("Jahr"), margin + 2, y + 0.5);
+        doc.text(sanitizeForPdf("Mieteinnahmen"), margin + 35, y + 0.5);
+        doc.text(sanitizeForPdf("Kreditrate"), margin + 80, y + 0.5);
+        doc.text(sanitizeForPdf("Instandhaltung"), margin + 115, y + 0.5);
+        doc.text(sanitizeForPdf("Cashflow"), pageW - margin - 25, y + 0.5, { align: "right" });
         y += 6;
         for (const row of chartData) {
           checkPage(5);
-          doc.text(row.year, margin + 2, y);
-          doc.text(formatCurrency(row.mieteinnahmen), margin + 35, y);
-          doc.text(formatCurrency(row.kreditrate), margin + 80, y);
-          doc.text(formatCurrency(row.instandhaltung), margin + 115, y);
-          doc.text(formatCurrency(row.cashflow), pageW - margin - 2, y, { align: "right" });
+          doc.text(sanitizeForPdf(row.year), margin + 2, y);
+          doc.text(sanitizeForPdf(formatCurrency(row.mieteinnahmen)), margin + 35, y);
+          doc.text(sanitizeForPdf(formatCurrency(row.kreditrate)), margin + 80, y);
+          doc.text(sanitizeForPdf(formatCurrency(row.instandhaltung)), margin + 115, y);
+          doc.text(sanitizeForPdf(formatCurrency(row.cashflow)), pageW - margin - 2, y, { align: "right" });
           y += 5;
         }
         y += 4;
@@ -213,17 +213,17 @@ export function Entwicklungsplan({
       /* Maßnahmen */
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text("Wertsteigernde Maßnahmen", margin, y);
+      doc.text(sanitizeForPdf("Wertsteigernde Maßnahmen"), margin, y);
       y += 7;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       for (const m of plan.massnahmen) {
         checkPage(18);
         doc.setFont("helvetica", "bold");
-        doc.text(m.title, margin, y);
+        doc.text(sanitizeForPdf(m.title), margin, y);
         y += 5;
         doc.setFont("helvetica", "normal");
-        const descLines = doc.splitTextToSize(m.description, pageW - 2 * margin - 4);
+        const descLines = doc.splitTextToSize(sanitizeForPdf(m.description), pageW - 2 * margin - 4);
         doc.text(descLines, margin + 2, y);
         y += descLines.length * 4.5 + 2;
         const details: string[] = [];
@@ -232,7 +232,7 @@ export function Entwicklungsplan({
         if (m.revenueAnnual != null && m.revenueAnnual > 0) details.push(`+${formatCurrency(m.revenueAnnual)}/Jahr`);
         if (m.umlegbarPercent != null) details.push(`${m.umlegbarPercent} % umlegbar`);
         if (details.length > 0) {
-          doc.text(details.join(" · "), margin + 2, y);
+          doc.text(sanitizeForPdf(details.join(" · ")), margin + 2, y);
           y += 5;
         }
         y += 3;
@@ -244,11 +244,11 @@ export function Entwicklungsplan({
         checkPage(20);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
-        doc.text("Kurztext für Bankanschreiben", margin, y);
+        doc.text(sanitizeForPdf("Kurztext für Bankanschreiben"), margin, y);
         y += 6;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        const lines = doc.splitTextToSize(aiText, pageW - 2 * margin - 4);
+        const lines = doc.splitTextToSize(sanitizeForPdf(aiText), pageW - 2 * margin - 4);
         doc.text(lines, margin, y);
         y += lines.length * 4.5 + 4;
       }
@@ -259,7 +259,7 @@ export function Entwicklungsplan({
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(170, 170, 170);
-        doc.text(`ImmoControl · Entwicklungsplan · ${new Date().toLocaleDateString("de-DE")} · Seite ${i}/${pageCount}`, pageW / 2, 287, { align: "center" });
+        doc.text(sanitizeForPdf(`ImmoControl · Entwicklungsplan · ${new Date().toLocaleDateString("de-DE")} · Seite ${i}/${pageCount}`), pageW / 2, 287, { align: "center" });
       }
 
       doc.save(`${title}.pdf`);
