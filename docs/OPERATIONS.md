@@ -46,6 +46,14 @@ In **Entwicklung** bieten manche Toasts **„Copy for AI“** (Fehlerkontext fü
 
 - [FEATURE_FLAGS.md](./FEATURE_FLAGS.md) — `VITE_FEATURE_*` und `isFeatureEnabled()` in `src/lib/featureFlags.ts`.
 
+## Newsticker (RSS)
+
+- Browser können RSS-URLs **nicht direkt** laden (CORS). Deshalb: **Supabase Edge Function** `rss-fetch` holt das XML serverseitig.
+- **Ohne Login:** Die Function akzeptiert `apikey` (Anon-Key) + `Authorization: Bearer <Anon-Key>` nur für **bekannte Feed-Hosts** (Allowlist in `supabase/functions/rss-fetch/index.ts`, parallel zu `src/pages/newsticker/newsFetch.ts`).
+- **Mit Login:** Beliebige erlaubte öffentliche `http(s)`-URLs (SSRF-Filter wie zuvor).
+- Nach Änderungen deployen: `supabase functions deploy rss-fetch` (lokal: `supabase functions serve`).
+- Optional: **`VITE_RSS2JSON_API_KEY`** — höheres Kontingent bei [rss2json.com](https://rss2json.com) als zweiter Fallback (CORS-fähig).
+
 ## Dialoge und Barrierefreiheit
 
 - **`DialogContent`** und **`SheetContent`** enthalten versteckte Radix-**Title**/**Description**-Fallbacks, damit Screenreader und Radix-Warnungen konsistent abgedeckt sind, auch wenn ein Screen nur eine sichtbare Überschrift hat.

@@ -1,6 +1,7 @@
 /**
- * Fetches RSS/Atom XML server-side for the Newsticker (avoids brittle public CORS proxies).
- * Requires a valid Supabase user JWT.
+ * Fetches RSS/Atom XML server-side for the Newsticker (CORS-frei).
+ * – Eingeloggte Nutzer: beliebige erlaubte http(s)-URL (SSRF-Schutz).
+ * – Ohne Login: nur Hosts aus ALLOWED_RSS_HOSTS (gleiche Feeds wie im Client).
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -13,6 +14,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+/** Muss mit den URLs in src/pages/newsticker/newsFetch.ts übereinstimmen */
+const ALLOWED_RSS_HOSTS = new Set([
+  "news.google.com",
+  "www.tagesspiegel.de",
+  "tagesspiegel.de",
+  "www.iz.de",
+  "iz.de",
+  "www.spiegel.de",
+  "spiegel.de",
+  "rss.sueddeutsche.de",
+  "www.sueddeutsche.de",
+  "sueddeutsche.de",
+  "www.n-tv.de",
+  "n-tv.de",
+  "www.welt.de",
+  "welt.de",
+  "www.focus.de",
+  "focus.de",
+  "www.rbb24.de",
+  "rbb24.de",
+]);
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -49,6 +72,12 @@ function isAllowedFetchUrl(raw: string): boolean {
   return true;
 }
 
+function isAllowlistedNewstickerHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (ALLOWED_RSS_HOSTS.has(h)) return true;
+  return false;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -57,21 +86,41 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Nicht authentifiziert" }, 401);
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) return json({ error: "Nicht authentifiziert" }, 401);
+    const apikeyHeader = req.headers.get("apikey");
 
     const body = (await req.json().catch(() => null)) as { url?: string } | null;
     const target = typeof body?.url === "string" ? body.url.trim() : "";
     if (!target || !isAllowedFetchUrl(target)) {
       return json({ error: "Ungültige oder nicht erlaubte URL" }, 400);
+    }
+
+    let targetHost: string;
+    try {
+      targetHost = new URL(target).hostname.toLowerCase();
+    } catch {
+      return json({ error: "Ungültige URL" }, 400);
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader ?? "" } },
+    });
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    let authorized = false;
+    if (!userError && user) {
+      authorized = true;
+    } else if (
+      apikeyHeader === SUPABASE_ANON_KEY &&
+      isAllowlistedNewstickerHost(targetHost)
+    ) {
+      authorized = true;
+    }
+
+    if (!authorized) {
+      return json({ error: "Nicht authentifiziert" }, 401);
     }
 
     const ac = new AbortController();
@@ -84,7 +133,7 @@ serve(async (req) => {
         signal: ac.signal,
         headers: {
           "User-Agent": "ImmoControl-RSS-Fetch/1.0",
-          Accept: "application/rss+xml, application/xml, text/xml, */*",
+          Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
         },
       });
     } finally {

@@ -10,4 +10,5 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.rss-fetch]
-verify_jwt = true
+# Auth erfolgt in der Function: eingeloggter User ODER anon + Allowlist (Newsticker öffentlich)
+verify_jwt = false

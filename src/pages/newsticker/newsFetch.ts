@@ -36,6 +36,55 @@ export const RSS_FEEDS = [
 
 export const RSS_FETCH_CONCURRENCY = 5;
 
+/** Kostenloser Dienst (Browser-CORS-fähig); optional VITE_RSS2JSON_API_KEY für höheres Kontingent */
+function rss2JsonUrl(feedUrl: string): string {
+  const base = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+  const key = typeof import.meta.env.VITE_RSS2JSON_API_KEY === "string"
+    ? import.meta.env.VITE_RSS2JSON_API_KEY.trim()
+    : "";
+  return key ? `${base}&api_key=${encodeURIComponent(key)}` : base;
+}
+
+async function fetchNewsItemsViaRss2Json(
+  feedUrl: string,
+  source: string,
+  icon: string,
+): Promise<NewsItem[]> {
+  try {
+    const resp = await fetch(rss2JsonUrl(feedUrl), { signal: AbortSignal.timeout(12_000) });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    if (data.status !== "ok" || !Array.isArray(data.items) || data.items.length === 0) return [];
+    return data.items
+      .map((item: { title?: string; link?: string; description?: string; pubDate?: string; thumbnail?: string }, idx: number) => {
+        const title = item.title?.trim() || "";
+        const description = (item.description || "").replace(/<[^>]+>/g, "").slice(0, 300);
+        return {
+          id: `${source}-rss2json-${idx}`,
+          title,
+          description,
+          url: item.link || "",
+          source,
+          sourceIcon: icon,
+          publishedAt: (() => {
+            try {
+              return item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString();
+            } catch {
+              return new Date().toISOString();
+            }
+          })(),
+          category: categoriseNews(title, description),
+          region: detectRegion(title, description),
+          sentiment: detectSentiment(title, description),
+          imageUrl: item.thumbnail && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail) ? item.thumbnail : undefined,
+        } satisfies NewsItem;
+      })
+      .filter((n: NewsItem) => n.title && n.url);
+  } catch {
+    return [];
+  }
+}
+
 async function fetchRSSViaAllOriginsJson(feedUrl: string): Promise<string | null> {
   try {
     const u = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`;
@@ -76,6 +125,8 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
     const parsed = parseRSSItems(viaEdge, source, icon);
     if (parsed.length > 0) return parsed;
   }
+  const viaRss2Json = await fetchNewsItemsViaRss2Json(feedUrl, source, icon);
+  if (viaRss2Json.length > 0) return viaRss2Json;
   const viaCorsProxy = await fetchViaCorsProxy(feedUrl);
   if (viaCorsProxy) {
     const parsed = parseRSSItems(viaCorsProxy, source, icon);
@@ -99,41 +150,6 @@ async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Prom
     } catch {
       continue;
     }
-  }
-  try {
-    const resp = await fetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
-      { signal: AbortSignal.timeout(10000) },
-    );
-    if (resp.ok) {
-      const data = await resp.json();
-      if (data.status === "ok" && Array.isArray(data.items) && data.items.length > 0) {
-        return data.items
-          .map((item: { title?: string; link?: string; description?: string; pubDate?: string; thumbnail?: string }, idx: number) => {
-            const title = item.title?.trim() || "";
-            const description = (item.description || "").replace(/<[^>]+>/g, "").slice(0, 300);
-            return {
-              id: `${source}-rss2json-${idx}`,
-              title,
-              description,
-              url: item.link || "",
-              source,
-              sourceIcon: icon,
-              publishedAt: (() => {
-                try { return item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(); }
-                catch { return new Date().toISOString(); }
-              })(),
-              category: categoriseNews(title, description),
-              region: detectRegion(title, description),
-              sentiment: detectSentiment(title, description),
-              imageUrl: item.thumbnail && /\.(jpg|jpeg|png|webp|gif)/i.test(item.thumbnail) ? item.thumbnail : undefined,
-            } satisfies NewsItem;
-          })
-          .filter((n: NewsItem) => n.title && n.url);
-      }
-    }
-  } catch {
-    /* rss2json failed */
   }
   return [];
 }
