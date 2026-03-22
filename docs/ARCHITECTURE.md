@@ -50,8 +50,12 @@ Der **Rest der Codebase** soll keine Referenzen auf Lovable, Replit, Cursor, Dev
 
 1. **Einstieg:** Ungeloggt → Redirect auf `/auth`. Nach Login/Register prüft `RoleRouter` Rolle (`user_roles`) und Onboarding (`profiles.onboarding_completed`).
 2. **Rollen:** `tenant` → Mieterportal; `handworker` → Handwerker-Portal; sonst → Haupt-App mit AppLayout.
-3. **Session:** Supabase `autoRefreshToken: true`; Inaktivitäts-Hinweis nach 45 Min (`useInactivityHint`), Abmeldung nach 90 Min Inaktivität (`useSessionIdleTimeout`).
+3. **Session:** Supabase `autoRefreshToken: true`; Inaktivitäts-Hinweis nach 45 Min (`useInactivityHint`), Abmeldung nach 90 Min Inaktivität (`useSessionIdleTimeout`). Ungültige Refresh-Tokens: siehe [OPERATIONS.md](./OPERATIONS.md).
 4. **2FA:** Optional; nach Login AAL-Check; vertraute Geräte 30 Tage über localStorage.
+
+## Betrieb & Monitoring
+
+Deploy, Smoke-Tests, `version.json`, optionales Sentry, Fehlerdiagnose: **[OPERATIONS.md](./OPERATIONS.md)**.
 
 ## Supabase-Nutzung
 

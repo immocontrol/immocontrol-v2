@@ -1,0 +1,24 @@
+# Manueller Smoke-Check gegen eine deployte URL (keine Secrets nötig außer optionaler URL).
+# Nutzung: Actions → Smoke → Run workflow → URL eintragen
+name: Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Basis-URL der App (ohne trailing slash)"
+        required: true
+        default: "https://example.com"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: HTTP smoke + optional version.json
+        run: npm run smoke -- "${{ inputs.url }}"
