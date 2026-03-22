@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera, Landmark, BarChart3, Receipt, Sparkles, Store, ShieldAlert, Calculator } from "lucide-react";
+import { Plus, Wrench, MessageSquare, CreditCard, StickyNote, FileText, Camera, Landmark, BarChart3, Receipt, Sparkles, Store, ShieldAlert, Calculator, TrendingUp, Wallet } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES, contractsWithAddInvoice, contractsWithAddContract } from "@/lib/routes";
 
@@ -49,6 +49,8 @@ const QuickActions = ({ onScrollTo, onNavigate, propertyId }: QuickActionsProps)
     { id: "scout", label: "WGH-Scout", icon: Store, color: "text-emerald-600", shortcut: "S", navigate: true, path: ROUTES.CRM_SCOUT },
     { id: "rent", label: "Mietübersicht", icon: BarChart3, color: "text-amber-500", shortcut: "8", navigate: true, path: ROUTES.RENT },
     { id: "nebenkosten", label: "Nebenkosten", icon: Receipt, color: "text-emerald-500", shortcut: "9", navigate: true, path: ROUTES.NK },
+    { id: "finanzierung", label: "Finanzierungs-Cockpit", icon: Wallet, color: "text-primary", shortcut: "K", navigate: true, path: ROUTES.FINANZIERUNG },
+    { id: "forecast", label: "Cashflow-Prognose", icon: TrendingUp, color: "text-profit", shortcut: "C", navigate: true, path: ROUTES.FORECAST },
     { id: "stress-test", label: "Stress-Test", icon: ShieldAlert, color: "text-amber-600", shortcut: "T", navigate: true, path: ROUTES.STRESS_TEST },
     { id: "steuer-cockpit", label: "Steuer-Cockpit", icon: Calculator, color: "text-blue-500", shortcut: "F", navigate: true, path: ROUTES.STEUER_COCKPIT },
     { id: "immo-ai", label: "Immo-AI", icon: Sparkles, color: "text-violet-500", shortcut: "0", navigate: true, path: ROUTES.AI },
