@@ -294,7 +294,7 @@ const Mietuebersicht = () => {
             )}
           </p>
           <RentIncreaseWizard />
-          <Link to={ROUTES.HOME} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]">
+          <Link to={ROUTES.PORTFOLIO} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-2 touch-target min-h-[44px]">
             <TrendingUp className="h-3.5 w-3.5" /> Index-Mietanpassung prüfen
           </Link>
           <Link to={ROUTES.NK} className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline ml-2 touch-target min-h-[44px]">

@@ -8,7 +8,8 @@ import { toast } from "sonner";
 import { ROUTES } from "@/lib/routes";
 
 const DEFAULT_PAGE_OPTIONS = [
-  { value: ROUTES.HOME, label: "Portfolio" },
+  { value: ROUTES.HOME, label: "Newsticker (Start)" },
+  { value: ROUTES.PORTFOLIO, label: "Portfolio (Dashboard)" },
   { value: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard" },
   { value: ROUTES.LOANS, label: "Darlehen" },
   { value: ROUTES.RENT, label: "Mieten" },

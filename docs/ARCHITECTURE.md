@@ -40,7 +40,7 @@ Der **Rest der Codebase** soll keine Referenzen auf Lovable, Replit, Cursor, Dev
 
 | Modul | Beschreibung |
 |-------|--------------|
-| **App.tsx** | Router, RoleRouter (Tenant/Handworker/Onboarding), geschützte Routen, Lazy-Loading der Seiten. |
+| **App.tsx** | Router, RoleRouter (Tenant/Handworker/Onboarding), geschützte Routen, Lazy-Loading der Seiten. **`/` (ROUTES.HOME)** = Newsticker; **`/portfolio`** = klassisches Portfolio-Dashboard. |
 | **Auth** | `src/pages/Auth.tsx` + `useAuth` (`src/hooks/useAuth.tsx`): Login, Registrierung, 2FA, Passwort vergessen. Session über Supabase Auth. |
 | **PropertyContext** | `src/context/PropertyContext.tsx`: Objektliste, Stats (Rendite, Cashflow, etc.), CRUD über Supabase `properties`. |
 | **React Query** | Server-State; `queryKeys` in `src/lib/queryKeys.ts`; staleTime pro Entity in App.tsx. |

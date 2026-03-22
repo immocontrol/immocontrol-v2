@@ -8,7 +8,8 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
 const DEFAULT_SHORTCUTS: Record<string, string> = {
-  "Navigation: Portfolio": "Alt+1",
+  "Navigation: Newsticker": "Alt+1",
+  "Navigation: Portfolio": "Alt+Shift+1",
   "Navigation: Objekte": "Alt+O",
   "Navigation: Darlehen": "Alt+2",
   "Navigation: Mieten": "Alt+3",

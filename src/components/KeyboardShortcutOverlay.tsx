@@ -10,7 +10,8 @@ const SHORTCUT_GROUPS: { title: string; shortcuts: { keys: string; description: 
   {
     title: "Navigation",
     shortcuts: [
-      { keys: "Alt+1", description: "Portfolio" },
+      { keys: "Alt+1", description: "Newsticker (Startseite)" },
+      { keys: "Alt+Shift+1", description: "Portfolio (Dashboard)" },
       { keys: "Alt+2", description: "Darlehen" },
       { keys: "Alt+3", description: "Mieten" },
       { keys: "Alt+4", description: "Verträge" },

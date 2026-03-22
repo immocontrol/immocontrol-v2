@@ -341,7 +341,9 @@ const RoleRouter = () => {
           <Route path={ROUTES.ONBOARDING} element={<ErrorBoundary><Onboarding /></ErrorBoundary>} />
           <Route path={`${ROUTES.TENANT_PORTAL}/*`} element={<ErrorBoundary><TenantPortal /></ErrorBoundary>} />
           <Route path={`${ROUTES.HANDWORKER_PORTAL}/*`} element={<ErrorBoundary><HandworkerPortal /></ErrorBoundary>} />
-          <Route path={ROUTES.HOME} element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+          <Route path={ROUTES.HOME} element={<ErrorBoundary><Newsticker /></ErrorBoundary>} />
+          <Route path={ROUTES.NEWSTICKER} element={<Navigate to={ROUTES.HOME} replace />} />
+          <Route path={ROUTES.PORTFOLIO} element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
           <Route path={ROUTES.PERSONAL_DASHBOARD} element={<ErrorBoundary><Dashboard mode="personal" /></ErrorBoundary>} />
           <Route path={ROUTES.ERFOLGE} element={<ErrorBoundary><Erfolge /></ErrorBoundary>} />
           <Route path={ROUTES.OBJEKTE} element={<ErrorBoundary><ObjekteList /></ErrorBoundary>} />

@@ -3,7 +3,10 @@
  * Used by App.tsx and pages (e.g. ObjekteList) to avoid circular imports.
  */
 export const ROUTES = {
+  /** Startseite: Newsticker */
   HOME: "/",
+  /** Klassisches Portfolio-Dashboard (KPIs, Übersicht) */
+  PORTFOLIO: "/portfolio",
   PERSONAL_DASHBOARD: "/dashboard",
   HOCKEY_STICK: "/hockey-stick",
   AUTH: "/auth",

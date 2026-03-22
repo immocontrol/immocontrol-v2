@@ -205,7 +205,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       return (
         <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground breadcrumb-nav">
           <span>/</span>
-          <Link to={ROUTES.HOME} className="hover:text-foreground transition-colors">Portfolio</Link>
+          <Link to={ROUTES.PORTFOLIO} className="hover:text-foreground transition-colors">Portfolio</Link>
           <span>/</span>
           <span className="text-foreground font-medium truncate max-w-[200px]">{propertyName}</span>
         </div>

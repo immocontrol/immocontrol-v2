@@ -66,7 +66,8 @@ export const GlobalSearch = () => {
   // Navigation items (static)
   const navResults = useMemo<SearchResult[]>(() => {
     const items = [
-      { id: "nav-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", path: ROUTES.HOME },
+      { id: "nav-newsticker", title: "Newsticker", subtitle: "Startseite & Immo-News", path: ROUTES.HOME },
+      { id: "nav-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", path: ROUTES.PORTFOLIO },
       { id: "nav-finanzen", title: "Finanzen", subtitle: "Darlehen & Kredite", path: ROUTES.LOANS },
       { id: "nav-mieten", title: "Mieten", subtitle: "Mietübersicht", path: ROUTES.RENT },
       { id: "nav-nebenkosten", title: "Nebenkosten", subtitle: "Nebenkostenabrechnung", path: ROUTES.NK },

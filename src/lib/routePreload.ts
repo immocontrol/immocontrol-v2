@@ -7,7 +7,8 @@ import { ROUTES } from "./routes";
 const PRELOAD_DELAY_MS = 300;
 
 export const routePreloadMap: Record<string, () => Promise<unknown>> = {
-  [ROUTES.HOME]: () => import("@/pages/Dashboard"),
+  [ROUTES.HOME]: () => import("@/pages/Newsticker"),
+  [ROUTES.PORTFOLIO]: () => import("@/pages/Dashboard"),
   [ROUTES.OBJEKTE]: () => import("@/pages/ObjekteList"),
   [ROUTES.LOANS]: () => import("@/pages/Loans"),
   [ROUTES.FORECAST]: () => import("@/pages/CashForecast"),

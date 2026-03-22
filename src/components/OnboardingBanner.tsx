@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Building2, Users, Calculator, CreditCard, CheckCircle2, ArrowRight, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/context/PropertyContext";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, objekteWithAdd } from "@/lib/routes";
 
 const ONBOARDING_KEY = "immocontrol_onboarding_dismissed";
 
@@ -33,7 +33,7 @@ export const OnboardingBanner = () => {
       title: "Objekt hinzufügen",
       description: "Füge dein erstes Investmentobjekt mit allen Finanzdaten hinzu.",
       action: "Objekt anlegen",
-      path: ROUTES.HOME,
+      path: objekteWithAdd(),
       complete: properties.length > 0,
     },
     {

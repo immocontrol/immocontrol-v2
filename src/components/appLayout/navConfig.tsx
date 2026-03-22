@@ -54,7 +54,8 @@ export function getGroupItems(g: NavGroup): NavItem[] {
 }
 
 export const navEntries: NavEntry[] = [
-  { path: ROUTES.HOME, label: "Portfolio", icon: LayoutDashboard, shortcut: "1" },
+  { path: ROUTES.HOME, label: "Newsticker", icon: Newspaper, shortcut: "1" },
+  { path: ROUTES.PORTFOLIO, label: "Portfolio", icon: LayoutDashboard, shortcut: "" },
   { path: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard", icon: Sparkles, shortcut: "" },
   { path: ROUTES.ERFOLGE, label: "Erfolge", icon: Trophy, shortcut: "" },
   {
@@ -86,7 +87,6 @@ export const navEntries: NavEntry[] = [
     items: [
       { path: ROUTES.DEALS_BEWERTUNG, label: "Deals & Bewertung", icon: Target, shortcut: "8" },
       { path: ROUTES.BESICHTIGUNGEN, label: "Besichtigungen", icon: Camera, shortcut: "" },
-      { path: ROUTES.NEWSTICKER, label: "Newsticker", icon: Newspaper, shortcut: "" },
     ],
   },
 ];
@@ -105,7 +105,8 @@ navItems.forEach((n) => {
 });
 
 export const ACTION_TO_PATH: Record<string, string> = {
-  "Navigation: Portfolio": ROUTES.HOME,
+  "Navigation: Newsticker": ROUTES.HOME,
+  "Navigation: Portfolio": ROUTES.PORTFOLIO,
   "Navigation: Objekte": ROUTES.OBJEKTE,
   "Navigation: Dashboard": ROUTES.PERSONAL_DASHBOARD,
   "Navigation: Darlehen": ROUTES.LOANS,

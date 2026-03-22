@@ -114,7 +114,8 @@ export const MobileSearchOverlay = memo(function MobileSearchOverlay({
 
     // Static page results
     const pages: SearchResult[] = [
-      { id: "page-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.HOME },
+      { id: "page-newsticker", title: "Newsticker", subtitle: "Startseite & Immo-News", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.HOME },
+      { id: "page-portfolio", title: "Portfolio", subtitle: "Dashboard & Übersicht", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.PORTFOLIO },
       { id: "page-darlehen", title: "Darlehen", subtitle: "Kredite verwalten", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.LOANS },
       { id: "page-mieten", title: "Mietübersicht", subtitle: "Mieten & Zahlungen", category: "Seiten", categoryIcon: <TrendingUp className="h-4 w-4" />, path: ROUTES.RENT },
       { id: "page-vertraege", title: "Verträge", subtitle: "Mietverträge", category: "Seiten", categoryIcon: <FileText className="h-4 w-4" />, path: ROUTES.CONTRACTS },

@@ -5,7 +5,7 @@
  */
 import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Sparkles, Landmark, FileText, Target, Settings, ChevronUp, X, Camera, Trophy } from "lucide-react";
+import { LayoutDashboard, Sparkles, Landmark, FileText, Target, Settings, ChevronUp, X, Camera, Trophy, Newspaper } from "lucide-react";
 import { useHaptic } from "@/hooks/useHaptic";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/routes";
@@ -19,7 +19,7 @@ interface TabItem {
 }
 
 const TABS: TabItem[] = [
-  { path: ROUTES.HOME, label: "Portfolio", icon: LayoutDashboard },
+  { path: ROUTES.HOME, label: "News", icon: Newspaper },
   { path: ROUTES.PERSONAL_DASHBOARD, label: "Dashboard", icon: Sparkles },
   {
     path: ROUTES.LOANS, label: "Finanzen", icon: Landmark,

@@ -4,7 +4,7 @@ import { useProperties } from "@/context/PropertyContext";
 import {
   LayoutDashboard, Calculator, Users, Landmark, CalendarDays, CheckSquare,
   Settings, Building2, Search, Command, Handshake, Camera, FileText, Store,
-  Plus, Receipt, Keyboard,
+  Plus, Receipt, Keyboard, Newspaper,
 } from "lucide-react";
 import {
   Dialog, DialogContent,
@@ -67,7 +67,8 @@ export const CommandPalette = () => {
       { id: "action-shortcuts", label: "Kurzbefehle anzeigen", sublabel: "Tastaturkürzel (?)", icon: <Keyboard className="h-4 w-4" />, action: () => { window.dispatchEvent(new CustomEvent("open-keyboard-shortcuts")); setOpen(false); }, category: "Aktionen" },
     ];
     const navItems: PaletteItem[] = [
-      { id: "nav-dashboard", label: "Portfolio", sublabel: "Dashboard & Übersicht", icon: <LayoutDashboard className="h-4 w-4" />, action: () => go(ROUTES.HOME), category: "Navigation" },
+      { id: "nav-newsticker", label: "Newsticker", sublabel: "Startseite & Immo-News", icon: <Newspaper className="h-4 w-4" />, action: () => go(ROUTES.HOME), category: "Navigation" },
+      { id: "nav-portfolio-dash", label: "Portfolio", sublabel: "Dashboard & Übersicht", icon: <LayoutDashboard className="h-4 w-4" />, action: () => go(ROUTES.PORTFOLIO), category: "Navigation" },
       { id: "nav-objekte", label: "Objekte", sublabel: "Objektliste & Immobilien", icon: <Building2 className="h-4 w-4" />, action: () => go(ROUTES.OBJEKTE), category: "Navigation" },
       { id: "nav-loans", label: "Darlehen", sublabel: "Finanzierungen verwalten", icon: <Landmark className="h-4 w-4" />, action: () => go(ROUTES.LOANS), category: "Navigation" },
       { id: "nav-forecast", label: "Cashforecast", sublabel: "Liquiditätsplanung", icon: <CalendarDays className="h-4 w-4" />, action: () => go(ROUTES.FORECAST), category: "Navigation" },

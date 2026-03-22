@@ -176,7 +176,7 @@ const Newsticker = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedSentiment, setSelectedSentiment] = useState<string>("all");
-  const [selectedPaywall, setSelectedPaywall] = useState<"all" | "free" | "paywall">("all");
+  const [selectedPaywall, setSelectedPaywall] = useState<"all" | "free" | "paywall">("free");
   const [showFilters, setShowFilters] = useState(false);
   const [isOffline, setIsOffline] = useState(() => !navigator.onLine);
   const [notifyKeywords, setNotifyKeywords] = useState<string[]>(getNewsNotificationKeywords);
