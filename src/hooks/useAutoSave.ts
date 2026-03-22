@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import { getAppScrollTop } from "@/lib/appScrollContainer";
 
 const AUTO_SAVE_KEY = "immocontrol_autosave";
 const AUTO_SAVE_INTERVAL = 10_000; // 10 seconds
@@ -81,7 +82,7 @@ export function useGlobalAutoSave() {
         const state = {
           timestamp: Date.now(),
           path: window.location.pathname,
-          scroll: window.scrollY,
+          scroll: getAppScrollTop(),
         };
         localStorage.setItem(`${AUTO_SAVE_KEY}_global`, JSON.stringify(state));
       } catch { /* ignore */ }

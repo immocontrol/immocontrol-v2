@@ -1,22 +1,29 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { createThrottle, safeDivide } from "@/lib/formatters";
+import { getAppScrollRange, getAppScrollTop } from "@/lib/appScrollContainer";
 
 const ScrollProgress = () => {
   const [progress, setProgress] = useState(0);
   const [isPastHeader, setIsPastHeader] = useState(false);
 
   useEffect(() => {
-    /* OPT-44: createThrottle for scroll listener */
+    /* Gleicher Scroll-Container wie #main-content (overflow) — nicht nur window */
     const onScroll = createThrottle(() => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollTop = getAppScrollTop();
+      const range = getAppScrollRange();
       setIsPastHeader(scrollTop > 72);
-      setProgress(docHeight > 0 ? safeDivide(scrollTop * 100, docHeight, 0) : 0);
+      setProgress(range > 0 ? safeDivide(scrollTop * 100, range, 0) : 0);
     }, 100);
     onScroll();
+    const main = document.getElementById("main-content");
+    main?.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); onScroll.cancel(); };
+    return () => {
+      main?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+      onScroll.cancel();
+    };
   }, []);
 
   // Hide while the header/menu is still visible near the top

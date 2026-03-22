@@ -13,6 +13,16 @@ export function getAppScrollTop(): number {
   return c === window ? window.scrollY : (c as HTMLElement).scrollTop;
 }
 
+/** Maximale Scroll-Strecke des aktiven Containers (0 wenn nicht scrollbar). */
+export function getAppScrollRange(): number {
+  const c = getAppScrollContainer();
+  if (c === window) {
+    return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  }
+  const el = c as HTMLElement;
+  return Math.max(0, el.scrollHeight - el.clientHeight);
+}
+
 export function appScrollTo(top: number, behavior: ScrollBehavior = "instant") {
   const c = getAppScrollContainer();
   if (c === window) {
