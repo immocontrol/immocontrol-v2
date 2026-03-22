@@ -1489,7 +1489,7 @@ button.btn-back-to-top,
 .btn-back-to-top {
   position: fixed !important;
   z-index: 40 !important;
-  bottom: 6rem !important;
+  bottom: calc(6rem + env(safe-area-inset-bottom, 0px)) !important;
   left: 1rem !important;
   right: auto !important;
   width: 3rem !important;
@@ -1519,7 +1519,7 @@ button.btn-back-to-top,
 }
 @media (min-width: 768px) {
   .btn-back-to-top {
-    bottom: 2rem !important;
+    bottom: calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
     left: auto !important;
     right: 1.5rem !important;
     width: 2.75rem !important;

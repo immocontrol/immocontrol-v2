@@ -3,7 +3,7 @@
  * Floating "scroll to top" button that appears after scrolling down.
  * Auto-hides when at top. Smooth scroll animation.
  */
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useLayoutEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,32 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
   const isMobile = useIsMobile();
   const [visible, setVisible] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
+  /** Gesetzter Scroll-Container, wenn Ref erst nach Mount gefüllt wird */
+  const [resolvedScrollEl, setResolvedScrollEl] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (!scrollContainer) {
+      setResolvedScrollEl(null);
+      return;
+    }
+    const el = scrollContainer.current;
+    if (el) {
+      setResolvedScrollEl(el);
+      return;
+    }
+    const id = window.setInterval(() => {
+      const next = scrollContainer.current;
+      if (next) {
+        setResolvedScrollEl(next);
+        window.clearInterval(id);
+      }
+    }, 48);
+    const t = window.setTimeout(() => window.clearInterval(id), 4000);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(t);
+    };
+  }, [scrollContainer]);
 
   useEffect(() => {
     let lastScrollY = 0;
@@ -39,8 +65,8 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
       ticking = true;
 
       requestAnimationFrame(() => {
-        const scrollY = scrollContainer?.current
-          ? scrollContainer.current.scrollTop
+        const scrollY = resolvedScrollEl
+          ? resolvedScrollEl.scrollTop
           : getAppScrollTop();
 
         setVisible(scrollY > threshold);
@@ -51,11 +77,10 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
       });
     };
 
-    const custom = scrollContainer?.current;
-    if (custom) {
-      custom.addEventListener("scroll", handleScroll, { passive: true });
+    if (resolvedScrollEl) {
+      resolvedScrollEl.addEventListener("scroll", handleScroll, { passive: true });
       handleScroll();
-      return () => custom.removeEventListener("scroll", handleScroll);
+      return () => resolvedScrollEl.removeEventListener("scroll", handleScroll);
     }
 
     const main = document.getElementById("main-content");
@@ -66,15 +91,16 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
       main?.removeEventListener("scroll", handleScroll);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [threshold, scrollContainer]);
+  }, [threshold, resolvedScrollEl]);
 
   const scrollToTop = useCallback(() => {
-    if (scrollContainer?.current) {
-      scrollContainer.current.scrollTo({ top: 0, behavior: "smooth" });
+    const el = resolvedScrollEl ?? scrollContainer?.current;
+    if (el) {
+      el.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       appScrollTo(0, "smooth");
     }
-  }, [scrollContainer]);
+  }, [resolvedScrollEl, scrollContainer]);
 
   // Only show on mobile, and only when scrolled down + scrolling up
   if (!isMobile || !visible) return null;
@@ -83,7 +109,7 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
     <button
       onClick={scrollToTop}
       className={cn(
-        "fixed right-4 z-40 w-10 h-10 rounded-full",
+        "fixed right-4 z-40 min-h-11 min-w-11 h-11 w-11 rounded-full touch-target",
         "bg-primary text-primary-foreground shadow-xl",
         "flex items-center justify-center",
         "transition-all duration-300",
@@ -93,7 +119,9 @@ export const MobileScrollToTop = memo(function MobileScrollToTop({
           : "opacity-60 translate-y-1",
         className
       )}
-      style={{ bottom: `${bottomOffset}px` }}
+      style={{
+        bottom: `calc(${bottomOffset}px + env(safe-area-inset-bottom, 0px))`,
+      }}
       aria-label="Nach oben scrollen"
     >
       <ArrowUp className="w-5 h-5" />

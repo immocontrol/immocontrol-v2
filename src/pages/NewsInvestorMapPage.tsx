@@ -44,6 +44,7 @@ const NewsInvestorMapPage = () => {
   const mapInstanceRef = useRef<{ remove: () => void } | null>(null);
   const layerRef = useRef<{ clearLayers: () => void } | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapLoadError, setMapLoadError] = useState<string | null>(null);
 
   const { data: snapshot, isLoading, error, isError } = useQuery({
     queryKey: queryKeys.newsInvestorMap.latest,
@@ -62,38 +63,52 @@ const NewsInvestorMapPage = () => {
     if (!mapRef.current) return;
     let cancelled = false;
 
-    loadLeaflet().then((LUnknown) => {
-      if (cancelled || !mapRef.current) return;
-      const L = LUnknown as {
-        map: (el: HTMLElement, opts?: object) => { remove: () => void };
-        tileLayer: (u: string, o?: object) => { addTo: (m: unknown) => unknown };
-        layerGroup: () => { addTo: (m: unknown) => unknown; clearLayers: () => void };
-      };
+    loadLeaflet()
+      .then((LUnknown) => {
+        if (cancelled || !mapRef.current) return;
+        const L = LUnknown as {
+          map: (el: HTMLElement, opts?: object) => { remove: () => void };
+          tileLayer: (u: string, o?: object) => { addTo: (m: unknown) => unknown };
+          layerGroup: () => { addTo: (m: unknown) => unknown; clearLayers: () => void };
+        };
 
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-      }
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+        }
 
-      const map = L.map(mapRef.current, {
-        center: [51.1657, 10.4515],
-        zoom: 6,
-        zoomControl: true,
-        scrollWheelZoom: true,
+        const map = L.map(mapRef.current, {
+          center: [51.1657, 10.4515],
+          zoom: 6,
+          zoomControl: true,
+          scrollWheelZoom: true,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+
+        const group = L.layerGroup();
+        group.addTo(map);
+        layerRef.current = group;
+        mapInstanceRef.current = map;
+        setMapLoadError(null);
+        setMapReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setMapLoadError("Kartenbibliothek konnte nicht geladen werden. Bitte Seite neu laden oder Netzwerk prüfen.");
       });
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
-
-      const group = L.layerGroup();
-      group.addTo(map);
-      layerRef.current = group;
-      mapInstanceRef.current = map;
-      setMapReady(true);
-    });
 
     return () => {
       cancelled = true;
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch {
+          /* ignore */
+        }
+        mapInstanceRef.current = null;
+      }
+      layerRef.current = null;
     };
   }, []);
 
@@ -131,7 +146,7 @@ const NewsInvestorMapPage = () => {
   }, [mapReady, snapshot, entries, maxScore]);
 
   return (
-    <div id="main-content" className="container max-w-5xl mx-auto px-4 py-6 space-y-6 min-w-0">
+    <div className="container max-w-5xl mx-auto px-4 py-6 space-y-6 min-w-0">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="sm" asChild className="shrink-0">
           <Link to={ROUTES.HOME} className="inline-flex items-center gap-2">
@@ -155,6 +170,12 @@ const NewsInvestorMapPage = () => {
         <div className="flex items-center gap-2 text-muted-foreground" role="status">
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
           Karte wird geladen…
+        </div>
+      )}
+
+      {mapLoadError && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-wrap-safe" role="alert">
+          {mapLoadError}
         </div>
       )}
 
