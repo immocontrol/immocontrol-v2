@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResponsiveDialog, ResponsiveDialogHeader, ResponsiveDialogTitle } from "@/components/ResponsiveDialog";
@@ -46,23 +47,27 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
         <ResponsiveDialogTitle>Aufgabe bearbeiten</ResponsiveDialogTitle>
       </ResponsiveDialogHeader>
       <div className="space-y-3">
-        <Input
-          value={form.title}
-          onChange={(e) => onFormChange((f) => ({ ...f, title: e.target.value }))}
-          placeholder="Titel"
-          className="h-9 text-sm font-medium"
-          autoFocus
-          aria-label="Aufgabentitel"
-        />
+        <div className="space-y-1">
+          <Label htmlFor="todo-edit-title" className="text-xs text-muted-foreground">Titel</Label>
+          <Input
+            id="todo-edit-title"
+            value={form.title}
+            onChange={(e) => onFormChange((f) => ({ ...f, title: e.target.value }))}
+            placeholder="Titel"
+            className="h-9 text-sm font-medium"
+            autoFocus
+          />
+        </div>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs text-muted-foreground">Beschreibung (optional)</label>
+            <Label htmlFor="todo-edit-description" className="text-xs text-muted-foreground">Beschreibung (optional)</Label>
             {isDeepSeekConfigured() && form.title.trim().length >= 2 && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="h-7 gap-1 text-xs"
+                aria-label="KI-Vorschlag für die Beschreibung generieren"
                 disabled={aiLoading}
                 onClick={async () => {
                   setAiLoading(true);
@@ -82,11 +87,11 @@ export function TodoEditDialog({ open, onClose, form, onFormChange, onSave, isSa
             )}
           </div>
           <Textarea
+            id="todo-edit-description"
             value={form.description}
             onChange={(e) => onFormChange((f) => ({ ...f, description: e.target.value }))}
             placeholder="Beschreibung (optional)"
             className="text-sm min-h-[80px] resize-none"
-            aria-label="Aufgabenbeschreibung"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">

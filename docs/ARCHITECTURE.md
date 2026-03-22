@@ -57,6 +57,12 @@ Der **Rest der Codebase** soll keine Referenzen auf Lovable, Replit, Cursor, Dev
 
 Deploy, Smoke-Tests, `version.json`, optionales Sentry, Fehlerdiagnose: **[OPERATIONS.md](./OPERATIONS.md)**.
 
+## Validierung, RLS, Feature-Flags
+
+- **[VALIDIERUNG_UND_RLS.md](./VALIDIERUNG_UND_RLS.md)** — Zod/Formulare, Supabase-Policies, Checkliste bei neuen Features.
+- **[FEATURE_FLAGS.md](./FEATURE_FLAGS.md)** — experimentelle Schalter per `VITE_FEATURE_*` und `isFeatureEnabled()` in `src/lib/featureFlags.ts`.
+- **Offline-Queue:** **[OFFLINE.md](./OFFLINE.md)**.
+
 ## Supabase-Nutzung
 
 - **Tabellen (Beispiele):** `properties`, `profiles`, `user_roles`, `tenants`, `loans`, `deals`, `property_viewings`, `documents`, etc. Typen in `src/integrations/supabase/types.ts`.

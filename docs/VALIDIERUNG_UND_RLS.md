@@ -1,20 +1,33 @@
-# Validierung und RLS (ImmoControl)
+# Validierung und Row Level Security (RLS)
 
-Kurze Übersicht, wo Pflichtfelder und Berechtigungen definiert sind (Vorschlag 18).
+Kurzüberblick, wo **Validierung** und **Zugriffskontrolle** in ImmoControl liegen — ergänzend zu [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-## Frontend-Validierung
+## Client-seitige Validierung
 
-- **Zentrale Schemas:** `src/lib/schemas.ts` — Zod-Schemas für Objekt, Kontakt, Darlehen, Deal, Mieter, Vertrag, Ticket, Rechnungen usw. Mit deutschen Fehlermeldungen.
-- **Add-Property-Formular:** Nutzt `addPropertyFormSchema` aus `schemas.ts` (einheitlich mit dem Rest).
-- **Datumslogik:** `src/lib/validation.ts` — `validateDateRange(start, end)` für „Enddatum > Startdatum“. In Formularen mit Start-/Enddatum nutzen.
-- **E-Mail/Telefon:** `validation.ts` — `isValidEmail`, `isValidPhoneDE`, `isValidDate`.
+- **Formulare:** Zod-Schemas in `src/lib/schemas.ts` (und teils lokale Schemas) — Pflichtfelder, Zahlenbereiche, deutsche Fehlermeldungen.
+- **API-Antworten:** Wo Daten aus Supabase kommen, helfen Zod-Schemas in `src/lib/supabaseSchemas.ts` (optional) beim Parsen/Abweichungserkennung.
+- **Kein Ersatz für Server-Validierung:** Alles im Browser kann umgangen werden; die Datenbank und RLS bleiben maßgeblich.
 
-## Supabase / RLS
+## Supabase: RLS und Policies
 
-- **Tabellendefinitionen:** `src/integrations/supabase/types.ts` (generiert bzw. abgeleitet von der Datenbank).
-- **RLS (Row Level Security):** In Supabase Dashboard pro Tabelle konfiguriert. Typisch: Lese-/Schreibzugriff nur für `auth.uid() = user_id` (oder entsprechende Spalte).
-- **Pflichtfelder pro Tabelle:** Entsprechen den `Insert`-Typen in `types.ts`; Felder ohne `?` sind Pflicht. Frontend-Schemas in `schemas.ts` sollten dieselben Pflichtfelder abdecken.
+- **Wo definiert:** In SQL-Migrationen unter `supabase/migrations/` (z. B. `CREATE POLICY … ON … FOR ALL USING (…)`).
+- **Typische Muster:** Zugriff nur mit `auth.uid()` = `user_id` der Zeile, oder Mitgliedschaft über Rollen-Tabellen — je nach Tabelle.
+- **Änderungen:** Neue Policies oder Anpassungen **immer** per Migration versionieren und auf Staging/Produktion anwenden (`supabase db push` oder euer Deploy-Pipeline).
 
-## Empfehlung
+## Pflichtfelder pro Tabelle (Orientierung)
 
-Bei neuen Formularen: Schema aus `schemas.ts` verwenden (oder erweitern), `zodResolver` in react-hook-form, und bei Start-/Enddatum optional `validateDateRange` in einem `.refine()` oder im Submit-Handler aufrufen.
+Die **Single Source of Truth** sind die Migrationen (`CREATE TABLE`, `NOT NULL`) und die generierten/ gepflegten Typen in `src/integrations/supabase/types.ts`.  
+App-Formulare können zusätzliche Regeln haben (z. B. UX „mindestens ein Kontakt“), die nicht in der DB stehen.
+
+| Bereich | Typen / Schema |
+|--------|----------------|
+| Objekte | `properties` in `types.ts`, Form: `addPropertyFormSchema` |
+| Profile / Rollen | `profiles`, `user_roles` |
+| Geschäftsdaten | `deals`, `loans`, `tenants`, … jeweils in `types.ts` |
+
+## Checkliste bei neuen Features
+
+1. Migration: Tabellen/Spalten + RLS-Policies.
+2. `types.ts` aktualisieren (oder Generator nutzen).
+3. Zod/Form-Schema in `schemas.ts` ergänzen, wo Nutzer eingibt.
+4. Kurz in dieser Doku oder im PR vermerken, welche RLS-Regel gilt.

@@ -40,6 +40,11 @@ In **Entwicklung** bieten manche Toasts **„Copy for AI“** (Fehlerkontext fü
 ## Datenbank
 
 - Schemaänderungen: Migrationen unter `supabase/migrations/` — auf dem **Ziel-Projekt** anwenden (`supabase db push` oder CI/CD eurer Wahl).
+- **RLS & Validierung:** [VALIDIERUNG_UND_RLS.md](./VALIDIERUNG_UND_RLS.md).
+
+## Feature-Flags (experimentell)
+
+- [FEATURE_FLAGS.md](./FEATURE_FLAGS.md) — `VITE_FEATURE_*` und `isFeatureEnabled()` in `src/lib/featureFlags.ts`.
 
 ## Dialoge und Barrierefreiheit
 

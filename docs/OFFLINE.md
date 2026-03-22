@@ -4,11 +4,11 @@ Kurzbeschreibung, welche Aktionen offline gequeuet werden und wie der Sync funkt
 
 ## Aktuell unterstützt
 
-### Objekte (Properties)
+### Objekte (Properties) — einzige produktive Queue-Nutzung
 
-- **Anlegen:** Beim Anlegen eines Objekts ohne Netz wird die Mutation in die Offline-Queue geschrieben. Toast: „Wird gespeichert, sobald du wieder online bist.“
-- **Sync:** Beim Wieder-online werden ausstehende Mutationen nacheinander an Supabase gesendet. Danach wird der Properties-Cache invalidiert, damit die echten Daten geladen werden.
-- **Speicherort:** IndexedDB (Store `pending_mutations`), Key `immocontrol-offline`.
+- **Anlegen:** Nur **`addProperty`** in `PropertyContext` schreibt bei Offline ein **`insert`** auf Tabelle `properties` in die Queue. Toast: „Wird gespeichert, sobald du wieder online bist.“
+- **Nicht gequeuet:** Update/Löschen von Objekten offline, sowie andere Tabellen (Kontakte, Darlehen, …) — Sync-Engine unterstützt generisch `insert`/`update`/`delete`, aber es gibt derzeit **keine weiteren Aufrufe** von `addPendingMutation` außer Objekt-Anlegen.
+- **Speicherort:** IndexedDB, Datenbankname `immocontrol-offline`, Store **`pending_mutations`** (Auto-Increment-Keys).
 
 ### Lesen (Cache)
 
@@ -23,15 +23,14 @@ Kurzbeschreibung, welche Aktionen offline gequeuet werden und wie der Sync funkt
 
 ## Konflikthandling nach Reconnect
 
-- **Reihenfolge:** Pending Mutations werden in der Reihenfolge `createdAt` abgearbeitet.
-- **Fehler:** Schlägt eine Mutation fehl (z. B. 409 Conflict, Validierung), wird sie übersprungen; der Rest läuft weiter.
-- **Duplikate:** Wird dasselbe Objekt zweimal offline angelegt, erzeugt Supabase zwei Einträge (keine Merge-Logik).
+- **Reihenfolge:** FIFO gemäß Speicherreihenfolge in `pending_mutations`.
+- **Fehler:** Bei **erstem** Fehler stoppt der Sync; es werden keine weiteren Mutationen in **diesem** Lauf versucht. Erfolgreiche vor dem Fehler sind aus der Queue entfernt.
+- **Duplikate:** Mehrfaches offline Anlegen erzeugt mehrere Inserts nach Reconnect (keine Deduplizierung).
 
 ## Geplante Erweiterungen
 
-- **Kontakte:** Offline-Queue für Anlegen/Bearbeiten/Löschen (analog zu Objekten).
-- **Darlehen:** Offline-Queue für Anlegen/Bearbeiten.
-- **Konflikthandling:** Dokumentation, wie Duplikate oder Konflikte (z. B. gleiche ID) behandelt werden.
+- **Kontakte / Darlehen / weitere Tabellen:** `addPendingMutation` aus Kontexten analog zu Objekten aufrufen; Sync-Loop ist tabellenagnostisch.
+- **Konfliktlösung:** ggf. Retry, Merge oder Nutzerhinweis bei 409 — derzeit nicht implementiert.
 
 ## Technische Referenz
 

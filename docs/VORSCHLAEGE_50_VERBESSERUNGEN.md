@@ -120,13 +120,19 @@
 |-----|----------------------------|--------|
 | 6   | target="_blank" + noopener | ✅ Umgesetzt |
 | 14  | document.title (fehlende Seiten) | ✅ Index, Einladung, FinanzierungsCockpit, HandworkerPortal, ImmobilienBewertung ergänzt |
+| 15  | Meta-Description (Start)   | ✅ `index.html` + OG/Twitter |
 | 1   | aria-label Icon-Buttons    | ✅ Mehrere Komponenten (ImmoAI, HandworkerPortal, TenantPortal, NotificationBell, EditPropertyDialog, TenantManagement, etc.) |
-| 3   | Form label id/htmlFor      | 🔄 TodoEditDialog (Fälligkeit, Uhrzeit, Priorität, Projekt) ergänzt; weitere Formulare schrittweise |
+| 3   | Form label id/htmlFor      | ✅ TodoEditDialog (Titel, Beschreibung, Fälligkeit, Uhrzeit, Priorität, Projekt); weitere Formulare schrittweise |
 | 19  | Stabile Keys in Listen     | 🔄 Wo id vorhanden, key={id} nutzen |
 | 9   | Loading bei Async-Buttons  | ✅ LoadingButton in TenantManagement, ContractManagement, EnergyCertificateTracker, MaintenancePlanner; weitere schrittweise |
 | 17  | useDisclosure / ExpandableCard | ✅ useDisclosure (hooks), ExpandableCard (components); Pilot-Nutzung möglich |
 | 18  | toErrorMessage()           | ✅ In lib/handleError.ts exportiert (toErrorMessage + ErrorContext) |
+| 38  | Offline-Queue dokumentieren | ✅ [OFFLINE.md](./OFFLINE.md) an Code angepasst |
+| 45  | RLS & Validierung dokumentieren | ✅ [VALIDIERUNG_UND_RLS.md](./VALIDIERUNG_UND_RLS.md) |
+| 48  | Unit-Tests Utils           | ✅ u. a. formatters, dealUtils, mutationErrorHandler, handleError |
+| 46  | E2E nutzt ROUTES           | ✅ `e2e/auth.spec.ts` importiert `ROUTES` |
+| 50  | Feature-Flags              | ✅ `src/lib/featureFlags.ts` + [FEATURE_FLAGS.md](./FEATURE_FLAGS.md) |
 
 ---
 
-*Stand: März 2025. Kann bei Änderungen am Produkt angepasst werden.*
+*Stand: März 2026. Kann bei Änderungen am Produkt angepasst werden.*

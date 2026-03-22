@@ -9,7 +9,7 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:5173";
 
 test.describe("Authentication Flow", () => {
   test("should show login page", async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(`${BASE_URL}${ROUTES.HOME}`);
     await expect(page.locator("text=Anmelden").or(page.locator("text=Sign In"))).toBeVisible({ timeout: 10000 });
   });
 
