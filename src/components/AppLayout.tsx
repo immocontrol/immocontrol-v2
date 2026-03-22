@@ -33,6 +33,7 @@ import { useSessionIdleTimeout } from "@/hooks/useSessionIdleTimeout";
 import { useEnterToNext } from "@/hooks/useEnterToNext";
 import { useNotificationChecks } from "@/hooks/useNotificationChecks";
 import { scheduleAutoBackup } from "@/lib/autoBackup";
+import { getAppScrollTop } from "@/lib/appScrollContainer";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { PageProgressBar } from "@/components/PageProgressBar";
@@ -150,7 +151,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const lastScrollY = useRef(0);
   const scrollTicking = useRef(false);
 
+  /* Mobile: Inhalt scrollt in #main-content (overflow-y-auto), nicht am window */
   useEffect(() => {
+    if (!isMobile) return;
     const onScroll = () => {
       /* FIX: Skip scroll-based nav visibility updates when an input/textarea is focused
          to prevent re-renders that steal focus on mobile keyboards */
@@ -161,7 +164,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       if (scrollTicking.current) return;
       scrollTicking.current = true;
       requestAnimationFrame(() => {
-        const currentY = window.scrollY;
+        const currentY = getAppScrollTop();
         if (currentY > lastScrollY.current + 10 && currentY > 60) {
           setMobileNavVisible(false); // scrolling down
         } else if (currentY < lastScrollY.current - 10 || currentY <= 10) {
@@ -171,9 +174,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         scrollTicking.current = false;
       });
     };
+    const main = mainContentRef.current;
+    main?.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    return () => {
+      main?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [isMobile]);
 
   /* UPD-47: Safe logout with error handling */
   const handleLogout = async () => {

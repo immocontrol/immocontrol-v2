@@ -8,6 +8,7 @@
  */
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { appScrollTo, getAppScrollTop } from "@/lib/appScrollContainer";
 
 const scrollPositions = new Map<string, number>();
 
@@ -20,10 +21,15 @@ export function useScrollPosition() {
      for the current route, even before a navigation triggers a re-render. */
   useEffect(() => {
     const onScroll = () => {
-      scrollPositions.set(location.pathname, window.scrollY);
+      scrollPositions.set(location.pathname, getAppScrollTop());
     };
+    const main = document.getElementById("main-content");
+    main?.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      main?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [location.pathname]);
 
   /* On navigation: restore saved position for the new route, or scroll to top */
@@ -34,10 +40,10 @@ export function useScrollPosition() {
     const saved = scrollPositions.get(location.pathname);
     if (saved !== undefined && saved > 0) {
       requestAnimationFrame(() => {
-        window.scrollTo({ top: saved, behavior: "instant" as ScrollBehavior });
+        appScrollTo(saved, "instant");
       });
     } else {
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      appScrollTo(0, "instant");
     }
   }, [location.pathname]);
 }

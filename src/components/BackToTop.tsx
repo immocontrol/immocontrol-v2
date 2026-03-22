@@ -3,40 +3,29 @@ import { useState, useEffect, forwardRef } from "react";
 import { ArrowUp } from "lucide-react";
 import { createThrottle } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { appScrollTo, getAppScrollTop } from "@/lib/appScrollContainer";
 
 /** Pixel ab dem der Button erscheint (erst bei ausreichend Scroll nach unten) */
 const SCROLL_THRESHOLD = 380;
-
-/** Scroll-Container: main (#main-content) wenn vorhanden und scrollbar, sonst window */
-function getScrollContainer(): HTMLElement | typeof window {
-  const main = document.getElementById("main-content");
-  if (main && main.scrollHeight > main.clientHeight) return main;
-  return window;
-}
 
 const BackToTop = forwardRef<HTMLButtonElement>((_, ref) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const container = getScrollContainer();
-    const getScrollTop = () =>
-      container === window ? window.scrollY : (container as HTMLElement).scrollTop;
-    const onScroll = createThrottle(() => setVisible(getScrollTop() > SCROLL_THRESHOLD), 120);
+    const onScroll = createThrottle(() => setVisible(getAppScrollTop() > SCROLL_THRESHOLD), 120);
     onScroll();
-    container.addEventListener("scroll", onScroll, { passive: true });
+    const main = document.getElementById("main-content");
+    main?.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      container.removeEventListener("scroll", onScroll as EventListener);
+      main?.removeEventListener("scroll", onScroll as EventListener);
+      window.removeEventListener("scroll", onScroll as EventListener);
       onScroll.cancel();
     };
   }, []);
 
   const scrollToTop = () => {
-    const container = getScrollContainer();
-    if (container === window) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      (container as HTMLElement).scrollTo({ top: 0, behavior: "smooth" });
-    }
+    appScrollTo(0, "smooth");
   };
 
   return (

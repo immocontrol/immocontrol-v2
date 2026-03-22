@@ -84,8 +84,9 @@ function injectMobileCSS() {
         .fixed.bottom-0, [class*="fixed"][class*="bottom-"] {
           padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
         }
-        /* Immer seitlicher Abstand (min. 1.25rem), auch wenn safe-area 0 ist (z. B. native iOS WebView) */
-        main, [role="main"] {
+        /* Seitenrand nur wenn main nicht schon .container ist — sonst doppeltes Padding zu index.css .container */
+        main:not(.container),
+        [role="main"]:not(.container) {
           padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
           padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
         }
