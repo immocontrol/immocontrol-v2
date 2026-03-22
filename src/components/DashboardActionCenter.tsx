@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt, Store, Bell } from "lucide-react";
+import { Wrench, CreditCard, MessageSquare, AlertTriangle, CheckCircle2, Clock, ArrowRight, Euro, Users, Building2, Landmark, Camera, Receipt, Store, Bell, Sparkles, TrendingUp, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,61 @@ import { queryKeys } from "@/lib/queryKeys";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "@/lib/formatters";
 import { ROUTES, propertyDetail } from "@/lib/routes";
+import { cn } from "@/lib/utils";
+
+/** Gemeinsame Synergie-Schnelllinks (Dashboard: Akquise, Finanzen, Aufgaben, KI) */
+function DashboardSynergyLinks({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex flex-wrap gap-2", className)}>
+      <p className="w-full text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Vernetzt öffnen</p>
+      <Link
+        to={ROUTES.CRM_SCOUT}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
+        aria-label="Gewerbe-Scout – Gewerbe nach Ort oder Umkreis finden"
+      >
+        <Store className="h-4 w-4 text-emerald-600 shrink-0" />
+        <span>Gewerbe finden</span>
+        <ArrowRight className="h-3 w-3 text-emerald-600 shrink-0" />
+      </Link>
+      <Link
+        to={ROUTES.FINANZIERUNG}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
+        aria-label="Finanzierungs-Cockpit"
+      >
+        <Landmark className="h-4 w-4 text-primary shrink-0" />
+        <span>Finanzierung</span>
+        <ArrowRight className="h-3 w-3 text-primary shrink-0" />
+      </Link>
+      <Link
+        to={ROUTES.FORECAST}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-profit/10 border border-profit/20 hover:bg-profit/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
+        aria-label="Cashflow-Prognose"
+      >
+        <TrendingUp className="h-4 w-4 text-profit shrink-0" />
+        <span>Cashflow</span>
+        <ArrowRight className="h-3 w-3 text-profit shrink-0" />
+      </Link>
+      <Link
+        to={ROUTES.TODOS}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/80 hover:bg-secondary transition-colors text-sm font-medium touch-target min-h-[44px]"
+        aria-label="Aufgaben"
+      >
+        <CheckSquare className="h-4 w-4 text-muted-foreground shrink-0" />
+        <span>Aufgaben</span>
+        <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+      </Link>
+      <Link
+        to={ROUTES.AI}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
+        aria-label="Immo-AI"
+      >
+        <Sparkles className="h-4 w-4 text-violet-600 shrink-0" />
+        <span>Immo-AI</span>
+        <ArrowRight className="h-3 w-3 text-violet-600 shrink-0" />
+      </Link>
+    </div>
+  );
+}
 
 interface ActionStats {
   openTickets: number;
@@ -102,7 +157,28 @@ const DashboardActionCenter = () => {
     );
   }
 
-  if (totalActions === 0 && recentTickets.length === 0 && dealsInBesichtigung === 0 && recentViewings.length === 0 && draftBillings === 0) return null;
+  const showActionTiles =
+    totalActions > 0 ||
+    recentTickets.length > 0 ||
+    dealsInBesichtigung > 0 ||
+    recentViewings.length > 0 ||
+    draftBillings > 0;
+
+  if (!showActionTiles) {
+    return (
+      <div
+        className="gradient-card rounded-xl border border-border p-5 animate-fade-in [animation-delay:250ms]"
+        role="region"
+        aria-label="Vernetzte Bereiche"
+      >
+        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">Schnell vernetzen</h2>
+        <p className="text-xs text-muted-foreground mb-3 text-wrap-safe">
+          Kein offenes Ticket oder überfällige Zahlung – hier springst du trotzdem in die wichtigsten verbundenen Bereiche.
+        </p>
+        <DashboardSynergyLinks />
+      </div>
+    );
+  }
 
   const categoryIcons: Record<string, string> = {
     repair: "🔧", damage: "⚠️", maintenance: "🛠️", question: "❓", other: "📋",
@@ -186,17 +262,34 @@ const DashboardActionCenter = () => {
             <div className="text-[10px] text-muted-foreground">Ungelesen</div>
           </div>
         )}
-        {/* Synergy 5: Handworker assignment + repair cost */}
-        <div className={`rounded-lg p-3 text-center transition-colors ${stats.unassigned > 0 ? "bg-gold/10 border border-gold/20" : "bg-profit/10 border border-profit/20"}`}>
-          <Wrench className={`h-4 w-4 mx-auto mb-1 ${stats.unassigned > 0 ? "text-gold" : "text-profit"}`} />
-          <div className={`text-lg font-bold ${stats.unassigned > 0 ? "text-gold" : "text-profit"}`}>
-            {stats.assignedToHandworker}/{stats.assignedToHandworker + stats.unassigned}
+        {/* Synergy 5: Handworker assignment + repair cost — bei offenen Zuweisungen → Kontakte */}
+        {stats.unassigned > 0 ? (
+          <Link
+            to={ROUTES.CONTACTS}
+            className={`rounded-lg p-3 text-center transition-colors block touch-target min-h-[60px] bg-gold/10 border border-gold/20 hover:bg-gold/15`}
+            aria-label="Handwerker zuweisen – zu Kontakten"
+          >
+            <Wrench className="h-4 w-4 mx-auto mb-1 text-gold" />
+            <div className="text-lg font-bold text-gold">
+              {stats.assignedToHandworker}/{stats.assignedToHandworker + stats.unassigned}
+            </div>
+            <div className="text-[10px] text-muted-foreground">An Handwerker</div>
+            {stats.totalRepairCosts > 0 && (
+              <div className="text-[9px] text-muted-foreground font-medium mt-0.5">{formatCurrency(stats.totalRepairCosts)} Kosten</div>
+            )}
+          </Link>
+        ) : (
+          <div className="rounded-lg p-3 text-center transition-colors bg-profit/10 border border-profit/20 touch-target min-h-[60px]">
+            <Wrench className="h-4 w-4 mx-auto mb-1 text-profit" />
+            <div className="text-lg font-bold text-profit">
+              {stats.assignedToHandworker}/{stats.assignedToHandworker + stats.unassigned}
+            </div>
+            <div className="text-[10px] text-muted-foreground">An Handwerker</div>
+            {stats.totalRepairCosts > 0 && (
+              <div className="text-[9px] text-muted-foreground font-medium mt-0.5">{formatCurrency(stats.totalRepairCosts)} Kosten</div>
+            )}
           </div>
-          <div className="text-[10px] text-muted-foreground">An Handwerker</div>
-          {stats.totalRepairCosts > 0 && (
-            <div className="text-[9px] text-muted-foreground font-medium mt-0.5">{formatCurrency(stats.totalRepairCosts)} Kosten</div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Synergy: Deals in Besichtigung + Besichtigungen + Nebenkosten-Entwürfe */}
@@ -237,18 +330,7 @@ const DashboardActionCenter = () => {
         </div>
       )}
 
-      {/* Synergy: Gewerbe-Scout – immer sichtbar wenn Handlungsbedarf angezeigt wird */}
-      <div className="flex flex-wrap gap-2">
-        <Link
-          to={ROUTES.CRM_SCOUT}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors text-sm font-medium touch-target min-h-[44px]"
-          aria-label="Gewerbe-Scout – Gewerbe nach Ort oder Umkreis finden"
-        >
-          <Store className="h-4 w-4 text-emerald-600" />
-          <span>Gewerbe finden</span>
-          <ArrowRight className="h-3 w-3 text-emerald-600" />
-        </Link>
-      </div>
+      <DashboardSynergyLinks className="pt-1 border-t border-border/50" />
 
       {recentTickets.length > 0 && (
         <div className="space-y-1.5">
