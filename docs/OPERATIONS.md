@@ -54,7 +54,7 @@ In **Entwicklung** bieten manche Toasts **„Copy for AI“** (Fehlerkontext fü
 - **Mit Login:** Beliebige erlaubte öffentliche `http(s)`-URLs (SSRF-Filter wie zuvor).
 - Nach Änderungen deployen: `supabase functions deploy rss-fetch` (lokal: `supabase functions serve`).
 - Optional: **`VITE_RSS2JSON_API_KEY`** — höheres Kontingent bei [rss2json.com](https://rss2json.com) als zweiter Fallback (CORS-fähig).
-- **Tages-Top 3:** Die Seite zeigt zwei automatische Listen (bundesweit vs. Berlin & Brandenburg) aus den geladenen Artikeln der letzten **72h**; Logik in `src/pages/newsticker/dailyTopPicks.ts` (Heuristik, keine Redaktion).
+- **Tages-Top 3:** Die Seite zeigt zwei automatische Listen (bundesweit vs. regional) aus den geladenen Artikeln der letzten **72h**; Logik in `src/pages/newsticker/dailyTopPicks.ts` (Heuristik, keine Redaktion). **„Vor Ort“** gewichtet Treffer nach Orten aus **Objekten** (Standort, Adresse, Name) und **aktiven Deals** (nicht `abgelehnt`); Details in `src/pages/newsticker/investmentLocationHints.ts`.
 
 ## Dialoge und Barrierefreiheit
 

@@ -1,10 +1,13 @@
 /**
  * Tages-Top: die wichtigsten Meldungen aus dem aktuellen Feed,
- * getrennt in bundesweite (Deutschland) und regionale Investitions-/Standort-News (Berlin & Brandenburg).
+ * getrennt in bundesweite (Deutschland) und regionale Investitions-/Standort-News
+ * (Standard: Berlin & Brandenburg; optional: Portfolio-Orte aus Objekten & Deals).
  * Heuristik: Score + Aktualität; kein externes LLM.
  */
 import type { NewsItem } from "./newsUtils";
 import { detectCity } from "./newsUtils";
+import type { PortfolioLocationHints } from "./investmentLocationHints";
+import { portfolioLocationMatchScore } from "./investmentLocationHints";
 
 /** Artikel höchstens so alt berücksichtigen (RSS-Verzögerung, Wochenenden) */
 const MAX_AGE_MS = 72 * 60 * 60 * 1000;
@@ -35,6 +38,8 @@ export interface DailyTopPicks {
   vorOrt: NewsItem[];
   /** Anzeige-Datum (Europe/Berlin) */
   dateLabelDE: string;
+  /** Kurzzeile unter „vor Ort“, z. B. Orte aus dem Portfolio; null = Standard-Region */
+  vorOrtPortfolioLine: string | null;
 }
 
 function publishedTime(item: NewsItem): number {
@@ -69,7 +74,11 @@ export function scoreNationalRelevance(item: NewsItem, now: number): number {
   return s;
 }
 
-export function scoreLocalInvestment(item: NewsItem, now: number): number {
+export function scoreLocalInvestment(
+  item: NewsItem,
+  now: number,
+  portfolioHints?: PortfolioLocationHints | null,
+): number {
   const text = `${item.title} ${item.description}`.toLowerCase();
   let s = freshnessBonus(item, now);
   if (item.region === "brandenburg" || item.region === "both") s += 3;
@@ -79,6 +88,9 @@ export function scoreLocalInvestment(item: NewsItem, now: number): number {
   if (INVESTMENT_PATTERN.test(text)) s += 2;
   if (LOCAL_SOURCE_PATTERN.test(item.source)) s += 2;
   if (item.category === "investment" || item.category === "markt") s += 1;
+  if (portfolioHints?.hasPortfolioData) {
+    s += portfolioLocationMatchScore(text, portfolioHints);
+  }
   return s;
 }
 
@@ -132,23 +144,34 @@ export function formatTopPicksDateDE(now: Date = new Date()): string {
  * Aus dem geladenen Feed: bis zu 3 „Deutschland“- und 3 „vor Ort“-Meldungen.
  * Zweite Liste ist zuerst disjunkt zur ersten; bei wenig Treffern wird der Schwellenwert gesenkt.
  */
-export function computeDailyTopPicks(news: NewsItem[], now: number = Date.now()): DailyTopPicks {
+export interface ComputeDailyTopPicksOptions {
+  portfolioHints?: PortfolioLocationHints | null;
+}
+
+export function computeDailyTopPicks(
+  news: NewsItem[],
+  now: number = Date.now(),
+  options?: ComputeDailyTopPicksOptions,
+): DailyTopPicks {
+  const hints = options?.portfolioHints ?? null;
+  const scoreLocal = (item: NewsItem) => scoreLocalInvestment(item, now, hints);
+
   const recent = news.filter((n) => isRecent(n, now));
   const deutschland = pickTop(recent, (item) => scoreNationalRelevance(item, now), 3, 4);
   const nationalIds = new Set(deutschland.map((n) => n.id));
 
   const poolNoNationalDup = recent.filter((n) => !nationalIds.has(n.id));
-  let vorOrt = pickTop(poolNoNationalDup, (item) => scoreLocalInvestment(item, now), 3, 4);
+  let vorOrt = pickTop(poolNoNationalDup, scoreLocal, 3, 4);
   if (vorOrt.length < 3) {
-    vorOrt = pickTop(poolNoNationalDup, (item) => scoreLocalInvestment(item, now), 3, 2);
+    vorOrt = pickTop(poolNoNationalDup, scoreLocal, 3, 2);
   }
   if (vorOrt.length < 3) {
-    vorOrt = pickTop(poolNoNationalDup, (item) => scoreLocalInvestment(item, now), 3, 0.5);
+    vorOrt = pickTop(poolNoNationalDup, scoreLocal, 3, 0.5);
   }
   /* Letzte Auffüllung: auch aus dem Gesamtpool nach lokalem Score, ohne Duplikate */
   if (vorOrt.length < 3) {
     const used = new Set(vorOrt.map((n) => n.id));
-    const extra = pickTop(recent, (item) => scoreLocalInvestment(item, now), 9, 0);
+    const extra = pickTop(recent, scoreLocal, 9, 0);
     for (const item of extra) {
       if (vorOrt.length >= 3) break;
       if (!used.has(item.id)) {
@@ -158,9 +181,15 @@ export function computeDailyTopPicks(news: NewsItem[], now: number = Date.now())
     }
   }
 
+  const vorOrtPortfolioLine =
+    hints?.hasPortfolioData && hints.summaryLabel.trim().length > 0
+      ? `Basierend auf deinen Objekten & Deals: ${hints.summaryLabel}`
+      : null;
+
   return {
     deutschland,
     vorOrt: vorOrt.slice(0, 3),
     dateLabelDE: formatTopPicksDateDE(new Date(now)),
+    vorOrtPortfolioLine,
   };
 }

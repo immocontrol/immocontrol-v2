@@ -113,8 +113,9 @@ describe("dailyTopPicks", () => {
         publishedAt: new Date(now - 7 * 60 * 60 * 1000).toISOString(),
       }),
     ];
-    const { deutschland, vorOrt, dateLabelDE } = computeDailyTopPicks(items, now);
+    const { deutschland, vorOrt, dateLabelDE, vorOrtPortfolioLine } = computeDailyTopPicks(items, now);
     expect(dateLabelDE.length).toBeGreaterThan(5);
+    expect(vorOrtPortfolioLine).toBeNull();
     expect(deutschland.length).toBeGreaterThanOrEqual(1);
     expect(vorOrt.length).toBeGreaterThanOrEqual(1);
     expect(deutschland.length).toBeLessThanOrEqual(3);

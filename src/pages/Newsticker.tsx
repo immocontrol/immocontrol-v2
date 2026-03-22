@@ -20,6 +20,9 @@ import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, P
 import { MobilePagePullToRefresh } from "@/components/mobile/MobilePagePullToRefresh";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { useAuth } from "@/hooks/useAuth";
+import { useProperties } from "@/context/PropertyContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   type NewsItem,
   type NewsCategory,
@@ -36,6 +39,7 @@ import {
 } from "./newsticker/newsUtils";
 import { fetchAllRssNews, RSS_FEEDS } from "./newsticker/newsFetch";
 import { computeDailyTopPicks } from "./newsticker/dailyTopPicks";
+import { buildPortfolioLocationHints, type DealForLocation } from "./newsticker/investmentLocationHints";
 import {
   getNewsNotificationKeywords,
   setNewsNotificationKeywords,
@@ -80,6 +84,22 @@ const VIEW_MODE_KEY = "immocontrol_news_view";
 const NEWSTICKER_STALE_MS = 5 * 60 * 1000; // 5 min cache
 
 const Newsticker = () => {
+  const { user } = useAuth();
+  const { properties } = useProperties();
+  const { data: dealsForLocation = [] } = useQuery({
+    queryKey: [...queryKeys.deals.all, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("deals")
+        .select("title, address, description, notes, stage")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+
   const {
     data: news = [],
     isLoading: loading,
@@ -349,10 +369,18 @@ const Newsticker = () => {
     return { total: tn.length, counts: c };
   }, [news]);
 
-  /** Tages-Top: Deutschland vs. Berlin & Brandenburg (Heuristik, letzte 72h) */
+  const portfolioLocationHints = useMemo(
+    () => buildPortfolioLocationHints(properties, (dealsForLocation ?? []) as DealForLocation[]),
+    [properties, dealsForLocation],
+  );
+
+  /** Tages-Top: Deutschland vs. regional (Portfolio-Orte aus Objekten & Deals, sonst BB-Schwerpunkt) */
   const dailyTopPicks = useMemo(
-    () => (news.length > 0 ? computeDailyTopPicks(news) : null),
-    [news],
+    () =>
+      news.length > 0
+        ? computeDailyTopPicks(news, Date.now(), { portfolioHints: portfolioLocationHints })
+        : null,
+    [news, portfolioLocationHints, dataUpdatedAt],
   );
 
   const toggleCategory = (cat: NewsCategory) => {
@@ -603,7 +631,7 @@ const Newsticker = () => {
             <p className="text-xs text-muted-foreground text-wrap-safe">
               {dailyTopPicks.dateLabelDE}
               {" · "}
-              Automatische Priorisierung aus den geladenen Feeds (bundesweite Markt-/Politik-Signale vs. Berlin &amp; Brandenburg inkl. Investition).
+              Automatische Priorisierung aus den geladenen Feeds (bundesweit vs. regional). Region „vor Ort“ nutzt bei hinterlegten Objekten/Deals die Orte aus Standort und Adresse.
               {" "}
               Keine redaktionelle Kuratierung.
             </p>
@@ -644,10 +672,17 @@ const Newsticker = () => {
               )}
             </div>
             <div className="rounded-lg border border-border/80 bg-background/60 p-3 min-w-0">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-1">
                 <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Berlin &amp; Brandenburg (Investition &amp; Standort)
+                Vor Ort — Investition &amp; Standort
               </h3>
+              {dailyTopPicks.vorOrtPortfolioLine ? (
+                <p className="text-[11px] text-muted-foreground text-wrap-safe mb-2">{dailyTopPicks.vorOrtPortfolioLine}</p>
+              ) : (
+                <p className="text-[11px] text-muted-foreground text-wrap-safe mb-2">
+                  Ohne Einträge in Objekten/Deals: Schwerpunkt Berlin &amp; Brandenburg (RSS). Orte bei Objekten unter Standort/Adresse pflegen, um Treffer zu steuern.
+                </p>
+              )}
               {dailyTopPicks.vorOrt.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-wrap-safe">
                   In den letzten 72 Stunden keine regional priorisierten Meldungen. Liste aktualisiert sich mit dem nächsten Abruf.
