@@ -859,6 +859,30 @@ export type Database = {
           },
         ]
       }
+      news_investor_map_snapshots: {
+        Row: {
+          id: string
+          day: string
+          payload: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          day: string
+          payload?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          day?: string
+          payload?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       meter_readings: {
         Row: {
           created_at: string

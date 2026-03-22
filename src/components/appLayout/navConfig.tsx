@@ -20,6 +20,7 @@ import {
   Target,
   Handshake,
   Newspaper,
+  Map,
   Camera,
   RefreshCw,
   ShieldAlert,
@@ -106,6 +107,7 @@ navItems.forEach((n) => {
 
 export const ACTION_TO_PATH: Record<string, string> = {
   "Navigation: Newsticker": ROUTES.HOME,
+  "Navigation: News-Karte": ROUTES.NEWS_INVESTOR_MAP,
   "Navigation: Portfolio": ROUTES.PORTFOLIO,
   "Navigation: Objekte": ROUTES.OBJEKTE,
   "Navigation: Dashboard": ROUTES.PERSONAL_DASHBOARD,

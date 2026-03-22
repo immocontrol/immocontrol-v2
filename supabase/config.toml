@@ -12,3 +12,7 @@ verify_jwt = true
 [functions.rss-fetch]
 # Auth erfolgt in der Function: eingeloggter User ODER anon + Allowlist (Newsticker öffentlich)
 verify_jwt = false
+
+[functions.news-daily-aggregate]
+# Nur Service Role (Cron / CI); schreibt news_investor_map_snapshots
+verify_jwt = false

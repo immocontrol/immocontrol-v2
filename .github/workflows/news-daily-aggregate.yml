@@ -1,0 +1,27 @@
+# Täglich: Edge Function news-daily-aggregate (RSS → Bundesland-Scores)
+# Secrets im Repo: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+name: News daily aggregate
+
+on:
+  schedule:
+    # ~06:00 Europe/Berlin (Winter); im Sommer eine Stunde früher — bei Bedarf anpassen
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST news-daily-aggregate
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
+            exit 1
+          fi
+          curl -sS -f -X POST \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            "${SUPABASE_URL%/}/functions/v1/news-daily-aggregate"

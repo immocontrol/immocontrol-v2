@@ -3,8 +3,9 @@
  * Features: Sentiment-Analyse, Lesezeichen, Trending Topics, Kompakt/Karten-Ansicht
  */
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
-  Newspaper, ExternalLink, RefreshCw, Filter, Search, Clock, MapPin, Tag,
+  Newspaper, ExternalLink, RefreshCw, Filter, Search, Clock, MapPin, Map, Tag,
   ChevronDown, AlertCircle, Globe, Bookmark, BookmarkCheck,
   Share2, TrendingUp, LayoutGrid, List, BarChart3,   Flame, Archive, Loader2, Lock, LockOpen, Download, WifiOff, Star,
 } from "lucide-react";
@@ -29,6 +30,7 @@ import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderMain, P
 import { MobilePagePullToRefresh } from "@/components/mobile/MobilePagePullToRefresh";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { ROUTES } from "@/lib/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useProperties } from "@/context/PropertyContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -503,6 +505,13 @@ const Newsticker = () => {
           </PageHeaderDescription>
         </PageHeaderMain>
         <PageHeaderActions>
+          <Button variant="outline" size="sm" className="gap-1.5" asChild>
+            <Link to={ROUTES.NEWS_INVESTOR_MAP}>
+              <Map className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Investor-Karte</span>
+              <span className="sm:hidden">Karte</span>
+            </Link>
+          </Button>
           <Button
             variant={showBookmarksOnly ? "default" : "outline"}
             size="sm"

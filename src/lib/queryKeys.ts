@@ -147,4 +147,8 @@ export const queryKeys = {
   newsticker: {
     all: ["newsticker"] as const,
   },
+  /** Tages-Snapshot Investor-Landkarte (Supabase, öffentlich lesbar) */
+  newsInvestorMap: {
+    latest: ["news_investor_map_snapshots", "latest"] as const,
+  },
 } as const;

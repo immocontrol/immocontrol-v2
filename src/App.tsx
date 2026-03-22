@@ -8,7 +8,7 @@ import { PropertyProvider } from "@/context/PropertyContext";
 import AppLayout from "@/components/AppLayout";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageTransition from "@/components/PageTransition";
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ConfigErrorScreen } from "@/components/ConfigErrorScreen";
@@ -80,6 +80,7 @@ const dealsBewertungImport = () => import("@/pages/DealsBewertungPage");
 const handoverConfirmImport = () => import("@/pages/HandoverConfirmPage");
 const contractSignImport = () => import("@/pages/ContractSignPage");
 const erfolgeImport = () => import("@/pages/Erfolge");
+const newsInvestorMapImport = () => import("@/pages/NewsInvestorMapPage");
 
 const Dashboard = lazy(dashboardImport);
 const PropertyDetail = lazy(propertyDetailImport);
@@ -131,6 +132,7 @@ const DealsBewertungPage = lazy(dealsBewertungImport);
 const HandoverConfirmPage = lazy(handoverConfirmImport);
 const ContractSignPage = lazy(contractSignImport);
 const Erfolge = lazy(erfolgeImport);
+const NewsInvestorMapPage = lazy(newsInvestorMapImport);
 
 /* BUG-6: Preload nur häufig genutzte Routen — reduziert Bandbreite auf Mobile, rest lädt on-demand */
 const preloadHighTrafficRoutes = () => {
@@ -208,6 +210,7 @@ queryClient.setQueryDefaults(["documents"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(["tickets"], { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.viewings.all, { staleTime: 2 * 60_000 });
 queryClient.setQueryDefaults(queryKeys.newsticker.all, { staleTime: 5 * 60_000 });
+queryClient.setQueryDefaults(queryKeys.newsInvestorMap.latest, { staleTime: 30 * 60_000 });
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -260,7 +263,7 @@ const RoleRouter = () => {
     fetchRole();
   }, [user]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const checkOnboarding = async () => {
       if (!user) {
         setOnboardingDone(true);
@@ -278,7 +281,7 @@ const RoleRouter = () => {
         setOnboardingDone(true);
       }
     };
-    checkOnboarding();
+    void checkOnboarding();
   }, [user]);
 
   /* Native Push (iOS/Android): Token für APNs/FCM registrieren → Benachrichtigungen inkl. Apple Watch */
@@ -307,11 +310,21 @@ const RoleRouter = () => {
     );
   }
 
-  if (!user) return <Navigate to={ROUTES.AUTH} replace />;
+  /** Ohne Login: Newsticker + Investor-News-Karte (öffentliche Daten); sonst Login */
+  const publicAppPaths = new Set<string>([ROUTES.HOME, ROUTES.NEWSTICKER, ROUTES.NEWS_INVESTOR_MAP]);
+  if (!user) {
+    if (!publicAppPaths.has(pathname)) {
+      try {
+        sessionStorage.setItem("immocontrol_return_url", window.location.pathname + window.location.search);
+      } catch {
+        /* ignore */
+      }
+      return <Navigate to={ROUTES.AUTH} replace />;
+    }
+  }
 
-  /* When onboarding not done: redirect to onboarding only if not already there,
-     so that the Route for ONBOARDING can render; otherwise we’d only redirect and never show the page. */
-  if (!onboardingDone && pathname !== ROUTES.ONBOARDING) {
+  /* Onboarding nur für angemeldete Nutzer */
+  if (user && !onboardingDone && pathname !== ROUTES.ONBOARDING) {
     return <Navigate to={ROUTES.ONBOARDING} replace />;
   }
 
@@ -329,7 +342,7 @@ const RoleRouter = () => {
   const defaultPage = (() => {
     try { return localStorage.getItem("immocontrol_default_page"); } catch { return null; }
   })();
-  if (defaultPage && defaultPage !== "/" && window.location.pathname === "/") {
+  if (user && defaultPage && defaultPage !== "/" && window.location.pathname === "/") {
     return <Navigate to={defaultPage} replace />;
   }
 
@@ -343,6 +356,7 @@ const RoleRouter = () => {
           <Route path={`${ROUTES.HANDWORKER_PORTAL}/*`} element={<ErrorBoundary><HandworkerPortal /></ErrorBoundary>} />
           <Route path={ROUTES.HOME} element={<ErrorBoundary><Newsticker /></ErrorBoundary>} />
           <Route path={ROUTES.NEWSTICKER} element={<Navigate to={ROUTES.HOME} replace />} />
+          <Route path={ROUTES.NEWS_INVESTOR_MAP} element={<ErrorBoundary><NewsInvestorMapPage /></ErrorBoundary>} />
           <Route path={ROUTES.PORTFOLIO} element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
           <Route path={ROUTES.PERSONAL_DASHBOARD} element={<ErrorBoundary><Dashboard mode="personal" /></ErrorBoundary>} />
           <Route path={ROUTES.ERFOLGE} element={<ErrorBoundary><Erfolge /></ErrorBoundary>} />
@@ -370,7 +384,6 @@ const RoleRouter = () => {
           <Route path={ROUTES.DOKUMENTE} element={<ErrorBoundary><Dokumente /></ErrorBoundary>} />
           <Route path={ROUTES.WARTUNG} element={<ErrorBoundary><Wartungsplaner /></ErrorBoundary>} />
           <Route path={ROUTES.HOCKEY_STICK} element={<ErrorBoundary><HockeyStickPage /></ErrorBoundary>} />
-          <Route path={ROUTES.NEWSTICKER} element={<ErrorBoundary><Newsticker /></ErrorBoundary>} />
           <Route path={ROUTES.BEWERTUNG} element={<ErrorBoundary><ImmobilienBewertung /></ErrorBoundary>} />
           <Route path={ROUTES.SETTINGS} element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path={ROUTES.STEUER_COCKPIT} element={<ErrorBoundary><SteuerCockpitPage /></ErrorBoundary>} />

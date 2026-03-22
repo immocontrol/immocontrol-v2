@@ -60,6 +60,23 @@ In **Entwicklung** bieten manche Toasts **„Copy for AI“** (Fehlerkontext fü
 - **Monitoring:** Sentry (optional, siehe unten); bei leerem Newsticker in Prod prüfen: Edge-Function `rss-fetch` deployed, Allowlist, ggf. `VITE_RSS2JSON_API_KEY`.
 - **Smoke:** `npm run smoke -- https://…` prüft `/` und optional **`/newsticker`** (SPA muss Route ausliefern).
 
+## Investor-News-Landkarte (täglicher Server-Snapshot)
+
+- **Zweck:** Bundesland-Scores aus denselben RSS-Quellen wie der Newsticker (Heuristik: positive Investoren-/Standort-Signale). Öffentlich lesbar (`news_investor_map_snapshots`, RLS `SELECT` für `anon`).
+- **Edge Function:** `supabase/functions/news-daily-aggregate/index.ts` — **POST** mit `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`. Schreibt/aktualisiert den Snapshot für den Kalendertag **Europe/Berlin**.
+- **Deploy:** `supabase functions deploy news-daily-aggregate` (lokal: `supabase functions serve`). In `supabase/config.toml`: `[functions.news-daily-aggregate]` mit `verify_jwt = false` (Auth nur über Service-Role-Header).
+- **Migration:** `supabase/migrations/…_news_investor_map_snapshots.sql` auf dem Projekt anwenden.
+- **Cron (1×/Tag):** z. B. GitHub Actions **`.github/workflows/news-daily-aggregate.yml`** (Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) oder externer Scheduler mit `curl`:
+
+```bash
+curl -sS -X POST \
+  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ANON_KEY" \
+  "$SUPABASE_URL/functions/v1/news-daily-aggregate"
+```
+
+- **Frontend:** Route `ROUTES.NEWS_INVESTOR_MAP` (`/news-investor-karte`) — auch **ohne Login** (öffentliche App-Pfade in `RoleRouter`). Datenabruf: `src/integrations/news/investorMapSnapshot.ts`.
+
 ## Dialoge und Barrierefreiheit
 
 - **`DialogContent`** und **`SheetContent`** enthalten versteckte Radix-**Title**/**Description**-Fallbacks, damit Screenreader und Radix-Warnungen konsistent abgedeckt sind, auch wenn ein Screen nur eine sichtbare Überschrift hat.

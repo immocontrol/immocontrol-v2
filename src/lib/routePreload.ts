@@ -31,6 +31,7 @@ export const routePreloadMap: Record<string, () => Promise<unknown>> = {
   [ROUTES.DOKUMENTE]: () => import("@/pages/Dokumente"),
   [ROUTES.WARTUNG]: () => import("@/pages/Wartungsplaner"),
   [ROUTES.NEWSTICKER]: () => import("@/pages/Newsticker"),
+  [ROUTES.NEWS_INVESTOR_MAP]: () => import("@/pages/NewsInvestorMapPage"),
   [ROUTES.BEWERTUNG]: () => import("@/pages/ImmobilienBewertung"),
   [ROUTES.NK]: () => import("@/pages/Nebenkosten"),
   [ROUTES.REPORTS]: () => import("@/pages/Berichte"),

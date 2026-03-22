@@ -39,6 +39,8 @@ export const ROUTES = {
   DOKUMENTE: "/dokumente",
   WARTUNG: "/wartungsplaner",
   NEWSTICKER: "/newsticker",
+  /** Investor-Stimmung aus aggregierten News (Server-Snapshot, Karte) */
+  NEWS_INVESTOR_MAP: "/news-investor-karte",
   BEWERTUNG: "/bewertung",
   BESICHTIGUNGEN: "/besichtigungen",
   OBJEKTE: "/objekte",
