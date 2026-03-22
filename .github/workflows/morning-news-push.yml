@@ -1,0 +1,27 @@
+# Täglich ~9:00 MEZ: Edge Function morning-news-push (Top-6-News, 24h)
+# Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (APNs-Secrets liegen in Supabase für den Versand)
+name: Morning news push
+
+on:
+  schedule:
+    # 08:00 UTC = 09:00 MEZ (Winter); im Sommer 10:00 MESZ — ggf. zweiten Cron ergänzen
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST morning-news-push
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
+            exit 1
+          fi
+          curl -sS -f -X POST \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            "${SUPABASE_URL%/}/functions/v1/morning-news-push"

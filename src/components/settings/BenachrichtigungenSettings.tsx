@@ -1,6 +1,6 @@
 /**
  * Settings Page-Splitting — Benachrichtigungen section
- * Central hub for notification channels (In-App, Browser, Web-Push, Telegram).
+ * Central hub for notification channels (In-App, Browser, Web-Push, native Morgen-Push, Telegram).
  * See docs/BENACHRICHTIGUNGEN.md for full documentation.
  */
 import { useState, useEffect } from "react";
@@ -48,6 +48,9 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
   }, [digestFreq]);
   const [pushLoading, setPushLoading] = useState(false);
   const [testPushLoading, setTestPushLoading] = useState(false);
+  const [morningNewsPush, setMorningNewsPush] = useState(false);
+  const [morningPushLoading, setMorningPushLoading] = useState(true);
+  const [morningPushSaving, setMorningPushSaving] = useState(false);
   const { user } = useAuth();
   const { prefs, setInApp, setBrowser, setWebPush } = useNotificationPreferences();
 
@@ -59,6 +62,57 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
       setBrowserPermission(Notification.permission);
     }
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!user?.id) {
+        if (mounted) setMorningPushLoading(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("morning_news_push_enabled")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (mounted && data) setMorningNewsPush(!!data.morning_news_push_enabled);
+      } finally {
+        if (mounted) setMorningPushLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [user?.id]);
+
+  const handleMorningNewsPushToggle = async (checked: boolean) => {
+    if (!user?.id) return;
+    setMorningPushSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ morning_news_push_enabled: checked })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setMorningNewsPush(checked);
+      if (checked) {
+        const { registerNativePush } = await import("@/integrations/nativePush");
+        const ok = await registerNativePush(user.id);
+        if (!ok) {
+          toast.info(
+            "Morgen-Push ist gespeichert. Bitte Mitteilungen für ImmoControl in den Systemeinstellungen erlauben und die App ggf. neu öffnen.",
+          );
+        } else {
+          toast.success("Morgen-Push aktiv (~9 Uhr): Top 6 News (24h), 3 bundesweit & 3 vor Ort.");
+        }
+      } else {
+        toast.success("Morgen-Push deaktiviert.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Speichern fehlgeschlagen");
+    } finally {
+      setMorningPushSaving(false);
+    }
+  };
 
   const handleWebPushToggle = async (enabled: boolean) => {
     if (!pushStatus.supported || !user?.id) return;
@@ -118,9 +172,29 @@ export function BenachrichtigungenSettings({ sectionRef }: BenachrichtigungenSet
         <Bell className="h-4 w-4 text-muted-foreground" /> Benachrichtigungen
       </h2>
       <p className="text-xs text-muted-foreground">
-        Verwalte die Benachrichtigungskanäle: In-App-Hinweise, Browser-Benachrichtigungen, Web-Push und Telegram.
+        Verwalte die Benachrichtigungskanäle: In-App-Hinweise, Browser-Benachrichtigungen, Web-Push, native App (Morgen-News) und Telegram.
       </p>
       <div className="space-y-3">
+        <div className="flex flex-col gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="flex items-start gap-3">
+            <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="min-w-0 space-y-1">
+              <p className="text-xs font-medium">Native App · Morgen-Push (~9 Uhr)</p>
+              <p className="text-[11px] text-muted-foreground text-wrap-safe">
+                Einmal täglich: die wichtigsten 6 Meldungen aus den letzten 24 Stunden — drei bundesweit und drei „vor Ort“
+                (gleiche Logik wie „Tages-Top“ im Newsticker, inkl. Portfolio-Orte). Erfordert iOS/Android-App mit Push-Berechtigung.
+              </p>
+            </div>
+          </div>
+          <SettingsToggleRow
+            label="Morgen-Push mit Top-6-News"
+            description="Wird serverseitig zum gleichen Zeitfenster wie deine Zeitzone konfiguriert (Cron, typisch 9:00 MEZ)."
+            checked={morningNewsPush}
+            onCheckedChange={handleMorningNewsPushToggle}
+            disabled={morningPushLoading || morningPushSaving || !user}
+            ariaLabel="Morgen-Push ein oder aus"
+          />
+        </div>
         <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
           <div className="flex items-center gap-3">
             <Inbox className="h-5 w-5 text-primary shrink-0" />

@@ -13,6 +13,7 @@
 
 - **Telegram:** Einstellungen → Bereich „Telegram“.
 - **Browser-Benachrichtigungen:** Werden bei Bedarf angefragt (Permission); keine zentrale Ein/Aus-Schaltung in der App außer über den Browser selbst.
+- **Morgen-Push (native App):** Einstellungen → **Benachrichtigungen** → „Morgen-Push mit Top-6-News“. Einmal täglich (Cron, typisch **~9 Uhr**, siehe `docs/OPERATIONS.md`): **3 Meldungen bundesweit** und **3 „vor Ort“** aus den **letzten 24 Stunden** — gleiche Heuristik wie der Newsticker „Tages-Top“ (inkl. Portfolio-Orte aus Objekten & Deals). **Nur iOS/Android** mit Push-Token in `device_tokens`. Versand über Edge Function **`morning-news-push`** (APNs wie `send-push-ios`).
 
 ## Apple Watch (wichtige Benachrichtigungen)
 

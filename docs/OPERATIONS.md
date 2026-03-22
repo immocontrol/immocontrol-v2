@@ -77,6 +77,15 @@ curl -sS -X POST \
 
 - **Frontend:** Route `ROUTES.NEWS_INVESTOR_MAP` (`/news-investor-karte`) — auch **ohne Login** (öffentliche App-Pfade in `RoleRouter`). Datenabruf: `src/integrations/news/investorMapSnapshot.ts`.
 
+## Morgen-Push (Top-6-News, 24h)
+
+- **Zweck:** Täglich **3 bundesweit + 3 „vor Ort“** aus den **letzten 24 Stunden** (Heuristik wie Newsticker-Tages-Top; `src/pages/newsticker/dailyTopPicks.ts` / `supabase/functions/_shared/morningNewsDigest.ts`).
+- **Opt-in:** `profiles.morning_news_push_enabled` — Schalter unter **Einstellungen → Benachrichtigungen**.
+- **Edge Function:** `supabase/functions/morning-news-push` — **POST** mit `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`. RSS-URLs parallel zu `newsFetch.ts` (`FEEDS` in der Function).
+- **Zielgeräte:** Einträge in `device_tokens`; Versand **iOS** über **APNs** (gleiche Secrets wie `send-push-ios`: `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_P8_KEY`). Android-Tokens werden aktuell gezählt, FCM-Versand kann später ergänzt werden.
+- **Deploy:** `supabase functions deploy morning-news-push`. In `supabase/config.toml`: `[functions.morning-news-push]` mit `verify_jwt = false`.
+- **Cron (~9 Uhr):** z. B. GitHub Actions **`.github/workflows/morning-news-push.yml`** (Standard `0 8 * * *` UTC = 9:00 MEZ) oder externer Scheduler.
+
 ## Dialoge und Barrierefreiheit
 
 - **`DialogContent`** und **`SheetContent`** enthalten versteckte Radix-**Title**/**Description**-Fallbacks, damit Screenreader und Radix-Warnungen konsistent abgedeckt sind, auch wenn ein Screen nur eine sichtbare Überschrift hat.

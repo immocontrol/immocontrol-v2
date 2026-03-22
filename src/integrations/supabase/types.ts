@@ -1101,6 +1101,8 @@ export type Database = {
           experience_level: string | null
           id: string
           investor_type: string | null
+          /** Native Push: täglich ~9 Uhr Top-6-News (Edge morning-news-push) */
+          morning_news_push_enabled: boolean
           onboarding_completed: boolean
           property_count_goal: number | null
           strategy: string | null
@@ -1113,6 +1115,7 @@ export type Database = {
           experience_level?: string | null
           id?: string
           investor_type?: string | null
+          morning_news_push_enabled?: boolean
           onboarding_completed?: boolean
           property_count_goal?: number | null
           strategy?: string | null
@@ -1125,6 +1128,7 @@ export type Database = {
           experience_level?: string | null
           id?: string
           investor_type?: string | null
+          morning_news_push_enabled?: boolean
           onboarding_completed?: boolean
           property_count_goal?: number | null
           strategy?: string | null

@@ -16,3 +16,7 @@ verify_jwt = false
 [functions.news-daily-aggregate]
 # Nur Service Role (Cron / CI); schreibt news_investor_map_snapshots
 verify_jwt = false
+
+[functions.morning-news-push]
+# Nur Service Role (Cron); Morgen-Push Top-6-News — APNs wie send-push-ios
+verify_jwt = false
