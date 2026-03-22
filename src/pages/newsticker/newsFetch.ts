@@ -53,9 +53,11 @@ async function fetchNewsItemsViaRss2Json(
   try {
     const resp = await fetch(rss2JsonUrl(feedUrl), { signal: AbortSignal.timeout(12_000) });
     if (!resp.ok) return [];
-    const data = await resp.json();
-    if (data.status !== "ok" || !Array.isArray(data.items) || data.items.length === 0) return [];
-    return data.items
+    const data = await resp.json() as { status?: string; items?: unknown };
+    const itemsRaw = Array.isArray(data.items) ? data.items : [];
+    if (itemsRaw.length === 0) return [];
+    /* Nutze items, sobald vorhanden (status-Feld ist bei rss2json nicht immer „ok“) */
+    return itemsRaw
       .map((item: { title?: string; link?: string; description?: string; pubDate?: string; thumbnail?: string }, idx: number) => {
         const title = item.title?.trim() || "";
         const description = (item.description || "").replace(/<[^>]+>/g, "").slice(0, 300);
@@ -120,12 +122,15 @@ async function fetchViaCorsProxy(feedUrl: string): Promise<string | null> {
 }
 
 async function fetchRSSFeed(feedUrl: string, source: string, icon: string): Promise<NewsItem[]> {
-  const viaEdge = await fetchRssTextViaEdge(feedUrl);
+  /* Edge (Supabase) und rss2json parallel: schneller als nacheinander; eine Quelle reicht */
+  const [viaEdge, viaRss2Json] = await Promise.all([
+    fetchRssTextViaEdge(feedUrl),
+    fetchNewsItemsViaRss2Json(feedUrl, source, icon),
+  ]);
   if (viaEdge && looksLikeXmlFeed(viaEdge)) {
     const parsed = parseRSSItems(viaEdge, source, icon);
     if (parsed.length > 0) return parsed;
   }
-  const viaRss2Json = await fetchNewsItemsViaRss2Json(feedUrl, source, icon);
   if (viaRss2Json.length > 0) return viaRss2Json;
   const viaCorsProxy = await fetchViaCorsProxy(feedUrl);
   if (viaCorsProxy) {

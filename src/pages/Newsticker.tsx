@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Newspaper, ExternalLink, RefreshCw, Filter, Search, Clock, MapPin, Tag,
   ChevronDown, AlertCircle, Globe, Bookmark, BookmarkCheck,
-  Share2, TrendingUp, LayoutGrid, List, BarChart3,   Flame, Archive, Loader2, Lock, LockOpen, Download, WifiOff,
+  Share2, TrendingUp, LayoutGrid, List, BarChart3,   Flame, Archive, Loader2, Lock, LockOpen, Download, WifiOff, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ import {
   estimateReadingTime,
 } from "./newsticker/newsUtils";
 import { fetchAllRssNews, RSS_FEEDS } from "./newsticker/newsFetch";
+import { computeDailyTopPicks } from "./newsticker/dailyTopPicks";
 import {
   getNewsNotificationKeywords,
   setNewsNotificationKeywords,
@@ -348,6 +349,12 @@ const Newsticker = () => {
     return { total: tn.length, counts: c };
   }, [news]);
 
+  /** Tages-Top: Deutschland vs. Berlin & Brandenburg (Heuristik, letzte 72h) */
+  const dailyTopPicks = useMemo(
+    () => (news.length > 0 ? computeDailyTopPicks(news) : null),
+    [news],
+  );
+
   const toggleCategory = (cat: NewsCategory) => {
     setSelectedCategories(prev => {
       const next = new Set(prev);
@@ -580,6 +587,100 @@ const Newsticker = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tages-Top 3: Deutschland + vor Ort */}
+      {dailyTopPicks && news.length > 0 && !showBookmarksOnly && !showArchivedOnly && (
+        <section
+          className="rounded-xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-4 sm:p-5 space-y-4"
+          aria-labelledby="daily-top-heading"
+        >
+          <div className="flex flex-col gap-1 min-w-0">
+            <h2 id="daily-top-heading" className="text-base font-semibold flex items-center gap-2 text-wrap-safe">
+              <Star className="h-5 w-5 text-amber-500 shrink-0" aria-hidden />
+              Tages-Top 3 — Deutschland &amp; vor Ort
+            </h2>
+            <p className="text-xs text-muted-foreground text-wrap-safe">
+              {dailyTopPicks.dateLabelDE}
+              {" · "}
+              Automatische Priorisierung aus den geladenen Feeds (bundesweite Markt-/Politik-Signale vs. Berlin &amp; Brandenburg inkl. Investition).
+              {" "}
+              Keine redaktionelle Kuratierung.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-lg border border-border/80 bg-background/60 p-3 min-w-0">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-2">
+                <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Deutschland (Markt &amp; Rahmen)
+              </h3>
+              {dailyTopPicks.deutschland.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-wrap-safe">
+                  In den letzten 72 Stunden keine bundesweit priorisierten Meldungen im Feed. Bitte aktualisieren oder Filter lockern.
+                </p>
+              ) : (
+                <ol className="space-y-2 list-decimal list-inside marker:text-primary">
+                  {dailyTopPicks.deutschland.map((n) => (
+                    <li key={n.id} className="text-sm min-w-0">
+                      <a
+                        href={n.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-primary hover:underline text-wrap-safe inline"
+                      >
+                        {n.title}
+                      </a>
+                      <span className="block text-[11px] text-muted-foreground mt-0.5 text-wrap-safe">
+                        {n.source}
+                        {" · "}
+                        {relativeTimeDE(n.publishedAt)}
+                        <span className="inline-flex ml-1 align-middle">
+                          <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+            <div className="rounded-lg border border-border/80 bg-background/60 p-3 min-w-0">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 mb-2">
+                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Berlin &amp; Brandenburg (Investition &amp; Standort)
+              </h3>
+              {dailyTopPicks.vorOrt.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-wrap-safe">
+                  In den letzten 72 Stunden keine regional priorisierten Meldungen. Liste aktualisiert sich mit dem nächsten Abruf.
+                </p>
+              ) : (
+                <ol className="space-y-2 list-decimal list-inside marker:text-primary">
+                  {dailyTopPicks.vorOrt.map((n) => (
+                    <li key={n.id} className="text-sm min-w-0">
+                      <a
+                        href={n.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-primary hover:underline text-wrap-safe inline"
+                      >
+                        {n.title}
+                      </a>
+                      <span className="block text-[11px] text-muted-foreground mt-0.5 text-wrap-safe">
+                        {n.source}
+                        {" · "}
+                        {REGION_LABELS[n.region] ?? n.region}
+                        {" · "}
+                        {relativeTimeDE(n.publishedAt)}
+                        <span className="inline-flex ml-1 align-middle">
+                          <ExternalLink className="h-3 w-3 opacity-60" aria-hidden />
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* Search */}
@@ -864,7 +965,7 @@ const Newsticker = () => {
               : showBookmarksOnly
                 ? "Speichere Artikel über das Lesezeichen-Symbol, um sie hier wiederzufinden."
                 : news.length === 0
-                  ? "Die Quellen werden über CORS-Proxies geladen. Bitte erneut versuchen oder die Seite später aktualisieren."
+                  ? "Zuerst „Erneut versuchen“. Wenn weiterhin keine Artikel: Supabase-Funktion rss-fetch deployen; optional Umgebungsvariable für rss2json (Hinweise in docs/OPERATIONS.md)."
                   : "Kategorien, Region oder Stimmung anpassen oder Suchbegriff ändern."}
           </p>
           {news.length === 0 && !showBookmarksOnly && (
