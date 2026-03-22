@@ -392,11 +392,13 @@ const Settings = () => {
                   key={section.id}
                   data-settings-tab={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-[color,background-color] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  type="button"
+                  title={section.label}
+                  className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-[color,background-color] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] text-[length:clamp(10px,2.8vw,12px)] ${
                     isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/50"
                   }`}
                 >
-                  <SectionIcon className="h-3 w-3" />
+                  <SectionIcon className="h-3 w-3 shrink-0" aria-hidden />
                   {section.label}
                 </button>
               );
@@ -410,7 +412,7 @@ const Settings = () => {
 
       {/* Desktop: Sidebar (nur ab lg) — fixed, bleibt beim Hoch/Runterscrollen immer sichtbar; innen scrollt nur die Sektionen-Liste */}
       <aside
-        className="hidden lg:flex lg:flex-col lg:w-48 lg:flex-none lg:fixed lg:left-[max(1.5rem,env(safe-area-inset-left))] lg:top-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:bottom-0 lg:h-[calc(100vh-3.5rem)] z-10 bg-background border-r border-border pr-2"
+        className="hidden lg:flex lg:flex-col lg:w-56 lg:flex-none lg:fixed lg:left-[max(1.5rem,env(safe-area-inset-left))] lg:top-[calc(3.5rem+env(safe-area-inset-top,0px))] lg:bottom-0 lg:h-[calc(100vh-3.5rem)] z-10 bg-background border-r border-border pr-2 min-w-0"
       >
           <nav className="w-full flex flex-col min-h-0 flex-1" aria-label="Einstellungen-Navigation">
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1">
@@ -445,7 +447,7 @@ const Settings = () => {
                       >
                         <SectionIcon className="h-2.5 w-2.5" />
                       </div>
-                      <span className="truncate">{section.label}</span>
+                      <span className="text-wrap-safe break-words min-w-0 flex-1 text-left leading-snug">{section.label}</span>
                       <div
                         className="ml-auto h-1.5 w-1.5 rounded-full bg-primary transition-opacity duration-500 ease-out"
                         style={{ opacity: isActive ? 1 : 0 }}
@@ -477,7 +479,7 @@ const Settings = () => {
                 >
                   <AlertTriangle className="h-2.5 w-2.5" />
                 </div>
-                <span className="truncate">{GEFAHRENZONE_SECTION.label}</span>
+                <span className="text-wrap-safe break-words min-w-0 flex-1 text-left leading-snug">{GEFAHRENZONE_SECTION.label}</span>
                 <div
                   className="ml-auto h-1.5 w-1.5 rounded-full bg-destructive transition-opacity duration-200"
                   style={{ opacity: activeSection === "gefahrenzone" ? 1 : 0 }}
@@ -488,8 +490,8 @@ const Settings = () => {
           </nav>
       </aside>
 
-      {/* Main settings content — mittig zentriert; auf Desktop neben fixierter Sidebar (lg:ml-48) */}
-      <div className="flex-1 flex justify-center w-full min-w-0 lg:ml-48 overflow-x-hidden">
+      {/* Main settings content — mittig zentriert; auf Desktop neben fixierter Sidebar (lg:ml-56) */}
+      <div className="flex-1 flex justify-center w-full min-w-0 lg:ml-56 overflow-x-hidden">
         <div className="w-full max-w-lg box-border space-y-6 px-2 sm:px-0">
         <PageHeader className="flex-col items-center text-center !mb-6 md:!mb-8">
           <PageHeaderMain className="text-center">

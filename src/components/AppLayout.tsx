@@ -390,6 +390,17 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     };
   }, [updateDotPosition, updateMobileDotPosition]);
 
+  /* Nav kann umbrechen (flex-wrap) — Punkt-Indikator bei Größenänderung neu setzen */
+  useEffect(() => {
+    const el = desktopNavRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      updateDotPosition();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [updateDotPosition]);
+
   const isInteractiveElement = (el: EventTarget | null): boolean => {
     if (!(el instanceof HTMLElement)) return false;
     const tag = el.tagName;
@@ -498,7 +509,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         className="sticky top-0 z-[150] border-b border-border/70 bg-background/85 backdrop-blur-xl glass-header page-header overflow-visible md:pt-0 shadow-[0_1px_0_hsl(var(--border)/0.5)]"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        <div className="container flex h-14 items-center justify-between gap-2 min-w-0">
+        <div className="container flex min-h-14 h-auto items-center justify-between gap-2 min-w-0 py-1.5 md:py-1">
           <div className="flex items-center gap-3 min-w-0 shrink-0">
             <Link to={ROUTES.HOME} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0" aria-label="ImmoControl Home">
               <Building2 className="h-6 w-6 text-primary" />
@@ -508,8 +519,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             {breadcrumb}
           </div>
           <div className="flex items-center gap-1 min-w-0 flex-1 justify-end">
-            <div className="hidden md:block min-w-0 flex-1 overflow-x-auto scrollbar-thin" aria-label="Navigation scrollbar">
-              <nav ref={desktopNavRef} data-testid="sidebar" className="flex items-center gap-0.5 relative flex-nowrap py-1" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
+            <div className="hidden md:block min-w-0 flex-1 overflow-visible" aria-label="Hauptnavigation Bereich">
+              <nav ref={desktopNavRef} data-testid="sidebar" className="flex flex-wrap items-center gap-x-1 gap-y-1.5 justify-start relative py-1 min-w-0" role="navigation" aria-label={"Hauptnavigation (" + NAV_ITEM_COUNT + ")"}>
               {navEntries.map((entry) => {
                 if (isGroup(entry)) {
                   const items = getGroupItems(entry);
@@ -519,13 +530,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                       <DropdownMenuTrigger asChild>
                         <button
                           data-nav-top
-                          className={`group flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all touch-target whitespace-nowrap shrink-0 ${
+                          type="button"
+                          className={`group flex items-center gap-1.5 px-2 lg:px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all touch-target shrink-0 min-w-0 max-w-[11rem] sm:max-w-[13rem] ${
                             groupActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                           }`}
                         >
-                          <entry.icon className="h-4 w-4 shrink-0" />
-                          {entry.label}
-                          <ChevronDown className="h-3 w-3 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-base ease-out-modern" />
+                          <entry.icon className="h-4 w-4 shrink-0" aria-hidden />
+                          <span className="nav-label-responsive nav-label-wrap !text-left leading-snug min-w-0 flex-1">{entry.label}</span>
+                          <ChevronDown className="h-3 w-3 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-base ease-out-modern" aria-hidden />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" sideOffset={4} className="min-w-[200px] z-[200]">
@@ -564,14 +576,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                         data-nav-top
                         data-nav-link
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-2 px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 whitespace-nowrap shrink-0 ${
+                        className={`flex items-center gap-2 px-2 lg:px-2.5 xl:px-3 py-2 rounded-lg text-xs xl:text-sm font-medium transition-all relative touch-target focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 shrink-0 min-w-0 max-w-[11rem] sm:max-w-[13rem] ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         }`}
                       >
-                        <entry.icon className="h-4 w-4" />
-                        {entry.label}
+                        <entry.icon className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="nav-label-responsive nav-label-wrap !text-left leading-snug min-w-0">{entry.label}</span>
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs tooltip-arrow dropdown-enter">
@@ -596,13 +608,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     size="sm"
                     className="h-8 gap-1.5 px-2 xl:px-2.5 text-muted-foreground hover:text-foreground shrink-0"
                     onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
-                    aria-label="Schnellsuche öffnen (Strg+K)"
+                    aria-label="Befehlspalette öffnen"
                   >
                     <Command className="h-4 w-4" />
-                    <span className="hidden xl:inline text-xs font-medium">Strg+K</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">Schnellsuche öffnen (Strg+K / ⌘K)</TooltipContent>
+                <TooltipContent side="bottom" className="text-xs max-w-[min(240px,calc(100vw-2rem))] text-wrap-safe">Befehlspalette: Seiten und Aktionen suchen</TooltipContent>
               </Tooltip>
               <GlobalSearch />
               <GamificationNavChip />
@@ -633,7 +644,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium hidden lg:block max-w-[120px] truncate">
+                <span className="text-sm font-medium hidden lg:block max-w-[min(160px,22vw)] text-wrap-safe break-words text-right" title={displayName || undefined}>
                   {displayName}
                 </span>
               </div>

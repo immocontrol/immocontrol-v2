@@ -89,7 +89,7 @@ export const GlobalSearch = () => {
       { id: "nav-deal-benchmark", title: "Deal-Benchmark", subtitle: "Erwartete vs. realisierte Rendite", path: ROUTES.DEAL_BENCHMARK },
       { id: "nav-besichtigungen", title: "Besichtigungen", subtitle: "Notizen, Bilder & Videos", path: ROUTES.BESICHTIGUNGEN },
       { id: "nav-settings", title: "Einstellungen", subtitle: "Profil & Theme", path: ROUTES.SETTINGS },
-      { id: "nav-shortcuts", title: "Tastenkombinationen", subtitle: "Liste aller Shortcuts (⌘K, Alt+S, Ctrl+N, …)", path: `${ROUTES.SETTINGS}#tastenkombinationen` },
+      { id: "nav-shortcuts", title: "Tastenkombinationen", subtitle: "Liste aller Kurzbefehle", path: `${ROUTES.SETTINGS}#tastenkombinationen` },
     ];
     return items.map(i => ({
       id: i.id,
@@ -319,7 +319,10 @@ export const GlobalSearch = () => {
               onFocus={() => { if (query.trim()) setOpen(true); }}
               onKeyDown={handleKeyDown}
               placeholder="z. B. Objekt, Seite, Aktion"
-              className="h-8 w-48 lg:w-64 pl-8 pr-16 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all min-w-0 search-input-enhanced"
+              className={cn(
+                "h-8 w-48 lg:w-64 pl-8 text-sm bg-secondary/50 border-border/50 focus:bg-background focus:w-72 lg:focus:w-80 transition-all min-w-0 search-input-enhanced",
+                query.trim() ? "pr-8" : "pr-3",
+              )}
               autoComplete="off"
               aria-label="Globale Suche – Objekte, Seiten, Kontakte, Deals"
               aria-expanded={open && !!query.trim()}
@@ -337,11 +340,7 @@ export const GlobalSearch = () => {
               >
                 <X className="h-3.5 w-3.5" />
               </button>
-            ) : (
-              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none hidden md:inline-flex h-5 items-center gap-0.5 rounded border border-border/60 bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground" aria-hidden>
-                Alt+S
-              </kbd>
-            )}
+            ) : null}
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs max-w-[240px]">
